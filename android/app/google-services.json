@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "681094379916",
+    "project_id": "gestion-financiera-add7e",
+    "storage_bucket": "gestion-financiera-add7e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:681094379916:android:1475f494925423cbbb7ea9",
+        "android_client_info": {
+          "package_name": "dev.jmcerezo.gestionfinanciera"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8SRaHiVTJ9ua2WxC7ovfZXhVcsl0j_lo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
