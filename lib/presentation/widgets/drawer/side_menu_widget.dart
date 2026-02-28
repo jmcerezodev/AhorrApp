@@ -1,6 +1,8 @@
+import 'package:ahorrapp/core/auth/biometric_service.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/authenticacion_dialogs/biometric_info_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -12,133 +14,184 @@ class SideMenuWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeCubit = context.watch<ThemeCubit>();
     final isDark = themeCubit.state == ThemeMode.dark;
+    final biometricService = BiometricService();
 
-    return NavigationDrawer(
+    return Drawer(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      elevation: 0,
-      indicatorColor: Colors.orange.shade100,
-      children: [
-        const _Header(),
-        const SizedBox(height: 5),
-        
-        const _SectionTitle(title: 'AJUSTES DE LA APP'),
-        
-        _DrawerSwitch(
-          icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-          label: 'Modo Oscuro',
-          value: isDark,
-          onChanged: (val) => themeCubit.toggleTheme(),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(30),
+          bottomRight: Radius.circular(30),
         ),
+      ),
+      child: Column(
+        children: [
+          const _Header(),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                const SizedBox(height: 10),
+                const _SectionTitle(title: 'AJUSTES DE LA APP'),
+                
+                _CustomSwitchItem(
+                  leadingIcon: Icons.dark_mode_outlined, // Icono de luna fijo
+                  label: 'Modo Oscuro',
+                  value: isDark,
+                  onChanged: (val) => themeCubit.toggleTheme(),
+                  activeIcon: Icons.dark_mode_rounded,
+                  inactiveIcon: Icons.light_mode_rounded,
+                ),
 
-        _DrawerSwitch(
-          icon: Icons.fingerprint_rounded,
-          label: 'Seguridad Biométrica',
-          value: Preferences.isBiometricActive,
-          onChanged: (val) {
-            Preferences.isBiometricActive = val;
-            (context as Element).markNeedsBuild();
-          },
-        ),
+                _CustomSwitchItem(
+                  leadingIcon: Icons.fingerprint_rounded,
+                  label: 'Biometría',
+                  value: Preferences.isBiometricActive,
+                  onChanged: (val) async {
+                    if (val) {
+                      final bool? confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => const BiometricInfoDialog(),
+                      );
+                      
+                      if (confirmed == true) {
+                        Preferences.isBiometricActive = true;
+                        (context as Element).markNeedsBuild();
+                      }
+                    } else {
+                      final bool authenticated = await biometricService.authenticate();
+                      if (authenticated) {
+                        Preferences.isBiometricActive = false;
+                        (context as Element).markNeedsBuild();
+                      }
+                    }
+                  },
+                  activeIcon: Icons.fingerprint_rounded,
+                  inactiveIcon: Icons.lock_outline_rounded,
+                ),
 
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 25, vertical: 5),
-          child: Divider(height: 1, thickness: 0.5, color: Colors.orange),
-        ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 25, vertical: 5),
+                  child: Divider(height: 1, thickness: 0.5, color: Colors.orange),
+                ),
 
-        const _SectionTitle(title: 'GESTIÓN DE CUENTA'),
-        _DrawerItem(
-          icon: Icons.badge_outlined,
-          label: 'Cambiar Nombre',
-          onTap: () => showDialog(
-            barrierDismissible: false,
-            context: context,
-            builder: (context) => const UpdateNameDialog(title: 'Cambio de Nombre'),
-          ),
-        ),
-        _DrawerItem(
-          icon: Icons.lock_reset_rounded,
-          label: 'Cambiar Contraseña',
-          onTap: () => showDialog(
-            barrierDismissible: false,
-            context: context,
-            builder: (context) => const UpdatePasswordDialog(
-              title: 'Cambio de contraseña',
-              text: '',
+                const _SectionTitle(title: 'GESTIÓN DE CUENTA'),
+                _DrawerItem(
+                  icon: Icons.badge_outlined,
+                  label: 'Cambiar Nombre',
+                  onTap: () {
+                    Navigator.pop(context);
+                    showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (context) => const UpdateNameDialog(title: 'Cambio de Nombre'),
+                    );
+                  },
+                ),
+                _DrawerItem(
+                  icon: Icons.lock_reset_rounded,
+                  label: 'Cambiar Contraseña',
+                  onTap: () {
+                    Navigator.pop(context);
+                    showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (context) => const UpdatePasswordDialog(
+                        title: 'Cambio de contraseña',
+                        text: '',
+                      ),
+                    );
+                  },
+                ),
+                
+                // CERRAR SESIÓN ahora aquí, entre contraseña y eliminar
+                _DrawerItem(
+                  icon: Icons.logout_rounded,
+                  label: 'Cerrar Sesión',
+                  onTap: () {
+                    Navigator.pop(context);
+                    showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (context) => const SingOutDialog(),
+                    );
+                  },
+                ),
+
+                _DrawerItem(
+                  icon: Icons.no_accounts_rounded,
+                  label: 'Eliminar Cuenta',
+                  iconColor: Colors.red.shade300,
+                  labelColor: Colors.red.shade300,
+                  onTap: () {
+                    Navigator.pop(context);
+                    showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (context) => const DeleteAcountDialog(
+                        title: 'Eliminar Cuenta',
+                        text: 'Introduce tu contraseña para confirmar.',
+                      ),
+                    );
+                  },
+                ),
+                
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 25, vertical: 5),
+                  child: Divider(height: 1, thickness: 0.5, color: Colors.orange),
+                ),
+
+                const _SectionTitle(title: 'INFORMACIÓN Y LEGAL'),
+                _DrawerItem(
+                  icon: Icons.verified_user_outlined,
+                  label: 'Licencias',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/licenses');
+                  },
+                ),
+                _DrawerItem(
+                  icon: Icons.privacy_tip_outlined,
+                  label: 'Política de Privacidad',
+                  onTap: () {},
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
           ),
-        ),
-        
-        _DrawerItem(
-          icon: Icons.no_accounts_rounded,
-          label: 'Eliminar Cuenta',
-          iconColor: Colors.red.shade300,
-          labelColor: Colors.red.shade300,
-          onTap: () => showDialog(
-            barrierDismissible: false,
-            context: context,
-            builder: (context) => const DeleteAcountDialog(
-              title: 'Eliminar Cuenta',
-              text: 'Introduce tu contraseña para confirmar.',
-            ),
-          ),
-        ),
-        
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 25, vertical: 5),
-          child: Divider(height: 1, thickness: 0.5, color: Colors.orange),
-        ),
-
-        const _SectionTitle(title: 'INFORMACIÓN Y LEGAL'),
-        _DrawerItem(
-          icon: Icons.verified_user_outlined,
-          label: 'Licencias',
-          onTap: () => context.push('/licenses'),
-        ),
-        _DrawerItem(
-          icon: Icons.privacy_tip_outlined,
-          label: 'Política de Privacidad',
-          onTap: () {},
-        ),
-
-        const SizedBox(height: 20),
-        
-        _DrawerItem(
-          icon: Icons.logout_rounded,
-          label: 'Cerrar Sesión',
-          iconColor: Colors.blueGrey.shade600,
-          onTap: () => showDialog(
-            barrierDismissible: false,
-            context: context,
-            builder: (context) => const SingOutDialog(),
-          ),
-        ),
-        const SizedBox(height: 10),
-      ],
+        ],
+      ),
     );
   }
 }
 
-class _DrawerSwitch extends StatelessWidget {
-  final IconData icon;
+class _CustomSwitchItem extends StatelessWidget {
+  final IconData leadingIcon;
   final String label;
   final bool value;
   final Function(bool) onChanged;
+  final IconData activeIcon;
+  final IconData inactiveIcon;
 
-  const _DrawerSwitch({
-    required this.icon,
+  const _CustomSwitchItem({
+    required this.leadingIcon,
     required this.label,
     required this.value,
     required this.onChanged,
+    required this.activeIcon,
+    required this.inactiveIcon,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
       child: Row(
         children: [
-          Icon(icon, color: Colors.orange.shade400, size: 20),
+          Icon(leadingIcon, color: Colors.orange.shade400, size: 20),
           const SizedBox(width: 15),
           Text(
             label,
@@ -149,12 +202,40 @@ class _DrawerSwitch extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          Transform.scale(
-            scale: 0.7, // Ajuste para hacer el switch más pequeño
-            child: Switch(
-              value: value,
-              onChanged: onChanged,
-              activeColor: Colors.orange,
+          GestureDetector(
+            onTap: () => onChanged(!value),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: 50,
+              height: 28,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: value ? Colors.orange.shade400 : Colors.grey.shade100,
+                border: Border.all(
+                  color: Colors.orange.shade300.withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
+              ),
+              child: AnimatedAlign(
+                duration: const Duration(milliseconds: 250),
+                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(2.0),
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: Icon(
+                      value ? activeIcon : inactiveIcon,
+                      size: 13,
+                      color: value ? Colors.orange.shade700 : Colors.grey.shade400,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -170,8 +251,9 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.fromLTRB(15, 30, 15, 10),
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20), // Padding reducido
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(25),
@@ -186,14 +268,14 @@ class _Header extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Image.asset('assets/Logo.png', height: 45, fit: BoxFit.contain), // Logo reducido
+          Image.asset('assets/Logo.png', height: 45, fit: BoxFit.contain),
           const SizedBox(height: 15),
           Text(
             Preferences.name,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: isDark ? Colors.white : Colors.blueGrey.shade900,
-              fontSize: 16, // Fuente ligeramente reducida
+              fontSize: 16,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.5,
             ),

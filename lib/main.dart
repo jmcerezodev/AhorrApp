@@ -8,13 +8,13 @@ import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Preferences.init();
 
-  // Configuración de UI del sistema
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarDividerColor: Colors.transparent,
@@ -32,13 +32,11 @@ void main() async {
   bool isAuthRequired = Preferences.uId.isNotEmpty;
 
   if (isAuthRequired) {
-    // Si la biometría está activa, intentamos autenticar antes de decidir la ruta
     if (Preferences.isBiometricActive) {
       final bool authenticated = await biometricService.authenticate();
       if (authenticated) {
         initialRoute = await authService.getInitialRoute();
       } else {
-        // Si falla o el usuario cancela, lo mandamos al login por seguridad
         initialRoute = '/login';
       }
     } else {
@@ -51,18 +49,36 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // CORRECCIÓN: Eliminamos 'const' porque initialRoute es una variable
-  runApp(MainAppWrapper(initialRoute: initialRoute));
+  runApp(
+    BlocProvider(
+      create: (_) => ThemeCubit(),
+      child: MainAppWrapper(initialRoute: initialRoute),
+    )
+  );
 }
 
-class MainApp extends StatelessWidget {
+class MainAppWrapper extends StatefulWidget {
   final String initialRoute;
-  const MainApp({super.key, required this.initialRoute});
+  const MainAppWrapper({super.key, required this.initialRoute});
+
+  @override
+  State<MainAppWrapper> createState() => _MainAppWrapperState();
+}
+
+class _MainAppWrapperState extends State<MainAppWrapper> {
+  late GoRouter router;
+
+  @override
+  void initState() {
+    super.initState();
+    // Creamos la instancia del router una sola vez aquí
+    router = getAppRouter(widget.initialRoute);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final totalMoneyCubit = TotalMoneyCubit();
     final themeMode = context.watch<ThemeCubit>().state;
+    final totalMoneyCubit = TotalMoneyCubit();
 
     return MultiBlocProvider(
       providers: [
@@ -85,21 +101,8 @@ class MainApp extends StatelessWidget {
         theme: AppTheme().getTheme(isDarkMode: false),
         darkTheme: AppTheme().getTheme(isDarkMode: true),
         themeMode: themeMode,
-        routerConfig: appRouter(initialRoute),
+        routerConfig: router, // Usamos la instancia persistente
       ),
-    );
-  }
-}
-
-class MainAppWrapper extends StatelessWidget {
-  final String initialRoute;
-  const MainAppWrapper({super.key, required this.initialRoute});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ThemeCubit(),
-      child: MainApp(initialRoute: initialRoute),
     );
   }
 }
