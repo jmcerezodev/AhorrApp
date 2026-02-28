@@ -10,7 +10,7 @@ class DateCubit extends Cubit<DateCubitState> {
 
   void isOpen(bool value){
     emit(state.copywith(
-      isOpen: !state.isOpen,
+      isOpen: value, // Corregido: ahora usa el valor pasado por parámetro
     ));
   }
 
@@ -34,14 +34,12 @@ class DateCubit extends Cubit<DateCubitState> {
   }
 
   void yearIncrement(int value){
-    // Aseguramos que sume el valor recibido (normalmente 1)
     emit(state.copywith(
       year: state.year + value,
     ));
   }
 
   void yearDecrement(int value){
-    // Aseguramos que reste el valor recibido (normalmente 1)
     emit(state.copywith(
       year: state.year - value,
     ));
@@ -64,7 +62,7 @@ class DateCubit extends Cubit<DateCubitState> {
 
   void isActive(bool value){
     emit(state.copywith(
-      isActive: value // Corregido: antes asignaba state.isActive a sí mismo
+      isActive: value
     ));
   }
 
