@@ -28,6 +28,8 @@ class _IncomesDialogState extends State<IncomesDialog> {
     final date = Date();
     final AppwriteRepository appwriteRepo = AppwriteRepository();
     final incomesCubit = context.watch<IncomesCubit>();
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -35,31 +37,33 @@ class _IncomesDialogState extends State<IncomesDialog> {
       child: Container(
         padding: const EdgeInsets.all(25),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.green.shade100, width: 1.5),
+          border: Border.all(
+            color: Colors.green.shade400.withValues(alpha: isDark ? 0.2 : 0.4), 
+            width: 1.5
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icono y Título
             Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade50,
+                    color: Colors.green.shade400.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.trending_up_rounded, color: Colors.green.shade700, size: 24),
+                  child: Icon(Icons.trending_up_rounded, color: Colors.green.shade400, size: 24),
                 ),
                 const SizedBox(width: 15),
-                const Text(
+                Text(
                   'NUEVO INGRESO',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: Colors.blueGrey,
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                     letterSpacing: 1.5,
                   ),
                 ),
@@ -90,7 +94,14 @@ class _IncomesDialogState extends State<IncomesDialog> {
                   child: TextButton(
                     onPressed: () => context.pop(),
                     style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text('CANCELAR', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: Text(
+                      'CANCELAR', 
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                        fontWeight: FontWeight.bold, 
+                        letterSpacing: 1
+                      )
+                    ),
                   ),
                 ),
                 const SizedBox(width: 15),
@@ -120,6 +131,7 @@ class _IncomesDialogState extends State<IncomesDialog> {
                       backgroundColor: Colors.green.shade600,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 15),
+                      elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
                     child: const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),

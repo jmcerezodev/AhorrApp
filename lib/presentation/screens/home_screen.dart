@@ -24,12 +24,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final String yearNow = Date().year();
     final String userName = Preferences.name;
-
-    // Este es el tono naranja muy claro (naranja + blanco) que viste en el resplandor
-    const backgroundColor = Color(0xFFFFFBF5); 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      // CORRECCIÓN: Usamos el scaffoldBackgroundColor definido en el AppTheme (Naranja Crema o Negro Premium)
+      backgroundColor: theme.scaffoldBackgroundColor, 
       drawer: const SideMenuWidget(),
       body: SafeArea(
         child: Column(
@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Builder(
                     builder: (context) => IconButton(
                       onPressed: () => Scaffold.of(context).openDrawer(),
-                      icon: const Icon(Icons.notes_rounded, color: Colors.black87, size: 28),
+                      icon: Icon(Icons.notes_rounded, color: colorScheme.onSurface, size: 28),
                     ),
                   ),
                   Column(
@@ -52,17 +52,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         'Hola, $userName',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       Text(
                         'Bienvenido de nuevo',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.orange.shade300, // Acento naranja sutil en el texto
+                          color: colorScheme.primary.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -72,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Contenido principal
             const InfoGlogalWidget(),
             const SizedBox(height: 5),
             const DateCustomWidget(),
@@ -80,19 +79,17 @@ class _HomeScreenState extends State<HomeScreen> {
             const ExpensesIncomesCustomWidget(),
             const SizedBox(height: 25),
             
-            // Historial expandible
             const Expanded(
               child: HistoryCustomWidget(),
             ),
             
-            // Copyright
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Text(
                   'JMCerezoDev - $yearNow ®',
                   style: TextStyle(
-                    color: Colors.orange.shade200,
+                    color: colorScheme.onSurface.withValues(alpha: 0.3),
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.5,

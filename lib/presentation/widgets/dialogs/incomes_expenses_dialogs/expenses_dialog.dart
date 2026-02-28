@@ -43,6 +43,8 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
     final expensesCubit = context.watch<ExpensesCubit>();
     final historyList = context.watch<HistoryCubit>().state.historyList;
     final double currentBalance = _calculateCurrentBalance(historyList);
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final double typedAmount = double.tryParse(expensesCubit.state.expenseMoney.value.replaceAll(',', '.')) ?? 0;
     final bool hasEnoughBalance = typedAmount <= currentBalance;
@@ -53,31 +55,33 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
       child: Container(
         padding: const EdgeInsets.all(25),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.orange.shade100, width: 1.5),
+          border: Border.all(
+            color: colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4), 
+            width: 1.5
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icono y Título
             Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
+                    color: colorScheme.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.trending_down_rounded, color: Colors.orange.shade700, size: 24),
+                  child: Icon(Icons.trending_down_rounded, color: colorScheme.primary, size: 24),
                 ),
                 const SizedBox(width: 15),
-                const Text(
+                Text(
                   'NUEVO GASTO',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: Colors.blueGrey,
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                     letterSpacing: 1.5,
                   ),
                 ),
@@ -85,19 +89,24 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
             ),
             const SizedBox(height: 25),
 
-            // Saldo Disponible (Badge Informativo)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: colorScheme.onSurface.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.grey.shade100),
+                border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.1)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Saldo disponible: ', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                  Text('${currentBalance.toStringAsFixed(2)}€', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  Text(
+                    'Saldo disponible: ', 
+                    style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12)
+                  ),
+                  Text(
+                    '${currentBalance.toStringAsFixed(2)}€', 
+                    style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13)
+                  ),
                 ],
               ),
             ),
@@ -128,7 +137,14 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                   child: TextButton(
                     onPressed: () => context.pop(),
                     style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text('CANCELAR', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: Text(
+                      'CANCELAR', 
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                        fontWeight: FontWeight.bold, 
+                        letterSpacing: 1
+                      )
+                    ),
                   ),
                 ),
                 const SizedBox(width: 15),
@@ -155,9 +171,10 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                     }
                     : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange.shade600,
+                      backgroundColor: colorScheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 15),
+                      elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
                     child: const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),

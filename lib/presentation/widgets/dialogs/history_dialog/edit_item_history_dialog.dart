@@ -30,6 +30,8 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
   Widget build(BuildContext context) {
     final appwriteRepo = AppwriteRepository();
     final historyCubit = context.watch<HistoryCubit>();
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     Map<String, dynamic> itemResult = historyCubit.state.historyList.firstWhere(
       (map) => map["id"] == widget.itemId, 
@@ -46,9 +48,12 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
       child: Container(
         padding: const EdgeInsets.all(25),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.blueGrey.shade50, width: 1.5),
+          border: Border.all(
+            color: colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4), 
+            width: 1.5
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -59,18 +64,18 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.blueGrey.shade50,
+                    color: colorScheme.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.edit_note_rounded, color: Colors.blueGrey.shade700, size: 24),
+                  child: Icon(Icons.edit_note_rounded, color: colorScheme.primary, size: 24),
                 ),
                 const SizedBox(width: 15),
                 Text(
                   isIncomeResult ? 'EDITAR INGRESO' : 'EDITAR GASTO',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: Colors.blueGrey,
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                     letterSpacing: 1.5,
                   ),
                 ),
@@ -101,7 +106,14 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
                   child: TextButton(
                     onPressed: () => context.pop(),
                     style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text('CANCELAR', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: Text(
+                      'CANCELAR', 
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                        fontWeight: FontWeight.bold, 
+                        letterSpacing: 1
+                      )
+                    ),
                   ),
                 ),
                 const SizedBox(width: 15),
@@ -131,7 +143,7 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
                     }
                     : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueGrey.shade700,
+                      backgroundColor: colorScheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       elevation: 0,

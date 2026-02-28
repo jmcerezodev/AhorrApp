@@ -13,6 +13,7 @@ class HistoryCustomWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final historyCubit = context.watch<HistoryCubit>();
     final dateCubit = context.watch<DateCubit>().state;
+    final colorScheme = Theme.of(context).colorScheme;
 
     final List<Map<String, dynamic>> filteredListDate = historyCubit.state.historyList.where((item) {
       return item["year"] == dateCubit.year && item["month"] == dateCubit.month;
@@ -31,7 +32,7 @@ class HistoryCustomWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: Colors.grey.shade400,
+                  color: colorScheme.onSurface.withValues(alpha: 0.4),
                   letterSpacing: 2.0,
                 ),
               ),
@@ -44,13 +45,13 @@ class HistoryCustomWidget extends StatelessWidget {
                         final newOrder = historyCubit.state.listOrder == 'descending' ? 'ascending' : 'descending';
                         context.read<HistoryCubit>().listOrder(newOrder);
                       },
-                      icon: Icon(Icons.sort_rounded, color: Colors.orange.shade300, size: 20),
+                      icon: Icon(Icons.sort_rounded, color: colorScheme.primary.withValues(alpha: 0.6), size: 20),
                     ),
                   IconButton(
                     visualDensity: VisualDensity.compact,
                     icon: Icon(
                       historyCubit.state.isChart ? Icons.list_alt_rounded : Icons.bar_chart_rounded,
-                      color: Colors.orange.shade300,
+                      color: colorScheme.primary.withValues(alpha: 0.6),
                       size: 22,
                     ),
                     onPressed: () => context.read<HistoryCubit>().isChart(!historyCubit.state.isChart),
@@ -79,6 +80,7 @@ class _HistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final historyCubit = context.watch<HistoryCubit>();
+    final colorScheme = Theme.of(context).colorScheme;
     final items = historyCubit.state.listOrder == 'descending' 
         ? filteredListDate 
         : filteredListDate.reversed.toList();
@@ -90,7 +92,7 @@ class _HistoryList extends StatelessWidget {
         child: Text(
           'No hay movimientos este mes.',
           style: TextStyle(
-            color: Colors.grey.shade400, 
+            color: colorScheme.onSurface.withValues(alpha: 0.3), 
             fontStyle: FontStyle.italic
           ),
         ),
@@ -115,6 +117,8 @@ class _HistoryItem extends StatelessWidget {
     final humanizeNumbers = HumanizeNumbers();
     final isIncome = item['isIncome'] == true;
     final money = humanizeNumbers.number((item['money'] as num).toDouble());
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -148,15 +152,15 @@ class _HistoryItem extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.orange.shade300.withValues(alpha: 0.2),
+              color: isDark ? Colors.white10 : colorScheme.primary.withValues(alpha: 0.2),
               width: 1.0,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.orange.shade100.withValues(alpha: 0.05),
+                color: isDark ? Colors.black38 : colorScheme.primary.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -167,12 +171,14 @@ class _HistoryItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isIncome ? Colors.green.shade50 : Colors.red.shade50, // Cambiado a rojo suave para gastos
+                  color: isIncome 
+                    ? Colors.green.shade400.withValues(alpha: isDark ? 0.1 : 0.05)
+                    : Colors.red.shade400.withValues(alpha: isDark ? 0.1 : 0.05),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   isIncome ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                  color: isIncome ? Colors.green : Colors.red.shade400, // Cambiado a rojo para gastos
+                  color: isIncome ? Colors.green.shade400 : Colors.red.shade400,
                   size: 18,
                 ),
               ),
@@ -186,13 +192,13 @@ class _HistoryItem extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blueGrey.shade900,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${item['currentDate']} • ${item['currentHour']}',
-                      style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                      style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.4)),
                     ),
                   ],
                 ),
@@ -202,7 +208,7 @@ class _HistoryItem extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
-                  color: isIncome ? Colors.green.shade700 : Colors.red.shade600, // Cambiado a rojo para gastos
+                  color: isIncome ? Colors.green.shade400 : Colors.red.shade400,
                 ),
               ),
             ],

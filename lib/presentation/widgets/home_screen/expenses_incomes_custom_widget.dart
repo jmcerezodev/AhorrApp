@@ -17,6 +17,7 @@ class ExpensesIncomesCustomWidget extends StatelessWidget {
     final humanizeNumbers = HumanizeNumbers();
     final date = Date();
     final filterLists = FilterLists();
+    final colorScheme = Theme.of(context).colorScheme;
   
     final historyCubit = context.watch<HistoryCubit>().state;
 
@@ -31,13 +32,11 @@ class ExpensesIncomesCustomWidget extends StatelessWidget {
                 money: (historyCubit.historyList.isNotEmpty) ? humanizeNumbers.number(filterLists.totalIncome(context, historyCubit.historyList)) : '0',
                 icon: Icons.arrow_upward_rounded,
                 iconColor: Colors.green.shade600,
-                bgColor: Colors.green.shade50,
+                bgColor: Colors.green.shade50.withValues(alpha: colorScheme.brightness == Brightness.dark ? 0.1 : 1.0),
                 borderColor: Colors.green.shade100,
                 glowColor: Colors.green.shade100,
                 onPressed: () {
-                  // Cerramos el calendario si está abierto para evitar overflow con el teclado
                   context.read<DateCubit>().isOpen(false);
-                  
                   if ((sigleton.currentDate['month'] == date.monthNames() && (sigleton.currentDate['year'] == date.year()))) {
                     showDialog(
                       barrierDismissible: false,
@@ -63,13 +62,11 @@ class ExpensesIncomesCustomWidget extends StatelessWidget {
                 money: (historyCubit.historyList.isNotEmpty) ? humanizeNumbers.number(filterLists.totalExpense(context, historyCubit.historyList)) : '0',
                 icon: Icons.arrow_downward_rounded,
                 iconColor: Colors.red.shade600,
-                bgColor: Colors.red.shade50,
+                bgColor: Colors.red.shade50.withValues(alpha: colorScheme.brightness == Brightness.dark ? 0.1 : 1.0),
                 borderColor: Colors.red.shade100,
                 glowColor: Colors.red.shade100,
                 onPressed: () {
-                  // Cerramos el calendario si está abierto para evitar overflow con el teclado
                   context.read<DateCubit>().isOpen(false);
-
                   if ((sigleton.currentDate['month'] == date.monthNames() && (sigleton.currentDate['year'] == date.year()))) {
                     showDialog(
                       barrierDismissible: false,
@@ -118,21 +115,24 @@ class _CompactActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: borderColor.withValues(alpha: 0.5),
+            color: isDark ? Colors.white10 : borderColor.withValues(alpha: 0.5),
             width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: glowColor.withValues(alpha: 0.1),
+              color: isDark ? Colors.black26 : glowColor.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -159,7 +159,7 @@ class _CompactActionCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w800,
-                      color: Colors.grey.shade400,
+                      color: colorScheme.onSurface.withValues(alpha: 0.4),
                       letterSpacing: 1.0,
                     ),
                   ),
@@ -170,7 +170,7 @@ class _CompactActionCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blueGrey.shade900,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),

@@ -23,6 +23,8 @@ class _SavingsDialogState extends State<SavingsDialog> {
   @override
   Widget build(BuildContext context) {
     final savingsCubit = context.watch<SavingsCubit>();
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -30,9 +32,12 @@ class _SavingsDialogState extends State<SavingsDialog> {
       child: Container(
         padding: const EdgeInsets.all(25),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.orange.shade100, width: 1.5),
+          border: Border.all(
+            color: colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4), 
+            width: 1.5
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -43,18 +48,18 @@ class _SavingsDialogState extends State<SavingsDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
+                    color: colorScheme.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.savings_outlined, color: Colors.orange.shade700, size: 24),
+                  child: Icon(Icons.savings_outlined, color: colorScheme.primary, size: 24),
                 ),
                 const SizedBox(width: 15),
-                const Text(
+                Text(
                   'GESTIONAR AHORRO',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: Colors.blueGrey,
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                     letterSpacing: 1.5,
                   ),
                 ),
@@ -77,7 +82,14 @@ class _SavingsDialogState extends State<SavingsDialog> {
                   child: TextButton(
                     onPressed: () => context.pop(),
                     style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text('CANCELAR', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: Text(
+                      'CANCELAR', 
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                        fontWeight: FontWeight.bold, 
+                        letterSpacing: 1
+                      )
+                    ),
                   ),
                 ),
                 const SizedBox(width: 15),
@@ -91,9 +103,10 @@ class _SavingsDialogState extends State<SavingsDialog> {
                       }
                     : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange.shade600,
+                      backgroundColor: colorScheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 15),
+                      elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
                     child: const Text('AHORRAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),

@@ -15,6 +15,7 @@ class InfoGlogalWidget extends StatelessWidget {
     final savingsCubit = context.watch<SavingsCubit>().state;
     final historyCubit = context.watch<HistoryCubit>();
     final humanizeNumbers = HumanizeNumbers();
+    final colorScheme = Theme.of(context).colorScheme;
 
     final double totalMoneyResult = filterLists.calculateTotalMoney(context, historyCubit);
 
@@ -24,19 +25,17 @@ class InfoGlogalWidget extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(25),
-          // Borde naranja sutil
           border: Border.all(
-            color: Colors.orange.shade300.withValues(alpha: 0.4),
+            color: colorScheme.primary.withValues(alpha: 0.2),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              // Sombra con resplandor naranja muy suave
-              color: Colors.orange.shade100.withValues(alpha: 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: colorScheme.primary.withValues(alpha: 0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -52,7 +51,7 @@ class InfoGlogalWidget extends StatelessWidget {
                     Text(
                       'BALANCE TOTAL',
                       style: TextStyle(
-                        color: Colors.grey.shade400,
+                        color: colorScheme.onSurface.withValues(alpha: 0.4),
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.5,
@@ -64,7 +63,7 @@ class InfoGlogalWidget extends StatelessWidget {
                       child: Text(
                         '${humanizeNumbers.number(totalMoneyResult)}€',
                         style: TextStyle(
-                          color: Colors.blueGrey.shade900,
+                          color: colorScheme.onSurface,
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -0.5,
@@ -117,6 +116,8 @@ class _CompactSavingButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final humanizeNumbers = HumanizeNumbers();
+    final colorScheme = Theme.of(context).colorScheme;
+
     return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
@@ -124,21 +125,21 @@ class _CompactSavingButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.orange.shade50,
+          color: colorScheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.orange.shade100, width: 1),
+          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2), width: 1),
         ),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.savings_rounded, color: Colors.orange.shade700, size: 14),
+                Icon(Icons.savings_rounded, color: colorScheme.primary, size: 14),
                 const SizedBox(width: 4),
                 Text(
                   'AHORROS',
                   style: TextStyle(
-                    color: Colors.orange.shade700,
+                    color: colorScheme.primary,
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
@@ -152,7 +153,7 @@ class _CompactSavingButton extends StatelessWidget {
               child: Text(
                 '${humanizeNumbers.number(money)}€',
                 style: TextStyle(
-                  color: Colors.orange.shade800,
+                  color: colorScheme.primary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),

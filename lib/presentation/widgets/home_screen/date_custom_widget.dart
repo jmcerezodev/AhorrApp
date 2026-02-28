@@ -33,6 +33,7 @@ class _MonthBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final singleton = Singleton();
     final dateCubit = context.watch<DateCubit>();
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -41,16 +42,15 @@ class _MonthBar extends StatelessWidget {
         child: Container(
           height: 55,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
-            // Borde naranja sutil
             border: Border.all(
-              color: Colors.orange.shade300.withValues(alpha: 0.4),
+              color: colorScheme.primary.withValues(alpha: 0.4),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.orange.shade100.withValues(alpha: 0.1),
+                color: colorScheme.primary.withValues(alpha: 0.1),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -60,7 +60,7 @@ class _MonthBar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Row(
               children: [
-                Icon(Icons.calendar_today_outlined, size: 20, color: Colors.orange.shade400),
+                Icon(Icons.calendar_today_outlined, size: 20, color: colorScheme.primary),
                 const SizedBox(width: 15),
                 Text(
                   context.select((DateCubit value) {
@@ -75,14 +75,14 @@ class _MonthBar extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blueGrey.shade800,
+                    color: colorScheme.onSurface,
                     letterSpacing: 0.5,
                   ),
                 ),
                 const Spacer(),
                 Icon(
                   dateCubit.state.isOpen ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                  color: Colors.grey.shade400,
+                  color: colorScheme.onSurface.withValues(alpha: 0.4),
                   size: 24,
                 ),
               ],
@@ -102,6 +102,7 @@ class _ContainerMonthBar extends StatelessWidget {
     final filterLists = FilterLists();
     final dateCubit = context.watch<DateCubit>().state;
     final historyList = context.watch<HistoryCubit>().state.historyList;
+    final colorScheme = Theme.of(context).colorScheme;
 
     final int historyMinYear = filterLists.findMinYear(historyList);
     final int minYear = historyMinYear < 2024 ? historyMinYear : 2024;
@@ -124,12 +125,12 @@ class _ContainerMonthBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: Colors.orange.shade100.withValues(alpha: 0.3)),
+          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
           boxShadow: [
             BoxShadow(
-              color: Colors.orange.shade100.withValues(alpha: 0.05),
+              color: colorScheme.primary.withValues(alpha: 0.05),
               blurRadius: 15,
               offset: const Offset(0, 10),
             ),
@@ -154,7 +155,7 @@ class _ContainerMonthBar extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: Colors.blueGrey.shade900,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -203,9 +204,10 @@ class _YearButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return IconButton(
       onPressed: enabled ? onPressed : null,
-      icon: Icon(icon, color: enabled ? Colors.orange : Colors.grey.shade200, size: 28),
+      icon: Icon(icon, color: enabled ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.1), size: 28),
     );
   }
 }
@@ -225,6 +227,7 @@ class _MonthItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final selectedMonth = context.watch<DateCubit>().state.month;
     final isSelected = selectedMonth == monthName;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return InkWell(
       onTap: () => context.read<DateCubit>().month(monthName),
@@ -234,10 +237,10 @@ class _MonthItem extends StatelessWidget {
         width: MediaQuery.of(context).size.width * 0.20,
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.orange : Colors.grey.shade50,
+          color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: isSelected ? Colors.orange : Colors.orange.shade100.withValues(alpha: 0.2),
+            color: isSelected ? colorScheme.primary : colorScheme.primary.withValues(alpha: 0.1),
           ),
         ),
         child: Column(
@@ -246,7 +249,7 @@ class _MonthItem extends StatelessWidget {
               monthName.substring(0, 3),
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.blueGrey.shade600,
+                color: isSelected ? Colors.white : colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
               ),
@@ -270,7 +273,7 @@ class _MonthItem extends StatelessWidget {
                     width: 4,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : Colors.orange.shade300,
+                      color: isSelected ? Colors.white : colorScheme.primary.withValues(alpha: 0.6),
                       shape: BoxShape.circle,
                     ),
                   ),

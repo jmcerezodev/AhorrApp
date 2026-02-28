@@ -20,6 +20,8 @@ class DeleteAcountDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final authService = AuthAppwrite();
     final deleteAcountCubit = context.watch<DeleteAcountCubit>();
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -27,18 +29,20 @@ class DeleteAcountDialog extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(25),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.red.shade100, width: 1.5),
+          border: Border.all(
+            color: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4), 
+            width: 1.5
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icono de advertencia crítica
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: Colors.red.shade400.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.no_accounts_rounded, color: Colors.red.shade400, size: 32),
@@ -48,10 +52,10 @@ class DeleteAcountDialog extends StatelessWidget {
             Text(
               title.toUpperCase(),
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
-                color: Colors.blueGrey,
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
                 letterSpacing: 1.5,
               ),
             ),
@@ -62,7 +66,7 @@ class DeleteAcountDialog extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.grey.shade600,
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
                 height: 1.5,
               ),
             ),
@@ -87,7 +91,14 @@ class DeleteAcountDialog extends StatelessWidget {
                   child: TextButton(
                     onPressed: () => context.pop(),
                     style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text('CANCELAR', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: Text(
+                      'CANCELAR', 
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                        fontWeight: FontWeight.bold, 
+                        letterSpacing: 1
+                      )
+                    ),
                   ),
                 ),
                 const SizedBox(width: 15),
