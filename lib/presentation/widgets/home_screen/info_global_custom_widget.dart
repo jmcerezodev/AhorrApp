@@ -3,6 +3,7 @@ import 'package:ahorrapp/core/filter_lists/filter_lists.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/saving_dialogs/savings_goal_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -12,7 +13,7 @@ class InfoGlogalWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filterLists = FilterLists();
-    final savingsCubit = context.watch<SavingsCubit>().state;
+    final savingsState = context.watch<SavingsCubit>().state;
     final historyCubit = context.watch<HistoryCubit>();
     final humanizeNumbers = HumanizeNumbers();
     final colorScheme = Theme.of(context).colorScheme;
@@ -44,6 +45,7 @@ class InfoGlogalWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: Row(
             children: [
+              // BALANCE TOTAL
               Expanded(
                 flex: 3,
                 child: Column(
@@ -75,24 +77,13 @@ class InfoGlogalWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 15),
+              // TARJETA DE AHORROS Y META
               Expanded(
                 flex: 2,
-                child: _CompactSavingButton(
-                  money: savingsCubit.savingTotal,
-                  onTap: () => showDialog(
-                    barrierDismissible: false,
-                    context: context,
-                    builder: (dialogContext) => const SavingsDialog(),
-                  ),
-                  onLongPress: () {
-                    if (savingsCubit.savingTotal > 0) {
-                      showDialog(
-                        barrierDismissible: false,
-                        context: context,
-                        builder: (dialogContext) => const SavingsDeleteDialog(),
-                      );
-                    }
-                  },
+                child: _SavingGoalCard(
+                  money: savingsState.savingTotal,
+                  goal: savingsState.savingGoal,
+                  progress: savingsState.progress,
                 ),
               ),
             ],
@@ -103,63 +94,118 @@ class InfoGlogalWidget extends StatelessWidget {
   }
 }
 
-class _CompactSavingButton extends StatelessWidget {
+class _SavingGoalCard extends StatelessWidget {
   final double money;
-  final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  final double goal;
+  final double progress;
 
-  const _CompactSavingButton({
+  const _SavingGoalCard({
     required this.money,
-    required this.onTap,
-    required this.onLongPress,
+    required this.goal,
+    required this.progress,
   });
 
   @override
   Widget build(BuildContext context) {
     final humanizeNumbers = HumanizeNumbers();
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Determinar si se ha alcanzado la meta
+    final bool goalReached = goal > 0 && progress >= 1.0;
+    
+    // Colores dinámicos basados en el éxito
+    final Color accentColor = goalReached ? Colors.green.shade400 : colorScheme.primary;
+    final Color bgColor = goalReached 
+        ? Colors.green.shade400.withValues(alpha: isDark ? 0.15 : 0.05)
+        : accentColor.withValues(alpha: 0.05);
 
     return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
+      onTap: () => showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (dialogContext) => const SavingsDialog(),
+      ),
+      onLongPress: () => showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (dialogContext) => const SavingsGoalDialog(),
+      ),
       borderRadius: BorderRadius.circular(15),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
         decoration: BoxDecoration(
-          color: colorScheme.primary.withValues(alpha: 0.1),
+          color: bgColor,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2), width: 1),
+          border: Border.all(
+            color: accentColor.withValues(alpha: 0.2), 
+            width: 1.2
+          ),
         ),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.savings_rounded, color: colorScheme.primary, size: 14),
+                if (goalReached) 
+                  const Icon(Icons.stars_rounded, color: Colors.green, size: 10),
                 const SizedBox(width: 4),
                 Text(
-                  'AHORROS',
+                  goalReached ? '¡META LOGRADA!' : 'MIS AHORROS',
                   style: TextStyle(
-                    color: colorScheme.primary,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
+                    color: accentColor,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w900,
                     letterSpacing: 0.5,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
                 '${humanizeNumbers.number(money)}€',
                 style: TextStyle(
-                  color: colorScheme.primary,
+                  color: accentColor,
                   fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ),
+            const SizedBox(height: 6),
+            // Barra de progreso y meta
+            if (goal > 0) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 4,
+                  backgroundColor: accentColor.withValues(alpha: 0.1),
+                  valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                ),
+              ),
+              const SizedBox(height: 4),
+              FittedBox(
+                child: Text(
+                  goalReached ? 'Objetivo: ${humanizeNumbers.number(goal)}€' : 'Meta: ${humanizeNumbers.number(goal)}€',
+                  style: TextStyle(
+                    fontSize: 7, 
+                    color: goalReached ? Colors.green.shade700 : colorScheme.onSurface.withValues(alpha: 0.5),
+                    fontWeight: FontWeight.w800
+                  ),
+                ),
+              ),
+            ] else 
+              Text(
+                'Sin meta fija',
+                style: TextStyle(
+                  fontSize: 7, 
+                  color: colorScheme.onSurface.withValues(alpha: 0.3), 
+                  fontStyle: FontStyle.italic
+                ),
+              ),
           ],
         ),
       ),

@@ -1,28 +1,23 @@
-import 'package:ahorrapp/presentation/bloc/cubits.dart';
+import 'package:ahorrapp/presentation/bloc/savings_cubit/savings_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-class SavingsDialog extends StatefulWidget {
-  const SavingsDialog({super.key});
+class SavingsGoalDialog extends StatefulWidget {
+  const SavingsGoalDialog({super.key});
 
   @override
-  State<SavingsDialog> createState() => _SavingsDialogState();
+  State<SavingsGoalDialog> createState() => _SavingsGoalDialogState();
 }
 
-class _SavingsDialogState extends State<SavingsDialog> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SavingsCubit>().resetCubit();
-    });
-  }
+class _SavingsGoalDialogState extends State<SavingsGoalDialog> {
+  String goalValue = '';
+  bool isValid = false;
 
   @override
   Widget build(BuildContext context) {
-    final savingsCubit = context.watch<SavingsCubit>();
+    final savingsCubit = context.read<SavingsCubit>();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -50,11 +45,11 @@ class _SavingsDialogState extends State<SavingsDialog> {
                     color: colorScheme.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.savings_outlined, color: colorScheme.primary, size: 24),
+                  child: Icon(Icons.flag_rounded, color: colorScheme.primary, size: 24),
                 ),
                 const SizedBox(width: 15),
                 Text(
-                  'AÑADIR AHORRO',
+                  'ESTABLECER META',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
@@ -67,12 +62,18 @@ class _SavingsDialogState extends State<SavingsDialog> {
             const SizedBox(height: 30),
 
             CustomInputTextWidget(
-              label: 'Cantidad a ahorrar',
+              label: '¿Cuál es tu objetivo de ahorro?',
               hintText: '0.00',
-              onChanged: savingsCubit.savingChanged,
-              errorText: savingsCubit.state.saving.isPure ? null : savingsCubit.state.saving.errorMessage,
+              onChanged: (value) {
+                setState(() {
+                  goalValue = value;
+                  isValid = double.tryParse(value.replaceAll(',', '.')) != null;
+                });
+              },
+              autoFocus: true,
               textInputType: const TextInputType.numberWithOptions(decimal: true),
             ),
+            
             const SizedBox(height: 30),
 
             Row(
@@ -94,18 +95,13 @@ class _SavingsDialogState extends State<SavingsDialog> {
                 const SizedBox(width: 15),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: (savingsCubit.state.isValid)
-                    ? () async {
-                        // 1. Añadimos la aportación
-                        await savingsCubit.addContribution();
-                        
-                        // 2. Refrescamos el historial general si el contexto sigue vivo
-                        if (context.mounted) {
-                          await context.read<HistoryCubit>().loadHistory();
-                          context.pop();
-                        }
+                    onPressed: isValid ? () {
+                      final double? goal = double.tryParse(goalValue.replaceAll(',', '.'));
+                      if (goal != null) {
+                        savingsCubit.setGoal(goal);
+                        context.pop();
                       }
-                    : null,
+                    } : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colorScheme.primary,
                       foregroundColor: Colors.white,
@@ -113,7 +109,7 @@ class _SavingsDialogState extends State<SavingsDialog> {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
-                    child: const Text('AHORRAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
                 ),
               ],

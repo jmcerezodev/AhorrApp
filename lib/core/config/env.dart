@@ -1,7 +1,4 @@
 class Env {
-  // Ahora estas constantes leerán los valores inyectados al compilar.
-  // Si no se inyectan, estarán vacías, protegiendo tus datos.
-  
   static const String appwriteEndpoint = String.fromEnvironment(
     'APPWRITE_ENDPOINT',
     defaultValue: '',
@@ -19,6 +16,12 @@ class Env {
 
   static const String appwriteHistoryCollectionId = String.fromEnvironment(
     'APPWRITE_HISTORY_COLLECTION_ID',
+    defaultValue: '',
+  );
+
+  // NUEVA COLECCIÓN DE AHORROS
+  static const String appwriteSavingsCollectionId = String.fromEnvironment(
+    'APPWRITE_SAVINGS_COLLECTION_ID',
     defaultValue: '',
   );
 }

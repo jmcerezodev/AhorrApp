@@ -5,12 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class FilterLists {
 
-  // * Filtro para encontrar el año mas bajo y el mas alto de la lista
-
   int findMaxYear(List<Map<String, dynamic>> historyList) {
     final date = Date();
     if (historyList.isNotEmpty) {
-      // Appwrite nos devuelve el año como int, ya no necesitamos int.parse
       return historyList.map((item) => item['year'] as int).reduce((a, b) => a > b ? a : b);
     } else {
       return int.parse(date.year());
@@ -26,48 +23,39 @@ class FilterLists {
     }
   }
 
-  // * Filtrar y hacer los calculos para el dinero total
-
+  // --- CORRECCIÓN CRÍTICA: Ahorros independientes del Balance Total ---
   double calculateTotalMoney(BuildContext context, HistoryCubit historyCubit) {
-    List<Map<String, dynamic>> filteredListIncome = historyCubit.state.historyList.where((item) {
-      return item["isIncome"] == true;
-    }).toList();
-
-    List<Map<String, dynamic>> filteredListExpense = historyCubit.state.historyList.where((item) {
-      return item["isIncome"] == false;
-    }).toList();
-
+    final historyList = historyCubit.state.historyList;
+    
     double totalMoney = 0;
 
-    for (var map in filteredListIncome) {
-      // Appwrite nos devuelve money como double, ya no necesitamos double.parse
-      totalMoney += (map['money'] as num).toDouble();
-    }
-
-    for (var map in filteredListExpense) {
-      totalMoney -= (map['money'] as num).toDouble();
+    for (var item in historyList) {
+      final double money = (item['money'] as num).toDouble();
+      
+      // Solo sumamos ingresos reales
+      if (item['type'] == 'income') {
+        totalMoney += money;
+      } 
+      // Solo restamos gastos reales
+      else if (item['type'] == 'expense') {
+        totalMoney -= money;
+      }
+      // El caso type == 'saving' NO se suma ni se resta del balance global
     }
     
     context.read<TotalMoneyCubit>().totalMoney(totalMoney);
     return totalMoney;
   }
 
-  // * Filtrar listas para mostrar el total de ingresos y gastos en la Grafica por meses
-
   List<double> calculateTotalIncomes(List<Map<String, dynamic>> historyList, int year) {
     List<double> totalIncomesList = [];
-    List<String> months = [
-      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
-      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-    ];
+    List<String> months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
     for (var month in months) {
-      // Comparamos el año como int
       List<Map<String, dynamic>> monthsFilter = historyList.where((item) => item['month'] == month && item['year'] == year).toList();
       double totalIncome = 0;
-
       for (var map in monthsFilter) {
-        if (map['isIncome'] == true) {
+        if (map['type'] == 'income') {
           totalIncome += (map['money'] as num).toDouble();
         }
       }
@@ -78,17 +66,13 @@ class FilterLists {
 
   List<double> calculateTotalExpenses(List<Map<String, dynamic>> historyList, int year) {
     List<double> totalExpensesList = [];
-    List<String> months = [
-      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
-      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-    ];
+    List<String> months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
     for (var month in months) {
       List<Map<String, dynamic>> monthsFilter = historyList.where((item) => item['month'] == month && item['year'] == year).toList();
       double totalExpenses = 0;
-
       for (var map in monthsFilter) {
-        if (map['isIncome'] == false) {
+        if (map['type'] == 'expense') {
           totalExpenses += (map['money'] as num).toDouble();
         }
       }
@@ -99,36 +83,30 @@ class FilterLists {
 
   double totalIncome(BuildContext context, List<Map<String, dynamic>> historyList) {
     final dateCubit = context.watch<DateCubit>().state;
-
     List<Map<String, dynamic>> filteredListDate = historyList.where((date) {
       return date["year"] == dateCubit.year && date["month"] == dateCubit.month;
     }).toList();
 
-    List<Map<String, dynamic>> filteredListIncome = filteredListDate.where((item) {
-      return item["isIncome"] == true;
-    }).toList();
-
     double totalIncome = 0;
-    for (var map in filteredListIncome) {
-      totalIncome += (map['money'] as num).toDouble();
+    for (var map in filteredListDate) {
+      if (map['type'] == 'income') {
+        totalIncome += (map['money'] as num).toDouble();
+      }
     }
     return totalIncome;
   }
 
   double totalExpense(BuildContext context, List<Map<String, dynamic>> historyList) {
     final dateCubit = context.watch<DateCubit>().state;
-
     List<Map<String, dynamic>> filteredListDate = historyList.where((date) {
       return date["year"] == dateCubit.year && date["month"] == dateCubit.month;
     }).toList();
 
-    List<Map<String, dynamic>> filteredListExpense = filteredListDate.where((item) {
-      return item["isIncome"] == false;
-    }).toList();
-
     double totalExpense = 0;
-    for (var map in filteredListExpense) {
-      totalExpense += (map['money'] as num).toDouble();
+    for (var map in filteredListDate) {
+      if (map['type'] == 'expense') {
+        totalExpense += (map['money'] as num).toDouble();
+      }
     }
     return totalExpense;
   }

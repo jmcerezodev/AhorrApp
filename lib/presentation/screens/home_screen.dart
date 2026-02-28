@@ -20,6 +20,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     authAppwrite.checkUserAuthentication(context);
+    
+    // ASEGURAMOS CARGA DE DATOS AL ENTRAR
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<HistoryCubit>().loadHistory();
+        context.read<SavingsCubit>().loadSavings();
+      }
+    });
   }
 
   @override
@@ -28,110 +36,88 @@ class _HomeScreenState extends State<HomeScreen> {
     final String userName = Preferences.name;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isCalendarOpen = context.watch<DateCubit>().state.isOpen;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       resizeToAvoidBottomInset: false, 
       drawer: const SideMenuWidget(),
       body: SafeArea(
-        child: Stack( // Usamos Stack para el efecto de calendario flotante
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // CAPA 1: Contenido Principal
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Cabecera
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 15, 20, 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Builder(
-                        builder: (context) => IconButton(
-                          onPressed: () => Scaffold.of(context).openDrawer(),
-                          icon: Icon(Icons.notes_rounded, color: colorScheme.onSurface, size: 28),
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Hola, $userName',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          Text(
-                            'Bienvenido de nuevo',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.primary.withValues(alpha: 0.7),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                const InfoGlogalWidget(),
-                const SizedBox(height: 5),
-
-                // Fila de Calendario y Balance Mes
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: DateCustomWidget(),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: MonthlyBalanceWidget(),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-                const ExpensesIncomesCustomWidget(),
-                const SizedBox(height: 25),
-                
-                const Expanded(
-                  child: HistoryCustomWidget(),
-                ),
-                
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Text(
-                      'JMCerezoDev - $yearNow ®',
-                      style: TextStyle(
-                        color: colorScheme.onSurface.withValues(alpha: 0.3),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.5,
-                      ),
+            // Cabecera
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 15, 20, 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Builder(
+                    builder: (context) => IconButton(
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                      icon: Icon(Icons.notes_rounded, color: colorScheme.onSurface, size: 28),
                     ),
                   ),
-                ),
-              ],
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Hola, $userName',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      Text(
+                        'Bienvenido de nuevo',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.primary.withValues(alpha: 0.7),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
 
-            // CAPA 2: Panel del Calendario Flotante (Overlay)
-            if (isCalendarOpen)
-              Positioned(
-                top: 200, // Ajustado para aparecer justo debajo de la barra del calendario
-                left: 0,
-                right: 0,
-                child: const CalendarPanelWidget(),
+            const InfoGlogalWidget(),
+            const SizedBox(height: 5),
+
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Expanded(flex: 3, child: DateCustomWidget()),
+                  SizedBox(width: 12),
+                  Expanded(flex: 2, child: MonthlyBalanceWidget()),
+                ],
               ),
+            ),
+
+            const SizedBox(height: 15),
+            const ExpensesIncomesCustomWidget(),
+            const SizedBox(height: 25),
+            
+            const Expanded(
+              child: HistoryCustomWidget(),
+            ),
+            
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  'JMCerezoDev - $yearNow ®',
+                  style: TextStyle(
+                    color: colorScheme.onSurface.withValues(alpha: 0.3),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

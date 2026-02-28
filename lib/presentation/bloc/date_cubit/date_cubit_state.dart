@@ -1,7 +1,6 @@
 part of 'date_cubit.dart';
 
 class DateCubitState {
-
   final bool isOpen;
   final String currentDate;
   final int year;
@@ -15,9 +14,8 @@ class DateCubitState {
     this.month = '',
     this.isActive = false,
   });
-  
 
-  copywith ({
+  DateCubitState copywith({
     bool? isOpen,
     String? currentDate,
     int? year,
@@ -28,8 +26,6 @@ class DateCubitState {
     currentDate: currentDate ?? this.currentDate,
     year: year ?? this.year,
     month: month ?? this.month,
-    isActive: isOpen ?? this.isActive,
+    isActive: isActive ?? this.isActive,
   );
-
-
 }

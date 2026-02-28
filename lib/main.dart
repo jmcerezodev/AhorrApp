@@ -67,18 +67,18 @@ class MainAppWrapper extends StatefulWidget {
 
 class _MainAppWrapperState extends State<MainAppWrapper> {
   late GoRouter router;
+  // Creamos el totalMoneyCubit aquí para que sea persistente
+  final totalMoneyCubit = TotalMoneyCubit();
 
   @override
   void initState() {
     super.initState();
-    // Creamos la instancia del router una sola vez aquí
     router = getAppRouter(widget.initialRoute);
   }
 
   @override
   Widget build(BuildContext context) {
     final themeMode = context.watch<ThemeCubit>().state;
-    final totalMoneyCubit = TotalMoneyCubit();
 
     return MultiBlocProvider(
       providers: [
@@ -101,7 +101,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> {
         theme: AppTheme().getTheme(isDarkMode: false),
         darkTheme: AppTheme().getTheme(isDarkMode: true),
         themeMode: themeMode,
-        routerConfig: router, // Usamos la instancia persistente
+        routerConfig: router,
       ),
     );
   }

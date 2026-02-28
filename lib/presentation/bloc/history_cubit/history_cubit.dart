@@ -10,7 +10,7 @@ part 'history_cubit_state.dart';
 
 class HistoryCubit extends Cubit<HistoryCubitState> {
   final AppwriteRepository _repository = AppwriteRepository();
-  final TotalMoneyCubit totalMoneyCubit; // Añadimos referencia al Cubit de dinero
+  final TotalMoneyCubit totalMoneyCubit;
 
   HistoryCubit({required this.totalMoneyCubit}) : super(const HistoryCubitState()) {
     if (Preferences.uId.isNotEmpty) {
@@ -21,54 +21,83 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
   Future<void> loadHistory() async {
     emit(state.copyWhith(formStatus: FormStatusHistory.validating));
     try {
-      final documents = await _repository.getHistory(Preferences.uId);
+      final historyDocs = await _repository.getHistory(Preferences.uId);
+      final savingsDocs = await _repository.getSavings(Preferences.uId);
       
-      final List<Map<String, dynamic>> history = documents.map((doc) {
+      final List<Map<String, dynamic>> history = historyDocs.map((doc) {
         return {
           'id': doc.$id,
-          'name': doc.data['name'],
-          'money': doc.data['money'],
-          'isIncome': doc.data['isIncome'],
-          'currentDate': doc.data['currentDate'],
-          'currentHour': doc.data['currentHour'],
-          'month': doc.data['month'],
-          'year': doc.data['year'],
+          'name': doc.data['name'] ?? 'Sin nombre',
+          'money': (doc.data['money'] as num).toDouble(),
+          'isIncome': doc.data['isIncome'] ?? false,
+          'type': (doc.data['isIncome'] == true) ? 'income' : 'expense',
+          'currentDate': doc.data['currentDate'] ?? '',
+          'currentHour': doc.data['currentHour'] ?? '',
+          'month': doc.data['month']?.toString() ?? '',
+          'year': int.tryParse(doc.data['year']?.toString() ?? '0') ?? 0,
           'userId': doc.data['userId'],
+          'createdAt': doc.$createdAt,
         };
       }).toList();
 
+      final List<Map<String, dynamic>> savings = savingsDocs.map((doc) {
+        final DateTime date = DateTime.parse(doc.$createdAt);
+        return {
+          'id': doc.$id,
+          'name': doc.data['description'] ?? 'Ahorro',
+          'money': (doc.data['money'] as num).toDouble(),
+          'isIncome': false, 
+          'type': 'saving',
+          'currentDate': "${date.day}/${date.month}/${date.year}",
+          'currentHour': "${date.hour}:${date.minute}",
+          'month': _getMonthName(date.month),
+          'year': date.year,
+          'userId': doc.data['userId'],
+          'createdAt': doc.$createdAt,
+        };
+      }).toList();
+
+      final List<Map<String, dynamic>> combinedList = [...history, ...savings];
+      combinedList.sort((a, b) => b['createdAt'].compareTo(a['createdAt']));
+
       emit(state.copyWhith(
-        historyList: history,
+        historyList: combinedList,
         formStatus: FormStatusHistory.valid
       ));
 
-      // CALCULAMOS Y ACTUALIZAMOS EL TOTAL MONEY AUTOMÁTICAMENTE
-      _updateGlobalBalance(history);
+      _updateGlobalBalance(combinedList);
 
     } catch (e) {
       emit(state.copyWhith(formStatus: FormStatusHistory.invalid));
     }
   }
 
-  void _updateGlobalBalance(List<Map<String, dynamic>> history) {
+  String _getMonthName(int month) {
+    const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    return months[month - 1];
+  }
+
+  // MÉTODO BLINDADO: Los ahorros NUNCA afectan al balance total
+  void _updateGlobalBalance(List<Map<String, dynamic>> list) {
     double total = 0;
-    for (var item in history) {
+    for (var item in list) {
       final double money = (item['money'] as num).toDouble();
-      if (item['isIncome'] == true) {
+      
+      // Solo operamos si NO es un ahorro
+      if (item['type'] == 'income') {
         total += money;
-      } else {
+      } else if (item['type'] == 'expense') {
         total -= money;
       }
+      // El caso item['type'] == 'saving' se ignora explícitamente aquí
     }
-    // Actualizamos el otro Cubit instantáneamente
     totalMoneyCubit.totalMoney(total);
   }
 
-  void onSubmit() async {
-    if (!state.isValid) return;
-    emit(state.copyWhith(formStatus: FormStatusHistory.validating));
-    emit(state.copyWhith(formStatus: FormStatusHistory.valid));
-  }
+  void toggleIncomes(bool value) => emit(state.copyWhith(showIncomes: value));
+  void toggleExpenses(bool value) => emit(state.copyWhith(showExpenses: value));
+  void toggleSavings(bool value) => emit(state.copyWhith(showSavings: value));
+  void toggleFilterPanel() => emit(state.copyWhith(isFilterOpen: !state.isFilterOpen));
 
   void resetCubit() {
     emit(state.copyWhith(
@@ -91,19 +120,6 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       newMoney: newMoney,
       isValid: Formz.validate([newMoney, state.newName]),
     ));
-  }
-
-  void historyData(List<Map<String, dynamic>> value) {
-    emit(state.copyWhith(historyList: value));
-    _updateGlobalBalance(value);
-  }
-
-  void currentText(String value) {
-    emit(state.copyWhith(currentName: value));
-  }
-
-  void currentMoney(String value) {
-    emit(state.copyWhith(currentMoney: value));
   }
 
   void listOrder(String value) {

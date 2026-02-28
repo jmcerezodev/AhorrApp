@@ -23,10 +23,14 @@ class Preferences {
   static bool get isRemember => _prefs.getBool('isRemember') ?? false;
   static set isRemember(bool value) => _prefs.setBool('isRemember', value);
 
-  // Ajustes de App (NUEVO)
+  // Ajustes de App
   static bool get isDarkMode => _prefs.getBool('isDarkMode') ?? false;
   static set isDarkMode(bool value) => _prefs.setBool('isDarkMode', value);
 
   static bool get isBiometricActive => _prefs.getBool('isBiometricActive') ?? false;
   static set isBiometricActive(bool value) => _prefs.setBool('isBiometricActive', value);
+
+  // Meta de Ahorro (NUEVO)
+  static double get savingGoal => _prefs.getDouble('savingGoal') ?? 0.0;
+  static set savingGoal(double value) => _prefs.setDouble('savingGoal', value);
 }
