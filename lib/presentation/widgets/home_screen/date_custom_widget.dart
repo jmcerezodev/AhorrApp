@@ -34,6 +34,7 @@ class _MonthBar extends StatelessWidget {
     final singleton = Singleton();
     final dateCubit = context.watch<DateCubit>();
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -45,8 +46,8 @@ class _MonthBar extends StatelessWidget {
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: colorScheme.primary.withValues(alpha: 0.4),
-              width: 1.5,
+              color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3),
+              width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
@@ -103,6 +104,7 @@ class _ContainerMonthBar extends StatelessWidget {
     final dateCubit = context.watch<DateCubit>().state;
     final historyList = context.watch<HistoryCubit>().state.historyList;
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final int historyMinYear = filterLists.findMinYear(historyList);
     final int minYear = historyMinYear < 2024 ? historyMinYear : 2024;
@@ -127,7 +129,10 @@ class _ContainerMonthBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
+          border: Border.all(
+            color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3),
+            width: 1.2,
+          ),
           boxShadow: [
             BoxShadow(
               color: colorScheme.primary.withValues(alpha: 0.05),

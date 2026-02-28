@@ -155,12 +155,12 @@ class _HistoryItem extends StatelessWidget {
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isDark ? Colors.white10 : colorScheme.primary.withValues(alpha: 0.2),
-              width: 1.0,
+              color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3), // Borde unificado
+              width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black38 : colorScheme.primary.withValues(alpha: 0.05),
+                color: colorScheme.primary.withValues(alpha: 0.05), // Sombra unificada
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),

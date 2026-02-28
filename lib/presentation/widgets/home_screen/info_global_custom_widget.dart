@@ -16,6 +16,7 @@ class InfoGlogalWidget extends StatelessWidget {
     final historyCubit = context.watch<HistoryCubit>();
     final humanizeNumbers = HumanizeNumbers();
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final double totalMoneyResult = filterLists.calculateTotalMoney(context, historyCubit);
 
@@ -28,8 +29,8 @@ class InfoGlogalWidget extends StatelessWidget {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
-            color: colorScheme.primary.withValues(alpha: 0.2),
-            width: 1.5,
+            color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3),
+            width: 1.2,
           ),
           boxShadow: [
             BoxShadow(

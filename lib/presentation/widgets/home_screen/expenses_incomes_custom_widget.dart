@@ -33,8 +33,8 @@ class ExpensesIncomesCustomWidget extends StatelessWidget {
                 icon: Icons.arrow_upward_rounded,
                 iconColor: Colors.green.shade600,
                 bgColor: Colors.green.shade50.withValues(alpha: colorScheme.brightness == Brightness.dark ? 0.1 : 1.0),
-                borderColor: Colors.green.shade100,
-                glowColor: Colors.green.shade100,
+                borderColor: colorScheme.primary, // Unificado
+                glowColor: colorScheme.primary, // Unificado
                 onPressed: () {
                   context.read<DateCubit>().isOpen(false);
                   if ((sigleton.currentDate['month'] == date.monthNames() && (sigleton.currentDate['year'] == date.year()))) {
@@ -63,8 +63,8 @@ class ExpensesIncomesCustomWidget extends StatelessWidget {
                 icon: Icons.arrow_downward_rounded,
                 iconColor: Colors.red.shade600,
                 bgColor: Colors.red.shade50.withValues(alpha: colorScheme.brightness == Brightness.dark ? 0.1 : 1.0),
-                borderColor: Colors.red.shade100,
-                glowColor: Colors.red.shade100,
+                borderColor: colorScheme.primary, // Unificado
+                glowColor: colorScheme.primary, // Unificado
                 onPressed: () {
                   context.read<DateCubit>().isOpen(false);
                   if ((sigleton.currentDate['month'] == date.monthNames() && (sigleton.currentDate['year'] == date.year()))) {
@@ -127,12 +127,12 @@ class _CompactActionCard extends StatelessWidget {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isDark ? Colors.white10 : borderColor.withValues(alpha: 0.5),
+            color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3), // Intensidad unificada
             width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.black26 : glowColor.withValues(alpha: 0.1),
+              color: colorScheme.primary.withValues(alpha: 0.05), // Sombra unificada
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
