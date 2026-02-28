@@ -36,88 +36,112 @@ class _HomeScreenState extends State<HomeScreen> {
     final String userName = Preferences.name;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    
+    // Obtenemos el estado del calendario
+    final isCalendarOpen = context.watch<DateCubit>().state.isOpen;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       resizeToAvoidBottomInset: false, 
       drawer: const SideMenuWidget(),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack( // Restauramos el Stack para el calendario flotante
           children: [
-            // Cabecera
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 15, 20, 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Builder(
-                    builder: (context) => IconButton(
-                      onPressed: () => Scaffold.of(context).openDrawer(),
-                      icon: Icon(Icons.notes_rounded, color: colorScheme.onSurface, size: 28),
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+            // CAPA 1: Contenido Principal de la App
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Cabecera
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 15, 20, 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Hola, $userName',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
+                      Builder(
+                        builder: (context) => IconButton(
+                          onPressed: () => Scaffold.of(context).openDrawer(),
+                          icon: Icon(Icons.notes_rounded, color: colorScheme.onSurface, size: 28),
                         ),
                       ),
-                      Text(
-                        'Bienvenido de nuevo',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colorScheme.primary.withValues(alpha: 0.7),
-                          fontWeight: FontWeight.w500,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Hola, $userName',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            'Bienvenido de nuevo',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colorScheme.primary.withValues(alpha: 0.7),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            const InfoGlogalWidget(),
-            const SizedBox(height: 5),
+                const InfoGlogalWidget(),
+                const SizedBox(height: 5),
 
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Expanded(flex: 3, child: DateCustomWidget()),
-                  SizedBox(width: 12),
-                  Expanded(flex: 2, child: MonthlyBalanceWidget()),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 15),
-            const ExpensesIncomesCustomWidget(),
-            const SizedBox(height: 25),
-            
-            const Expanded(
-              child: HistoryCustomWidget(),
-            ),
-            
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Text(
-                  'JMCerezoDev - $yearNow ®',
-                  style: TextStyle(
-                    color: colorScheme.onSurface.withValues(alpha: 0.3),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.5,
+                // Fila de Calendario y Balance Mes
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: DateCustomWidget(),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: MonthlyBalanceWidget(),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+
+                const SizedBox(height: 15),
+                const ExpensesIncomesCustomWidget(),
+                const SizedBox(height: 25),
+                
+                const Expanded(
+                  child: HistoryCustomWidget(),
+                ),
+                
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Text(
+                      'JMCerezoDev - $yearNow ®',
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withValues(alpha: 0.3),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+
+            // CAPA 2: El Panel del Calendario (Aparece encima del contenido)
+            if (isCalendarOpen)
+              Positioned(
+                top: 200, // Situado justo debajo de la barra del calendario
+                left: 0,
+                right: 0,
+                child: const CalendarPanelWidget(),
+              ),
           ],
         ),
       ),

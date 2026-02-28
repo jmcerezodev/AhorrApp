@@ -81,6 +81,24 @@ class FilterLists {
     return totalExpensesList;
   }
 
+  // --- NUEVO: Calcular ahorros totales por mes para la gráfica ---
+  List<double> calculateTotalSavings(List<Map<String, dynamic>> historyList, int year) {
+    List<double> totalSavingsList = [];
+    List<String> months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+    for (var month in months) {
+      List<Map<String, dynamic>> monthsFilter = historyList.where((item) => item['month'] == month && item['year'] == year).toList();
+      double totalSaving = 0;
+      for (var map in monthsFilter) {
+        if (map['type'] == 'saving') {
+          totalSaving += (map['money'] as num).toDouble();
+        }
+      }
+      totalSavingsList.add(totalSaving);
+    }
+    return totalSavingsList;
+  }
+
   double totalIncome(BuildContext context, List<Map<String, dynamic>> historyList) {
     final dateCubit = context.watch<DateCubit>().state;
     List<Map<String, dynamic>> filteredListDate = historyList.where((date) {

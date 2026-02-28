@@ -18,7 +18,10 @@ class CalendarPanelWidget extends StatelessWidget {
 
     final int historyMinYear = filterLists.findMinYear(historyList);
     final int minYear = historyMinYear < 2024 ? historyMinYear : 2024;
-    final int maxYear = int.parse(Date().year());
+    
+    final DateTime now = DateTime.now();
+    final int currentYear = now.year;
+    final int currentMonthIndex = now.month; // 1-12
 
     final Map<String, Map<String, bool>> activityMap = {};
     for (var item in historyList) {
@@ -32,6 +35,12 @@ class CalendarPanelWidget extends StatelessWidget {
         }
       }
     }
+
+    final List<String> months = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 
+      'Mayo', 'Junio', 'Julio', 'Agosto', 
+      'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
 
     return FadeInDown(
       duration: const Duration(milliseconds: 300),
@@ -55,13 +64,12 @@ class CalendarPanelWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Cabecera con selector de año y botón de cerrar
             Padding(
               padding: const EdgeInsets.fromLTRB(15, 5, 5, 5),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const SizedBox(width: 40), // Espaciador para centrar el año
+                  const SizedBox(width: 40),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -83,7 +91,7 @@ class CalendarPanelWidget extends StatelessWidget {
                       ),
                       _YearButton(
                         icon: Icons.chevron_right_rounded,
-                        enabled: dateCubit.year < maxYear,
+                        enabled: dateCubit.year < currentYear,
                         onPressed: () => context.read<DateCubit>().yearIncrement(1),
                       ),
                     ],
@@ -102,16 +110,19 @@ class CalendarPanelWidget extends StatelessWidget {
                 spacing: 10,
                 runSpacing: 10,
                 alignment: WrapAlignment.center,
-                children: [
-                  'Enero', 'Febrero', 'Marzo', 'Abril', 
-                  'Mayo', 'Junio', 'Julio', 'Agosto', 
-                  'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-                ].map((month) {
-                  final activity = activityMap[month] ?? {'hasIncome': false, 'hasExpense': false};
+                children: months.asMap().entries.map((entry) {
+                  final int index = entry.key + 1; // 1-12
+                  final String monthName = entry.value;
+                  
+                  // LÓGICA DE BLOQUEO: Si es año actual, no permitir meses futuros
+                  final bool isFuture = (dateCubit.year == currentYear && index > currentMonthIndex);
+                  
+                  final activity = activityMap[monthName] ?? {'hasIncome': false, 'hasExpense': false};
                   return _MonthItem(
-                    monthName: month,
+                    monthName: monthName,
                     hasIncome: activity['hasIncome']!,
                     hasExpense: activity['hasExpense']!,
+                    isEnabled: !isFuture, // Pasamos si está habilitado
                   );
                 }).toList(),
               ),
@@ -145,11 +156,13 @@ class _MonthItem extends StatelessWidget {
   final String monthName;
   final bool hasIncome;
   final bool hasExpense;
+  final bool isEnabled;
 
   const _MonthItem({
     required this.monthName,
     required this.hasIncome,
     required this.hasExpense,
+    required this.isEnabled,
   });
 
   @override
@@ -158,60 +171,63 @@ class _MonthItem extends StatelessWidget {
     final isSelected = selectedMonth == monthName;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return InkWell(
-      onTap: () {
-        context.read<DateCubit>().month(monthName);
-        context.read<DateCubit>().isOpen(false); // CERRAR AL PULSAR UN MES
-      },
-      borderRadius: BorderRadius.circular(15),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: MediaQuery.of(context).size.width * 0.20,
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: isSelected ? colorScheme.primary : colorScheme.primary.withValues(alpha: 0.1),
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.2, // Visualmente deshabilitado si es futuro
+      child: InkWell(
+        onTap: isEnabled ? () {
+          context.read<DateCubit>().month(monthName);
+          context.read<DateCubit>().isOpen(false);
+        } : null, // No permite pulsar si es futuro
+        borderRadius: BorderRadius.circular(15),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: MediaQuery.of(context).size.width * 0.20,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              color: isSelected ? colorScheme.primary : colorScheme.primary.withValues(alpha: 0.1),
+            ),
           ),
-        ),
-        child: Column(
-          children: [
-            Text(
-              monthName.substring(0, 3),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isSelected ? Colors.white : colorScheme.onSurface.withValues(alpha: 0.7),
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+          child: Column(
+            children: [
+              Text(
+                monthName.substring(0, 3),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : colorScheme.onSurface.withValues(alpha: 0.7),
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (hasIncome)
-                  Container(
-                    width: 4,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : Colors.green.shade400,
-                      shape: BoxShape.circle,
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (hasIncome)
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.white : Colors.green.shade400,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                if (hasIncome && hasExpense) const SizedBox(width: 3),
-                if (hasExpense)
-                  Container(
-                    width: 4,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : colorScheme.primary.withValues(alpha: 0.6),
-                      shape: BoxShape.circle,
+                  if (hasIncome && hasExpense) const SizedBox(width: 3),
+                  if (hasExpense)
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.white : colorScheme.primary.withValues(alpha: 0.6),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
