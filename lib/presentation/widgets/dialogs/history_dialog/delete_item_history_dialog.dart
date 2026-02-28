@@ -16,6 +16,8 @@ class DeleteItemHistoryDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final historyCubit = context.watch<HistoryCubit>();
     final appwriteRepo = AppwriteRepository();
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     bool isIncomeResult = false;
 
     final itemResult = historyCubit.state.historyList.firstWhere(
@@ -33,18 +35,21 @@ class DeleteItemHistoryDialog extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(25),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.red.shade100, width: 1.5),
+          border: Border.all(
+            color: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4), 
+            width: 1.5
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icono de advertencia
+            // Icono de advertencia dinámico
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: Colors.red.shade400.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 32),
@@ -54,10 +59,10 @@ class DeleteItemHistoryDialog extends StatelessWidget {
             Text(
               isIncomeResult ? '¿ELIMINAR INGRESO?' : '¿ELIMINAR GASTO?',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
-                color: Colors.blueGrey,
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
                 letterSpacing: 1.5,
               ),
             ),
@@ -68,7 +73,7 @@ class DeleteItemHistoryDialog extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.grey.shade600,
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
                 height: 1.5,
               ),
             ),
@@ -80,7 +85,14 @@ class DeleteItemHistoryDialog extends StatelessWidget {
                   child: TextButton(
                     onPressed: () => context.pop(),
                     style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text('CANCELAR', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: Text(
+                      'CANCELAR', 
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                        fontWeight: FontWeight.bold, 
+                        letterSpacing: 1
+                      )
+                    ),
                   ),
                 ),
                 const SizedBox(width: 15),

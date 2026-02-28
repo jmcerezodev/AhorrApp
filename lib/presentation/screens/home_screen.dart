@@ -28,14 +28,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      // CORRECCIÓN: Usamos el scaffoldBackgroundColor definido en el AppTheme (Naranja Crema o Negro Premium)
-      backgroundColor: theme.scaffoldBackgroundColor, 
+      backgroundColor: theme.scaffoldBackgroundColor,
+      // EVITA OVERFLOW: El fondo no se encoge cuando sale el teclado de los diálogos
+      resizeToAvoidBottomInset: false, 
       drawer: const SideMenuWidget(),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cabecera Personalizada
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 15, 20, 10),
               child: Row(

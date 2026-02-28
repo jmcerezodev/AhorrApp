@@ -34,112 +34,114 @@ class _IncomesDialogState extends State<IncomesDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(25),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: Colors.green.shade400.withValues(alpha: isDark ? 0.2 : 0.4), 
-            width: 1.5
+      child: SingleChildScrollView( // PROTECCIÓN CONTRA OVERFLOW
+        child: Container(
+          padding: const EdgeInsets.all(25),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: Colors.green.shade400.withValues(alpha: isDark ? 0.2 : 0.4), 
+              width: 1.5
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade400.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade400.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.trending_up_rounded, color: Colors.green.shade400, size: 24),
                   ),
-                  child: Icon(Icons.trending_up_rounded, color: Colors.green.shade400, size: 24),
-                ),
-                const SizedBox(width: 15),
-                Text(
-                  'NUEVO INGRESO',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: colorScheme.onSurface.withValues(alpha: 0.7),
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 30),
-
-            CustomInputTextWidget(
-              label: 'Origen del ingreso',
-              hintText: 'Ej. Nómina, Bizum...',
-              onChanged: incomesCubit.incomeNameChanged,
-              errorText: incomesCubit.state.incomeName.isPure ? null : incomesCubit.state.incomeName.errorMessage,
-              textInputType: TextInputType.name,
-            ),
-            const SizedBox(height: 15),
-            CustomInputTextWidget(
-              label: 'Importe',
-              hintText: '0.00',
-              onChanged: incomesCubit.incomeMoneyChanged,
-              errorText: incomesCubit.state.incomeMoney.isPure ? null : incomesCubit.state.incomeMoney.errorMessage,
-              textInputType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            const SizedBox(height: 30),
-
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => context.pop(),
-                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text(
-                      'CANCELAR', 
-                      style: TextStyle(
-                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                        fontWeight: FontWeight.bold, 
-                        letterSpacing: 1
-                      )
+                  const SizedBox(width: 15),
+                  Text(
+                    'NUEVO INGRESO',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      letterSpacing: 1.5,
                     ),
                   ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: (incomesCubit.state.isValid) 
-                    ? () async {
-                      incomesCubit.onSubmit();
-                      await appwriteRepo.addHistory(
-                        userId: Preferences.uId,
-                        name: incomesCubit.state.incomeName.value,
-                        money: double.parse(incomesCubit.state.incomeMoney.value.replaceAll(',', '.')),
-                        isIncome: true,
-                        currentDate: date.currentDate(),
-                        currentHour: date.currentHour(),
-                        month: date.monthNames(),
-                        year: int.parse(date.year()),
-                      );
-                      if (context.mounted) {
-                        await context.read<HistoryCubit>().loadHistory();
-                        incomesCubit.resetCubit();
-                        context.pop();
+                ],
+              ),
+              const SizedBox(height: 30),
+
+              CustomInputTextWidget(
+                label: 'Origen del ingreso',
+                hintText: 'Ej. Nómina, Bizum...',
+                onChanged: incomesCubit.incomeNameChanged,
+                errorText: incomesCubit.state.incomeName.isPure ? null : incomesCubit.state.incomeName.errorMessage,
+                textInputType: TextInputType.name,
+              ),
+              const SizedBox(height: 15),
+              CustomInputTextWidget(
+                label: 'Importe',
+                hintText: '0.00',
+                onChanged: incomesCubit.incomeMoneyChanged,
+                errorText: incomesCubit.state.incomeMoney.isPure ? null : incomesCubit.state.incomeMoney.errorMessage,
+                textInputType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: 30),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => context.pop(),
+                      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
+                      child: Text(
+                        'CANCELAR', 
+                        style: TextStyle(
+                          color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                          fontWeight: FontWeight.bold, 
+                          letterSpacing: 1
+                        )
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: (incomesCubit.state.isValid) 
+                      ? () async {
+                        incomesCubit.onSubmit();
+                        await appwriteRepo.addHistory(
+                          userId: Preferences.uId,
+                          name: incomesCubit.state.incomeName.value,
+                          money: double.parse(incomesCubit.state.incomeMoney.value.replaceAll(',', '.')),
+                          isIncome: true,
+                          currentDate: date.currentDate(),
+                          currentHour: date.currentHour(),
+                          month: date.monthNames(),
+                          year: int.parse(date.year()),
+                        );
+                        if (context.mounted) {
+                          await context.read<HistoryCubit>().loadHistory();
+                          incomesCubit.resetCubit();
+                          context.pop();
+                        }
                       }
-                    }
-                    : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade600,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade600,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
+                      child: const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                     ),
-                    child: const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
