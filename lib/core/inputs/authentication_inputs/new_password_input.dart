@@ -1,32 +1,27 @@
-
 import 'package:formz/formz.dart';
 
-// Define input validation errors
-enum NewPasswordError { empty, length }
+enum NewPasswordError { empty, length, sameAsOld }
 
-// Extend FormzInput and provide the input type and error type.
 class NewPassword extends FormzInput<String, NewPasswordError> {
-  // Call super.pure to represent an unmodified form input.
-  const NewPassword.pure() : super.pure('');
+  final String oldPassword;
 
-  // Call super.dirty to represent a modified form input.
-  const NewPassword.dirty({required String value}) : super.dirty(value);
+  // Ahora permite recibir un valor manteniendo el estado 'pure'
+  const NewPassword.pure({String value = '', this.oldPassword = ''}) : super.pure(value);
+  const NewPassword.dirty({required String value, this.oldPassword = ''}) : super.dirty(value);
 
-  String? get errorMessage{
-
-    if(isValid || isPure) return null;
-    if(displayError == NewPasswordError.empty) return 'El Campo es obligatorio';
-    if(displayError == NewPasswordError.length) return 'Minimo de 6 letras';
+  String? get errorMessage {
+    if (isValid || isPure) return null;
+    if (displayError == NewPasswordError.empty) return 'El campo es obligatorio';
+    if (displayError == NewPasswordError.length) return 'Mínimo de 8 caracteres';
+    if (displayError == NewPasswordError.sameAsOld) return 'Debe ser diferente a la actual';
     return null;
-
   }
 
-  // Override validator to handle validating a given input value.
   @override
   NewPasswordError? validator(String value) {
-    
-    if(value.isEmpty || value.trim().isEmpty) return NewPasswordError.empty;
-    if(value.length < 6) return NewPasswordError.length;
+    if (value.isEmpty || value.trim().isEmpty) return NewPasswordError.empty;
+    if (value.length < 8) return NewPasswordError.length;
+    if (value == oldPassword && oldPassword.isNotEmpty) return NewPasswordError.sameAsOld;
 
     return null;
   }

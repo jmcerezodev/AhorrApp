@@ -6,48 +6,81 @@ class ErrorDialog extends StatelessWidget {
   
   const ErrorDialog({
     super.key, 
-    this.errorMessage = 'Se A producido un error',
+    this.errorMessage = 'Se ha producido un error',
   });
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20.0),
-      ),
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 30),
       child: Container(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(25),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4), 
+            width: 1.5
+          ),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-
-            const SizedBox(height: 10),
-
-            const Icon(Icons.error_outline, color: Colors.red,size: 100,),
-
-            const SizedBox(height: 10),
-
-            Text(
-              errorMessage, 
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.red),
+            // Icono de error estilizado
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade400.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.error_outline_rounded, color: Colors.red.shade400, size: 40),
             ),
+            const SizedBox(height: 20),
+            
+            Text(
+              '¡HA OCURRIDO UN ERROR!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 15),
+            
+            Text(
+              errorMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 30),
 
-            const SizedBox(height: 10),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () {
-                    
-                    context.pop();
-                    context.pop();
-                  },
-                  child: const Text('Cerrar'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // CORRECCIÓN: Ahora solo cerramos el diálogo de error.
+                  // El diálogo anterior (ej: Cambiar Contraseña) permanecerá abierto.
+                  context.pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade400,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 ),
-              ],
+                child: const Text('REINTENTAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+              ),
             ),
           ],
         ),

@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:io'; // Importado para salir de la app
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +38,8 @@ void main() async {
       if (authenticated) {
         initialRoute = await authService.getInitialRoute();
       } else {
-        initialRoute = '/login';
+        // SEGURIDAD EXTREMA: Cerramos la app si no se identifica al abrir
+        exit(0); 
       }
     } else {
       initialRoute = await authService.getInitialRoute();
@@ -65,15 +67,53 @@ class MainAppWrapper extends StatefulWidget {
   State<MainAppWrapper> createState() => _MainAppWrapperState();
 }
 
-class _MainAppWrapperState extends State<MainAppWrapper> {
+class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObserver {
   late GoRouter router;
-  // Creamos el totalMoneyCubit aquí para que sea persistente
   final totalMoneyCubit = TotalMoneyCubit();
+  bool _isAuthenticating = false;
+  bool _wasPaused = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     router = getAppRouter(widget.initialRoute);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _wasPaused = true;
+    }
+
+    if (state == AppLifecycleState.resumed && _wasPaused) {
+      _wasPaused = false;
+      _checkBiometricsOnResume();
+    }
+  }
+
+  Future<void> _checkBiometricsOnResume() async {
+    if (Preferences.uId.isEmpty || !Preferences.isBiometricActive || _isAuthenticating) return;
+
+    _isAuthenticating = true;
+    
+    final biometricService = BiometricService();
+    final authenticated = await biometricService.authenticate();
+    
+    if (!authenticated) {
+      // SEGURIDAD EXTREMA: Cerramos la app si falla al volver de segundo plano
+      exit(0); 
+    }
+    
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _isAuthenticating = false;
+    });
   }
 
   @override

@@ -93,7 +93,7 @@ class UpdateNameDialog extends StatelessWidget {
                 const SizedBox(width: 15),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: updateNameCubit.state.isValid ? () async {
+                    onPressed: updateNameCubit.state.isValid && updateNameCubit.state.formStatus != FormStatusUpdateName.validating ? () async {
                       try {
                         updateNameCubit.onSubmit();
                         final newName = updateNameCubit.state.newName.value;
@@ -123,7 +123,9 @@ class UpdateNameDialog extends StatelessWidget {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
-                    child: const Text('ACTUALIZAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: updateNameCubit.state.formStatus == FormStatusUpdateName.validating
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('ACTUALIZAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
                 ),
               ],

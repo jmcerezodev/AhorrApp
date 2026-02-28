@@ -12,6 +12,8 @@ class UpdatePasswordInputWidget extends StatefulWidget {
 }
 
 class _UpdatePasswordInputWidgetState extends State<UpdatePasswordInputWidget> {
+  // Bandera para saber si el usuario ya intentó enviar el formulario
+  bool _formSubmitted = false;
   
   void isCurrentPasswordVisible(BuildContext context, bool value){
     context.read<UpdatePasswordCubit>().isCurrentPasswordVisible(value);
@@ -47,7 +49,8 @@ class _UpdatePasswordInputWidgetState extends State<UpdatePasswordInputWidget> {
           obscureText: updatePasswordCubit.state.currentPasswordEncripted,
           autoFocus: false,
           onChanged: updatePasswordCubit.currentPasswordChanged,
-          errorText: currentPassword.isPure ? null : currentPassword.errorMessage,
+          // Solo mostramos el error si el usuario ya pulsó el botón de enviar
+          errorText: _formSubmitted ? currentPassword.errorMessage : null,
           textCapitalization: TextCapitalization.none,
         ),
 
@@ -65,7 +68,7 @@ class _UpdatePasswordInputWidgetState extends State<UpdatePasswordInputWidget> {
           obscureText:updatePasswordCubit.state.newPasswordEncripted,
           autoFocus: false,
           onChanged: updatePasswordCubit.newPasswordChanged,
-          errorText: newPassword.isPure ? null : newPassword.errorMessage,
+          errorText: _formSubmitted ? newPassword.errorMessage : null,
           textCapitalization: TextCapitalization.none,
         ),
 
@@ -83,7 +86,7 @@ class _UpdatePasswordInputWidgetState extends State<UpdatePasswordInputWidget> {
           obscureText: updatePasswordCubit.state.confirmedPasswordEncripted,
           autoFocus: false,
           onChanged: updatePasswordCubit.confirmedPasswordChanged,
-          errorText: confirmedPassword.isPure ? null : confirmedPassword.errorMessage,
+          errorText: _formSubmitted ? confirmedPassword.errorMessage : null,
           textCapitalization: TextCapitalization.none,
         ),
 
@@ -104,11 +107,10 @@ class _UpdatePasswordInputWidgetState extends State<UpdatePasswordInputWidget> {
             const SizedBox(width: 15),
             Expanded(
               child: ElevatedButton(
-                onPressed: updatePasswordCubit.state.isValid 
-                ? () async {
+                onPressed: () async {
+                  setState(() => _formSubmitted = true); // Marcamos el intento de envío
                   updatePasswordCubit.onSubmit(context);
-                } 
-                : null,
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange.shade600,
                   foregroundColor: Colors.white,
@@ -116,7 +118,9 @@ class _UpdatePasswordInputWidgetState extends State<UpdatePasswordInputWidget> {
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 ),
-                child: const Text('CAMBIAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                child: updatePasswordCubit.state.formStatus == FormStatusUpdatePassword.validating
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('CAMBIAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
               ),
             ),
           ],

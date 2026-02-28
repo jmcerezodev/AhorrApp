@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/auth/biometric_service.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
@@ -47,6 +48,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
   @override
   Widget build(BuildContext context) {
     final loginCubit = context.watch<LoginCubit>();
+    final colorScheme = Theme.of(context).colorScheme;
     
     return BlocListener<LoginCubit, LoginCubitState>(
       listenWhen: (previous, current) => previous.formStatus != current.formStatus,
@@ -69,13 +71,12 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
           children: [
             const SizedBox(height: 10),
             
-            // Título interno estilizado
             Text(
               'ACCESO',
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: Colors.grey.shade400,
+                fontWeight: FontWeight.w900,
+                color: colorScheme.onSurface.withValues(alpha: 0.3),
                 letterSpacing: 3.0,
               ),
             ),
@@ -112,7 +113,14 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
 
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Recordarme', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              title: Text(
+                'Recordarme', 
+                style: TextStyle(
+                  fontSize: 14, 
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface.withValues(alpha: 0.7)
+                )
+              ),
               value: loginCubit.state.isRemember,
               onChanged: (value) {
                 final newValue = value ?? false;
@@ -120,7 +128,8 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                 Preferences.isRemember = newValue;
               },
               controlAffinity: ListTileControlAffinity.leading,
-              activeColor: Colors.blueGrey,
+              activeColor: colorScheme.primary,
+              checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
             ),
 
             const SizedBox(height: 15),
@@ -128,27 +137,39 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
             SizedBox(
               width: double.infinity,
               height: 55,
-              child: FilledButton.tonalIcon(
+              child: ElevatedButton.icon(
                 onPressed: (loginCubit.state.formStatus == FormStatusLogin.validating)
                   ? null 
-                  : () {
+                  : () async {
                       FocusScope.of(context).unfocus();
+                      
+                      // SEGURIDAD EXTRA: Si el check de biometría está activo en preferencias,
+                      // obligamos a identificarse antes de entrar, para proteger los datos de "Recordarme".
+                      if (Preferences.isBiometricActive) {
+                        final biometricService = BiometricService();
+                        final bool authenticated = await biometricService.authenticate();
+                        if (!authenticated) return; // Si cancela o falla, no hacemos login
+                      }
+
                       loginCubit.onSubmit();
                     },
-                style: FilledButton.styleFrom(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 ),
                 icon: loginCubit.state.formStatus == FormStatusLogin.validating
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blueGrey))
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.login_rounded),
                 label: Text(
                   loginCubit.state.formStatus == FormStatusLogin.validating ? 'CONECTANDO...' : 'ENTRAR',
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 1.2)
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.2)
                 ),
               ),
             ),
 
-            const SizedBox(height: 15),
+            const SizedBox(height: 20),
 
             Wrap(
               alignment: WrapAlignment.center,
@@ -157,16 +178,24 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               children: [
                 TextButton(
                   onPressed: () => context.push('/new-user'),
-                  child: const Text(
+                  child: Text(
                     'Crear Nueva Cuenta',
-                    style: TextStyle(color: Colors.blueGrey, fontSize: 13, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: colorScheme.primary, 
+                      fontSize: 13, 
+                      fontWeight: FontWeight.w800
+                    ),
                   ),
                 ),
                 TextButton(
                   onPressed: () => context.push('/reset-password'),
-                  child: const Text(
+                  child: Text(
                     '¿Olvidaste la contraseña?',
-                    style: TextStyle(color: Colors.blueGrey, fontSize: 13, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: colorScheme.onSurface.withValues(alpha: 0.5), 
+                      fontSize: 13, 
+                      fontWeight: FontWeight.w700
+                    ),
                   ),
                 ),
               ],

@@ -8,40 +8,49 @@ class NewUserScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final String yearNow = Date().year();
     final size = MediaQuery.of(context).size;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(),
-      bottomSheet: Container(
-        alignment: Alignment.bottomCenter,
-        color: Colors.white,
-        width: double.infinity,
-        height: 35,
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Text('JMCerezoDev - $yearNow ®'),
-        ),
+    return Theme(
+      data: ThemeData.light(useMaterial3: true).copyWith(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange, primary: Colors.orange),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25),
-          child: SizedBox(
-            width: size.width,
-            height: size.height,
-            child: ListView(
-              children: [
-
-                SizedBox(height: size.height * 0.05),
-          
-                Image.asset('assets/imagen_login.png', scale: 0.5,),
-
-                SizedBox(height: size.height * 0.05),
-                
-                const UserInputWidget(),
-              ],
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.orange),
+        ),
+        bottomSheet: Container(
+          alignment: Alignment.bottomCenter,
+          color: Colors.white,
+          width: double.infinity,
+          height: 35,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              'JMCerezoDev - $yearNow ®',
+              style: TextStyle(color: Colors.blueGrey.withValues(alpha: 0.3), fontSize: 10, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 25),
+            child: SizedBox(
+              width: size.width,
+              height: size.height,
+              child: ListView(
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  SizedBox(height: size.height * 0.02),
+                  Image.asset('assets/imagen_login.png', height: 100, fit: BoxFit.contain),
+                  SizedBox(height: size.height * 0.05),
+                  const UserInputWidget(),
+                  const SizedBox(height: 50),
+                ],
+              ),
             ),
           ),
         ),
@@ -49,4 +58,3 @@ class NewUserScreen extends StatelessWidget {
     );
   }
 }
-

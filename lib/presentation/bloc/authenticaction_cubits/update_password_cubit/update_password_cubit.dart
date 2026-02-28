@@ -14,11 +14,16 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
 
   void onSubmit(BuildContext context) async {
     final currentPassword = Password.dirty(value: state.currentPassword.value);
-    final newPassword = NewPassword.dirty(value: state.newPassword.value);
+    final newPassword = NewPassword.dirty(
+      value: state.newPassword.value,
+      oldPassword: currentPassword.value
+    );
     final confirmedPassword = ConfirmedPassword.dirty(
       value: state.confirmedPassword.value,
       originalPassword: newPassword.value
     );
+
+    final isValid = Formz.validate([currentPassword, newPassword, confirmedPassword]);
 
     emit(
       state.copyWhith(
@@ -26,11 +31,11 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
         currentPassword: currentPassword,
         newPassword: newPassword,
         confirmedPassword: confirmedPassword,
-        isValid: Formz.validate([currentPassword, newPassword, confirmedPassword]),
+        isValid: isValid,
       )
     );
 
-    if (!state.isValid) {
+    if (!isValid) {
       emit(state.copyWhith(formStatus: FormStatusUpdatePassword.invalid));
       return;
     }
@@ -53,6 +58,7 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
       newPassword: const NewPassword.pure(),
       confirmedPassword: const ConfirmedPassword.pure(),
       formStatus: FormStatusUpdatePassword.invalid,
+      isValid: false,
     ));
   }
 
@@ -77,8 +83,10 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
   }
 
   void newPasswordChanged(String value) {
-    final newPassword = NewPassword.dirty(value: value);
-    // Actualizamos también la confirmación para que compare contra el nuevo valor
+    final newPassword = NewPassword.dirty(
+      value: value,
+      oldPassword: state.currentPassword.value
+    );
     final confirmedPassword = ConfirmedPassword.dirty(
       value: state.confirmedPassword.value,
       originalPassword: newPassword.value

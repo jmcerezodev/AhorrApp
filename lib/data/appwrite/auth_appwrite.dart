@@ -12,7 +12,10 @@ class AuthAppwrite {
 
   Future<String> getInitialRoute() async {
     try {
-      await _account.get();
+      final user = await _account.get();
+      // Aseguramos que el nombre esté actualizado localmente al iniciar
+      Preferences.name = user.name;
+      Preferences.email = user.email;
       return '/home-screen';
     } catch (e) {
       return '/login';
@@ -29,7 +32,12 @@ class AuthAppwrite {
       );
       
       await _account.createEmailPasswordSession(email: email, password: password);
+      
+      // GUARDAMOS LOS DATOS LOCALMENTE
       Preferences.uId = user.$id;
+      Preferences.name = user.name;
+      Preferences.email = user.email;
+      
       return user.$id;
     } on AppwriteException catch (e) {
       if (e.code == 409) return 1;
@@ -43,20 +51,24 @@ class AuthAppwrite {
         await _account.deleteSession(sessionId: 'current');
       } catch (_) {}
 
-      final session = await _account.createEmailPasswordSession(
+      await _account.createEmailPasswordSession(
         email: email,
         password: password,
       );
       
-      Preferences.uId = session.userId;
+      // TRAS EL LOGIN, OBTENEMOS EL USUARIO COMPLETO PARA EL NOMBRE
+      final user = await _account.get();
       
-      // Solo guardamos email y password si el usuario quiere ser recordado
+      Preferences.uId = user.$id;
+      Preferences.name = user.name;
+      Preferences.email = user.email;
+      
       if (Preferences.isRemember) {
         Preferences.email = email;
         Preferences.password = password;
       }
       
-      return session.userId;
+      return user.$id;
     } on AppwriteException catch (e) {
       if (e.code == 401) return 0;
       return 3;
@@ -149,7 +161,6 @@ class AuthAppwrite {
   void _clearPreferences() {
     Preferences.uId = '';
     Preferences.name = '';
-    // No borramos email, password ni isRemember si el usuario quiere ser recordado
     if (!Preferences.isRemember) {
       Preferences.email = '';
       Preferences.password = '';
@@ -158,7 +169,9 @@ class AuthAppwrite {
 
   Future<void> checkUserAuthentication(BuildContext context) async {
     try {
-      await _account.get();
+      final user = await _account.get();
+      // Sincronizamos nombre por si acaso
+      Preferences.name = user.name;
     } catch (e) {
       context.go('/login');
     }
