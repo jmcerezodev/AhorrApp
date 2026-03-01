@@ -31,7 +31,7 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
     final savingsTotal = savingsCubit.state.savingTotal;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bool isLoading = savingsCubit.state.formStatus == FormStatusSavings.validating;
+    final bool isLoading = savingsCubit.state.status == SavingsStatus.loading;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -146,14 +146,13 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
                               ? 'Retirada de ahorros' 
                               : _conceptController.text.trim();
 
-                          // Usamos el método refactorizado del Cubit (cantidad negativa para retirar)
                           await context.read<SavingsCubit>().addSaving(
                             historyCubit,
                             customAmount: -amount,
                             customName: concept,
                           );
 
-                          if (context.mounted && context.read<SavingsCubit>().state.formStatus == FormStatusSavings.valid) {
+                          if (context.mounted && context.read<SavingsCubit>().state.status == SavingsStatus.success) {
                             context.pop();
                           }
                         }

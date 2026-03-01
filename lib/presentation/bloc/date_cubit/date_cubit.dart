@@ -9,8 +9,8 @@ class DateCubit extends Cubit<DateCubitState> {
   
 
   void isOpen(bool value){
-    emit(state.copywith(
-      isOpen: value, // Corregido: ahora usa el valor pasado por parámetro
+    emit(state.copyWith(
+      isOpen: value,
     ));
   }
 
@@ -19,7 +19,7 @@ class DateCubit extends Cubit<DateCubitState> {
   void dateCurrent(){
       final String currentDate = Date().currentDate();
     emit(
-      state.copywith(
+      state.copyWith(
         currentDate: currentDate,
       )
     );
@@ -28,19 +28,19 @@ class DateCubit extends Cubit<DateCubitState> {
   // * Año
   void currentYear(){
     final String currentYear = Date().year();
-    emit(state.copywith(
+    emit(state.copyWith(
       year: int.parse(currentYear),
     ));
   }
 
   void yearIncrement(int value){
-    emit(state.copywith(
+    emit(state.copyWith(
       year: state.year + value,
     ));
   }
 
   void yearDecrement(int value){
-    emit(state.copywith(
+    emit(state.copyWith(
       year: state.year - value,
     ));
   }
@@ -49,19 +49,19 @@ class DateCubit extends Cubit<DateCubitState> {
   
   void currentMonth(){
     final String currentMonth = Date().monthNames();
-    emit(state.copywith(
+    emit(state.copyWith(
       month: currentMonth,
     ));
   }
 
   void month(String value){
-    emit(state.copywith(
+    emit(state.copyWith(
       month: value,
     ));
   }
 
   void isActive(bool value){
-    emit(state.copywith(
+    emit(state.copyWith(
       isActive: value
     ));
   }

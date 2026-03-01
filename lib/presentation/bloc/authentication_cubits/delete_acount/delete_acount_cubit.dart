@@ -11,6 +11,7 @@ class DeleteAcountCubit extends Cubit<DeleteCubitState> {
   DeleteAcountCubit() : super(const DeleteCubitState());
 
   void inputValueDeleteAcount(String value) {
+    // CORREGIDO: copyWith con W mayúscula y parámetro 'status'
     emit(state.copyWith(
       deleteAcountValueInput: value,
       status: DeleteAccountStatus.initial,

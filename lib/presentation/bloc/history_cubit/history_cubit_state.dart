@@ -1,11 +1,10 @@
 part of 'history_cubit.dart';
 
-enum FormStatusHistory {invalid, valid, validating}
+enum HistoryStatus { initial, loading, success, failure }
 
-class HistoryCubitState extends Equatable{
-
+class HistoryCubitState extends Equatable {
   final bool isValid;
-  final FormStatusHistory formStatus;
+  final HistoryStatus status;
   final List<Map<String, dynamic>> historyList;
   final String listOrder;
   final IncomeNameInput newName;
@@ -21,10 +20,11 @@ class HistoryCubitState extends Equatable{
 
   final bool isSyncing;
   final double syncProgress;
+  final String? errorMessage;
 
   const HistoryCubitState({
     this.isValid = false,
-    this.formStatus = FormStatusHistory.invalid,
+    this.status = HistoryStatus.initial,
     this.historyList = const [],
     this.listOrder = 'descending',
     this.newName = const IncomeNameInput.pure(),
@@ -38,12 +38,12 @@ class HistoryCubitState extends Equatable{
     this.isFilterOpen = false,
     this.isSyncing = false,
     this.syncProgress = 0.0,
+    this.errorMessage,
   });
-  
 
-  HistoryCubitState copyWith ({
+  HistoryCubitState copyWith({
     bool? isValid,
-    FormStatusHistory? formStatus,
+    HistoryStatus? status,
     List<Map<String, dynamic>>? historyList,
     String? listOrder,
     IncomeNameInput? newName,
@@ -57,40 +57,44 @@ class HistoryCubitState extends Equatable{
     bool? isFilterOpen,
     bool? isSyncing,
     double? syncProgress,
-  }) => HistoryCubitState(
-    isValid: isValid ?? this.isValid,
-    formStatus: formStatus ?? this.formStatus,
-    historyList: historyList ?? this.historyList,
-    listOrder: listOrder ?? this.listOrder,
-    newName: newName ?? this.newName,
-    newMoney: newMoney ?? this.newMoney,
-    currentName: currentName ?? this.currentName,
-    currentMoney: currentMoney ?? this.currentMoney,
-    isChart: isChart ?? this.isChart,
-    showIncomes: showIncomes ?? this.showIncomes,
-    showExpenses: showExpenses ?? this.showExpenses,
-    showSavings: showSavings ?? this.showSavings,
-    isFilterOpen: isFilterOpen ?? this.isFilterOpen,
-    isSyncing: isSyncing ?? this.isSyncing,
-    syncProgress: syncProgress ?? this.syncProgress,
-  );
-  
+    String? errorMessage,
+  }) =>
+      HistoryCubitState(
+        isValid: isValid ?? this.isValid,
+        status: status ?? this.status,
+        historyList: historyList ?? this.historyList,
+        listOrder: listOrder ?? this.listOrder,
+        newName: newName ?? this.newName,
+        newMoney: newMoney ?? this.newMoney,
+        currentName: currentName ?? this.currentName,
+        currentMoney: currentMoney ?? this.currentMoney,
+        isChart: isChart ?? this.isChart,
+        showIncomes: showIncomes ?? this.showIncomes,
+        showExpenses: showExpenses ?? this.showExpenses,
+        showSavings: showSavings ?? this.showSavings,
+        isFilterOpen: isFilterOpen ?? this.isFilterOpen,
+        isSyncing: isSyncing ?? this.isSyncing,
+        syncProgress: syncProgress ?? this.syncProgress,
+        errorMessage: errorMessage ?? this.errorMessage,
+      );
+
   @override
   List<Object?> get props => [
-    isValid, 
-    formStatus, 
-    historyList, 
-    listOrder, 
-    newName, 
-    newMoney, 
-    currentName, 
-    currentMoney, 
-    isChart,
-    showIncomes,
-    showExpenses,
-    showSavings,
-    isFilterOpen,
-    isSyncing,
-    syncProgress,
-  ];
+        isValid,
+        status,
+        historyList,
+        listOrder,
+        newName,
+        newMoney,
+        currentName,
+        currentMoney,
+        isChart,
+        showIncomes,
+        showExpenses,
+        showSavings,
+        isFilterOpen,
+        isSyncing,
+        syncProgress,
+        errorMessage,
+      ];
 }

@@ -4,7 +4,7 @@ enum LoginStatus { initial, submitting, success, failure }
 
 class LoginCubitState extends Equatable {
   final bool isValid;
-  final LoginStatus status;
+  final LoginStatus status; // Unificado a 'status'
   final EmailLogin email;
   final PasswordLogin password;
   final bool passwordEncripted;

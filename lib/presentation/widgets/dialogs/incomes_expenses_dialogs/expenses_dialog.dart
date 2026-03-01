@@ -101,7 +101,7 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                 onChanged: expensesCubit.expenseNameChanged,
                 errorText: expensesCubit.state.expenseName.isPure ? null : expensesCubit.state.expenseName.errorMessage,
                 textInputType: TextInputType.name,
-                enabled: expensesCubit.state.formStatus != FormStatusExpenses.validating,
+                enabled: expensesCubit.state.status != ExpensesStatus.posting,
               ),
               const SizedBox(height: 15),
               CustomInputTextWidget(
@@ -112,7 +112,7 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                     ? 'Excede el saldo disponible' 
                     : (expensesCubit.state.expenseMoney.isPure ? null : expensesCubit.state.expenseMoney.errorMessage),
                 textInputType: const TextInputType.numberWithOptions(decimal: true),
-                enabled: expensesCubit.state.formStatus != FormStatusExpenses.validating,
+                enabled: expensesCubit.state.status != ExpensesStatus.posting,
               ),
               const SizedBox(height: 30),
 
@@ -120,7 +120,7 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: expensesCubit.state.formStatus == FormStatusExpenses.validating 
+                      onPressed: expensesCubit.state.status == ExpensesStatus.posting 
                         ? null 
                         : () => context.pop(),
                       style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
@@ -137,10 +137,10 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: (expensesCubit.state.isValid && hasEnoughBalance && typedAmount > 0 && expensesCubit.state.formStatus != FormStatusExpenses.validating) 
+                      onPressed: (expensesCubit.state.isValid && hasEnoughBalance && typedAmount > 0 && expensesCubit.state.status != ExpensesStatus.posting) 
                       ? () async {
                         await expensesCubit.saveExpense(historyCubit);
-                        if (context.mounted && expensesCubit.state.formStatus == FormStatusExpenses.valid) {
+                        if (context.mounted && expensesCubit.state.status == ExpensesStatus.success) {
                           context.pop();
                         }
                       }
@@ -152,7 +152,7 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
-                      child: expensesCubit.state.formStatus == FormStatusExpenses.validating
+                      child: expensesCubit.state.status == ExpensesStatus.posting
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                     ),

@@ -40,17 +40,17 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       final double correctBalance = fullData['balance'];
       await _localDb.saveTotalBalance(Preferences.uId, correctBalance);
       totalMoneyCubit.totalMoney(correctBalance);
-      emit(state.copyWith(isSyncing: false, syncProgress: 1.0));
+      emit(state.copyWith(isSyncing: false, syncProgress: 1.0, status: HistoryStatus.success));
       final date = Date();
       await loadHistoryByDate(date.monthNames(), int.parse(date.year()));
     } catch (e) {
-      emit(state.copyWith(isSyncing: false));
+      emit(state.copyWith(isSyncing: false, status: HistoryStatus.failure));
     }
   }
 
   Future<void> loadHistoryByDate(String month, int year) async {
     if (year == 0) return;
-    emit(state.copyWith(formStatus: FormStatusHistory.validating));
+    emit(state.copyWith(status: HistoryStatus.loading));
     try {
       final localTotalCount = await _localDb.getTotalCount();
       double globalBalance = await _localDb.getTotalBalance(Preferences.uId);
@@ -60,7 +60,6 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       }
       totalMoneyCubit.totalMoney(globalBalance);
       
-      // USAMOS EL CASO DE USO (Domain Layer)
       final movements = await _getMovementsUseCase(Preferences.uId, month, year);
       
       final List<Map<String, dynamic>> uiList = movements.map((e) => {
@@ -77,13 +76,11 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         'createdAt': e.createdAt.toIso8601String(),
       }).toList();
       
-      emit(state.copyWith(historyList: uiList, formStatus: FormStatusHistory.valid));
+      emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
     } catch (e) {
-      emit(state.copyWith(formStatus: FormStatusHistory.invalid, isSyncing: false));
+      emit(state.copyWith(status: HistoryStatus.failure, isSyncing: false));
     }
   }
-
-  // --- ACCIONES CRUD OPTIMIZADAS ---
 
   Future<void> addMovementLocally(LocalHistory item) async {
     await _localDb.saveHistoryItems([item]);
@@ -162,7 +159,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
   void toggleFilterPanel() => emit(state.copyWith(isFilterOpen: !state.isFilterOpen));
   void listOrder(String value) => emit(state.copyWith(listOrder: value));
   void isChart(bool value) => emit(state.copyWith(isChart: value));
-  void resetCubit() => emit(state.copyWith(newName: const IncomeNameInput.pure(), newMoney: const IncomeMoneyInput.pure(), formStatus: FormStatusHistory.invalid));
+  void resetCubit() => emit(state.copyWith(newName: const IncomeNameInput.pure(), newMoney: const IncomeMoneyInput.pure(), status: HistoryStatus.initial));
   void newNameChanged(String value) { final newName = IncomeNameInput.dirty(value: value); emit(state.copyWith(newName: newName, isValid: Formz.validate([newName, state.newMoney]))); }
   void newMoneyChanged(String value) { final newMoney = IncomeMoneyInput.dirty(value: value); emit(state.copyWith(newMoney: newMoney, isValid: Formz.validate([newMoney, state.newName]))); }
 }

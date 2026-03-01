@@ -15,7 +15,8 @@ class DateCubitState {
     this.isActive = false,
   });
 
-  DateCubitState copywith({
+  // CORREGIDO: de copywith a copyWith
+  DateCubitState copyWith({
     bool? isOpen,
     String? currentDate,
     int? year,

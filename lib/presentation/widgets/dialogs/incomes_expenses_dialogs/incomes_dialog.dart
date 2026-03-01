@@ -89,7 +89,7 @@ class _IncomesDialogState extends State<IncomesDialog> {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: incomesCubit.state.formStatus == FormStatusIncomes.validating 
+                      onPressed: incomesCubit.state.status == IncomesStatus.posting 
                         ? null 
                         : () => context.pop(),
                       style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
@@ -106,11 +106,10 @@ class _IncomesDialogState extends State<IncomesDialog> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: (incomesCubit.state.isValid && incomesCubit.state.formStatus != FormStatusIncomes.validating) 
+                      onPressed: (incomesCubit.state.isValid && incomesCubit.state.status != IncomesStatus.posting) 
                       ? () async {
-                        // Llamamos al método refactorizado del Cubit
                         await incomesCubit.saveIncome(historyCubit);
-                        if (context.mounted && incomesCubit.state.formStatus == FormStatusIncomes.valid) {
+                        if (context.mounted && incomesCubit.state.status == IncomesStatus.success) {
                           context.pop();
                         }
                       }
@@ -122,7 +121,7 @@ class _IncomesDialogState extends State<IncomesDialog> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
-                      child: incomesCubit.state.formStatus == FormStatusIncomes.validating
+                      child: incomesCubit.state.status == IncomesStatus.posting
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                     ),

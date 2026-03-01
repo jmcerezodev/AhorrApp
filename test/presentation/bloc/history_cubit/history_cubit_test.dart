@@ -40,8 +40,9 @@ void main() {
   });
 
   group('HistoryCubit - Blindaje de Lógica', () {
-    test('Estado inicial debe ser invalid y lista vacía', () {
-      expect(historyCubit.state.formStatus, FormStatusHistory.invalid);
+    test('Estado inicial debe ser initial y lista vacía', () {
+      // CORREGIDO: De formStatus/FormStatusHistory a status/HistoryStatus
+      expect(historyCubit.state.status, HistoryStatus.initial);
       expect(historyCubit.state.historyList, isEmpty);
     });
 
@@ -57,7 +58,8 @@ void main() {
 
       await historyCubit.loadHistoryByDate('October', 2023);
       
-      expect(historyCubit.state.formStatus, FormStatusHistory.invalid);
+      // CORREGIDO: De formStatus/FormStatusHistory a status/HistoryStatus
+      expect(historyCubit.state.status, HistoryStatus.failure);
     });
   });
 }

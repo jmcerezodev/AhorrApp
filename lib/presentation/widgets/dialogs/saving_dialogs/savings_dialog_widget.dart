@@ -28,7 +28,7 @@ class _SavingsDialogState extends State<SavingsDialog> {
     final historyCubit = context.read<HistoryCubit>();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bool isLoading = savingsCubit.state.formStatus == FormStatusSavings.validating;
+    final bool isLoading = savingsCubit.state.status == SavingsStatus.loading;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -103,7 +103,7 @@ class _SavingsDialogState extends State<SavingsDialog> {
                     onPressed: (savingsCubit.state.isValid && !isLoading)
                     ? () async {
                         await context.read<SavingsCubit>().addSaving(historyCubit);
-                        if (context.mounted && context.read<SavingsCubit>().state.formStatus == FormStatusSavings.valid) {
+                        if (context.mounted && context.read<SavingsCubit>().state.status == SavingsStatus.success) {
                           context.pop();
                         }
                       }
