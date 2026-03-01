@@ -4,7 +4,7 @@ import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/local_history.dart';
-import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart'; // Añadido para FormStatusHistory
+import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:formz/formz.dart';
@@ -21,16 +21,11 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
     }
   }
 
-  // Cargar meta y ahorros desde Isar (Instantáneo)
   Future<void> loadSavings() async {
     emit(state.copyWith(formStatus: FormStatusSavings.validating));
     try {
       final String uid = Preferences.uId;
-      
-      // 1. Obtener meta de Isar
       final double goal = await _localDb.getSavingGoal(uid);
-      
-      // 2. Calcular total de ahorros desde Isar (Historial tipo 'saving')
       final double total = await _localDb.calculateTotalSavings(uid);
       
       emit(state.copyWith(
@@ -53,7 +48,6 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
 
     emit(state.copyWith(formStatus: FormStatusSavings.validating));
     try {
-      // 1. Guardar en Appwrite
       final doc = await _repository.addSaving(
         userId: Preferences.uId,
         money: value,
@@ -61,7 +55,6 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
         year: year,
       );
 
-      // 2. Guardar en Isar
       await _localDb.saveHistoryItems([
         LocalHistory()
           ..appwriteId = doc.$id
@@ -74,9 +67,32 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
           ..month = month
           ..year = year
           ..createdAt = DateTime.parse(doc.$createdAt)
+          ..isSpent = false
       ]);
 
       await loadSavings();
+    } catch (e) {
+      emit(state.copyWith(formStatus: FormStatusSavings.invalid));
+    }
+  }
+
+  Future<void> emptySavings(HistoryCubit historyCubit) async {
+    emit(state.copyWith(formStatus: FormStatusSavings.validating));
+    try {
+      // 1. Marcamos localmente en Isar como gastados
+      final List<String> appwriteIds = await _localDb.markSavingsAsSpent();
+      
+      // 2. Sincronizamos con Appwrite (Colección savingsList)
+      for (var id in appwriteIds) {
+        // CORRECCIÓN: Actualizamos el campo isSpent en la nube
+        await _repository.updateSaving(documentId: id, data: {'isSpent': true});
+      }
+
+      // 3. Recargamos datos para actualizar UI
+      await loadSavings();
+      final date = Date();
+      await historyCubit.loadHistoryByDate(date.monthNames(), int.parse(date.year()));
+      
     } catch (e) {
       emit(state.copyWith(formStatus: FormStatusSavings.invalid));
     }
@@ -86,17 +102,6 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
     try {
       await _repository.deleteSaving(id);
       await _localDb.deleteItemByAppwriteId(id);
-      await loadSavings();
-    } catch (e) {
-      emit(state.copyWith(formStatus: FormStatusSavings.invalid));
-    }
-  }
-
-  Future<void> deleteSavings() async {
-    emit(state.copyWith(formStatus: FormStatusSavings.validating));
-    try {
-      await _repository.deleteAllSavings(Preferences.uId);
-      await _localDb.clearAll(); 
       await loadSavings();
     } catch (e) {
       emit(state.copyWith(formStatus: FormStatusSavings.invalid));
@@ -116,9 +121,6 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
 
   void savingChanged(String value) {
     final saving = SavingInput.dirty(value: value);
-    emit(state.copyWith(
-      saving: saving,
-      isValid: Formz.validate([saving]),
-    ));
+    emit(state.copyWith(saving: saving, isValid: Formz.validate([saving])));
   }
 }

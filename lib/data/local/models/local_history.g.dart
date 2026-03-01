@@ -42,28 +42,33 @@ const LocalHistorySchema = CollectionSchema(
       name: r'isIncome',
       type: IsarType.bool,
     ),
-    r'money': PropertySchema(
+    r'isSpent': PropertySchema(
       id: 5,
+      name: r'isSpent',
+      type: IsarType.bool,
+    ),
+    r'money': PropertySchema(
+      id: 6,
       name: r'money',
       type: IsarType.double,
     ),
     r'month': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'month',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'name',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'type',
       type: IsarType.string,
     ),
     r'year': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'year',
       type: IsarType.long,
     )
@@ -122,11 +127,12 @@ void _localHistorySerialize(
   writer.writeString(offsets[2], object.currentDate);
   writer.writeString(offsets[3], object.currentHour);
   writer.writeBool(offsets[4], object.isIncome);
-  writer.writeDouble(offsets[5], object.money);
-  writer.writeString(offsets[6], object.month);
-  writer.writeString(offsets[7], object.name);
-  writer.writeString(offsets[8], object.type);
-  writer.writeLong(offsets[9], object.year);
+  writer.writeBool(offsets[5], object.isSpent);
+  writer.writeDouble(offsets[6], object.money);
+  writer.writeString(offsets[7], object.month);
+  writer.writeString(offsets[8], object.name);
+  writer.writeString(offsets[9], object.type);
+  writer.writeLong(offsets[10], object.year);
 }
 
 LocalHistory _localHistoryDeserialize(
@@ -142,11 +148,12 @@ LocalHistory _localHistoryDeserialize(
   object.currentHour = reader.readString(offsets[3]);
   object.id = id;
   object.isIncome = reader.readBool(offsets[4]);
-  object.money = reader.readDouble(offsets[5]);
-  object.month = reader.readString(offsets[6]);
-  object.name = reader.readString(offsets[7]);
-  object.type = reader.readString(offsets[8]);
-  object.year = reader.readLong(offsets[9]);
+  object.isSpent = reader.readBool(offsets[5]);
+  object.money = reader.readDouble(offsets[6]);
+  object.month = reader.readString(offsets[7]);
+  object.name = reader.readString(offsets[8]);
+  object.type = reader.readString(offsets[9]);
+  object.year = reader.readLong(offsets[10]);
   return object;
 }
 
@@ -168,14 +175,16 @@ P _localHistoryDeserializeProp<P>(
     case 4:
       return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 7:
       return (reader.readString(offset)) as P;
     case 8:
       return (reader.readString(offset)) as P;
     case 9:
+      return (reader.readString(offset)) as P;
+    case 10:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -904,6 +913,16 @@ extension LocalHistoryQueryFilter
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      isSpentEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSpent',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition> moneyEqualTo(
     double value, {
     double epsilon = Query.epsilon,
@@ -1495,6 +1514,18 @@ extension LocalHistoryQuerySortBy
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByIsSpent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSpent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByIsSpentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSpent', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByMoney() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'money', Sort.asc);
@@ -1633,6 +1664,18 @@ extension LocalHistoryQuerySortThenBy
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByIsSpent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSpent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByIsSpentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSpent', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByMoney() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'money', Sort.asc);
@@ -1729,6 +1772,12 @@ extension LocalHistoryQueryWhereDistinct
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QDistinct> distinctByIsSpent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSpent');
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QDistinct> distinctByMoney() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'money');
@@ -1798,6 +1847,12 @@ extension LocalHistoryQueryProperty
   QueryBuilder<LocalHistory, bool, QQueryOperations> isIncomeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isIncome');
+    });
+  }
+
+  QueryBuilder<LocalHistory, bool, QQueryOperations> isSpentProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSpent');
     });
   }
 

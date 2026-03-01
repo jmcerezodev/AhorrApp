@@ -2,6 +2,7 @@ import 'package:ahorrapp/config/routes/app_router.dart';
 import 'package:ahorrapp/config/theme/app_theme.dart';
 import 'package:ahorrapp/core/auth/biometric_service.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
+import 'package:ahorrapp/core/sync/sync_service.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
@@ -15,9 +16,11 @@ import 'dart:io';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // INICIALIZACIÓN DE PREFERENCIAS Y BASE DE DATOS LOCAL
   await Preferences.init();
   await LocalDbService().init();
+  
+  // INICIALIZAMOS EL SERVICIO DE SINCRONIZACIÓN OFFLINE
+  SyncService().init();
 
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     systemNavigationBarColor: Colors.transparent,
@@ -85,6 +88,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    SyncService().dispose(); // Limpiamos el servicio
     super.dispose();
   }
 

@@ -27,7 +27,6 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Buscamos el ahorro en el historial general (que ya está en Isar/Memoria)
     Map<String, dynamic>? item;
     for (final s in historyState.historyList) {
       if (s['id'] == widget.savingId) {
@@ -39,6 +38,7 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
     if (item == null) return const SizedBox();
 
     final double oldAmount = (item['money'] as num).toDouble();
+    final bool isWithdrawal = oldAmount < 0; // Si es negativo, es una retirada
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -61,13 +61,16 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
                   child: Icon(Icons.edit_note_rounded, color: colorScheme.primary, size: 24)
                 ),
                 const SizedBox(width: 15),
-                Text('EDITAR APORTACIÓN', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: colorScheme.onSurface.withValues(alpha: 0.7), letterSpacing: 1.5)),
+                Text(
+                  isWithdrawal ? 'EDITAR RETIRADA' : 'EDITAR APORTACIÓN', 
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1.5)
+                ),
               ],
             ),
             const SizedBox(height: 30),
             CustomInputTextWidget(
-              label: 'Nuevo importe del ahorro', 
-              hintText: oldAmount.toString(), 
+              label: isWithdrawal ? 'Nuevo importe de retirada' : 'Nuevo importe de ahorro', 
+              hintText: oldAmount.abs().toString(), // Mostramos siempre positivo para el usuario
               onChanged: (value) { 
                 setState(() { 
                   newValue = value; 
@@ -93,17 +96,20 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
                     onPressed: (isValid && !_isLoading) ? () async {
                       setState(() => _isLoading = true);
                       try {
-                        final double? money = double.tryParse(newValue.replaceAll(',', '.'));
-                        if (money != null) {
+                        final double? inputMoney = double.tryParse(newValue.replaceAll(',', '.'));
+                        if (inputMoney != null) {
+                          // Si era una retirada, el nuevo valor también debe ser negativo internamente
+                          final double money = isWithdrawal ? -inputMoney : inputMoney;
+
                           // 1. Actualizar en Appwrite (Nube)
                           await appwriteRepo.updateSaving(documentId: widget.savingId, money: money);
                           
                           if (mounted) {
-                            // 2. Sincronizar en Isar (Local) e Historial
+                            // 2. Sincronizar localmente (Isar)
                             await context.read<HistoryCubit>().updateMovementLocally(
                               LocalHistory()
                                 ..appwriteId = widget.savingId
-                                ..name = 'Aportación de ahorro'
+                                ..name = isWithdrawal ? 'Retirada de ahorros' : 'Aportación de ahorro'
                                 ..money = money
                                 ..type = 'saving'
                                 ..isIncome = false
@@ -163,6 +169,11 @@ class DeleteSavingItemDialog extends StatelessWidget {
         break;
       }
     }
+    
+    if (item == null) return const SizedBox();
+    
+    final double amount = (item['money'] as num).toDouble();
+    final bool isWithdrawal = amount < 0;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -173,11 +184,21 @@ class DeleteSavingItemDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.red.shade400.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(Icons.delete_sweep_rounded, color: Colors.red.shade400, size: 32)),
+            Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.red.shade400.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(isWithdrawal ? Icons.undo_rounded : Icons.delete_sweep_rounded, color: Colors.red.shade400, size: 32)),
             const SizedBox(height: 20),
-            Text('¿ELIMINAR APORTACIÓN?', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: colorScheme.onSurface.withValues(alpha: 0.7), letterSpacing: 1.5)),
+            Text(
+              isWithdrawal ? '¿ELIMINAR RETIRADA?' : '¿ELIMINAR APORTACIÓN?', 
+              textAlign: TextAlign.center, 
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1.5)
+            ),
             const SizedBox(height: 15),
-            Text('Esta aportación se restará de tus ahorros totales y se borrará del historial.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5)),
+            Text(
+              isWithdrawal 
+                ? 'Al eliminar esta retirada, el dinero se sumará de nuevo a tus ahorros totales.' 
+                : 'Esta aportación se restará de tus ahorros totales y se borrará del historial.', 
+              textAlign: TextAlign.center, 
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5)
+            ),
             const SizedBox(height: 30),
             Row(
               children: [
@@ -186,17 +207,18 @@ class DeleteSavingItemDialog extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
+                      // 1. Borrar de Appwrite y Local (SavingsCubit gestiona el total)
                       await context.read<SavingsCubit>().removeContribution(savingId);
+                      
                       if (context.mounted) {
-                        if (item != null) {
-                          await historyCubit.deleteMovementLocally(
-                            savingId, 
-                            item['month'] ?? '', 
-                            item['year'] ?? 0, 
-                            (item['money'] as num).toDouble(), 
-                            'saving'
-                          );
-                        }
+                        // 2. Refrescar historial instantáneo (HistoryCubit)
+                        await historyCubit.deleteMovementLocally(
+                          savingId, 
+                          item!['month'] ?? '', 
+                          item['year'] ?? 0, 
+                          amount, 
+                          'saving'
+                        );
                         context.pop();
                       }
                     },

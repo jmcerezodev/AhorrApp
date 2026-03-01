@@ -1,6 +1,5 @@
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/core/date/date.dart';
-import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/sync_progress_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
@@ -16,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final authAppwrite = AuthAppwrite();
-  bool _isSyncDialogOpen = false; // Bandera local para control de seguridad
+  bool _isSyncDialogOpen = false; 
 
   @override
   void initState() {
@@ -35,10 +34,32 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final String yearNow = Date().year();
-    final String userName = Preferences.name;
+    final String userName = context.watch<UpdateNameCubit>().state.name;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isCalendarOpen = context.watch<DateCubit>().state.isOpen;
+
+    // LÓGICA INTELIGENTE DE GÉNERO MEJORADA
+    String greeting = 'Bienvenido';
+    if (userName.isNotEmpty) {
+      final String firstWord = userName.trim().split(' ').first.toLowerCase();
+      
+      // Lista de excepciones comunes de nombres femeninos que no terminan en 'a'
+      const femaleExceptions = {
+        'raquel', 'isabel', 'belen', 'pilar', 'carmen', 'lourdes', 
+        'concepcion', 'concha', 'mercedes', 'dolores', 'rosario', 
+        'ester', 'esther', 'miriam', 'iris', 'ruth', 'abril'
+      };
+
+      // Si termina en 'a' o está en nuestra lista de excepciones femeninas
+      if (firstWord.endsWith('a') || femaleExceptions.contains(firstWord)) {
+        // Exclusión de nombres masculinos que terminan en 'a' (ej. Luca, Borja)
+        const maleNamesWithA = {'luca', 'borja', 'bautista', 'josua'};
+        if (!maleNamesWithA.contains(firstWord)) {
+          greeting = 'Bienvenida';
+        }
+      }
+    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -53,7 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 context.read<HistoryCubit>().loadHistoryByDate(state.month, state.year);
               },
             ),
-            // GESTIÓN CORREGIDA DEL DIÁLOGO DE SINCRONIZACIÓN
             BlocListener<HistoryCubit, HistoryCubitState>(
               listenWhen: (prev, curr) => prev.isSyncing != curr.isSyncing,
               listener: (context, state) {
@@ -70,7 +90,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ).then((_) => _isSyncDialogOpen = false);
                 } else if (!state.isSyncing && _isSyncDialogOpen) {
-                  // Cerramos solo si el diálogo está abierto
                   Navigator.of(context, rootNavigator: true).pop();
                   _isSyncDialogOpen = false;
                 }
@@ -101,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                             ),
                             Text(
-                              'Bienvenido de nuevo',
+                              '$greeting de nuevo',
                               style: TextStyle(fontSize: 12, color: colorScheme.primary.withValues(alpha: 0.7), fontWeight: FontWeight.w500),
                             ),
                           ],

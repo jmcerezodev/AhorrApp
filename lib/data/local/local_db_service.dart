@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'models/local_history.dart';
 import 'models/local_settings.dart';
+import 'models/pending_sync.dart';
 
 class LocalDbService {
   static final LocalDbService _instance = LocalDbService._internal();
@@ -15,7 +17,7 @@ class LocalDbService {
     final dir = await getApplicationDocumentsDirectory();
     if (Isar.instanceNames.isEmpty) {
       _isar = await Isar.open(
-        [LocalHistorySchema, LocalSettingsSchema],
+        [LocalHistorySchema, LocalSettingsSchema, PendingSyncSchema],
         directory: dir.path,
       );
     } else {
@@ -77,7 +79,6 @@ class LocalDbService {
     return settings?.savingGoal ?? 0.0;
   }
 
-  // NUEVO: Guardar balance total en Isar
   Future<void> saveTotalBalance(String userId, double balance) async {
     await _isar.writeTxn(() async {
       final settings = await _isar.localSettings.filter().userIdEqualTo(userId).findFirst() ?? LocalSettings()..userId = userId;
@@ -86,19 +87,69 @@ class LocalDbService {
     });
   }
 
-  // NUEVO: Obtener balance total desde Isar
   Future<double> getTotalBalance(String userId) async {
     final settings = await _isar.localSettings.filter().userIdEqualTo(userId).findFirst();
     return settings?.totalBalance ?? 0.0;
   }
 
+  // ACTUALIZADO: Solo sumamos los ahorros que NO han sido gastados/vaciados
   Future<double> calculateTotalSavings(String userId) async {
-    final savings = await _isar.localHistorys.filter().typeEqualTo('saving').findAll();
+    final savings = await _isar.localHistorys
+        .filter()
+        .typeEqualTo('saving')
+        .isSpentEqualTo(false)
+        .findAll();
+    
     double total = 0;
     for (var s in savings) {
       total += s.money;
     }
     return total;
+  }
+
+  // NUEVO: Marcar todos los ahorros actuales como "gastados"
+  Future<List<String>> markSavingsAsSpent() async {
+    final savings = await _isar.localHistorys
+        .filter()
+        .typeEqualTo('saving')
+        .isSpentEqualTo(false)
+        .findAll();
+    
+    final List<String> idsToUpdate = [];
+    
+    await _isar.writeTxn(() async {
+      for (var s in savings) {
+        s.isSpent = true;
+        idsToUpdate.add(s.appwriteId);
+        await _isar.localHistorys.put(s);
+      }
+    });
+    
+    return idsToUpdate;
+  }
+
+  // --- COLA DE SINCRONIZACIÓN ---
+
+  Future<void> addPendingSync(String action, String collection, Map<String, dynamic> data, {String? appwriteId}) async {
+    await _isar.writeTxn(() async {
+      final pending = PendingSync()
+        ..action = action
+        ..collection = collection
+        ..dataJson = jsonEncode(data)
+        ..appwriteId = appwriteId
+        ..createdAt = DateTime.now();
+      await _isar.pendingSyncs.put(pending);
+    });
+  }
+
+  Future<List<PendingSync>> getPendingSyncs() async {
+    return await _isar.pendingSyncs.where().sortByCreatedAt().findAll();
+  }
+
+  Future<void> deletePendingSync(int id) async {
+    await _isar.writeTxn(() async {
+      await _isar.pendingSyncs.delete(id);
+    });
   }
 
   // --- GENERAL ---
@@ -107,6 +158,7 @@ class LocalDbService {
     await _isar.writeTxn(() async {
       await _isar.localHistorys.clear();
       await _isar.localSettings.clear();
+      await _isar.pendingSyncs.clear();
     });
   }
 

@@ -11,7 +11,7 @@ class AppwriteRepository {
   final String _historyId = Env.appwriteHistoryCollectionId;
   final String _savingsId = Env.appwriteSavingsCollectionId;
 
-  // --- PREFERENCIAS DE USUARIO (Cloud Settings) ---
+  // --- PREFERENCIAS DE USUARIO ---
 
   Future<Map<String, dynamic>> getUserPrefs() async {
     final user = await _account.get();
@@ -42,7 +42,6 @@ class AppwriteRepository {
     }
   }
 
-  // SINCRONIZACIÓN MAESTRA REFORZADA
   Future<Map<String, dynamic>> syncFullData(String userId, Function(double) onProgress) async {
     double totalIncomes = 0;
     double totalExpenses = 0;
@@ -50,13 +49,10 @@ class AppwriteRepository {
     List<Document> allSavings = [];
     
     try {
-      // 1. Obtener totales reales
       final historyInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _historyId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
       final savingsInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _savingsId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
       
       final int totalDocsCount = historyInfo.total + savingsInfo.total;
-      print('AppwriteRepo: Detectados ${historyInfo.total} movimientos y ${savingsInfo.total} ahorros. Total: $totalDocsCount');
-
       if (totalDocsCount == 0) {
         await updateTotalBalance(0.0);
         return {'balance': 0.0, 'history': [], 'savings': [], 'savingGoal': 0.0};
@@ -64,45 +60,33 @@ class AppwriteRepository {
 
       int processed = 0;
 
-      // 2. Descarga de Historial con Paginación Segura (por $id para evitar duplicados en el cursor)
+      // 1. Procesar Movimientos
       bool hasMore = true;
       String? lastId;
       while (hasMore) {
         final response = await _databases.listDocuments(
           databaseId: _databaseId,
           collectionId: _historyId,
-          queries: [
-            Query.equal('userId', [userId]),
-            Query.limit(100),
-            Query.orderAsc('\$id'), // Orden estable para paginación
-            if (lastId != null) Query.cursorAfter(lastId),
-          ],
+          queries: [Query.equal('userId', [userId]), Query.limit(100), Query.orderAsc('\$id'), if (lastId != null) Query.cursorAfter(lastId)],
         );
-        
         for (var doc in response.documents) {
           final double amount = (doc.data['money'] as num).toDouble().abs();
           if (doc.data['isIncome'] == true) totalIncomes += amount; else totalExpenses += amount;
           allHistory.add(doc);
         }
-        
         processed += response.documents.length;
         onProgress((processed / totalDocsCount) * 0.8);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
 
-      // 3. Descarga de Ahorros
+      // 2. Procesar Ahorros
       hasMore = true;
       lastId = null;
       while (hasMore) {
         final response = await _databases.listDocuments(
           databaseId: _databaseId,
           collectionId: _savingsId,
-          queries: [
-            Query.equal('userId', [userId]),
-            Query.limit(100),
-            Query.orderAsc('\$id'),
-            if (lastId != null) Query.cursorAfter(lastId),
-          ],
+          queries: [Query.equal('userId', [userId]), Query.limit(100), Query.orderAsc('\$id'), if (lastId != null) Query.cursorAfter(lastId)],
         );
         allSavings.addAll(response.documents);
         processed += response.documents.length;
@@ -111,8 +95,6 @@ class AppwriteRepository {
       }
 
       final double finalBalance = totalIncomes - totalExpenses;
-      print('AppwriteRepo: Auditoría final -> Ingresos: $totalIncomes | Gastos: $totalExpenses | Balance: $finalBalance');
-      
       await updateTotalBalance(finalBalance);
       
       final userPrefs = await getUserPrefs();
@@ -127,7 +109,6 @@ class AppwriteRepository {
         'savingGoal': savingGoal,
       };
     } catch (e) {
-      print('AppwriteRepo: Error crítico en sincronización: $e');
       rethrow;
     }
   }
@@ -165,14 +146,20 @@ class AppwriteRepository {
   }
 
   Future<Document> addSaving({required String userId, required double money, required String month, required int year, String? description}) async {
-    return await _databases.createDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: ID.unique(), data: {'userId': userId, 'money': money, 'month': month, 'year': year, 'description': description ?? 'Aportación de ahorro'});
+    return await _databases.createDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: ID.unique(), data: {'userId': userId, 'money': money, 'month': month, 'year': year, 'description': description ?? 'Aportación de ahorro', 'isSpent': false});
   }
 
   Future<void> deleteHistory(String documentId) async => await _databases.deleteDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId);
   Future<void> deleteSaving(String documentId) async => await _databases.deleteDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: documentId);
   
-  Future<Document> updateSaving({required String documentId, required double money}) async {
-    return await _databases.updateDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: documentId, data: {'money': money});
+  // ACTUALIZADO: Permite enviar cualquier dato (como isSpent)
+  Future<Document> updateSaving({required String documentId, Map<String, dynamic>? data, double? money}) async {
+    return await _databases.updateDocument(
+      databaseId: _databaseId, 
+      collectionId: _savingsId, 
+      documentId: documentId, 
+      data: data ?? {'money': money}
+    );
   }
 
   Future<void> deleteAllSavings(String userId) async {

@@ -1,8 +1,10 @@
-import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
-import 'package:ahorrapp/presentation/bloc/savings_cubit/savings_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
+import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/savings_cubit/savings_cubit.dart';
 
 class SavingsDeleteDialog extends StatelessWidget {
   const SavingsDeleteDialog({super.key});
@@ -10,8 +12,11 @@ class SavingsDeleteDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final humanizeNumbers = HumanizeNumbers();
-    final savingsCubitState = context.watch<SavingsCubit>().state;
-    final totalSaving = humanizeNumbers.number(savingsCubitState.savingTotal);
+    
+    // Obtenemos los estados usando watch para reactividad
+    final savingsState = context.watch<SavingsCubit>().state;
+    final totalSaving = humanizeNumbers.number(savingsState.savingTotal);
+    
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -42,7 +47,7 @@ class SavingsDeleteDialog extends StatelessWidget {
             const SizedBox(height: 20),
             
             Text(
-              '¿REINICIAR AHORROS?',
+              '¿VACIAR AHORROS?',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -54,7 +59,7 @@ class SavingsDeleteDialog extends StatelessWidget {
             const SizedBox(height: 15),
             
             Text(
-              'Tienes $totalSaving€ ahorrados. Al confirmar, el contador volverá a cero.\n¿Estás seguro?',
+              'Tienes $totalSaving€ ahorrados. Al confirmar, el contador volverá a cero pero tus registros se mantendrán en el historial como "gastados".',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -83,9 +88,16 @@ class SavingsDeleteDialog extends StatelessWidget {
                 const SizedBox(width: 15),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      context.read<SavingsCubit>().deleteSavings();
-                      context.pop();
+                    onPressed: () async {
+                      // Referencias directas para evitar errores de tipo en el editor
+                      final historyCubit = BlocProvider.of<HistoryCubit>(context);
+                      final savingsCubit = BlocProvider.of<SavingsCubit>(context);
+                      
+                      await savingsCubit.emptySavings(historyCubit);
+                      
+                      if (context.mounted) {
+                        context.pop();
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colorScheme.primary,
@@ -94,7 +106,7 @@ class SavingsDeleteDialog extends StatelessWidget {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
-                    child: const Text('BORRAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: const Text('VACIAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
                 ),
               ],

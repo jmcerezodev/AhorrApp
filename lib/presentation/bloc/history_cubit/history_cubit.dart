@@ -57,18 +57,21 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       }
       totalMoneyCubit.totalMoney(globalBalance);
       final localData = await _localDb.getHistoryByMonth(month, year);
+      
       final List<Map<String, dynamic>> uiList = localData.map((e) => {
         'id': e.appwriteId,
         'name': e.name,
         'money': e.money,
         'type': e.type,
         'isIncome': e.isIncome,
+        'isSpent': e.isSpent, // CORRECCIÓN: Pasamos el estado a la UI
         'currentDate': e.currentDate,
         'currentHour': e.currentHour,
         'month': e.month,
         'year': e.year,
         'createdAt': e.createdAt.toIso8601String(),
       }).toList();
+      
       emit(state.copyWith(historyList: uiList, formStatus: FormStatusHistory.valid));
     } catch (e) {
       emit(state.copyWith(formStatus: FormStatusHistory.invalid, isSyncing: false));
@@ -77,7 +80,6 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
 
   // --- ACCIONES CRUD OPTIMIZADAS ---
 
-  // 1. AÑADIR (Suma/Resta importe total)
   Future<void> addMovementLocally(LocalHistory item) async {
     await _localDb.saveHistoryItems([item]);
     if (item.type != 'saving') {
@@ -86,7 +88,6 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     await loadHistoryByDate(item.month, item.year);
   }
 
-  // 2. ACTUALIZAR (Calcula diferencia y ajusta balance)
   Future<void> updateMovementLocally(LocalHistory item, double oldAmount) async {
     await _localDb.saveHistoryItems([item]);
     if (item.type != 'saving') {
@@ -98,17 +99,14 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     await loadHistoryByDate(item.month, item.year);
   }
 
-  // 3. ELIMINAR (Revierte la operación original)
   Future<void> deleteMovementLocally(String appwriteId, String month, int year, double amount, String type) async {
     await _localDb.deleteItemByAppwriteId(appwriteId);
     if (type != 'saving') {
-      // Si borramos un ingreso restamos, si borramos un gasto sumamos
       await _updateBalance(amount, type == 'expense');
     }
     await loadHistoryByDate(month, year);
   }
 
-  // Método privado para evitar duplicidad de lógica de balance
   Future<void> _updateBalance(double amount, bool isAddition) async {
     double current = await _localDb.getTotalBalance(Preferences.uId);
     final double newBalance = isAddition ? current + amount : current - amount;
@@ -126,6 +124,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         ..money = (doc.data['money'] as num).toDouble()
         ..type = (doc.data['isIncome'] == true) ? 'income' : 'expense'
         ..isIncome = doc.data['isIncome'] ?? false
+        ..isSpent = false // Los movimientos normales no se gastan
         ..currentDate = doc.data['currentDate'] ?? ''
         ..currentHour = doc.data['currentHour'] ?? ''
         ..month = doc.data['month']?.toString() ?? ''
@@ -141,6 +140,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         ..money = (doc.data['money'] as num).toDouble()
         ..type = 'saving'
         ..isIncome = false
+        ..isSpent = doc.data['isSpent'] ?? false // CORRECCIÓN: Leemos de Appwrite
         ..currentDate = "${date.day}/${date.month}/${date.year}"
         ..currentHour = "${date.hour}:${date.minute}"
         ..month = doc.data['month'] ?? ''

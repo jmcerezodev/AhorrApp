@@ -268,8 +268,9 @@ class _HistoryItem extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = colorScheme.brightness == Brightness.dark;
     
-    final money = humanizeNumbers.number((item['money'] as num).toDouble());
+    final double amount = (item['money'] as num).toDouble();
     final type = item['type'];
+    final bool isSpent = item['isSpent'] ?? false;
 
     Color accentColor = Colors.orange;
     IconData icon = Icons.help_outline_rounded;
@@ -278,119 +279,159 @@ class _HistoryItem extends StatelessWidget {
     if (type == 'income') {
       accentColor = Colors.green.shade400;
       icon = Icons.arrow_upward_rounded;
-      prefix = "+";
+      prefix = "";
     } else if (type == 'expense') {
       accentColor = Colors.red.shade400;
       icon = Icons.arrow_downward_rounded;
       prefix = "-";
     } else if (type == 'saving') {
       accentColor = colorScheme.primary; 
-      icon = Icons.savings_rounded;
-      prefix = "";
+      if (amount >= 0) {
+        icon = Icons.savings_rounded;
+        prefix = "";
+      } else {
+        icon = Icons.outbox_rounded;
+        prefix = "-";
+      }
     }
+
+    final moneyString = humanizeNumbers.number(amount.abs());
+    
+    // Solo mostramos 'GASTADO' si es una aportación positiva marcada como tal.
+    // Una retirada (negativa) ya implica gasto por sí misma.
+    final bool showSpentLabel = isSpent && amount >= 0;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Dismissible(
-        key: Key(item['id']),
-        background: _SwipeBackground(
-          color: Colors.green.shade400,
-          icon: Icons.edit_note_rounded,
-          label: 'EDITAR',
-          alignment: Alignment.centerLeft,
-        ),
-        secondaryBackground: _SwipeBackground(
-          color: Colors.red.shade400,
-          icon: Icons.delete_sweep_rounded,
-          label: 'ELIMINAR',
-          alignment: Alignment.centerRight,
-        ),
-        confirmDismiss: (direction) async {
-          if (direction == DismissDirection.startToEnd) {
-            if (type == 'saving') {
-              return showDialog(
-                barrierDismissible: false,
-                context: context,
-                builder: (context) => EditSavingDialog(savingId: item['id']),
-              );
-            }
-            return showDialog(
-              barrierDismissible: false,
-              context: context,
-              builder: (context) => EditItemHistoryDialog(itemId: item['id']),
-            );
-          } else {
-            if (type == 'saving') {
-              return showDialog(
-                barrierDismissible: false,
-                context: context,
-                builder: (context) => DeleteSavingItemDialog(savingId: item['id']),
-              );
-            }
-            return showDialog(
-              barrierDismissible: false,
-              context: context,
-              builder: (context) => DeleteItemHistoryDialog(itemId: item['id']),
-            );
-          }
-        },
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
+      child: Opacity(
+        opacity: showSpentLabel ? 0.7 : 1.0, 
+        child: Dismissible(
+          key: Key(item['id']),
+          background: _SwipeBackground(
+            color: Colors.green.shade400,
+            icon: Icons.edit_note_rounded,
+            label: 'EDITAR',
+            alignment: Alignment.centerLeft,
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: isDark ? 0.1 : 0.05),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: accentColor, size: 18),
+          secondaryBackground: _SwipeBackground(
+            color: Colors.red.shade400,
+            icon: Icons.delete_sweep_rounded,
+            label: 'ELIMINAR',
+            alignment: Alignment.centerRight,
+          ),
+          confirmDismiss: (direction) async {
+            if (direction == DismissDirection.startToEnd) {
+              if (type == 'saving') {
+                return showDialog(
+                  barrierDismissible: false,
+                  context: context,
+                  builder: (context) => EditSavingDialog(savingId: item['id']),
+                );
+              }
+              return showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (context) => EditItemHistoryDialog(itemId: item['id']),
+              );
+            } else {
+              if (type == 'saving') {
+                return showDialog(
+                  barrierDismissible: false,
+                  context: context,
+                  builder: (context) => DeleteSavingItemDialog(savingId: item['id']),
+                );
+              }
+              return showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (context) => DeleteItemHistoryDialog(itemId: item['id']),
+              );
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3),
+                width: 1.2,
               ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item['name'],
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.primary.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: isDark ? 0.1 : 0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: accentColor, size: 18),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              item['name'],
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
+                                decoration: showSpentLabel ? TextDecoration.lineThrough : null,
+                              ),
+                            ),
+                          ),
+                          if (showSpentLabel) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                'GASTADO', 
+                                style: TextStyle(
+                                  fontSize: 7, 
+                                  fontWeight: FontWeight.w900, 
+                                  color: colorScheme.primary.withValues(alpha: 0.6)
+                                )
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${item['currentDate']} • ${item['currentHour']}',
-                      style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.4)),
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        '${item['currentDate']} • ${item['currentHour']}',
+                        style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.4)),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Text(
-                '$prefix$money€',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  color: accentColor,
+                Text(
+                  '$prefix$moneyString€',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    color: accentColor,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

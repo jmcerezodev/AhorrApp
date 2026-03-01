@@ -18,4 +18,6 @@ class LocalHistory {
   late String month;
   late int year;
   late DateTime createdAt;
+
+  bool isSpent = false; // NUEVO: Indica si este ahorro ya se ha "vaciado" o gastado
 }

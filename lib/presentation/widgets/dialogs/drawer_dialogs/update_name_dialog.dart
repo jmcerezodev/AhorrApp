@@ -64,7 +64,7 @@ class UpdateNameDialog extends StatelessWidget {
 
             CustomInputTextWidget(
               label: 'Nuevo Nombre',
-              hintText: Preferences.name,
+              hintText: updateNameCubit.state.name, // Usamos el nombre del cubit
               onChanged: updateNameCubit.newNameChanged,
               autoFocus: true,
               obscureText: false,
@@ -98,7 +98,10 @@ class UpdateNameDialog extends StatelessWidget {
                         updateNameCubit.onSubmit();
                         final newName = updateNameCubit.state.newName.value;
                         await AppwriteService().account.updateName(name: newName);
+                        
+                        // Sincronizamos preferencias y el Cubit para el Home
                         Preferences.name = newName;
+                        updateNameCubit.onUpdateSuccess(newName);
                         
                         if (context.mounted) {
                           context.pop();

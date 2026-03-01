@@ -4,6 +4,7 @@ import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/saving_dialogs/savings_empty_dialog_widget.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/saving_dialogs/savings_withdraw_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -66,7 +67,7 @@ class _SavingsDialogState extends State<SavingsDialog> {
                     ),
                     const SizedBox(width: 15),
                     Text(
-                      'AÑADIR AHORRO',
+                      'GESTIÓN AHORROS',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
@@ -91,7 +92,7 @@ class _SavingsDialogState extends State<SavingsDialog> {
             const SizedBox(height: 30),
 
             CustomInputTextWidget(
-              label: 'Cantidad a ahorrar',
+              label: 'Cantidad a añadir',
               hintText: '0.00',
               onChanged: savingsCubit.savingChanged,
               errorText: savingsCubit.state.saving.isPure ? null : savingsCubit.state.saving.errorMessage,
@@ -100,24 +101,11 @@ class _SavingsDialogState extends State<SavingsDialog> {
             ),
             const SizedBox(height: 30),
 
-            Row(
+            Column(
               children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: _isLoading ? null : () => context.pop(),
-                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text(
-                      'CANCELAR', 
-                      style: TextStyle(
-                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                        fontWeight: FontWeight.bold, 
-                        letterSpacing: 1
-                      )
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
+                // BOTÓN AHORRAR (Principal)
+                SizedBox(
+                  width: double.infinity,
                   child: ElevatedButton(
                     onPressed: (savingsCubit.state.isValid && !_isLoading)
                     ? () async {
@@ -127,7 +115,6 @@ class _SavingsDialogState extends State<SavingsDialog> {
                           final String monthName = date.monthNames();
                           final int yearInt = int.parse(date.year());
 
-                          // 1. Guardar en Appwrite
                           final doc = await appwriteRepo.addSaving(
                             userId: Preferences.uId,
                             money: amount,
@@ -135,10 +122,8 @@ class _SavingsDialogState extends State<SavingsDialog> {
                             year: yearInt,
                           );
 
-                          // 2. Sincronizar con Isar y refrescar historial
                           if (mounted) {
-                            final historyCubit = context.read<HistoryCubit>();
-                            await historyCubit.addMovementLocally(
+                            await context.read<HistoryCubit>().addMovementLocally(
                               LocalHistory()
                                 ..appwriteId = doc.$id
                                 ..name = 'Aportación de ahorro'
@@ -151,20 +136,11 @@ class _SavingsDialogState extends State<SavingsDialog> {
                                 ..year = yearInt
                                 ..createdAt = DateTime.parse(doc.$createdAt)
                             );
-                            
-                            // 3. Refrescar contador de ahorros
                             await context.read<SavingsCubit>().loadSavings();
-                            
                             if (mounted) context.pop();
                           }
                         } catch (e) {
-                          print('Error al ahorrar: $e');
-                          if (mounted) {
-                            setState(() => _isLoading = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Error al conectar con el servidor. Inténtalo de nuevo.'))
-                            );
-                          }
+                          if (mounted) setState(() => _isLoading = false);
                         }
                       }
                     : null,
@@ -178,6 +154,28 @@ class _SavingsDialogState extends State<SavingsDialog> {
                     child: _isLoading 
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : const Text('AHORRAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+
+                // BOTÓN RETIRAR (Secundario)
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    onPressed: _isLoading ? null : () {
+                      context.pop();
+                      showDialog(
+                        context: context,
+                        builder: (context) => const SavingsWithdrawDialog(),
+                      );
+                    },
+                    icon: const Icon(Icons.outbox_rounded, size: 18),
+                    label: const Text('RETIRAR DINERO', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1)),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.orange.shade700,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
                   ),
                 ),
               ],
