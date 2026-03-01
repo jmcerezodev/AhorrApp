@@ -5,6 +5,7 @@ export 'home_screen/history_custom_widget.dart';
 export 'home_screen/info_global_custom_widget.dart';
 export 'home_screen/monthly_balance_widget.dart';
 export 'home_screen/calendar_panel_widget.dart';
+export 'home_screen/savings_progress_widget.dart';
 export 'login_screen/login_form_widget.dart';
 export 'new_user_screen/new_user_form_widget.dart';
 export 'charts/chart_history.dart';

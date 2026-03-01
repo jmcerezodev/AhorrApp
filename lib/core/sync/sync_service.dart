@@ -32,7 +32,6 @@ class SyncService {
     _isSyncing = true;
 
     try {
-      // Si la DB no está lista, salimos silenciosamente (esto protege los tests)
       final pendingList = await _localDb.getPendingSyncs();
       if (pendingList.isEmpty) {
         _isSyncing = false;
@@ -60,7 +59,7 @@ class SyncService {
         }
       }
     } catch (e) {
-      // Error manejado para evitar crashes
+      // Error manejado
     } finally {
       _isSyncing = false;
     }
@@ -68,7 +67,9 @@ class SyncService {
 
   Future<bool> _syncHistory(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'create') {
+      // CORREGIDO: Ahora pasamos el documentId que viene de Isar
       await _appwriteRepo.addHistory(
+        documentId: pending.appwriteId!,
         userId: data['userId'],
         name: data['name'],
         money: data['money'],
@@ -91,7 +92,9 @@ class SyncService {
 
   Future<bool> _syncSavings(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'create') {
+      // CORREGIDO: Ahora pasamos el documentId que viene de Isar
       await _appwriteRepo.addSaving(
+        documentId: pending.appwriteId!,
         userId: data['userId'],
         money: data['money'],
         month: data['month'],

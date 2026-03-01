@@ -17,6 +17,7 @@ class LoginFormWidget extends StatefulWidget {
 class _LoginFormWidgetState extends State<LoginFormWidget> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  bool _formSubmitted = false;
 
   void isPasswordVisible(BuildContext context) {
     context.read<LoginCubit>().isPasswordVisible();
@@ -50,27 +51,29 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
     final loginCubit = context.watch<LoginCubit>();
     
     return BlocListener<LoginCubit, LoginCubitState>(
-      // 1. Actualizado para usar LoginStatus
+      // SOLO ESCUCHAMOS CAMBIOS EN EL STATUS PARA EVITAR DIÁLOGOS AL CAMBIAR VISIBILIDAD
+      listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == LoginStatus.success) {
           context.go('/home-screen');
         } else if (state.status == LoginStatus.failure) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AuthErrorDialog(
-              errorTitle: '!Se ha producido un error!',
-              // 2. Ahora mostramos el mensaje real que devuelve el Cubit
-              errorText: state.errorMessage ?? 'Credenciales inválidas o problema de conexión.',
-            ),
-          );
+          // Si el error es por validación, no mostramos el diálogo, solo los errores en los campos
+          if (state.errorMessage != 'Formulario no válido') {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AuthErrorDialog(
+                errorTitle: '!Se ha producido un error!',
+                errorText: state.errorMessage ?? 'Credenciales inválidas.',
+              ),
+            );
+          }
         }
       },
       child: Form(
         child: Column(
           children: [
             const SizedBox(height: 10),
-            
             Text(
               'ACCESO',
               style: TextStyle(
@@ -80,7 +83,6 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                 letterSpacing: 3.0,
               ),
             ),
-            
             const SizedBox(height: 25),
 
             CustomInputTextWidget(
@@ -88,7 +90,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               prefixIcon: Icons.email_outlined,
               label: 'Correo Electrónico',
               onChanged: loginCubit.emailChanged,
-              errorText: loginCubit.state.email.errorMessage,
+              errorText: _formSubmitted ? loginCubit.state.email.errorMessage : null,
               autoFocus: false,
               textInputType: TextInputType.emailAddress,
               textCapitalization: TextCapitalization.none,
@@ -107,7 +109,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               obscureText: loginCubit.state.passwordEncripted,
               autoFocus: false,
               onChanged: loginCubit.passwordChanged,
-              errorText: loginCubit.state.password.errorMessage,
+              errorText: _formSubmitted ? loginCubit.state.password.errorMessage : null,
               textCapitalization: TextCapitalization.none,
             ),
 
@@ -130,12 +132,12 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton.icon(
-                // 3. Gestión de estados de carga con LoginStatus
                 onPressed: (loginCubit.state.status == LoginStatus.submitting)
                   ? null 
                   : () async {
                       FocusScope.of(context).unfocus();
-                      
+                      setState(() => _formSubmitted = true);
+
                       if (Preferences.isBiometricActive) {
                         final biometricService = BiometricService();
                         final bool authenticated = await biometricService.authenticate();

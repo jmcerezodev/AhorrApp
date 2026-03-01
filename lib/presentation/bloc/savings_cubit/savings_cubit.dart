@@ -85,16 +85,29 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
   }
 
   Future<void> emptySavings(HistoryCubit historyCubit) async {
+    // 1. Iniciamos carga
     emit(state.copyWith(status: SavingsStatus.loading));
+    
     try {
+      // 2. Marcamos localmente
       final List<String> appwriteIds = await _localDb.markSavingsAsSpent();
-      for (var id in appwriteIds) {
-        await _repository.updateSaving(documentId: id, data: {'isSpent': true});
+      
+      // 3. OPTIMIZACIÓN: Actualizamos en Appwrite en paralelo para evitar esperas largas
+      if (appwriteIds.isNotEmpty) {
+        await Future.wait(appwriteIds.map((id) => 
+          _repository.updateSaving(documentId: id, data: {'isSpent': true})
+        ).toList());
       }
+
+      // 4. Refrescamos datos
       await loadSavings();
+      
       final date = Date();
       await historyCubit.loadHistoryByDate(date.monthNames(), int.parse(date.year()));
+      
+      // 5. ÉXITO: Esto disparará el BlocListener para cerrar el diálogo
       emit(state.copyWith(status: SavingsStatus.success));
+
     } catch (e) {
       emit(state.copyWith(
         status: SavingsStatus.failure,

@@ -14,55 +14,86 @@ import 'package:go_router/go_router.dart';
 import 'dart:io';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. INICIALIZAMOS PREFERENCIAS Y EL SERVICE LOCATOR (Clean Architecture)
-  await Preferences.init();
-  await setupServiceLocator();
-  
-  // 2. INICIALIZAMOS EL SERVICIO DE SINCRONIZACIÓN OFFLINE
-  getIt<SyncService>().init();
+    // 1. INICIALIZAMOS PREFERENCIAS Y EL SERVICE LOCATOR (Clean Architecture)
+    await Preferences.init();
+    await setupServiceLocator();
+    
+    // 2. INICIALIZAMOS EL SERVICIO DE SINCRONIZACIÓN OFFLINE
+    getIt<SyncService>().init();
 
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    systemNavigationBarColor: Colors.transparent,
-    systemNavigationBarDividerColor: Colors.transparent,
-    systemNavigationBarIconBrightness: Brightness.dark,
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark,
-  ));
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ));
 
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  final authService = getIt<AuthAppwrite>();
-  final biometricService = getIt<BiometricService>();
-  
-  String initialRoute = '/login';
-  bool isAuthRequired = Preferences.uId.isNotEmpty;
+    final authService = getIt<AuthAppwrite>();
+    final biometricService = getIt<BiometricService>();
+    
+    String initialRoute = '/login';
+    bool isAuthRequired = Preferences.uId.isNotEmpty;
 
-  if (isAuthRequired) {
-    if (Preferences.isBiometricActive) {
-      final bool authenticated = await biometricService.authenticate();
-      if (authenticated) {
-        initialRoute = await authService.getInitialRoute();
+    if (isAuthRequired) {
+      if (Preferences.isBiometricActive) {
+        final bool authenticated = await biometricService.authenticate();
+        if (authenticated) {
+          initialRoute = await authService.getInitialRoute();
+        } else {
+          exit(0); 
+        }
       } else {
-        exit(0); 
+        initialRoute = await authService.getInitialRoute();
       }
-    } else {
-      initialRoute = await authService.getInitialRoute();
     }
+
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+
+    runApp(
+      BlocProvider(
+        create: (_) => ThemeCubit(),
+        child: MainAppWrapper(initialRoute: initialRoute),
+      )
+    );
+  } catch (e) {
+    debugPrint("❌ Error fatal durante la inicialización: $e");
+    runApp(MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(25.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline_rounded, color: Colors.orange, size: 60),
+                const SizedBox(height: 20),
+                const Text(
+                  'Error de Inicialización',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'La aplicación no pudo iniciarse correctamente.\n\n$e',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ));
   }
-
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-
-  runApp(
-    BlocProvider(
-      create: (_) => ThemeCubit(),
-      child: MainAppWrapper(initialRoute: initialRoute),
-    )
-  );
 }
 
 class MainAppWrapper extends StatefulWidget {
@@ -75,8 +106,6 @@ class MainAppWrapper extends StatefulWidget {
 
 class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObserver {
   late GoRouter router;
-  // Usamos el Service Locator para obtener el Cubit estable
-  final totalMoneyCubit = TotalMoneyCubit(); 
   bool _isAuthenticating = false;
   bool _wasPaused = false;
 
@@ -90,7 +119,6 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    // El SyncService se limpia solo si es necesario o vía getIt
     super.dispose();
   }
 
@@ -136,11 +164,13 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
         BlocProvider(create: (_) => UpdateNameCubit()),
         BlocProvider(create: (_) => DeleteAcountCubit()),
         BlocProvider(create: (_) => SavingsCubit()),
-        BlocProvider.value(value: totalMoneyCubit),
+        // USAMOS LA INSTANCIA ÚNICA DE GETIT PARA QUE TODO ESTÉ SINCRONIZADO
+        BlocProvider.value(value: getIt<TotalMoneyCubit>()),
         BlocProvider(create: (_) => DateCubit()),
         BlocProvider(create: (_) => IncomesCubit()),
         BlocProvider(create: (_) => ExpensesCubit()),
-        BlocProvider(create: (_) => HistoryCubit(totalMoneyCubit: totalMoneyCubit)),
+        // PASAMOS LA INSTANCIA DE GETIT TAMBIÉN AQUÍ
+        BlocProvider(create: (_) => HistoryCubit(totalMoneyCubit: getIt<TotalMoneyCubit>())),
       ],
       child: MaterialApp.router(
         title: 'AhorrApp',

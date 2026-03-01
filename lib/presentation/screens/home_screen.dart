@@ -10,6 +10,9 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  Widget build(BuildContext context) => const _HomeScreenView();
+
+  @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
@@ -39,30 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final colorScheme = theme.colorScheme;
     final isCalendarOpen = context.watch<DateCubit>().state.isOpen;
 
-    // LÓGICA INTELIGENTE DE GÉNERO MEJORADA
-    String greeting = 'Bienvenido';
-    if (userName.isNotEmpty) {
-      final String firstWord = userName.trim().split(' ').first.toLowerCase();
-      
-      // Lista de excepciones comunes de nombres femeninos que no terminan en 'a'
-      const femaleExceptions = {
-        'raquel', 'isabel', 'belen', 'pilar', 'carmen', 'lourdes', 
-        'concepcion', 'concha', 'mercedes', 'dolores', 'rosario', 
-        'ester', 'esther', 'miriam', 'iris', 'ruth', 'abril'
-      };
-
-      // Si termina en 'a' o está en nuestra lista de excepciones femeninas
-      if (firstWord.endsWith('a') || femaleExceptions.contains(firstWord)) {
-        // Exclusión de nombres masculinos que terminan en 'a' (ej. Luca, Borja)
-        const maleNamesWithA = {'luca', 'borja', 'bautista', 'josua'};
-        if (!maleNamesWithA.contains(firstWord)) {
-          greeting = 'Bienvenida';
-        }
-      }
-    }
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor, // CORREGIDO: Usa el color del tema
       resizeToAvoidBottomInset: false, 
       drawer: const SideMenuWidget(),
       body: SafeArea(
@@ -102,14 +83,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 15, 20, 10),
+                    padding: const EdgeInsets.fromLTRB(20, 15, 20, 5),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Builder(
                           builder: (context) => IconButton(
                             onPressed: () => Scaffold.of(context).openDrawer(),
-                            icon: Icon(Icons.notes_rounded, color: colorScheme.onSurface, size: 28),
+                            icon: Icon(Icons.menu_rounded, color: colorScheme.onSurface, size: 30),
                           ),
                         ),
                         Column(
@@ -117,11 +98,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Text(
                               'Hola, $userName',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: colorScheme.onSurface),
                             ),
-                            Text(
-                              '$greeting de nuevo',
-                              style: TextStyle(fontSize: 12, color: colorScheme.primary.withValues(alpha: 0.7), fontWeight: FontWeight.w500),
+                            const Text(
+                              'Bienvenido de nuevo',
+                              style: TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -130,10 +111,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
 
                   const InfoGlogalWidget(),
-                  const SizedBox(height: 5),
 
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                     child: Row(
                       children: [
                         Expanded(flex: 3, child: DateCustomWidget()),
@@ -143,9 +123,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
                   const ExpensesIncomesCustomWidget(),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 20),
                   
                   const Expanded(
                     child: HistoryCustomWidget(),
@@ -153,10 +133,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   
                   Center(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
                         'JMCerezoDev - $yearNow ®',
-                        style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1.5),
+                        style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1.0),
                       ),
                     ),
                   ),
@@ -165,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               if (isCalendarOpen)
                 Positioned(
-                  top: 200,
+                  top: 220,
                   left: 0,
                   right: 0,
                   child: const CalendarPanelWidget(),
@@ -175,5 +155,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+}
+
+class _HomeScreenView extends StatelessWidget {
+  const _HomeScreenView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const HomeScreen();
   }
 }

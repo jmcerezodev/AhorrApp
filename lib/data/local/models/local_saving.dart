@@ -1,21 +1,19 @@
 import 'package:isar/isar.dart';
 
-part 'local_history.g.dart';
+part 'local_saving.g.dart';
 
 @collection
-class LocalHistory {
+class LocalSaving {
   Id id = Isar.autoIncrement;
 
   @Index(unique: true, replace: true)
   late String appwriteId;
 
-  late String name;
+  late String userId;
   late double money;
-  late bool isIncome;
-  late String type; // 'income', 'expense'
-  late String currentDate;
-  late String currentHour;
   late String month;
   late int year;
+  late String description;
   late DateTime createdAt;
+  bool isSpent = false;
 }

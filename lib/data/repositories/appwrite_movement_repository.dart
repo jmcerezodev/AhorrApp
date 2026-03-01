@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/repositories/i_movement_repository.dart';
 import '../appwrite/appwrite_repository.dart';
@@ -26,9 +27,12 @@ class AppwriteMovementRepository implements IMovementRepository {
 
   @override
   Future<void> saveMovement(Movement movement) async {
+    final String uid = Preferences.uId;
+
     if (movement.type == MovementType.saving) {
       await _dataSource.addSaving(
-        userId: movement.id, // En la creación usamos el id como userId temporalmente según tu lógica actual
+        documentId: movement.id, // Usamos el ID del movimiento como ID del documento en Appwrite
+        userId: uid, 
         money: movement.amount,
         month: movement.month,
         year: movement.year,
@@ -36,7 +40,8 @@ class AppwriteMovementRepository implements IMovementRepository {
       );
     } else {
       await _dataSource.addHistory(
-        userId: movement.id,
+        documentId: movement.id, // Usamos el ID del movimiento como ID del documento en Appwrite
+        userId: uid,
         name: movement.name,
         money: movement.amount,
         isIncome: movement.isIncome,
@@ -50,8 +55,6 @@ class AppwriteMovementRepository implements IMovementRepository {
 
   @override
   Future<void> deleteMovement(String id) async {
-    // Aquí necesitamos saber si es de history o savings. 
-    // Por simplicidad en la transición, intentaremos en ambos o ampliaremos la lógica.
     try {
       await _dataSource.deleteHistory(id);
     } catch (_) {

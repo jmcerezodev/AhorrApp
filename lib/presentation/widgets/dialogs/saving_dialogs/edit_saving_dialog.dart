@@ -1,6 +1,7 @@
+import 'package:ahorrapp/core/di/service_locator.dart';
+import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
-import 'package:ahorrapp/data/local/local_db_service.dart';
-import 'package:ahorrapp/data/local/models/local_history.dart';
+import 'package:ahorrapp/data/local/models/local_saving.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
@@ -16,14 +17,40 @@ class EditSavingDialog extends StatefulWidget {
 }
 
 class _EditSavingDialogState extends State<EditSavingDialog> {
-  String newValue = '';
-  bool isValid = false;
+  bool isValid = true; 
   bool _isLoading = false;
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final historyCubit = context.read<HistoryCubit>();
+    Map<String, dynamic>? item;
+    for (final s in historyCubit.state.historyList) {
+      if (s['id'] == widget.savingId) {
+        item = s;
+        break;
+      }
+    }
+    
+    if (item != null) {
+      final double amount = (item['money'] as num).toDouble().abs();
+      _controller = TextEditingController(text: amount.toString());
+    } else {
+      _controller = TextEditingController();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final historyState = context.watch<HistoryCubit>().state;
-    final appwriteRepo = AppwriteRepository();
+    final appwriteRepo = getIt<AppwriteRepository>();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -38,7 +65,7 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
     if (item == null) return const SizedBox();
 
     final double oldAmount = (item['money'] as num).toDouble();
-    final bool isWithdrawal = oldAmount < 0; // Si es negativo, es una retirada
+    final bool isWithdrawal = oldAmount < 0;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -69,11 +96,10 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
             ),
             const SizedBox(height: 30),
             CustomInputTextWidget(
+              controller: _controller,
               label: isWithdrawal ? 'Nuevo importe de retirada' : 'Nuevo importe de ahorro', 
-              hintText: oldAmount.abs().toString(), // Mostramos siempre positivo para el usuario
               onChanged: (value) { 
                 setState(() { 
-                  newValue = value; 
                   isValid = double.tryParse(value.replaceAll(',', '.')) != null; 
                 }); 
               }, 
@@ -96,39 +122,39 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
                     onPressed: (isValid && !_isLoading) ? () async {
                       setState(() => _isLoading = true);
                       try {
-                        final double? inputMoney = double.tryParse(newValue.replaceAll(',', '.'));
+                        final double? inputMoney = double.tryParse(_controller.text.replaceAll(',', '.'));
                         if (inputMoney != null) {
-                          // Si era una retirada, el nuevo valor también debe ser negativo internamente
                           final double money = isWithdrawal ? -inputMoney : inputMoney;
 
-                          // 1. Actualizar en Appwrite (Nube)
+                          // 1. Actualizar en Appwrite
                           await appwriteRepo.updateSaving(documentId: widget.savingId, money: money);
                           
-                          if (mounted) {
-                            // 2. Sincronizar localmente (Isar)
+                          if (context.mounted) {
+                            // 2. Sincronizar localmente usando el modelo correcto (LocalSaving)
                             await context.read<HistoryCubit>().updateMovementLocally(
-                              LocalHistory()
+                              LocalSaving()
                                 ..appwriteId = widget.savingId
-                                ..name = isWithdrawal ? 'Retirada de ahorros' : 'Aportación de ahorro'
+                                ..userId = Preferences.uId
+                                ..description = isWithdrawal ? 'Retirada de ahorros' : 'Aportación de ahorro'
                                 ..money = money
-                                ..type = 'saving'
-                                ..isIncome = false
-                                ..currentDate = item!['currentDate'] ?? ''
-                                ..currentHour = item['currentHour'] ?? ''
-                                ..month = item['month'] ?? ''
+                                ..month = item!['month'] ?? ''
                                 ..year = item['year'] ?? 0
+                                ..isSpent = item['isSpent'] ?? false
                                 ..createdAt = DateTime.parse(item['createdAt']),
                               oldAmount
                             );
                             
-                            // 3. Refrescar contador de ahorros
+                            // 3. Refrescar total de ahorros
                             await context.read<SavingsCubit>().loadSavings();
                             
                             if (mounted) context.pop();
                           }
                         }
                       } catch (e) {
-                        if (mounted) setState(() => _isLoading = false);
+                        if (mounted) {
+                          setState(() => _isLoading = false);
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                        }
                       }
                     } : null,
                     style: ElevatedButton.styleFrom(
@@ -207,11 +233,9 @@ class DeleteSavingItemDialog extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
-                      // 1. Borrar de Appwrite y Local (SavingsCubit gestiona el total)
                       await context.read<SavingsCubit>().removeContribution(savingId);
                       
                       if (context.mounted) {
-                        // 2. Refrescar historial instantáneo (HistoryCubit)
                         await historyCubit.deleteMovementLocally(
                           savingId, 
                           item!['month'] ?? '', 

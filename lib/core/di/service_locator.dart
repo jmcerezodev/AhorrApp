@@ -7,12 +7,16 @@ import '../../data/repositories/isar_movement_repository.dart';
 import '../../domain/repositories/i_movement_repository.dart';
 import '../../domain/usecases/get_movements_usecase.dart';
 import '../../domain/usecases/save_movement_usecase.dart';
+import '../../presentation/bloc/total_money_cubit/total_money_cubit.dart';
 import '../auth/biometric_service.dart';
 import '../sync/sync_service.dart';
 
 final getIt = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
+  // --- Cubits Globales ---
+  getIt.registerSingleton<TotalMoneyCubit>(TotalMoneyCubit());
+
   // --- Data Sources & Services ---
   final localDbService = LocalDbService();
   await localDbService.init();
@@ -44,5 +48,6 @@ Future<void> setupServiceLocator() async {
         localRepository: getIt<IMovementRepository>(instanceName: 'local'),
         remoteRepository: getIt<IMovementRepository>(instanceName: 'remote'),
         localDbService: getIt<LocalDbService>(),
+        totalMoneyCubit: getIt<TotalMoneyCubit>(), // Inyectamos el cubit de balance
       ));
 }

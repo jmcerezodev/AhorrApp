@@ -141,18 +141,19 @@ class AppwriteRepository {
     return await _databases.updateDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId, data: data);
   }
 
-  Future<Document> addHistory({required String userId, required String name, required double money, required bool isIncome, required String currentDate, required String currentHour, required String month, required int year}) async {
-    return await _databases.createDocument(databaseId: _databaseId, collectionId: _historyId, documentId: ID.unique(), data: {'userId': userId, 'name': name, 'money': money, 'isIncome': isIncome, 'currentDate': currentDate, 'currentHour': currentHour, 'month': month, 'year': year});
+  // CORREGIDO: Acepta documentId para sincronía total con Isar
+  Future<Document> addHistory({required String documentId, required String userId, required String name, required double money, required bool isIncome, required String currentDate, required String currentHour, required String month, required int year}) async {
+    return await _databases.createDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId, data: {'userId': userId, 'name': name, 'money': money, 'isIncome': isIncome, 'currentDate': currentDate, 'currentHour': currentHour, 'month': month, 'year': year});
   }
 
-  Future<Document> addSaving({required String userId, required double money, required String month, required int year, String? description}) async {
-    return await _databases.createDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: ID.unique(), data: {'userId': userId, 'money': money, 'month': month, 'year': year, 'description': description ?? 'Aportación de ahorro', 'isSpent': false});
+  // CORREGIDO: Acepta documentId para sincronía total con Isar
+  Future<Document> addSaving({required String documentId, required String userId, required double money, required String month, required int year, String? description}) async {
+    return await _databases.createDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: documentId, data: {'userId': userId, 'money': money, 'month': month, 'year': year, 'description': description ?? 'Aportación de ahorro', 'isSpent': false});
   }
 
   Future<void> deleteHistory(String documentId) async => await _databases.deleteDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId);
   Future<void> deleteSaving(String documentId) async => await _databases.deleteDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: documentId);
   
-  // ACTUALIZADO: Permite enviar cualquier dato (como isSpent)
   Future<Document> updateSaving({required String documentId, Map<String, dynamic>? data, double? money}) async {
     return await _databases.updateDocument(
       databaseId: _databaseId, 

@@ -5,11 +5,13 @@ import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/local_history.dart';
+import 'package:ahorrapp/data/local/models/local_saving.dart';
 import 'package:ahorrapp/domain/usecases/get_movements_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:formz/formz.dart';
+import 'package:isar/isar.dart';
 
 part 'history_cubit_state.dart';
 
@@ -26,20 +28,28 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     await loadHistoryByDate(date.monthNames(), int.parse(date.year()));
   }
 
-  Future<void> forceBalanceResync() async {
-    emit(state.copyWith(isSyncing: true, syncProgress: 0.0));
+  Future<void> forceBalanceResync(TotalMoneyCubit totalMoneyCubit) async {
+    emit(state.copyWith(status: HistoryStatus.loading, isSyncing: true, syncProgress: 0.0));
     try {
       await _localDb.clearAll();
       final fullData = await _repository.syncFullData(
         Preferences.uId, 
         (progress) => emit(state.copyWith(syncProgress: progress))
       );
-      final List<LocalHistory> localItems = _convertToLocal(fullData['history'], fullData['savings']);
-      await _localDb.saveHistoryItems(localItems);
+      
+      // Procesamos historial
+      final List<LocalHistory> historyItems = _convertToLocalHistory(fullData['history']);
+      await _localDb.saveHistoryItems(historyItems);
+      
+      // Procesamos ahorros
+      final List<LocalSaving> savingItems = _convertToLocalSaving(fullData['savings']);
+      await _localDb.saveSavingItems(savingItems);
+
       await _localDb.saveSavingGoal(Preferences.uId, fullData['savingGoal']);
       final double correctBalance = fullData['balance'];
       await _localDb.saveTotalBalance(Preferences.uId, correctBalance);
       totalMoneyCubit.totalMoney(correctBalance);
+      
       emit(state.copyWith(isSyncing: false, syncProgress: 1.0, status: HistoryStatus.success));
       final date = Date();
       await loadHistoryByDate(date.monthNames(), int.parse(date.year()));
@@ -54,12 +64,13 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     try {
       final localTotalCount = await _localDb.getTotalCount();
       double globalBalance = await _localDb.getTotalBalance(Preferences.uId);
+      
       if (localTotalCount == 0) {
-        await forceBalanceResync();
+        await forceBalanceResync(totalMoneyCubit);
         return;
       }
-      totalMoneyCubit.totalMoney(globalBalance);
       
+      totalMoneyCubit.totalMoney(globalBalance);
       final movements = await _getMovementsUseCase(Preferences.uId, month, year);
       
       final List<Map<String, dynamic>> uiList = movements.map((e) => {
@@ -82,22 +93,34 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     }
   }
 
-  Future<void> addMovementLocally(LocalHistory item) async {
-    await _localDb.saveHistoryItems([item]);
-    if (item.type != 'saving') {
+  // --- MÉTODOS DE ACTUALIZACIÓN LOCAL (Soportando el split de tablas) ---
+
+  Future<void> addMovementLocally(dynamic item) async {
+    if (item is LocalSaving) {
+      await _localDb.saveSavingItems([item]);
+    } else if (item is LocalHistory) {
+      await _localDb.saveHistoryItems([item]);
       await _updateBalance(item.money, item.type == 'income');
     }
     await loadHistoryByDate(item.month, item.year);
   }
 
-  Future<void> updateMovementLocally(LocalHistory item, double oldAmount) async {
-    await _localDb.saveHistoryItems([item]);
-    if (item.type != 'saving') {
+  Future<void> updateMovementLocally(dynamic item, double oldAmount) async {
+    final isar = _localDb.isar;
+    
+    if (item is LocalSaving) {
+      final existing = await isar.localSavings.filter().appwriteIdEqualTo(item.appwriteId).findFirst();
+      if (existing != null) item.id = existing.id;
+      await _localDb.saveSavingItems([item]);
+    } else if (item is LocalHistory) {
+      final existing = await isar.localHistorys.filter().appwriteIdEqualTo(item.appwriteId).findFirst();
+      if (existing != null) item.id = existing.id;
+      await _localDb.saveHistoryItems([item]);
+      
       final double diff = item.type == 'income' ? (item.money - oldAmount) : (oldAmount - item.money);
-      if (diff != 0) {
-        await _updateBalance(diff.abs(), diff > 0);
-      }
+      if (diff != 0) await _updateBalance(diff.abs(), diff > 0);
     }
+    
     await loadHistoryByDate(item.month, item.year);
   }
 
@@ -117,40 +140,34 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     totalMoneyCubit.totalMoney(newBalance);
   }
 
-  List<LocalHistory> _convertToLocal(dynamic historyDocs, dynamic savingsDocs) {
-    final List<LocalHistory> results = [];
-    for (var doc in (historyDocs as List)) {
-      results.add(LocalHistory()
-        ..appwriteId = doc.$id
-        ..name = doc.data['name'] ?? 'Sin nombre'
-        ..money = (doc.data['money'] as num).toDouble()
-        ..type = (doc.data['isIncome'] == true) ? 'income' : 'expense'
-        ..isIncome = doc.data['isIncome'] ?? false
-        ..isSpent = false
-        ..currentDate = doc.data['currentDate'] ?? ''
-        ..currentHour = doc.data['currentHour'] ?? ''
-        ..month = doc.data['month']?.toString() ?? ''
-        ..year = int.tryParse(doc.data['year']?.toString() ?? '0') ?? 0
-        ..createdAt = DateTime.parse(doc.$createdAt)
-      );
-    }
-    for (var doc in (savingsDocs as List)) {
+  List<LocalHistory> _convertToLocalHistory(dynamic historyDocs) {
+    return (historyDocs as List).map((doc) => LocalHistory()
+      ..appwriteId = doc.$id
+      ..name = doc.data['name'] ?? 'Sin nombre'
+      ..money = (doc.data['money'] as num).toDouble()
+      ..type = (doc.data['isIncome'] == true) ? 'income' : 'expense'
+      ..isIncome = doc.data['isIncome'] ?? false
+      ..currentDate = doc.data['currentDate'] ?? ''
+      ..currentHour = doc.data['currentHour'] ?? ''
+      ..month = doc.data['month']?.toString() ?? ''
+      ..year = int.tryParse(doc.data['year']?.toString() ?? '0') ?? 0
+      ..createdAt = DateTime.parse(doc.$createdAt)
+    ).toList();
+  }
+
+  List<LocalSaving> _convertToLocalSaving(dynamic savingsDocs) {
+    return (savingsDocs as List).map((doc) {
       final DateTime date = DateTime.parse(doc.$createdAt);
-      results.add(LocalHistory()
+      return LocalSaving()
         ..appwriteId = doc.$id
-        ..name = doc.data['description'] ?? 'Ahorro'
+        ..userId = doc.data['userId'] ?? ''
         ..money = (doc.data['money'] as num).toDouble()
-        ..type = 'saving'
-        ..isIncome = false
-        ..isSpent = doc.data['isSpent'] ?? false
-        ..currentDate = "${date.day}/${date.month}/${date.year}"
-        ..currentHour = "${date.hour}:${date.minute}"
         ..month = doc.data['month'] ?? ''
         ..year = doc.data['year'] ?? 0
-        ..createdAt = date
-      );
-    }
-    return results;
+        ..description = doc.data['description'] ?? 'Ahorro'
+        ..isSpent = doc.data['isSpent'] ?? false
+        ..createdAt = date;
+    }).toList();
   }
 
   void toggleIncomes(bool value) => emit(state.copyWith(showIncomes: value));

@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
@@ -15,17 +16,46 @@ class EditItemHistoryDialog extends StatefulWidget {
 }
 
 class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
+  bool _isLoading = false;
+  late TextEditingController _nameController;
+  late TextEditingController _moneyController;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HistoryCubit>().resetCubit();
-    });
+    final historyCubit = context.read<HistoryCubit>();
+    Map<String, dynamic>? item;
+    for (final i in historyCubit.state.historyList) {
+      if (i['id'] == widget.itemId) {
+        item = i;
+        break;
+      }
+    }
+
+    if (item != null) {
+      _nameController = TextEditingController(text: item['name']);
+      _moneyController = TextEditingController(text: item['money'].toString());
+      // Inicializamos el Cubit con los valores actuales para que el botón se active
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        historyCubit.newNameChanged(item!['name']);
+        historyCubit.newMoneyChanged(item['money'].toString());
+      });
+    } else {
+      _nameController = TextEditingController();
+      _moneyController = TextEditingController();
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _moneyController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final appwriteRepo = AppwriteRepository();
+    final appwriteRepo = getIt<AppwriteRepository>();
     final historyState = context.watch<HistoryCubit>().state;
     final historyCubit = context.read<HistoryCubit>();
     final colorScheme = Theme.of(context).colorScheme;
@@ -68,33 +98,25 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
               ],
             ),
             const SizedBox(height: 30),
-            CustomInputTextWidget(label: 'Nuevo concepto', hintText: itemResult['name'], onChanged: historyCubit.newNameChanged, errorText: historyState.newName.isPure ? null : historyState.newName.errorMessage, textInputType: TextInputType.name),
+            CustomInputTextWidget(controller: _nameController, label: 'Nuevo concepto', onChanged: historyCubit.newNameChanged, errorText: historyState.newName.isPure ? null : historyState.newName.errorMessage, textInputType: TextInputType.name),
             const SizedBox(height: 15),
-            CustomInputTextWidget(label: 'Nuevo importe', hintText: itemResult['money'].toString(), onChanged: historyCubit.newMoneyChanged, errorText: historyState.newMoney.isPure ? null : historyState.newMoney.errorMessage, textInputType: const TextInputType.numberWithOptions(decimal: true)),
+            CustomInputTextWidget(controller: _moneyController, label: 'Nuevo importe', onChanged: historyCubit.newMoneyChanged, errorText: historyState.newMoney.isPure ? null : historyState.newMoney.errorMessage, textInputType: const TextInputType.numberWithOptions(decimal: true)),
             const SizedBox(height: 30),
             Row(
               children: [
-                Expanded(child: TextButton(onPressed: () => context.pop(), child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1)))),
+                Expanded(child: TextButton(onPressed: _isLoading ? null : () => context.pop(), child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1)))),
                 const SizedBox(width: 15),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: (historyState.newName.isValid || historyState.newMoney.isValid) 
+                    onPressed: (historyState.isValid && !_isLoading) 
                     ? () async {
-                        final Map<String, dynamic> updateData = {};
-                        String finalName = itemResult!['name'];
-                        double finalAmount = oldAmount;
+                        setState(() => _isLoading = true);
+                        try {
+                          final String finalName = historyState.newName.value;
+                          final double finalAmount = double.parse(historyState.newMoney.value.replaceAll(',', '.'));
 
-                        if (historyState.newName.isValid) {
-                          finalName = historyState.newName.value;
-                          updateData['name'] = finalName;
-                        }
-                        if (historyState.newMoney.isValid) {
-                          finalAmount = double.parse(historyState.newMoney.value.replaceAll(',', '.'));
-                          updateData['money'] = finalAmount;
-                        }
-
-                        if (updateData.isNotEmpty) {
-                          await appwriteRepo.updateHistory(documentId: widget.itemId, data: updateData);
+                          await appwriteRepo.updateHistory(documentId: widget.itemId, data: {'name': finalName, 'money': finalAmount});
+                          
                           if (context.mounted) {
                             await historyCubit.updateMovementLocally(
                               LocalHistory()
@@ -103,7 +125,7 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
                                 ..money = finalAmount
                                 ..isIncome = isIncomeResult
                                 ..type = isIncomeResult ? 'income' : 'expense'
-                                ..currentDate = itemResult['currentDate']
+                                ..currentDate = itemResult!['currentDate']
                                 ..currentHour = itemResult['currentHour']
                                 ..month = itemResult['month']
                                 ..year = itemResult['year']
@@ -113,10 +135,15 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
                             historyCubit.resetCubit();
                             context.pop();
                           }
+                        } catch (e) {
+                          if (mounted) setState(() => _isLoading = false);
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
                         }
                     } : null,
                     style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 15), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-                    child: const Text('ACTUALIZAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: _isLoading 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('ACTUALIZAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
                 ),
               ],

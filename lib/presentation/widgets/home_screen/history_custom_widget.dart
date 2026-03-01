@@ -297,8 +297,6 @@ class _HistoryItem extends StatelessWidget {
 
     final moneyString = humanizeNumbers.number(amount.abs());
     
-    // Solo mostramos 'GASTADO' si es una aportación positiva marcada como tal.
-    // Una retirada (negativa) ya implica gasto por sí misma.
     final bool showSpentLabel = isSpent && amount >= 0;
 
     return Padding(
@@ -334,6 +332,7 @@ class _HistoryItem extends StatelessWidget {
                 builder: (context) => EditItemHistoryDialog(itemId: item['id']),
               );
             } else {
+              // CORREGIDO: Usamos el nombre correcto del diálogo de borrado para ahorros
               if (type == 'saving') {
                 return showDialog(
                   barrierDismissible: false,

@@ -11,17 +11,20 @@ void main() {
 
   setUp(() {
     mockLocalDb = MockLocalDbService();
-    // Ahora inyectamos el mock para evitar el error de Isar no inicializado
     repository = IsarMovementRepository(localDb: mockLocalDb);
   });
 
   group('IsarMovementRepository - Blindaje de Datos', () {
     test('getMovementsByMonth debe retornar una lista vacía si no hay datos en Isar', () async {
+      // CORREGIDO: Ahora mockeamos ambas tablas para que no devuelvan Null
       when(() => mockLocalDb.getHistoryByMonth(any(), any())).thenAnswer((_) async => []);
+      when(() => mockLocalDb.getSavingsByMonth(any(), any())).thenAnswer((_) async => []);
       
       final results = await repository.getMovementsByMonth('user123', 'October', 2023);
+      
       expect(results, isEmpty);
       verify(() => mockLocalDb.getHistoryByMonth('October', 2023)).called(1);
+      verify(() => mockLocalDb.getSavingsByMonth('October', 2023)).called(1);
     });
   });
 }
