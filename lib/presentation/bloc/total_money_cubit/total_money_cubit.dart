@@ -8,7 +8,7 @@ class TotalMoneyCubit extends Cubit<TotalMoneyCubitState> {
 
    void addition(double value){
     emit(
-      state.copyWhith(
+      state.copyWith(
         totalMoney: state.totalMoney + value
       )
     );
@@ -16,16 +16,15 @@ class TotalMoneyCubit extends Cubit<TotalMoneyCubitState> {
 
    void subtraction(double value){
     emit(
-      state.copyWhith(
+      state.copyWith(
         totalMoney: state.totalMoney - value
       )
     );
    }
 
    void totalMoney(double value){
-    emit(state.copyWhith(
+    emit(state.copyWith(
       totalMoney: value
     ));
    }
 }
-

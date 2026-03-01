@@ -1,7 +1,3 @@
-import 'package:ahorrapp/core/date/date.dart';
-import 'package:ahorrapp/core/shared_preferences/preferences.dart';
-import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
-import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/saving_dialogs/savings_empty_dialog_widget.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/saving_dialogs/savings_withdraw_dialog.dart';
@@ -18,8 +14,6 @@ class SavingsDialog extends StatefulWidget {
 }
 
 class _SavingsDialogState extends State<SavingsDialog> {
-  bool _isLoading = false;
-
   @override
   void initState() {
     super.initState();
@@ -30,11 +24,11 @@ class _SavingsDialogState extends State<SavingsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final date = Date();
-    final AppwriteRepository appwriteRepo = AppwriteRepository();
     final savingsCubit = context.watch<SavingsCubit>();
+    final historyCubit = context.read<HistoryCubit>();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isLoading = savingsCubit.state.formStatus == FormStatusSavings.validating;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -78,7 +72,7 @@ class _SavingsDialogState extends State<SavingsDialog> {
                   ],
                 ),
                 IconButton(
-                  onPressed: _isLoading ? null : () {
+                  onPressed: isLoading ? null : () {
                     context.pop();
                     showDialog(
                       context: context,
@@ -97,50 +91,20 @@ class _SavingsDialogState extends State<SavingsDialog> {
               onChanged: savingsCubit.savingChanged,
               errorText: savingsCubit.state.saving.isPure ? null : savingsCubit.state.saving.errorMessage,
               textInputType: const TextInputType.numberWithOptions(decimal: true),
-              enabled: !_isLoading,
+              enabled: !isLoading,
             ),
             const SizedBox(height: 30),
 
             Column(
               children: [
-                // BOTÓN AHORRAR (Principal)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: (savingsCubit.state.isValid && !_isLoading)
+                    onPressed: (savingsCubit.state.isValid && !isLoading)
                     ? () async {
-                        setState(() => _isLoading = true);
-                        try {
-                          final double amount = double.parse(savingsCubit.state.saving.value.replaceAll(',', '.'));
-                          final String monthName = date.monthNames();
-                          final int yearInt = int.parse(date.year());
-
-                          final doc = await appwriteRepo.addSaving(
-                            userId: Preferences.uId,
-                            money: amount,
-                            month: monthName,
-                            year: yearInt,
-                          );
-
-                          if (mounted) {
-                            await context.read<HistoryCubit>().addMovementLocally(
-                              LocalHistory()
-                                ..appwriteId = doc.$id
-                                ..name = 'Aportación de ahorro'
-                                ..money = amount
-                                ..type = 'saving'
-                                ..isIncome = false
-                                ..currentDate = date.currentDate()
-                                ..currentHour = date.currentHour()
-                                ..month = monthName
-                                ..year = yearInt
-                                ..createdAt = DateTime.parse(doc.$createdAt)
-                            );
-                            await context.read<SavingsCubit>().loadSavings();
-                            if (mounted) context.pop();
-                          }
-                        } catch (e) {
-                          if (mounted) setState(() => _isLoading = false);
+                        await context.read<SavingsCubit>().addSaving(historyCubit);
+                        if (context.mounted && context.read<SavingsCubit>().state.formStatus == FormStatusSavings.valid) {
+                          context.pop();
                         }
                       }
                     : null,
@@ -151,7 +115,7 @@ class _SavingsDialogState extends State<SavingsDialog> {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
-                    child: _isLoading 
+                    child: isLoading 
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : const Text('AHORRAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
@@ -159,11 +123,10 @@ class _SavingsDialogState extends State<SavingsDialog> {
                 
                 const SizedBox(height: 12),
 
-                // BOTÓN RETIRAR (Secundario)
                 SizedBox(
                   width: double.infinity,
                   child: TextButton.icon(
-                    onPressed: _isLoading ? null : () {
+                    onPressed: isLoading ? null : () {
                       context.pop();
                       showDialog(
                         context: context,

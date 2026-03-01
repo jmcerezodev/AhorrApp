@@ -1,7 +1,3 @@
-import 'package:ahorrapp/core/date/date.dart';
-import 'package:ahorrapp/core/shared_preferences/preferences.dart';
-import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
-import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
@@ -26,10 +22,8 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final date = Date();
-    final AppwriteRepository appwriteRepo = AppwriteRepository();
     final expensesCubit = context.watch<ExpensesCubit>();
-    // CORRECCIÓN: Accedemos al valor numérico dentro del estado
+    final historyCubit = context.read<HistoryCubit>();
     final double totalBalance = context.watch<TotalMoneyCubit>().state.totalMoney;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -107,6 +101,7 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                 onChanged: expensesCubit.expenseNameChanged,
                 errorText: expensesCubit.state.expenseName.isPure ? null : expensesCubit.state.expenseName.errorMessage,
                 textInputType: TextInputType.name,
+                enabled: expensesCubit.state.formStatus != FormStatusExpenses.validating,
               ),
               const SizedBox(height: 15),
               CustomInputTextWidget(
@@ -117,6 +112,7 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                     ? 'Excede el saldo disponible' 
                     : (expensesCubit.state.expenseMoney.isPure ? null : expensesCubit.state.expenseMoney.errorMessage),
                 textInputType: const TextInputType.numberWithOptions(decimal: true),
+                enabled: expensesCubit.state.formStatus != FormStatusExpenses.validating,
               ),
               const SizedBox(height: 30),
 
@@ -124,7 +120,9 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: () => context.pop(),
+                      onPressed: expensesCubit.state.formStatus == FormStatusExpenses.validating 
+                        ? null 
+                        : () => context.pop(),
                       style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
                       child: Text(
                         'CANCELAR', 
@@ -139,43 +137,10 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: (expensesCubit.state.isValid && hasEnoughBalance && typedAmount > 0) 
+                      onPressed: (expensesCubit.state.isValid && hasEnoughBalance && typedAmount > 0 && expensesCubit.state.formStatus != FormStatusExpenses.validating) 
                       ? () async {
-                        expensesCubit.onSubmit();
-                        
-                        final double amount = typedAmount;
-                        final String month = date.monthNames();
-                        final int year = int.parse(date.year());
-
-                        // 1. Guardar en Appwrite
-                        final doc = await appwriteRepo.addHistory(
-                          userId: Preferences.uId,
-                          name: expensesCubit.state.expenseName.value,
-                          money: amount,
-                          isIncome: false,
-                          currentDate: date.currentDate(),
-                          currentHour: date.currentHour(),
-                          month: month,
-                          year: year,
-                        );
-
-                        // 2. Guardar en Isar (Local) para velocidad instantánea
-                        if (context.mounted) {
-                          await context.read<HistoryCubit>().addMovementLocally(
-                            LocalHistory()
-                              ..appwriteId = doc.$id
-                              ..name = doc.data['name']
-                              ..money = amount
-                              ..type = 'expense'
-                              ..isIncome = false
-                              ..currentDate = doc.data['currentDate']
-                              ..currentHour = doc.data['currentHour']
-                              ..month = month
-                              ..year = year
-                              ..createdAt = DateTime.parse(doc.$createdAt)
-                          );
-
-                          expensesCubit.resetCubit();
+                        await expensesCubit.saveExpense(historyCubit);
+                        if (context.mounted && expensesCubit.state.formStatus == FormStatusExpenses.valid) {
                           context.pop();
                         }
                       }
@@ -187,7 +152,9 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
-                      child: const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      child: expensesCubit.state.formStatus == FormStatusExpenses.validating
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                     ),
                   ),
                 ],

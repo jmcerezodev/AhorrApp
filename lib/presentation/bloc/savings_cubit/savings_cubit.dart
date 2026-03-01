@@ -1,19 +1,24 @@
 import 'package:ahorrapp/core/date/date.dart';
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/inputs/inputs.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/local_history.dart';
+import 'package:ahorrapp/domain/entities/movement.dart';
+import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:formz/formz.dart';
+import 'package:uuid/uuid.dart';
 
 part 'savings_cubit_state.dart';
 
 class SavingsCubit extends Cubit<SavingsCubitState> {
-  final AppwriteRepository _repository = AppwriteRepository();
-  final LocalDbService _localDb = LocalDbService();
+  final AppwriteRepository _repository = getIt<AppwriteRepository>();
+  final LocalDbService _localDb = getIt<LocalDbService>();
+  final SaveMovementUseCase _saveMovementUseCase = getIt<SaveMovementUseCase>();
 
   SavingsCubit() : super(const SavingsCubitState()) {
     if (Preferences.uId.isNotEmpty) {
@@ -38,39 +43,35 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
     }
   }
 
-  Future<void> addContribution() async {
-    final double? value = double.tryParse(state.saving.value.replaceAll(',', '.'));
-    if (value == null) return;
+  Future<void> addSaving(HistoryCubit historyCubit, {double? customAmount, String? customName}) async {
+    final double amount = customAmount ?? double.parse(state.saving.value.replaceAll(',', '.'));
+    final String name = customName ?? 'Aportación de ahorro';
+
+    emit(state.copyWith(formStatus: FormStatusSavings.validating));
 
     final date = Date();
     final String month = date.monthNames();
     final int year = int.parse(date.year());
+    final String tempId = const Uuid().v4();
 
-    emit(state.copyWith(formStatus: FormStatusSavings.validating));
+    final movement = Movement(
+      id: tempId,
+      name: name,
+      amount: amount,
+      type: MovementType.saving,
+      isIncome: false,
+      date: date.currentDate(),
+      hour: date.currentHour(),
+      month: month,
+      year: year,
+      createdAt: DateTime.now(),
+    );
+
     try {
-      final doc = await _repository.addSaving(
-        userId: Preferences.uId,
-        money: value,
-        month: month,
-        year: year,
-      );
-
-      await _localDb.saveHistoryItems([
-        LocalHistory()
-          ..appwriteId = doc.$id
-          ..name = 'Aportación de ahorro'
-          ..money = value
-          ..type = 'saving'
-          ..isIncome = false
-          ..currentDate = date.currentDate()
-          ..currentHour = date.currentHour()
-          ..month = month
-          ..year = year
-          ..createdAt = DateTime.parse(doc.$createdAt)
-          ..isSpent = false
-      ]);
-
+      await _saveMovementUseCase(movement);
       await loadSavings();
+      await historyCubit.loadHistoryByDate(month, year);
+      emit(state.copyWith(formStatus: FormStatusSavings.valid));
     } catch (e) {
       emit(state.copyWith(formStatus: FormStatusSavings.invalid));
     }
@@ -79,20 +80,14 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
   Future<void> emptySavings(HistoryCubit historyCubit) async {
     emit(state.copyWith(formStatus: FormStatusSavings.validating));
     try {
-      // 1. Marcamos localmente en Isar como gastados
       final List<String> appwriteIds = await _localDb.markSavingsAsSpent();
-      
-      // 2. Sincronizamos con Appwrite (Colección savingsList)
       for (var id in appwriteIds) {
-        // CORRECCIÓN: Actualizamos el campo isSpent en la nube
         await _repository.updateSaving(documentId: id, data: {'isSpent': true});
       }
-
-      // 3. Recargamos datos para actualizar UI
       await loadSavings();
       final date = Date();
       await historyCubit.loadHistoryByDate(date.monthNames(), int.parse(date.year()));
-      
+      emit(state.copyWith(formStatus: FormStatusSavings.valid));
     } catch (e) {
       emit(state.copyWith(formStatus: FormStatusSavings.invalid));
     }

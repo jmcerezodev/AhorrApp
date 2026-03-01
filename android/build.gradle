@@ -10,13 +10,26 @@ subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
 
-// SOLUCIÓN PARA ISAR: Forzamos el namespace en las librerías antiguas
+// SOLUCIÓN PARA ISAR Y OBSOLESCENCIA DE JAVA 8
 subprojects {
     afterEvaluate { project ->
         if (project.hasProperty('android')) {
             project.android {
                 if (namespace == null) {
                     namespace = project.group
+                }
+                
+                // Forzamos Java 17 en todos los plugins y subproyectos de forma segura
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+
+                // Ajustamos Kotlin si está presente dentro del bloque android
+                if (project.plugins.hasPlugin('kotlin-android')) {
+                    kotlinOptions {
+                        jvmTarget = "17"
+                    }
                 }
             }
         }

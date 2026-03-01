@@ -16,7 +16,7 @@ class IncomesCubitState extends Equatable {
     this.incomeMoney = const IncomeMoneyInput.pure(),
   });
 
-  IncomesCubitState copyWhith({
+  IncomesCubitState copyWith({
     FormStatusIncomes? formStatus,
     bool? isValid,
     IncomeNameInput? incomeName,
@@ -36,6 +36,3 @@ class IncomesCubitState extends Equatable {
     incomeMoney,
   ];
 }
-
-
-

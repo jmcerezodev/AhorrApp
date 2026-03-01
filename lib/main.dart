@@ -1,10 +1,10 @@
 import 'package:ahorrapp/config/routes/app_router.dart';
 import 'package:ahorrapp/config/theme/app_theme.dart';
 import 'package:ahorrapp/core/auth/biometric_service.dart';
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/core/sync/sync_service.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
-import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:flutter/services.dart';
@@ -16,11 +16,12 @@ import 'dart:io';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 1. INICIALIZAMOS PREFERENCIAS Y EL SERVICE LOCATOR (Clean Architecture)
   await Preferences.init();
-  await LocalDbService().init();
+  await setupServiceLocator();
   
-  // INICIALIZAMOS EL SERVICIO DE SINCRONIZACIÓN OFFLINE
-  SyncService().init();
+  // 2. INICIALIZAMOS EL SERVICIO DE SINCRONIZACIÓN OFFLINE
+  getIt<SyncService>().init();
 
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     systemNavigationBarColor: Colors.transparent,
@@ -32,8 +33,8 @@ void main() async {
 
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  final authService = AuthAppwrite();
-  final biometricService = BiometricService();
+  final authService = getIt<AuthAppwrite>();
+  final biometricService = getIt<BiometricService>();
   
   String initialRoute = '/login';
   bool isAuthRequired = Preferences.uId.isNotEmpty;
@@ -74,7 +75,8 @@ class MainAppWrapper extends StatefulWidget {
 
 class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObserver {
   late GoRouter router;
-  final totalMoneyCubit = TotalMoneyCubit();
+  // Usamos el Service Locator para obtener el Cubit estable
+  final totalMoneyCubit = TotalMoneyCubit(); 
   bool _isAuthenticating = false;
   bool _wasPaused = false;
 
@@ -88,7 +90,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    SyncService().dispose(); // Limpiamos el servicio
+    // El SyncService se limpia solo si es necesario o vía getIt
     super.dispose();
   }
 
@@ -109,7 +111,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
 
     _isAuthenticating = true;
     
-    final biometricService = BiometricService();
+    final biometricService = getIt<BiometricService>();
     final authenticated = await biometricService.authenticate();
     
     if (!authenticated) {

@@ -1,7 +1,3 @@
-import 'package:ahorrapp/core/date/date.dart';
-import 'package:ahorrapp/core/shared_preferences/preferences.dart';
-import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
-import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,9 +22,8 @@ class _IncomesDialogState extends State<IncomesDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final date = Date();
-    final AppwriteRepository appwriteRepo = AppwriteRepository();
     final incomesCubit = context.watch<IncomesCubit>();
+    final historyCubit = context.read<HistoryCubit>();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -94,7 +89,9 @@ class _IncomesDialogState extends State<IncomesDialog> {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: () => context.pop(),
+                      onPressed: incomesCubit.state.formStatus == FormStatusIncomes.validating 
+                        ? null 
+                        : () => context.pop(),
                       style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
                       child: Text(
                         'CANCELAR', 
@@ -109,43 +106,11 @@ class _IncomesDialogState extends State<IncomesDialog> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: (incomesCubit.state.isValid) 
+                      onPressed: (incomesCubit.state.isValid && incomesCubit.state.formStatus != FormStatusIncomes.validating) 
                       ? () async {
-                        incomesCubit.onSubmit();
-                        
-                        final double amount = double.parse(incomesCubit.state.incomeMoney.value.replaceAll(',', '.'));
-                        final String month = date.monthNames();
-                        final int year = int.parse(date.year());
-
-                        // 1. Guardar en Appwrite (Nube)
-                        final doc = await appwriteRepo.addHistory(
-                          userId: Preferences.uId,
-                          name: incomesCubit.state.incomeName.value,
-                          money: amount,
-                          isIncome: true,
-                          currentDate: date.currentDate(),
-                          currentHour: date.currentHour(),
-                          month: month,
-                          year: year,
-                        );
-
-                        // 2. Guardar en Isar (Local) para velocidad instantánea
-                        if (context.mounted) {
-                          await context.read<HistoryCubit>().addMovementLocally(
-                            LocalHistory()
-                              ..appwriteId = doc.$id
-                              ..name = doc.data['name']
-                              ..money = amount
-                              ..type = 'income'
-                              ..isIncome = true
-                              ..currentDate = doc.data['currentDate']
-                              ..currentHour = doc.data['currentHour']
-                              ..month = month
-                              ..year = year
-                              ..createdAt = DateTime.parse(doc.$createdAt)
-                          );
-
-                          incomesCubit.resetCubit();
+                        // Llamamos al método refactorizado del Cubit
+                        await incomesCubit.saveIncome(historyCubit);
+                        if (context.mounted && incomesCubit.state.formStatus == FormStatusIncomes.valid) {
                           context.pop();
                         }
                       }
@@ -157,7 +122,9 @@ class _IncomesDialogState extends State<IncomesDialog> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
-                      child: const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      child: incomesCubit.state.formStatus == FormStatusIncomes.validating
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                     ),
                   ),
                 ],

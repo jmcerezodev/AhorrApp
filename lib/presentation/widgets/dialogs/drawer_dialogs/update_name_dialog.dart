@@ -1,6 +1,6 @@
 import 'package:ahorrapp/core/appwrite/appwrite_service.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
-import 'package:ahorrapp/presentation/bloc/authenticaction_cubits/update_name/update_name_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/authentication_cubits/update_name/update_name_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog_no_go.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/error_dialog.dart';
@@ -64,7 +64,7 @@ class UpdateNameDialog extends StatelessWidget {
 
             CustomInputTextWidget(
               label: 'Nuevo Nombre',
-              hintText: updateNameCubit.state.name, // Usamos el nombre del cubit
+              hintText: updateNameCubit.state.name,
               onChanged: updateNameCubit.newNameChanged,
               autoFocus: true,
               obscureText: false,
@@ -99,7 +99,6 @@ class UpdateNameDialog extends StatelessWidget {
                         final newName = updateNameCubit.state.newName.value;
                         await AppwriteService().account.updateName(name: newName);
                         
-                        // Sincronizamos preferencias y el Cubit para el Home
                         Preferences.name = newName;
                         updateNameCubit.onUpdateSuccess(newName);
                         

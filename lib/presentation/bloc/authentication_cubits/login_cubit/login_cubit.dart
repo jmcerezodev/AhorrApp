@@ -17,7 +17,7 @@ class LoginCubit extends Cubit<LoginCubitState> {
     final password = PasswordLogin.dirty(value: state.password.value);
 
     emit(
-      state.copyWhith(
+      state.copyWith(
         formStatus: FormStatusLogin.validating,
         email: email,
         password: password,
@@ -26,14 +26,14 @@ class LoginCubit extends Cubit<LoginCubitState> {
     );
 
     if (!state.isValid) {
-      emit(state.copyWhith(formStatus: FormStatusLogin.invalid));
+      emit(state.copyWith(formStatus: FormStatusLogin.invalid));
       return;
     }
 
     try {
       final result = await _auth.signInEmailAndPassword(
         state.email.value, 
-        state.password.value
+        state.password.value,
       );
 
       if (result is String) { // Éxito (retorna el userId)
@@ -42,30 +42,29 @@ class LoginCubit extends Cubit<LoginCubitState> {
           Preferences.email = state.email.value;
           Preferences.password = state.password.value;
         } else {
-          // Si no está marcado, podrías limpiar las credenciales antiguas si lo deseas
           Preferences.email = '';
           Preferences.password = '';
         }
         
-        emit(state.copyWhith(formStatus: FormStatusLogin.valid));
+        emit(state.copyWith(formStatus: FormStatusLogin.valid));
       } else {
-        emit(state.copyWhith(formStatus: FormStatusLogin.invalid));
+        emit(state.copyWith(formStatus: FormStatusLogin.invalid));
       }
     } catch (e) {
-      emit(state.copyWhith(formStatus: FormStatusLogin.invalid));
+      emit(state.copyWith(formStatus: FormStatusLogin.invalid));
     }
   }
 
   void isRememberChanged(bool value) {
-    emit(state.copyWhith(isRemember: value));
+    emit(state.copyWith(isRemember: value));
   }
 
   void isPasswordVisible() {
-    emit(state.copyWhith(passwordEncripted: !state.passwordEncripted));
+    emit(state.copyWith(passwordEncripted: !state.passwordEncripted));
   }
 
   void resetCubit() {
-    emit(state.copyWhith(
+    emit(state.copyWith(
       email: const EmailLogin.pure(),
       password: const PasswordLogin.pure(),
       formStatus: FormStatusLogin.editing,
@@ -75,7 +74,7 @@ class LoginCubit extends Cubit<LoginCubitState> {
 
   void emailChanged(String value) {
     final email = EmailLogin.dirty(value: value);
-    emit(state.copyWhith(
+    emit(state.copyWith(
       email: email,
       isValid: Formz.validate([email, state.password]),
       formStatus: FormStatusLogin.editing,
@@ -84,7 +83,7 @@ class LoginCubit extends Cubit<LoginCubitState> {
 
   void passwordChanged(String value) {
     final password = PasswordLogin.dirty(value: value);
-    emit(state.copyWhith(
+    emit(state.copyWith(
       password: password,
       isValid: Formz.validate([password, state.email]),
       formStatus: FormStatusLogin.editing,

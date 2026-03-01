@@ -1,55 +1,74 @@
+import 'package:ahorrapp/core/date/date.dart';
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/inputs/inputs.dart';
-import 'package:equatable/equatable.dart';
+import 'package:ahorrapp/core/shared_preferences/preferences.dart';
+import 'package:ahorrapp/domain/entities/movement.dart';
+import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
+import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:formz/formz.dart';
+import 'package:uuid/uuid.dart';
 
 part 'incomes_cubit_state.dart';
 
 class IncomesCubit extends Cubit<IncomesCubitState> {
+  final SaveMovementUseCase _saveMovementUseCase = getIt<SaveMovementUseCase>();
+
   IncomesCubit() : super(const IncomesCubitState());
 
-   void onSubmit(){
-    emit(
-      state.copyWhith(
-        formStatus: FormStatusIncomes.validating,
-        incomeName: IncomeNameInput.dirty(value: state.incomeName.value),
-        incomeMoney: IncomeMoneyInput.dirty(value: state.incomeMoney.value),
-        isValid: Formz.validate([
-          state.incomeMoney,
-          state.incomeName,
-        ]),
-      )
-    );
-   }
+  Future<void> saveIncome(HistoryCubit historyCubit) async {
+    if (!state.isValid) return;
 
-   void resetCubit(){
-    emit(
-      state.copyWhith(
-        incomeName: const IncomeNameInput.pure(),
-        incomeMoney: const IncomeMoneyInput.pure(),
-      )
-    );
-   }
+    emit(state.copyWith(formStatus: FormStatusIncomes.validating));
 
-   void incomeNameChanged(String value){
+    final date = Date();
+    final double amount = double.parse(state.incomeMoney.value.replaceAll(',', '.'));
+    final String month = date.monthNames();
+    final int year = int.parse(date.year());
+    
+    // CORREGIDO: Eliminamos const para evitar error de compilación
+    final String tempId = const Uuid().v4();
+
+    final movement = Movement(
+      id: tempId,
+      name: state.incomeName.value,
+      amount: amount,
+      type: MovementType.income,
+      isIncome: true,
+      date: date.currentDate(),
+      hour: date.currentHour(),
+      month: month,
+      year: year,
+      createdAt: DateTime.now(),
+    );
+
+    try {
+      await _saveMovementUseCase(movement);
+      await historyCubit.loadHistoryByDate(month, year);
+      emit(state.copyWith(formStatus: FormStatusIncomes.valid));
+    } catch (e) {
+      emit(state.copyWith(formStatus: FormStatusIncomes.invalid));
+    }
+  }
+
+  void resetCubit() {
+    emit(const IncomesCubitState());
+  }
+
+  void incomeNameChanged(String value) {
     final incomeName = IncomeNameInput.dirty(value: value);
-    emit(
-      state.copyWhith(
-        incomeName: incomeName,
-        isValid: Formz.validate([ incomeName, state.incomeMoney ]),
-      )
-    );    
+    emit(state.copyWith(
+      incomeName: incomeName,
+      isValid: Formz.validate([incomeName, state.incomeMoney]),
+    ));
   }
 
-  void incomeMoneyChanged(String value){
+  void incomeMoneyChanged(String value) {
     final incomeMoney = IncomeMoneyInput.dirty(value: value);
-    emit(
-      state.copyWhith(
-        incomeMoney: incomeMoney,
-        isValid: Formz.validate([incomeMoney, state.incomeName]),
-      )
-    );    
+    emit(state.copyWith(
+      incomeMoney: incomeMoney,
+      isValid: Formz.validate([incomeMoney, state.incomeName]),
+    ));
   }
-  
 }
-

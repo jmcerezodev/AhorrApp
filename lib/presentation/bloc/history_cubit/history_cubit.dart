@@ -1,9 +1,11 @@
 import 'package:ahorrapp/core/date/date.dart';
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/inputs/inputs.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/local_history.dart';
+import 'package:ahorrapp/domain/usecases/get_movements_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,8 +14,9 @@ import 'package:formz/formz.dart';
 part 'history_cubit_state.dart';
 
 class HistoryCubit extends Cubit<HistoryCubitState> {
-  final AppwriteRepository _repository = AppwriteRepository();
-  final LocalDbService _localDb = LocalDbService();
+  final GetMovementsUseCase _getMovementsUseCase = getIt<GetMovementsUseCase>();
+  final AppwriteRepository _repository = getIt<AppwriteRepository>();
+  final LocalDbService _localDb = getIt<LocalDbService>();
   final TotalMoneyCubit totalMoneyCubit;
 
   HistoryCubit({required this.totalMoneyCubit}) : super(const HistoryCubitState());
@@ -56,17 +59,19 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         return;
       }
       totalMoneyCubit.totalMoney(globalBalance);
-      final localData = await _localDb.getHistoryByMonth(month, year);
       
-      final List<Map<String, dynamic>> uiList = localData.map((e) => {
-        'id': e.appwriteId,
+      // USAMOS EL CASO DE USO (Domain Layer)
+      final movements = await _getMovementsUseCase(Preferences.uId, month, year);
+      
+      final List<Map<String, dynamic>> uiList = movements.map((e) => {
+        'id': e.id,
         'name': e.name,
-        'money': e.money,
-        'type': e.type,
+        'money': e.amount,
+        'type': e.type.name,
         'isIncome': e.isIncome,
-        'isSpent': e.isSpent, // CORRECCIÓN: Pasamos el estado a la UI
-        'currentDate': e.currentDate,
-        'currentHour': e.currentHour,
+        'isSpent': e.isSpent,
+        'currentDate': e.date,
+        'currentHour': e.hour,
         'month': e.month,
         'year': e.year,
         'createdAt': e.createdAt.toIso8601String(),
@@ -124,7 +129,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         ..money = (doc.data['money'] as num).toDouble()
         ..type = (doc.data['isIncome'] == true) ? 'income' : 'expense'
         ..isIncome = doc.data['isIncome'] ?? false
-        ..isSpent = false // Los movimientos normales no se gastan
+        ..isSpent = false
         ..currentDate = doc.data['currentDate'] ?? ''
         ..currentHour = doc.data['currentHour'] ?? ''
         ..month = doc.data['month']?.toString() ?? ''
@@ -140,7 +145,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         ..money = (doc.data['money'] as num).toDouble()
         ..type = 'saving'
         ..isIncome = false
-        ..isSpent = doc.data['isSpent'] ?? false // CORRECCIÓN: Leemos de Appwrite
+        ..isSpent = doc.data['isSpent'] ?? false
         ..currentDate = "${date.day}/${date.month}/${date.year}"
         ..currentHour = "${date.hour}:${date.minute}"
         ..month = doc.data['month'] ?? ''

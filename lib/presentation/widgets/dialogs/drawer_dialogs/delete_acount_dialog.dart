@@ -1,6 +1,6 @@
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
-import 'package:ahorrapp/presentation/bloc/authenticaction_cubits/delete_acount/delete_acount_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/authentication_cubits/delete_acount/delete_acount_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

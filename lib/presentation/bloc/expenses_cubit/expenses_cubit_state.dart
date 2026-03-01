@@ -16,7 +16,7 @@ class ExpensesCubitState {
     this.expenseName = const ExpenseNameInput.pure(),
   });
 
-  ExpensesCubitState copyWhith({
+  ExpensesCubitState copyWith({
     FormStatusExpenses? formStatus,
     bool? isValid,
     ExpenseNameInput? expenseName,
@@ -28,6 +28,3 @@ class ExpensesCubitState {
     expenseMoney: expenseMoney ?? this.expenseMoney,
   );
 }
-
-
-

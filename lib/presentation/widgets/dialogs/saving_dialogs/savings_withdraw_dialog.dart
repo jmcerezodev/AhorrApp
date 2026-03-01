@@ -1,7 +1,3 @@
-import 'package:ahorrapp/core/date/date.dart';
-import 'package:ahorrapp/core/shared_preferences/preferences.dart';
-import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
-import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +16,6 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
   final TextEditingController _conceptController = TextEditingController();
   String _amountValue = '';
   bool _isValid = false;
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -31,11 +26,12 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final date = Date();
-    final appwriteRepo = AppwriteRepository();
-    final savingsTotal = context.watch<SavingsCubit>().state.savingTotal;
+    final savingsCubit = context.watch<SavingsCubit>();
+    final historyCubit = context.read<HistoryCubit>();
+    final savingsTotal = savingsCubit.state.savingTotal;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isLoading = savingsCubit.state.formStatus == FormStatusSavings.validating;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -99,7 +95,7 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
                 controller: _amountController,
                 label: 'Cantidad a retirar',
                 hintText: '0.00',
-                enabled: !_isLoading,
+                enabled: !isLoading,
                 onChanged: (val) {
                   setState(() {
                     _amountValue = val;
@@ -112,12 +108,11 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
               
               const SizedBox(height: 15),
         
-              // NUEVO CAMPO OPCIONAL PARA EL CONCEPTO
               CustomInputTextWidget(
                 controller: _conceptController,
                 label: '¿En qué lo vas a gastar? (opcional)',
                 hintText: 'Ej. Reparación coche, Capricho...',
-                enabled: !_isLoading,
+                enabled: !isLoading,
                 autoFocus: false,
                 textInputType: TextInputType.text,
                 textCapitalization: TextCapitalization.sentences,
@@ -129,7 +124,7 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: _isLoading ? null : () => context.pop(),
+                      onPressed: isLoading ? null : () => context.pop(),
                       style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
                       child: Text(
                         'CANCELAR', 
@@ -144,50 +139,22 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: (_isValid && !_isLoading)
+                      onPressed: (_isValid && !isLoading)
                       ? () async {
-                          setState(() => _isLoading = true);
-                          try {
-                            final double amount = double.parse(_amountValue.replaceAll(',', '.'));
-                            final double finalAmount = -amount; 
-                            final String month = date.monthNames();
-                            final int year = int.parse(date.year());
-                            
-                            // Si no pone nada, usamos el valor por defecto
-                            final String finalName = _conceptController.text.trim().isEmpty 
-                                ? 'Retirada de ahorros' 
-                                : _conceptController.text.trim();
-        
-                            // 1. Appwrite
-                            final doc = await appwriteRepo.addSaving(
-                              userId: Preferences.uId,
-                              money: finalAmount,
-                              month: month,
-                              year: year,
-                              description: finalName,
-                            );
-        
-                            // 2. Isar & Historial
-                            if (mounted) {
-                              await context.read<HistoryCubit>().addMovementLocally(
-                                LocalHistory()
-                                  ..appwriteId = doc.$id
-                                  ..name = finalName
-                                  ..money = finalAmount
-                                  ..type = 'saving'
-                                  ..isIncome = false
-                                  ..currentDate = date.currentDate()
-                                  ..currentHour = date.currentHour()
-                                  ..month = month
-                                  ..year = year
-                                  ..createdAt = DateTime.parse(doc.$createdAt)
-                              );
-                              
-                              await context.read<SavingsCubit>().loadSavings();
-                              context.pop();
-                            }
-                          } catch (e) {
-                            setState(() => _isLoading = false);
+                          final double amount = double.parse(_amountValue.replaceAll(',', '.'));
+                          final String concept = _conceptController.text.trim().isEmpty 
+                              ? 'Retirada de ahorros' 
+                              : _conceptController.text.trim();
+
+                          // Usamos el método refactorizado del Cubit (cantidad negativa para retirar)
+                          await context.read<SavingsCubit>().addSaving(
+                            historyCubit,
+                            customAmount: -amount,
+                            customName: concept,
+                          );
+
+                          if (context.mounted && context.read<SavingsCubit>().state.formStatus == FormStatusSavings.valid) {
+                            context.pop();
                           }
                         }
                       : null,
@@ -198,7 +165,7 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
-                      child: _isLoading 
+                      child: isLoading
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : const Text('RETIRAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                     ),

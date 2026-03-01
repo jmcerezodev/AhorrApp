@@ -8,7 +8,6 @@ class MonthlyBalanceWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final historyList = context.watch<HistoryCubit>().state.historyList;
     final dateState = context.watch<DateCubit>().state;
@@ -26,7 +25,6 @@ class MonthlyBalanceWidget extends StatelessWidget {
         } else if (type == 'expense') {
           monthlyTotal -= money;
         }
-        // Los ahorros (type == 'saving') se ignoran para el balance
       }
     }
 

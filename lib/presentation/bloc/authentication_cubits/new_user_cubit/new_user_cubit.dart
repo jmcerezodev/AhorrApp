@@ -19,7 +19,7 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
     final password = Password.dirty(value: state.password.value);
 
     emit(
-      state.copyWhith(
+      state.copyWith(
         formStatus: FormStatusNewUser.validating,
         name: name,
         email: email,
@@ -29,7 +29,7 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
     );
 
     if (!state.isValid) {
-      emit(state.copyWhith(formStatus: FormStatusNewUser.invalid));
+      emit(state.copyWith(formStatus: FormStatusNewUser.invalid));
       return;
     }
 
@@ -41,20 +41,20 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
       );
 
       if (result is String) { // Éxito (retorna el userId)
-        emit(state.copyWhith(formStatus: FormStatusNewUser.valid));
+        emit(state.copyWith(formStatus: FormStatusNewUser.valid));
       } else if (result == 1) {
         // Podrías manejar errores específicos aquí (ej. email ya en uso)
-        emit(state.copyWhith(formStatus: FormStatusNewUser.invalid));
+        emit(state.copyWith(formStatus: FormStatusNewUser.invalid));
       } else {
-        emit(state.copyWhith(formStatus: FormStatusNewUser.invalid));
+        emit(state.copyWith(formStatus: FormStatusNewUser.invalid));
       }
     } catch (e) {
-      emit(state.copyWhith(formStatus: FormStatusNewUser.invalid));
+      emit(state.copyWith(formStatus: FormStatusNewUser.invalid));
     }
   }
 
   void resetCubit() {
-    emit(state.copyWhith(
+    emit(state.copyWith(
       name: const Name.pure(),
       email: const Email.pure(),
       password: const Password.pure(),
@@ -63,12 +63,12 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
   }
 
   void isPasswordVisible() {
-    emit(state.copyWhith(passwordEncripted: !state.passwordEncripted));
+    emit(state.copyWith(passwordEncripted: !state.passwordEncripted));
   }
 
   void nameChanged(String value) {
     final name = Name.dirty(value: value);
-    emit(state.copyWhith(
+    emit(state.copyWith(
       name: name,
       isValid: Formz.validate([name, state.email, state.password]),
     ));
@@ -76,7 +76,7 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
 
   void emailChanged(String value) {
     final email = Email.dirty(value: value);
-    emit(state.copyWhith(
+    emit(state.copyWith(
       email: email,
       isValid: Formz.validate([email, state.name, state.password]),
     ));
@@ -84,7 +84,7 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
 
   void passwordChanged(String value) {
     final password = Password.dirty(value: value);
-    emit(state.copyWhith(
+    emit(state.copyWith(
       password: password,
       isValid: Formz.validate([password, state.name, state.email]),
     ));

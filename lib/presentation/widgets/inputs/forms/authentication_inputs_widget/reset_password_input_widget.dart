@@ -1,4 +1,4 @@
-import 'package:ahorrapp/presentation/bloc/authenticaction_cubits/reset_password_cubit/reset_password_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/authentication_cubits/reset_password_cubit/reset_password_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/authenticacion_dialogs/reset_password_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';

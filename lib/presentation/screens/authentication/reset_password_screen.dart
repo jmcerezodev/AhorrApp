@@ -1,5 +1,5 @@
 import 'package:ahorrapp/core/date/date.dart';
-import 'package:ahorrapp/presentation/bloc/authenticaction_cubits/reset_password_cubit/reset_password_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/authentication_cubits/reset_password_cubit/reset_password_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/forms/authentication_inputs_widget/reset_password_input_widget.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';

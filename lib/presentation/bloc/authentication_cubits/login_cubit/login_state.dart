@@ -8,7 +8,7 @@ class LoginCubitState extends Equatable {
   final EmailLogin email;
   final PasswordLogin password;
   final bool passwordEncripted;
-  final bool isRemember; // Añadido
+  final bool isRemember; 
   final Map<String, dynamic> loginData;
 
   const LoginCubitState({
@@ -17,14 +17,14 @@ class LoginCubitState extends Equatable {
     this.email = const EmailLogin.pure(),
     this.password = const PasswordLogin.pure(),
     this.passwordEncripted = true,
-    this.isRemember = false, // Por defecto no recordar
+    this.isRemember = false, 
     this.loginData = const {
       'email': '',
       'password': '',
     },
   });
 
-  LoginCubitState copyWhith({
+  LoginCubitState copyWith({
     FormStatusLogin? formStatus,
     bool? isValid,
     EmailLogin? email,
@@ -38,7 +38,7 @@ class LoginCubitState extends Equatable {
     email: email ?? this.email,
     password: password ?? this.password,
     passwordEncripted: passwordEncripted ?? this.passwordEncripted,
-    isRemember: isRemember ?? this.isRemember, // Actualizado
+    isRemember: isRemember ?? this.isRemember,
     loginData: loginData ?? this.loginData,
   );
   

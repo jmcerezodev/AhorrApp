@@ -26,7 +26,7 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
     final isValid = Formz.validate([currentPassword, newPassword, confirmedPassword]);
 
     emit(
-      state.copyWhith(
+      state.copyWith(
         formStatus: FormStatusUpdatePassword.validating,
         currentPassword: currentPassword,
         newPassword: newPassword,
@@ -36,7 +36,7 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
     );
 
     if (!isValid) {
-      emit(state.copyWhith(formStatus: FormStatusUpdatePassword.invalid));
+      emit(state.copyWith(formStatus: FormStatusUpdatePassword.invalid));
       return;
     }
 
@@ -46,14 +46,14 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
         state.newPassword.value, 
         state.currentPassword.value
       );
-      emit(state.copyWhith(formStatus: FormStatusUpdatePassword.valid));
+      emit(state.copyWith(formStatus: FormStatusUpdatePassword.valid));
     } catch (e) {
-      emit(state.copyWhith(formStatus: FormStatusUpdatePassword.invalid));
+      emit(state.copyWith(formStatus: FormStatusUpdatePassword.invalid));
     }
   }
 
   void resetCubit() {
-    emit(state.copyWhith(
+    emit(state.copyWith(
       currentPassword: const Password.pure(),
       newPassword: const NewPassword.pure(),
       confirmedPassword: const ConfirmedPassword.pure(),
@@ -63,20 +63,20 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
   }
 
   void isCurrentPasswordVisible(bool value) {
-    emit(state.copyWhith(currentPasswordEncripted: !state.currentPasswordEncripted));
+    emit(state.copyWith(currentPasswordEncripted: !state.currentPasswordEncripted));
   }
 
   void isNewPasswordVisible(bool value) {
-    emit(state.copyWhith(newPasswordEncripted: !state.newPasswordEncripted));
+    emit(state.copyWith(newPasswordEncripted: !state.newPasswordEncripted));
   }
 
   void isConfirmedPasswordVisible(bool value) {
-    emit(state.copyWhith(confirmedPasswordEncripted: !state.confirmedPasswordEncripted));
+    emit(state.copyWith(confirmedPasswordEncripted: !state.confirmedPasswordEncripted));
   }
 
   void currentPasswordChanged(String value) {
     final currentPassword = Password.dirty(value: value);
-    emit(state.copyWhith(
+    emit(state.copyWith(
       currentPassword: currentPassword,
       isValid: Formz.validate([currentPassword, state.newPassword, state.confirmedPassword]),
     ));
@@ -92,7 +92,7 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
       originalPassword: newPassword.value
     );
     
-    emit(state.copyWhith(
+    emit(state.copyWith(
       newPassword: newPassword,
       confirmedPassword: confirmedPassword,
       isValid: Formz.validate([newPassword, state.currentPassword, confirmedPassword]),
@@ -104,7 +104,7 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
       value: value,
       originalPassword: state.newPassword.value
     );
-    emit(state.copyWhith(
+    emit(state.copyWith(
       confirmedPassword: confirmedPassword,
       isValid: Formz.validate([confirmedPassword, state.currentPassword, state.newPassword]),
     ));

@@ -11,7 +11,7 @@ class UpdateNameCubit extends Cubit<UpdateNameState> {
 
   void onSubmit() {
     emit(
-      state.copyWhith(
+      state.copyWith(
         formStatus: FormStatusUpdateName.validating,
         newName: Name.dirty(value: state.newName.value),
         isValid: Formz.validate([state.newName]),
@@ -20,7 +20,7 @@ class UpdateNameCubit extends Cubit<UpdateNameState> {
   }
 
   void onUpdateSuccess(String newName) {
-    emit(state.copyWhith(
+    emit(state.copyWith(
       name: newName,
       formStatus: FormStatusUpdateName.valid,
       newName: const Name.pure(),
@@ -28,7 +28,7 @@ class UpdateNameCubit extends Cubit<UpdateNameState> {
   }
 
   void resetCubit() {
-    emit(state.copyWhith(
+    emit(state.copyWith(
       newName: const Name.pure(),
       formStatus: FormStatusUpdateName.invalid,
     ));
@@ -37,7 +37,7 @@ class UpdateNameCubit extends Cubit<UpdateNameState> {
   void newNameChanged(String value) {
     final newName = Name.dirty(value: value);
     emit(
-      state.copyWhith(
+      state.copyWith(
         newName: newName,
         isValid: Formz.validate([newName]),
       )
