@@ -20,32 +20,25 @@ void main() {
     );
   });
 
-  group('GetMovementsUseCase - Lógica de Sincronización', () {
-    test('debe retornar datos remotos cuando local está vacío y hay conexión', () async {
-      final tMovements = [
-        Movement(
-          id: '1', name: 'Test', amount: 10, type: MovementType.income, 
-          isIncome: true, date: '1/10/2023', hour: '12:00', month: 'October', 
-          year: 2023, createdAt: DateTime.now()
-        )
-      ];
-
-      // Local está vacío
+  group('GetMovementsUseCase - Lógica de Fuente Única (Isar)', () {
+    test('debe retornar lista vacía desde local si no hay movimientos', () async {
+      // Arrange: Simulamos que Isar no tiene nada
       when(() => mockLocalRepo.getMovementsByMonth(any(), any(), any()))
           .thenAnswer((_) async => []);
-      
-      // Remoto tiene datos
-      when(() => mockRemoteRepo.getMovementsByMonth(any(), any(), any()))
-          .thenAnswer((_) async => tMovements);
 
+      // Act
       final result = await useCase.call('user123', 'October', 2023);
 
-      expect(result, tMovements);
+      // Assert
+      expect(result, isEmpty);
       verify(() => mockLocalRepo.getMovementsByMonth('user123', 'October', 2023)).called(1);
-      verify(() => mockRemoteRepo.getMovementsByMonth('user123', 'October', 2023)).called(1);
+      
+      // REGLA DE ORO: No debe llamar al remoto para mostrar la UI
+      // La sincronización se gestiona por otros procesos para mayor velocidad.
+      verifyNever(() => mockRemoteRepo.getMovementsByMonth(any(), any(), any()));
     });
 
-    test('debe retornar datos locales y NO llamar al remoto si local ya tiene datos', () async {
+    test('debe retornar datos locales cuando existen', () async {
       final tMovements = [
         Movement(
           id: 'local1', name: 'Test Local', amount: 20, type: MovementType.expense, 
@@ -61,7 +54,6 @@ void main() {
 
       expect(result, tMovements);
       verify(() => mockLocalRepo.getMovementsByMonth('user123', 'October', 2023)).called(1);
-      // No debería llamar al remoto si ya hay datos locales (ahorro de datos/batería)
       verifyNever(() => mockRemoteRepo.getMovementsByMonth(any(), any(), any()));
     });
   });

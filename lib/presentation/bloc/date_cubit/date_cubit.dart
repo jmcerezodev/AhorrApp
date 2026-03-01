@@ -7,14 +7,18 @@ class DateCubit extends Cubit<DateCubitState> {
 
   DateCubit() : super(const DateCubitState());
   
+  // REINICIO MAESTRO: Vuelve al mes y año actual
+  void resetCubit() {
+    emit(const DateCubitState());
+    currentMonth();
+    currentYear();
+  }
 
   void isOpen(bool value){
     emit(state.copyWith(
       isOpen: value,
     ));
   }
-
-  // * Fecha completa Actual
 
   void dateCurrent(){
       final String currentDate = Date().currentDate();
@@ -25,7 +29,6 @@ class DateCubit extends Cubit<DateCubitState> {
     );
   }
 
-  // * Año
   void currentYear(){
     final String currentYear = Date().year();
     emit(state.copyWith(
@@ -44,8 +47,6 @@ class DateCubit extends Cubit<DateCubitState> {
       year: state.year - value,
     ));
   }
-
-  // * Meses
   
   void currentMonth(){
     final String currentMonth = Date().monthNames();
@@ -65,5 +66,4 @@ class DateCubit extends Cubit<DateCubitState> {
       isActive: value
     ));
   }
-
 }

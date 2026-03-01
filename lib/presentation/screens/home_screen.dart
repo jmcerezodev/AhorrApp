@@ -10,9 +10,6 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => const _HomeScreenView();
-
-  @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
@@ -42,8 +39,27 @@ class _HomeScreenState extends State<HomeScreen> {
     final colorScheme = theme.colorScheme;
     final isCalendarOpen = context.watch<DateCubit>().state.isOpen;
 
+    // LÓGICA INTELIGENTE DE GÉNERO RESTAURADA
+    String greeting = 'Bienvenido';
+    if (userName.isNotEmpty) {
+      final String firstWord = userName.trim().split(' ').first.toLowerCase();
+      
+      const femaleExceptions = {
+        'raquel', 'isabel', 'belen', 'pilar', 'carmen', 'lourdes', 
+        'concepcion', 'concha', 'mercedes', 'dolores', 'rosario', 
+        'ester', 'esther', 'miriam', 'iris', 'ruth', 'abril', 'lucia'
+      };
+
+      if (firstWord.endsWith('a') || femaleExceptions.contains(firstWord)) {
+        const maleNamesWithA = {'luca', 'borja', 'bautista', 'josua'};
+        if (!maleNamesWithA.contains(firstWord)) {
+          greeting = 'Bienvenida';
+        }
+      }
+    }
+
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // CORREGIDO: Usa el color del tema
+      backgroundColor: theme.scaffoldBackgroundColor,
       resizeToAvoidBottomInset: false, 
       drawer: const SideMenuWidget(),
       body: SafeArea(
@@ -100,9 +116,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               'Hola, $userName',
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: colorScheme.onSurface),
                             ),
-                            const Text(
-                              'Bienvenido de nuevo',
-                              style: TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w600),
+                            Text(
+                              '$greeting de nuevo',
+                              style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -155,14 +171,5 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
-  }
-}
-
-class _HomeScreenView extends StatelessWidget {
-  const _HomeScreenView();
-
-  @override
-  Widget build(BuildContext context) {
-    return const HomeScreen();
   }
 }

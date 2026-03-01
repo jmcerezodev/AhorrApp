@@ -28,6 +28,10 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     await loadHistoryByDate(date.monthNames(), int.parse(date.year()));
   }
 
+  void resetCubit() {
+    emit(const HistoryCubitState());
+  }
+
   Future<void> forceBalanceResync(TotalMoneyCubit totalMoneyCubit) async {
     emit(state.copyWith(status: HistoryStatus.loading, isSyncing: true, syncProgress: 0.0));
     try {
@@ -37,11 +41,9 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         (progress) => emit(state.copyWith(syncProgress: progress))
       );
       
-      // Procesamos historial
       final List<LocalHistory> historyItems = _convertToLocalHistory(fullData['history']);
       await _localDb.saveHistoryItems(historyItems);
       
-      // Procesamos ahorros
       final List<LocalSaving> savingItems = _convertToLocalSaving(fullData['savings']);
       await _localDb.saveSavingItems(savingItems);
 
@@ -93,8 +95,6 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     }
   }
 
-  // --- MÉTODOS DE ACTUALIZACIÓN LOCAL (Soportando el split de tablas) ---
-
   Future<void> addMovementLocally(dynamic item) async {
     if (item is LocalSaving) {
       await _localDb.saveSavingItems([item]);
@@ -107,7 +107,6 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
 
   Future<void> updateMovementLocally(dynamic item, double oldAmount) async {
     final isar = _localDb.isar;
-    
     if (item is LocalSaving) {
       final existing = await isar.localSavings.filter().appwriteIdEqualTo(item.appwriteId).findFirst();
       if (existing != null) item.id = existing.id;
@@ -116,11 +115,9 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       final existing = await isar.localHistorys.filter().appwriteIdEqualTo(item.appwriteId).findFirst();
       if (existing != null) item.id = existing.id;
       await _localDb.saveHistoryItems([item]);
-      
       final double diff = item.type == 'income' ? (item.money - oldAmount) : (oldAmount - item.money);
       if (diff != 0) await _updateBalance(diff.abs(), diff > 0);
     }
-    
     await loadHistoryByDate(item.month, item.year);
   }
 
@@ -176,7 +173,6 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
   void toggleFilterPanel() => emit(state.copyWith(isFilterOpen: !state.isFilterOpen));
   void listOrder(String value) => emit(state.copyWith(listOrder: value));
   void isChart(bool value) => emit(state.copyWith(isChart: value));
-  void resetCubit() => emit(state.copyWith(newName: const IncomeNameInput.pure(), newMoney: const IncomeMoneyInput.pure(), status: HistoryStatus.initial));
   void newNameChanged(String value) { final newName = IncomeNameInput.dirty(value: value); emit(state.copyWith(newName: newName, isValid: Formz.validate([newName, state.newMoney]))); }
   void newMoneyChanged(String value) { final newMoney = IncomeMoneyInput.dirty(value: value); emit(state.copyWith(newMoney: newMoney, isValid: Formz.validate([newMoney, state.newName]))); }
 }

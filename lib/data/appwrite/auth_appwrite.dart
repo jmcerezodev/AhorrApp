@@ -1,16 +1,18 @@
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
+import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/error_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog_no_go.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/appwrite/appwrite_service.dart';
 
 class AuthAppwrite {
   final Account _account = AppwriteService().account;
-  final LocalDbService _localDb = LocalDbService(); // Instancia para limpiar local
+  final LocalDbService _localDb = LocalDbService(); 
 
   Future<String> getInitialRoute() async {
     try {
@@ -89,6 +91,9 @@ class AuthAppwrite {
     try {
       await _account.deleteSession(sessionId: 'current');
       
+      // RESET TOTAL DE ESTADOS
+      _resetAllCubits(context);
+
       showDialog(
         barrierDismissible: false,
         context: context,
@@ -98,7 +103,7 @@ class AuthAppwrite {
         ),
       );
 
-      await _clearAllData(); // LIMPIEZA TOTAL
+      await _clearAllData(); 
     } catch (e) {
       showDialog(
         barrierDismissible: false,
@@ -132,7 +137,11 @@ class AuthAppwrite {
   Future<void> singOut(BuildContext context) async {
     try {
       await _account.deleteSession(sessionId: 'current');
-      await _clearAllData(); // LIMPIEZA TOTAL
+      
+      // RESET TOTAL DE ESTADOS ANTES DE SALIR
+      _resetAllCubits(context);
+
+      await _clearAllData();
 
       if (context.mounted) {
         showDialog(
@@ -149,7 +158,7 @@ class AuthAppwrite {
         showDialog(
           barrierDismissible: false,
           context: context,
-          builder: (dialogContext) => const ErrorDialog(
+          builder: (context) => const ErrorDialog(
             errorMessage: '!Se ha producido un Error!\n La sesión no se ha cerrado',
           ),
         );
@@ -157,17 +166,24 @@ class AuthAppwrite {
     }
   }
 
-  // MÉTODO PARA LIMPIAR TODO EL RASTRO LOCAL
+  void _resetAllCubits(BuildContext context) {
+    try {
+      context.read<DateCubit>().resetCubit();
+      context.read<TotalMoneyCubit>().resetCubit();
+      context.read<HistoryCubit>().resetCubit();
+      context.read<SavingsCubit>().resetCubit();
+    } catch (e) {
+      // Ignoramos errores si algún cubit no está disponible
+    }
+  }
+
   Future<void> _clearAllData() async {
-    // 1. Limpiar SharedPreferences
     Preferences.uId = '';
     Preferences.name = '';
     if (!Preferences.isRemember) {
       Preferences.email = '';
       Preferences.password = '';
     }
-    
-    // 2. Limpiar Base de Datos Local (Isar)
     await _localDb.clearAll();
   }
 
