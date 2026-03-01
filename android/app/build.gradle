@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.jmcerezo.gestionfinanciera"
+    namespace = "dev.jmcerezo.ahorrapp" // CAMBIO DE NOMBRE DE PAQUETE
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "dev.jmcerezo.gestionfinanciera"
+        applicationId = "dev.jmcerezo.ahorrapp" // CAMBIO DE NOMBRE DE PAQUETE
         minSdkVersion = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

@@ -1,11 +1,11 @@
 {
-    "name": "control_gastos",
-    "short_name": "control_gastos",
+    "name": "ahorrapp",
+    "short_name": "ahorrapp",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "AhorrApp - Tu control de gastos personal.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
