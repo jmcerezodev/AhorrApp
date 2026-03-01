@@ -16,30 +16,27 @@ class ResetPasswordCubit extends Cubit<ResetPasswordState> {
 
     emit(
       state.copyWith(
-        formStatus: FormStatusResetPassword.validating,
+        status: ResetPasswordStatus.submitting,
         resetPassword: email,
         isValid: Formz.validate([email]),
       )
     );
 
     if (!state.isValid) {
-      emit(state.copyWith(formStatus: FormStatusResetPassword.invalid));
+      emit(state.copyWith(status: ResetPasswordStatus.failure, errorMessage: 'Formulario no válido'));
       return;
     }
 
     try {
       await _auth.resetPassword(state.resetPassword.value);
-      emit(state.copyWith(formStatus: FormStatusResetPassword.valid));
+      emit(state.copyWith(status: ResetPasswordStatus.success));
     } catch (e) {
-      emit(state.copyWith(formStatus: FormStatusResetPassword.invalid));
+      emit(state.copyWith(status: ResetPasswordStatus.failure, errorMessage: 'Error al enviar el correo de recuperación'));
     }
   }
 
   void resetCubit() {
-    emit(state.copyWith(
-      resetPassword: const Email.pure(),
-      formStatus: FormStatusResetPassword.invalid,
-    ));
+    emit(const ResetPasswordState());
   }
 
   void emailChanged(String value) {
@@ -47,6 +44,7 @@ class ResetPasswordCubit extends Cubit<ResetPasswordState> {
     emit(state.copyWith(
       resetPassword: email,
       isValid: Formz.validate([email]),
+      status: ResetPasswordStatus.initial,
     ));
   }
 }

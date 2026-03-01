@@ -18,7 +18,7 @@ class LoginCubit extends Cubit<LoginCubitState> {
 
     emit(
       state.copyWith(
-        formStatus: FormStatusLogin.validating,
+        status: LoginStatus.submitting,
         email: email,
         password: password,
         isValid: Formz.validate([email, password]),
@@ -26,7 +26,7 @@ class LoginCubit extends Cubit<LoginCubitState> {
     );
 
     if (!state.isValid) {
-      emit(state.copyWith(formStatus: FormStatusLogin.invalid));
+      emit(state.copyWith(status: LoginStatus.failure, errorMessage: 'Formulario no válido'));
       return;
     }
 
@@ -37,7 +37,6 @@ class LoginCubit extends Cubit<LoginCubitState> {
       );
 
       if (result is String) { // Éxito (retorna el userId)
-        // Guardar credenciales si el usuario marcó "Recordarme"
         if (state.isRemember) {
           Preferences.email = state.email.value;
           Preferences.password = state.password.value;
@@ -46,17 +45,22 @@ class LoginCubit extends Cubit<LoginCubitState> {
           Preferences.password = '';
         }
         
-        emit(state.copyWith(formStatus: FormStatusLogin.valid));
+        emit(state.copyWith(status: LoginStatus.success));
       } else {
-        emit(state.copyWith(formStatus: FormStatusLogin.invalid));
+        // Manejo de errores específicos según lo que retorna AuthAppwrite
+        String message = 'Error al iniciar sesión';
+        if (result == 0) message = 'Credenciales incorrectas';
+        if (result == 3) message = 'Error de conexión con el servidor';
+        
+        emit(state.copyWith(status: LoginStatus.failure, errorMessage: message));
       }
     } catch (e) {
-      emit(state.copyWith(formStatus: FormStatusLogin.invalid));
+      emit(state.copyWith(status: LoginStatus.failure, errorMessage: 'Se ha producido un error inesperado'));
     }
   }
 
   void isRememberChanged(bool value) {
-    emit(state.copyWith(isRemember: value));
+    emit(state.copyWith(isRemember: value, status: LoginStatus.initial));
   }
 
   void isPasswordVisible() {
@@ -64,12 +68,7 @@ class LoginCubit extends Cubit<LoginCubitState> {
   }
 
   void resetCubit() {
-    emit(state.copyWith(
-      email: const EmailLogin.pure(),
-      password: const PasswordLogin.pure(),
-      formStatus: FormStatusLogin.editing,
-      isRemember: false,
-    ));
+    emit(const LoginCubitState());
   }
 
   void emailChanged(String value) {
@@ -77,7 +76,7 @@ class LoginCubit extends Cubit<LoginCubitState> {
     emit(state.copyWith(
       email: email,
       isValid: Formz.validate([email, state.password]),
-      formStatus: FormStatusLogin.editing,
+      status: LoginStatus.initial,
     ));
   }
 
@@ -86,7 +85,7 @@ class LoginCubit extends Cubit<LoginCubitState> {
     emit(state.copyWith(
       password: password,
       isValid: Formz.validate([password, state.email]),
-      formStatus: FormStatusLogin.editing,
+      status: LoginStatus.initial,
     ));
   }
 }

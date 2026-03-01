@@ -20,7 +20,7 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
 
     emit(
       state.copyWith(
-        formStatus: FormStatusNewUser.validating,
+        status: NewUserStatus.submitting,
         name: name,
         email: email,
         password: password,
@@ -29,7 +29,7 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
     );
 
     if (!state.isValid) {
-      emit(state.copyWith(formStatus: FormStatusNewUser.invalid));
+      emit(state.copyWith(status: NewUserStatus.failure, errorMessage: 'Formulario no válido'));
       return;
     }
 
@@ -41,25 +41,19 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
       );
 
       if (result is String) { // Éxito (retorna el userId)
-        emit(state.copyWith(formStatus: FormStatusNewUser.valid));
+        emit(state.copyWith(status: NewUserStatus.success));
       } else if (result == 1) {
-        // Podrías manejar errores específicos aquí (ej. email ya en uso)
-        emit(state.copyWith(formStatus: FormStatusNewUser.invalid));
+        emit(state.copyWith(status: NewUserStatus.failure, errorMessage: 'El email ya está registrado'));
       } else {
-        emit(state.copyWith(formStatus: FormStatusNewUser.invalid));
+        emit(state.copyWith(status: NewUserStatus.failure, errorMessage: 'Error de conexión con el servidor'));
       }
     } catch (e) {
-      emit(state.copyWith(formStatus: FormStatusNewUser.invalid));
+      emit(state.copyWith(status: NewUserStatus.failure, errorMessage: 'Error inesperado al crear la cuenta'));
     }
   }
 
   void resetCubit() {
-    emit(state.copyWith(
-      name: const Name.pure(),
-      email: const Email.pure(),
-      password: const Password.pure(),
-      formStatus: FormStatusNewUser.invalid,
-    ));
+    emit(const NewUserCubitState());
   }
 
   void isPasswordVisible() {
@@ -71,6 +65,7 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
     emit(state.copyWith(
       name: name,
       isValid: Formz.validate([name, state.email, state.password]),
+      status: NewUserStatus.initial,
     ));
   }
 
@@ -79,6 +74,7 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
     emit(state.copyWith(
       email: email,
       isValid: Formz.validate([email, state.name, state.password]),
+      status: NewUserStatus.initial,
     ));
   }
 
@@ -87,6 +83,7 @@ class NewUserCubit extends Cubit<NewUserCubitState> {
     emit(state.copyWith(
       password: password,
       isValid: Formz.validate([password, state.name, state.email]),
+      status: NewUserStatus.initial,
     ));
   }
 }

@@ -50,17 +50,18 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
     final loginCubit = context.watch<LoginCubit>();
     
     return BlocListener<LoginCubit, LoginCubitState>(
-      listenWhen: (previous, current) => previous.formStatus != current.formStatus,
+      // 1. Actualizado para usar LoginStatus
       listener: (context, state) {
-        if (state.formStatus == FormStatusLogin.valid) {
+        if (state.status == LoginStatus.success) {
           context.go('/home-screen');
-        } else if (state.formStatus == FormStatusLogin.invalid) {
+        } else if (state.status == LoginStatus.failure) {
           showDialog(
             context: context,
             barrierDismissible: false,
-            builder: (context) => const AuthErrorDialog(
+            builder: (context) => AuthErrorDialog(
               errorTitle: '!Se ha producido un error!',
-              errorText: 'Credenciales inválidas o problema de conexión.',
+              // 2. Ahora mostramos el mensaje real que devuelve el Cubit
+              errorText: state.errorMessage ?? 'Credenciales inválidas o problema de conexión.',
             ),
           );
         }
@@ -120,7 +121,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                 Preferences.isRemember = newValue;
               },
               controlAffinity: ListTileControlAffinity.leading,
-              activeColor: Colors.orange, // CAMBIADO A NARANJA
+              activeColor: Colors.orange,
             ),
 
             const SizedBox(height: 15),
@@ -128,8 +129,9 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
             SizedBox(
               width: double.infinity,
               height: 55,
-              child: ElevatedButton.icon( // CAMBIADO A ELEVATED BUTTON PARA COLOR NARANJA SÓLIDO
-                onPressed: (loginCubit.state.formStatus == FormStatusLogin.validating)
+              child: ElevatedButton.icon(
+                // 3. Gestión de estados de carga con LoginStatus
+                onPressed: (loginCubit.state.status == LoginStatus.submitting)
                   ? null 
                   : () async {
                       FocusScope.of(context).unfocus();
@@ -143,16 +145,16 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                       loginCubit.onSubmit();
                     },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange.shade600, // NARANJA CORPORATIVO
+                  backgroundColor: Colors.orange.shade600,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 ),
-                icon: loginCubit.state.formStatus == FormStatusLogin.validating
+                icon: loginCubit.state.status == LoginStatus.submitting
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.login_rounded),
                 label: Text(
-                  loginCubit.state.formStatus == FormStatusLogin.validating ? 'CONECTANDO...' : 'ENTRAR',
+                  loginCubit.state.status == LoginStatus.submitting ? 'CONECTANDO...' : 'ENTRAR',
                   style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.2)
                 ),
               ),
@@ -169,7 +171,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                   onPressed: () => context.push('/new-user'),
                   child: const Text(
                     'Crear Nueva Cuenta',
-                    style: TextStyle(color: Colors.orange, fontSize: 13, fontWeight: FontWeight.w800), // CAMBIADO A NARANJA
+                    style: TextStyle(color: Colors.orange, fontSize: 13, fontWeight: FontWeight.w800),
                   ),
                 ),
                 TextButton(

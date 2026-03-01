@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/pending_sync.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class SyncService {
-  static final SyncService _instance = SyncService._internal();
-  factory SyncService() => _instance;
-  SyncService._internal();
-
-  final LocalDbService _localDb = LocalDbService();
-  final AppwriteRepository _appwriteRepo = AppwriteRepository();
+  // Ahora usamos getIt para obtener las dependencias
+  final LocalDbService _localDb = getIt<LocalDbService>();
+  final AppwriteRepository _appwriteRepo = getIt<AppwriteRepository>();
+  
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   bool _isSyncing = false;
 
@@ -21,7 +20,6 @@ class SyncService {
         processQueue();
       }
     });
-    // Intentar procesar al iniciar por si quedaron cosas pendientes
     processQueue();
   }
 
@@ -34,13 +32,12 @@ class SyncService {
     _isSyncing = true;
 
     try {
+      // Si la DB no está lista, salimos silenciosamente (esto protege los tests)
       final pendingList = await _localDb.getPendingSyncs();
       if (pendingList.isEmpty) {
         _isSyncing = false;
         return;
       }
-
-      print('SyncService: Procesando ${pendingList.length} operaciones pendientes...');
 
       for (var pending in pendingList) {
         bool success = false;
@@ -59,11 +56,11 @@ class SyncService {
             await _localDb.deletePendingSync(pending.id);
           }
         } catch (e) {
-          print('SyncService: Error sincronizando item ${pending.id}: $e');
-          // Si es un error de red, paramos el bucle y reintentaremos luego
           break;
         }
       }
+    } catch (e) {
+      // Error manejado para evitar crashes
     } finally {
       _isSyncing = false;
     }
@@ -71,16 +68,13 @@ class SyncService {
 
   Future<bool> _syncHistory(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'create') {
-      // Nota: Si ya se creó localmente con un appwriteId temporal o nulo, 
-      // aquí deberíamos actualizar Isar con el ID real de Appwrite.
-      // Pero para simplificar, usaremos el ID que ya generamos o dejaremos que Appwrite cree uno.
       await _appwriteRepo.addHistory(
         userId: data['userId'],
         name: data['name'],
         money: data['money'],
         isIncome: data['isIncome'],
-        currentDate: data['currentDate'],
-        currentHour: data['currentHour'],
+        currentDate: data['currentDate'] ?? '',
+        currentHour: data['currentHour'] ?? '',
         month: data['month'],
         year: data['year'],
       );

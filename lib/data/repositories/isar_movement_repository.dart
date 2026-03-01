@@ -1,10 +1,15 @@
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/repositories/i_movement_repository.dart';
 import '../local/local_db_service.dart';
 import '../local/models/local_history.dart';
 
 class IsarMovementRepository implements IMovementRepository {
-  final LocalDbService _localDb = LocalDbService();
+  final LocalDbService _localDb;
+
+  // Inyectamos el servicio por constructor (o vía getIt por defecto)
+  IsarMovementRepository({LocalDbService? localDb}) 
+    : _localDb = localDb ?? getIt<LocalDbService>();
 
   @override
   Future<List<Movement>> getMovementsByMonth(String userId, String month, int year) async {
@@ -47,8 +52,6 @@ class IsarMovementRepository implements IMovementRepository {
 
   @override
   Future<Map<String, dynamic>> syncAllData(String userId, Function(double) onProgress) async {
-    // La sincronización total suele ser responsabilidad del repositorio de nube (Appwrite)
-    // que vuelca en el local. No obstante, dejamos la firma por si Isar necesitara una lógica propia.
     throw UnimplementedError('La sincronización se gestiona desde el repositorio de nube.');
   }
 

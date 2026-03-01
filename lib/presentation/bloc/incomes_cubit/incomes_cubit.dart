@@ -1,7 +1,6 @@
 import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/inputs/inputs.dart';
-import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
@@ -18,16 +17,17 @@ class IncomesCubit extends Cubit<IncomesCubitState> {
   IncomesCubit() : super(const IncomesCubitState());
 
   Future<void> saveIncome(HistoryCubit historyCubit) async {
+    // 1. Verificar validez antes de proceder
     if (!state.isValid) return;
 
-    emit(state.copyWith(formStatus: FormStatusIncomes.validating));
+    // 2. Estado de "Posting" (guardando...)
+    emit(state.copyWith(status: IncomesStatus.posting));
 
     final date = Date();
     final double amount = double.parse(state.incomeMoney.value.replaceAll(',', '.'));
     final String month = date.monthNames();
     final int year = int.parse(date.year());
     
-    // CORREGIDO: Eliminamos const para evitar error de compilación
     final String tempId = const Uuid().v4();
 
     final movement = Movement(
@@ -44,11 +44,19 @@ class IncomesCubit extends Cubit<IncomesCubitState> {
     );
 
     try {
+      // 3. Intento de guardado
       await _saveMovementUseCase(movement);
+      
+      // 4. Éxito: Actualizar historial y emitir éxito
       await historyCubit.loadHistoryByDate(month, year);
-      emit(state.copyWith(formStatus: FormStatusIncomes.valid));
+      emit(state.copyWith(status: IncomesStatus.success));
+      
     } catch (e) {
-      emit(state.copyWith(formStatus: FormStatusIncomes.invalid));
+      // 5. Fallo: Emitir error detallado
+      emit(state.copyWith(
+        status: IncomesStatus.failure,
+        errorMessage: 'Error al conectar con el servidor: $e',
+      ));
     }
   }
 
@@ -61,6 +69,7 @@ class IncomesCubit extends Cubit<IncomesCubitState> {
     emit(state.copyWith(
       incomeName: incomeName,
       isValid: Formz.validate([incomeName, state.incomeMoney]),
+      status: IncomesStatus.initial, // Resetear status al editar
     ));
   }
 
@@ -69,6 +78,7 @@ class IncomesCubit extends Cubit<IncomesCubitState> {
     emit(state.copyWith(
       incomeMoney: incomeMoney,
       isValid: Formz.validate([incomeMoney, state.incomeName]),
+      status: IncomesStatus.initial, // Resetear status al editar
     ));
   }
 }

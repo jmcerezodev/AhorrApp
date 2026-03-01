@@ -10,27 +10,29 @@ class UpdateNameCubit extends Cubit<UpdateNameState> {
   UpdateNameCubit() : super(UpdateNameState(name: Preferences.name));
 
   void onSubmit() {
-    emit(
-      state.copyWith(
-        formStatus: FormStatusUpdateName.validating,
-        newName: Name.dirty(value: state.newName.value),
-        isValid: Formz.validate([state.newName]),
-      )
-    );
+    if (!state.isValid) return;
+
+    emit(state.copyWith(status: UpdateNameStatus.submitting));
+    
+    // Aquí se llamaría al repositorio para actualizar el nombre
+    // Por ahora, simulamos el éxito si es válido
+    onUpdateSuccess(state.newName.value);
   }
 
   void onUpdateSuccess(String newName) {
+    Preferences.name = newName;
     emit(state.copyWith(
       name: newName,
-      formStatus: FormStatusUpdateName.valid,
+      status: UpdateNameStatus.success,
       newName: const Name.pure(),
     ));
   }
 
   void resetCubit() {
-    emit(state.copyWith(
+    emit(UpdateNameState(
+      name: Preferences.name,
       newName: const Name.pure(),
-      formStatus: FormStatusUpdateName.invalid,
+      status: UpdateNameStatus.initial,
     ));
   }
 
@@ -40,6 +42,7 @@ class UpdateNameCubit extends Cubit<UpdateNameState> {
       state.copyWith(
         newName: newName,
         isValid: Formz.validate([newName]),
+        status: UpdateNameStatus.initial,
       )
     );    
   }

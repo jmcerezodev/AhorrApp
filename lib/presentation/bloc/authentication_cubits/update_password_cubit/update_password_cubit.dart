@@ -27,7 +27,7 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
 
     emit(
       state.copyWith(
-        formStatus: FormStatusUpdatePassword.validating,
+        status: UpdatePasswordStatus.submitting,
         currentPassword: currentPassword,
         newPassword: newPassword,
         confirmedPassword: confirmedPassword,
@@ -36,7 +36,7 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
     );
 
     if (!isValid) {
-      emit(state.copyWith(formStatus: FormStatusUpdatePassword.invalid));
+      emit(state.copyWith(status: UpdatePasswordStatus.failure, errorMessage: 'Formulario no válido'));
       return;
     }
 
@@ -46,31 +46,25 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
         state.newPassword.value, 
         state.currentPassword.value
       );
-      emit(state.copyWith(formStatus: FormStatusUpdatePassword.valid));
+      emit(state.copyWith(status: UpdatePasswordStatus.success));
     } catch (e) {
-      emit(state.copyWith(formStatus: FormStatusUpdatePassword.invalid));
+      emit(state.copyWith(status: UpdatePasswordStatus.failure, errorMessage: 'Error al actualizar la contraseña'));
     }
   }
 
   void resetCubit() {
-    emit(state.copyWith(
-      currentPassword: const Password.pure(),
-      newPassword: const NewPassword.pure(),
-      confirmedPassword: const ConfirmedPassword.pure(),
-      formStatus: FormStatusUpdatePassword.invalid,
-      isValid: false,
-    ));
+    emit(const UpdatePasswordState());
   }
 
-  void isCurrentPasswordVisible(bool value) {
+  void isCurrentPasswordVisible() {
     emit(state.copyWith(currentPasswordEncripted: !state.currentPasswordEncripted));
   }
 
-  void isNewPasswordVisible(bool value) {
+  void isNewPasswordVisible() {
     emit(state.copyWith(newPasswordEncripted: !state.newPasswordEncripted));
   }
 
-  void isConfirmedPasswordVisible(bool value) {
+  void isConfirmedPasswordVisible() {
     emit(state.copyWith(confirmedPasswordEncripted: !state.confirmedPasswordEncripted));
   }
 
@@ -79,6 +73,7 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
     emit(state.copyWith(
       currentPassword: currentPassword,
       isValid: Formz.validate([currentPassword, state.newPassword, state.confirmedPassword]),
+      status: UpdatePasswordStatus.initial,
     ));
   }
 
@@ -96,6 +91,7 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
       newPassword: newPassword,
       confirmedPassword: confirmedPassword,
       isValid: Formz.validate([newPassword, state.currentPassword, confirmedPassword]),
+      status: UpdatePasswordStatus.initial,
     ));
   }
 
@@ -107,6 +103,7 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
     emit(state.copyWith(
       confirmedPassword: confirmedPassword,
       isValid: Formz.validate([confirmedPassword, state.currentPassword, state.newPassword]),
+      status: UpdatePasswordStatus.initial,
     ));
   }
 }

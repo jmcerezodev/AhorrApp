@@ -1,30 +1,37 @@
 part of 'expenses_cubit.dart';
 
-enum FormStatusExpenses {invalid, valid, validating}
+enum ExpensesStatus { initial, posting, success, failure }
 
-class ExpensesCubitState {
-
+class ExpensesCubitState extends Equatable {
   final bool isValid;
-  final FormStatusExpenses formStatus;
+  final ExpensesStatus status;
   final ExpenseNameInput expenseName;
   final ExpenseMoneyInput expenseMoney;
+  final String? errorMessage;
 
   const ExpensesCubitState({
     this.isValid = false,
-    this.formStatus = FormStatusExpenses.invalid,
+    this.status = ExpensesStatus.initial,
     this.expenseMoney = const ExpenseMoneyInput.pure(),
     this.expenseName = const ExpenseNameInput.pure(),
+    this.errorMessage,
   });
 
   ExpensesCubitState copyWith({
-    FormStatusExpenses? formStatus,
+    ExpensesStatus? status,
     bool? isValid,
     ExpenseNameInput? expenseName,
     ExpenseMoneyInput? expenseMoney,
-  }) => ExpensesCubitState(
-    formStatus: formStatus ?? this.formStatus,
-    isValid: isValid ?? this.isValid,
-    expenseName: expenseName ?? this.expenseName,
-    expenseMoney: expenseMoney ?? this.expenseMoney,
-  );
+    String? errorMessage,
+  }) =>
+      ExpensesCubitState(
+        status: status ?? this.status,
+        isValid: isValid ?? this.isValid,
+        expenseName: expenseName ?? this.expenseName,
+        expenseMoney: expenseMoney ?? this.expenseMoney,
+        errorMessage: errorMessage ?? this.errorMessage,
+      );
+
+  @override
+  List<Object?> get props => [status, isValid, expenseName, expenseMoney, errorMessage];
 }

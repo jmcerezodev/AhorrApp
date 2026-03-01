@@ -1,38 +1,37 @@
 part of 'incomes_cubit.dart';
 
-enum FormStatusIncomes {invalid, valid, validating}
+enum IncomesStatus { initial, posting, success, failure }
 
 class IncomesCubitState extends Equatable {
-
-  final FormStatusIncomes formStatus;
+  final IncomesStatus status;
   final bool isValid;
   final IncomeNameInput incomeName;
   final IncomeMoneyInput incomeMoney;
+  final String? errorMessage;
 
   const IncomesCubitState({
-    this.formStatus = FormStatusIncomes.invalid,
+    this.status = IncomesStatus.initial,
     this.isValid = false,
     this.incomeName = const IncomeNameInput.pure(),
     this.incomeMoney = const IncomeMoneyInput.pure(),
+    this.errorMessage,
   });
 
   IncomesCubitState copyWith({
-    FormStatusIncomes? formStatus,
+    IncomesStatus? status,
     bool? isValid,
     IncomeNameInput? incomeName,
     IncomeMoneyInput? incomeMoney,
-  }) => IncomesCubitState(
-    formStatus: formStatus ?? this.formStatus,
-    isValid: isValid ?? this.isValid,
-    incomeName: incomeName ?? this.incomeName,
-    incomeMoney: incomeMoney ?? this.incomeMoney,
-  );
-  
+    String? errorMessage,
+  }) =>
+      IncomesCubitState(
+        status: status ?? this.status,
+        isValid: isValid ?? this.isValid,
+        incomeName: incomeName ?? this.incomeName,
+        incomeMoney: incomeMoney ?? this.incomeMoney,
+        errorMessage: errorMessage ?? this.errorMessage,
+      );
+
   @override
-  List<Object?> get props => [
-    formStatus,
-    isValid,
-    incomeName,
-    incomeMoney,
-  ];
+  List<Object?> get props => [status, isValid, incomeName, incomeMoney, errorMessage];
 }

@@ -1,47 +1,44 @@
 part of 'login_cubit.dart';
 
-enum FormStatusLogin {invalid, valid, validating, editing}
+enum LoginStatus { initial, submitting, success, failure }
 
 class LoginCubitState extends Equatable {
   final bool isValid;
-  final FormStatusLogin formStatus;
+  final LoginStatus status;
   final EmailLogin email;
   final PasswordLogin password;
   final bool passwordEncripted;
   final bool isRemember; 
-  final Map<String, dynamic> loginData;
+  final String? errorMessage;
 
   const LoginCubitState({
-    this.formStatus = FormStatusLogin.editing,
+    this.status = LoginStatus.initial,
     this.isValid = false,
     this.email = const EmailLogin.pure(),
     this.password = const PasswordLogin.pure(),
     this.passwordEncripted = true,
     this.isRemember = false, 
-    this.loginData = const {
-      'email': '',
-      'password': '',
-    },
+    this.errorMessage,
   });
 
   LoginCubitState copyWith({
-    FormStatusLogin? formStatus,
+    LoginStatus? status,
     bool? isValid,
     EmailLogin? email,
     PasswordLogin? password,
     bool? passwordEncripted,
     bool? isRemember,
-    Map<String, dynamic>? loginData,
+    String? errorMessage,
   }) => LoginCubitState(
-    formStatus: formStatus ?? this.formStatus,
+    status: status ?? this.status,
     isValid: isValid ?? this.isValid,
     email: email ?? this.email,
     password: password ?? this.password,
     passwordEncripted: passwordEncripted ?? this.passwordEncripted,
     isRemember: isRemember ?? this.isRemember,
-    loginData: loginData ?? this.loginData,
+    errorMessage: errorMessage ?? this.errorMessage,
   );
   
   @override
-  List<Object?> get props => [formStatus, isValid, email, password, passwordEncripted, isRemember];
+  List<Object?> get props => [status, isValid, email, password, passwordEncripted, isRemember, errorMessage];
 }

@@ -4,7 +4,6 @@ import 'package:ahorrapp/core/inputs/inputs.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
-import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
@@ -27,7 +26,7 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
   }
 
   Future<void> loadSavings() async {
-    emit(state.copyWith(formStatus: FormStatusSavings.validating));
+    emit(state.copyWith(status: SavingsStatus.loading));
     try {
       final String uid = Preferences.uId;
       final double goal = await _localDb.getSavingGoal(uid);
@@ -36,18 +35,23 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
       emit(state.copyWith(
         savingGoal: goal,
         savingTotal: total,
-        formStatus: FormStatusSavings.valid
+        status: SavingsStatus.success
       ));
     } catch (e) {
-      emit(state.copyWith(formStatus: FormStatusSavings.invalid));
+      emit(state.copyWith(
+        status: SavingsStatus.failure,
+        errorMessage: 'Error al cargar ahorros: $e'
+      ));
     }
   }
 
   Future<void> addSaving(HistoryCubit historyCubit, {double? customAmount, String? customName}) async {
-    final double amount = customAmount ?? double.parse(state.saving.value.replaceAll(',', '.'));
+    final double? amount = customAmount ?? double.tryParse(state.saving.value.replaceAll(',', '.'));
+    if (amount == null) return;
+    
     final String name = customName ?? 'Aportación de ahorro';
 
-    emit(state.copyWith(formStatus: FormStatusSavings.validating));
+    emit(state.copyWith(status: SavingsStatus.loading));
 
     final date = Date();
     final String month = date.monthNames();
@@ -71,14 +75,17 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
       await _saveMovementUseCase(movement);
       await loadSavings();
       await historyCubit.loadHistoryByDate(month, year);
-      emit(state.copyWith(formStatus: FormStatusSavings.valid));
+      emit(state.copyWith(status: SavingsStatus.success));
     } catch (e) {
-      emit(state.copyWith(formStatus: FormStatusSavings.invalid));
+      emit(state.copyWith(
+        status: SavingsStatus.failure,
+        errorMessage: 'Error al añadir ahorro: $e'
+      ));
     }
   }
 
   Future<void> emptySavings(HistoryCubit historyCubit) async {
-    emit(state.copyWith(formStatus: FormStatusSavings.validating));
+    emit(state.copyWith(status: SavingsStatus.loading));
     try {
       final List<String> appwriteIds = await _localDb.markSavingsAsSpent();
       for (var id in appwriteIds) {
@@ -87,35 +94,58 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
       await loadSavings();
       final date = Date();
       await historyCubit.loadHistoryByDate(date.monthNames(), int.parse(date.year()));
-      emit(state.copyWith(formStatus: FormStatusSavings.valid));
+      emit(state.copyWith(status: SavingsStatus.success));
     } catch (e) {
-      emit(state.copyWith(formStatus: FormStatusSavings.invalid));
+      emit(state.copyWith(
+        status: SavingsStatus.failure,
+        errorMessage: 'Error al vaciar ahorros: $e'
+      ));
     }
   }
 
   Future<void> removeContribution(String id) async {
+    emit(state.copyWith(status: SavingsStatus.loading));
     try {
       await _repository.deleteSaving(id);
       await _localDb.deleteItemByAppwriteId(id);
       await loadSavings();
+      emit(state.copyWith(status: SavingsStatus.success));
     } catch (e) {
-      emit(state.copyWith(formStatus: FormStatusSavings.invalid));
+      emit(state.copyWith(
+        status: SavingsStatus.failure,
+        errorMessage: 'Error al eliminar contribución: $e'
+      ));
     }
   }
 
   Future<void> setGoal(double value) async {
-    final String uid = Preferences.uId;
-    await _localDb.saveSavingGoal(uid, value);
-    await _repository.updatePrefs({'savingGoal': value});
-    emit(state.copyWith(savingGoal: value));
+    emit(state.copyWith(status: SavingsStatus.loading));
+    try {
+      final String uid = Preferences.uId;
+      await _localDb.saveSavingGoal(uid, value);
+      await _repository.updatePrefs({'savingGoal': value});
+      emit(state.copyWith(savingGoal: value, status: SavingsStatus.success));
+    } catch (e) {
+      emit(state.copyWith(
+        status: SavingsStatus.failure,
+        errorMessage: 'Error al establecer meta: $e'
+      ));
+    }
   }
 
   void resetCubit() {
-    emit(state.copyWith(saving: const SavingInput.pure()));
+    emit(state.copyWith(
+      saving: const SavingInput.pure(),
+      status: SavingsStatus.initial
+    ));
   }
 
   void savingChanged(String value) {
     final saving = SavingInput.dirty(value: value);
-    emit(state.copyWith(saving: saving, isValid: Formz.validate([saving])));
+    emit(state.copyWith(
+      saving: saving, 
+      isValid: Formz.validate([saving]),
+      status: SavingsStatus.initial
+    ));
   }
 }

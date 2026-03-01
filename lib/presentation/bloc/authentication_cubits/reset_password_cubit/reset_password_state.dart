@@ -1,37 +1,32 @@
 part of 'reset_password_cubit.dart';
 
-enum FormStatusResetPassword {invalid, valid, validating}
+enum ResetPasswordStatus { initial, submitting, success, failure }
 
 class ResetPasswordState extends Equatable {
+  final ResetPasswordStatus status;
   final bool isValid;
-  final FormStatusResetPassword formStatus;
   final Email resetPassword;
-  final bool passwordEncripted;
-  final bool isRemember;
+  final String? errorMessage;
 
   const ResetPasswordState({
-    this.formStatus = FormStatusResetPassword.invalid,
+    this.status = ResetPasswordStatus.initial,
     this.isValid = false,
     this.resetPassword = const Email.pure(),
-    this.passwordEncripted = true,
-    this.isRemember = false,
+    this.errorMessage,
   });
 
   ResetPasswordState copyWith({
-    FormStatusResetPassword? formStatus,
+    ResetPasswordStatus? status,
     bool? isValid,
     Email? resetPassword,
-    bool? passwordEncripted,
-    bool? isRemember,
-  }) =>
-      ResetPasswordState(
-        formStatus: formStatus ?? this.formStatus,
-        isValid: isValid ?? this.isValid,
-        resetPassword: resetPassword ?? this.resetPassword,
-        passwordEncripted: passwordEncripted ?? this.passwordEncripted,
-        isRemember: isRemember ?? this.isRemember,
-      );
-
+    String? errorMessage,
+  }) => ResetPasswordState(
+    status: status ?? this.status,
+    isValid: isValid ?? this.isValid,
+    resetPassword: resetPassword ?? this.resetPassword,
+    errorMessage: errorMessage ?? this.errorMessage,
+  );
+  
   @override
-  List<Object?> get props => [formStatus, isValid, resetPassword, passwordEncripted, isRemember];
+  List<Object?> get props => [status, isValid, resetPassword, errorMessage];
 }

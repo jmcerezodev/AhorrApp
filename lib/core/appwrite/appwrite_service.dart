@@ -12,10 +12,15 @@ class AppwriteService {
   }
 
   AppwriteService._internal() {
-    client = Client()
-      ..setEndpoint(Env.appwriteEndpoint)
-      ..setProject(Env.appwriteProjectId)
-      ..setSelfSigned(status: true);
+    client = Client();
+    
+    // Solo configuramos si el endpoint no está vacío (evita crash en tests)
+    if (Env.appwriteEndpoint.isNotEmpty) {
+      client
+        ..setEndpoint(Env.appwriteEndpoint)
+        ..setProject(Env.appwriteProjectId)
+        ..setSelfSigned(status: true);
+    }
 
     account = Account(client);
     databases = Databases(client);

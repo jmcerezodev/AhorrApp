@@ -1,33 +1,37 @@
 part of 'update_name_cubit.dart';
 
-enum FormStatusUpdateName { invalid, valid, validating }
+enum UpdateNameStatus { initial, submitting, success, failure }
 
 class UpdateNameState extends Equatable {
-  final FormStatusUpdateName formStatus;
-  final bool isValid;
   final String name;
+  final UpdateNameStatus status;
   final Name newName;
+  final bool isValid;
+  final String? errorMessage;
 
   const UpdateNameState({
-    this.formStatus = FormStatusUpdateName.invalid,
-    this.isValid = false,
-    this.name = '',
+    required this.name,
+    this.status = UpdateNameStatus.initial,
     this.newName = const Name.pure(),
+    this.isValid = false,
+    this.errorMessage,
   });
 
   UpdateNameState copyWith({
-    FormStatusUpdateName? formStatus,
-    bool? isValid,
     String? name,
+    UpdateNameStatus? status,
     Name? newName,
+    bool? isValid,
+    String? errorMessage,
   }) =>
       UpdateNameState(
-        formStatus: formStatus ?? this.formStatus,
-        isValid: isValid ?? this.isValid,
         name: name ?? this.name,
+        status: status ?? this.status,
         newName: newName ?? this.newName,
+        isValid: isValid ?? this.isValid,
+        errorMessage: errorMessage ?? this.errorMessage,
       );
 
   @override
-  List<Object> get props => [formStatus, isValid, name, newName];
+  List<Object?> get props => [name, status, newName, isValid, errorMessage];
 }

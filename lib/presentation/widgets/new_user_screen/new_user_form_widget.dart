@@ -27,14 +27,18 @@ class _UserInputWidgetState extends State<UserInputWidget> {
 
     return BlocListener<NewUserCubit, NewUserCubitState>(
       listener: (context, state) {
-        if (state.formStatus == FormStatusNewUser.valid) {
+        // 1. Éxito: Navegamos a la Home
+        if (state.status == NewUserStatus.success) {
           context.go('/home-screen');
-        } else if (state.formStatus == FormStatusNewUser.invalid) {
+        } 
+        
+        // 2. Fallo: Mostramos el error detallado que viene de Appwrite
+        else if (state.status == NewUserStatus.failure) {
           showDialog(
             context: context, 
-            builder: (context) => const AuthErrorDialog(
+            builder: (context) => AuthErrorDialog(
               errorTitle: '!Se ha producido un error!', 
-              errorText: 'No se pudo crear la cuenta. Es posible que el correo ya esté en uso o haya un error de conexión.',
+              errorText: state.errorMessage ?? 'No se pudo crear la cuenta. Verifica tu conexión.',
             ),
           );
         }
@@ -103,7 +107,8 @@ class _UserInputWidgetState extends State<UserInputWidget> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton.icon(
-                onPressed: newUserCubit.state.formStatus == FormStatusNewUser.validating
+                // 3. Deshabilitar botón mientras se envía (submitting)
+                onPressed: newUserCubit.state.status == NewUserStatus.submitting
                   ? null
                   : () => newUserCubit.onSubmit(),
                 style: ElevatedButton.styleFrom(
@@ -112,7 +117,7 @@ class _UserInputWidgetState extends State<UserInputWidget> {
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 ),
-                icon: newUserCubit.state.formStatus == FormStatusNewUser.validating
+                icon: newUserCubit.state.status == NewUserStatus.submitting
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.person_add_rounded),
                 label: const Text(
