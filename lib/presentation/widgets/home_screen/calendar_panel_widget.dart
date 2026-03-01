@@ -1,4 +1,5 @@
 import 'package:ahorrapp/core/date/date.dart';
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:flutter/material.dart';
@@ -15,16 +16,18 @@ class CalendarPanelWidget extends StatefulWidget {
 class _CalendarPanelWidgetState extends State<CalendarPanelWidget> {
   Map<String, Map<String, bool>> _activityMap = {};
   int _minYear = 2024;
+  late LocalDbService _localDb;
 
   @override
   void initState() {
     super.initState();
+    // CORREGIDO: Inicialización segura para tests
+    _localDb = getIt<LocalDbService>();
     _loadInitialData();
   }
 
   Future<void> _loadInitialData() async {
-    final localDb = LocalDbService();
-    final minYear = await localDb.getMinYear();
+    final minYear = await _localDb.getMinYear();
     if (mounted) {
       setState(() {
         _minYear = minYear;
@@ -35,9 +38,7 @@ class _CalendarPanelWidgetState extends State<CalendarPanelWidget> {
 
   Future<void> _loadYearlyActivity() async {
     final dateCubit = context.read<DateCubit>().state;
-    final localDb = LocalDbService();
-    
-    final yearData = await localDb.getYearlyActivity(dateCubit.year);
+    final yearData = await _localDb.getYearlyActivity(dateCubit.year);
     
     final Map<String, Map<String, bool>> newMap = {};
     for (var item in yearData) {

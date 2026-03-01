@@ -2,7 +2,6 @@ import 'package:animate_do/animate_do.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/saving_dialogs/edit_saving_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
@@ -266,7 +265,7 @@ class _HistoryItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final humanizeNumbers = HumanizeNumbers();
     final colorScheme = Theme.of(context).colorScheme;
-    final isDark = colorScheme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     final double amount = (item['money'] as num).toDouble();
     final type = item['type'];
@@ -332,7 +331,6 @@ class _HistoryItem extends StatelessWidget {
                 builder: (context) => EditItemHistoryDialog(itemId: item['id']),
               );
             } else {
-              // CORREGIDO: Usamos el nombre correcto del diálogo de borrado para ahorros
               if (type == 'saving') {
                 return showDialog(
                   barrierDismissible: false,

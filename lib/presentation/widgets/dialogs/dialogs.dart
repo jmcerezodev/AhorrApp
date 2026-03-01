@@ -10,6 +10,8 @@ export 'incomes_expenses_dialogs/incomes_dialog.dart';
 export 'no_money_dialog/no_money_dialog_widget.dart';
 export 'saving_dialogs/savings_dialog_widget.dart';
 export 'saving_dialogs/savings_empty_dialog_widget.dart';
+export 'saving_dialogs/delete_saving_item_dialog.dart';
+export 'saving_dialogs/edit_saving_dialog.dart';
 export 'general_dialogs/error_dialog.dart';
 export 'drawer_dialogs/update_name_dialog.dart';
 export 'history_dialog/delete_item_history_dialog.dart';
