@@ -1,6 +1,7 @@
 import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
+import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
@@ -23,36 +24,23 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
     });
   }
 
-  double _calculateCurrentBalance(List<Map<String, dynamic>> history) {
-    double total = 0;
-    for (var item in history) {
-      final double money = (item['money'] as num).toDouble();
-      if (item['isIncome'] == true) {
-        total += money;
-      } else {
-        total -= money;
-      }
-    }
-    return total;
-  }
-
   @override
   Widget build(BuildContext context) {
     final date = Date();
     final AppwriteRepository appwriteRepo = AppwriteRepository();
     final expensesCubit = context.watch<ExpensesCubit>();
-    final historyList = context.watch<HistoryCubit>().state.historyList;
-    final double currentBalance = _calculateCurrentBalance(historyList);
+    // CORRECCIÓN: Accedemos al valor numérico dentro del estado
+    final double totalBalance = context.watch<TotalMoneyCubit>().state.totalMoney;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final double typedAmount = double.tryParse(expensesCubit.state.expenseMoney.value.replaceAll(',', '.')) ?? 0;
-    final bool hasEnoughBalance = typedAmount <= currentBalance;
+    final bool hasEnoughBalance = typedAmount <= totalBalance;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SingleChildScrollView( // PROTECCIÓN CONTRA OVERFLOW
+      child: SingleChildScrollView(
         child: Container(
           padding: const EdgeInsets.all(25),
           decoration: BoxDecoration(
@@ -105,7 +93,7 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                       style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12)
                     ),
                     Text(
-                      '${currentBalance.toStringAsFixed(2)}€', 
+                      '${totalBalance.toStringAsFixed(2)}€', 
                       style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13)
                     ),
                   ],
@@ -154,18 +142,39 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                       onPressed: (expensesCubit.state.isValid && hasEnoughBalance && typedAmount > 0) 
                       ? () async {
                         expensesCubit.onSubmit();
-                        await appwriteRepo.addHistory(
+                        
+                        final double amount = typedAmount;
+                        final String month = date.monthNames();
+                        final int year = int.parse(date.year());
+
+                        // 1. Guardar en Appwrite
+                        final doc = await appwriteRepo.addHistory(
                           userId: Preferences.uId,
                           name: expensesCubit.state.expenseName.value,
-                          money: typedAmount,
+                          money: amount,
                           isIncome: false,
                           currentDate: date.currentDate(),
                           currentHour: date.currentHour(),
-                          month: date.monthNames(),
-                          year: int.parse(date.year()),
+                          month: month,
+                          year: year,
                         );
+
+                        // 2. Guardar en Isar (Local) para velocidad instantánea
                         if (context.mounted) {
-                          await context.read<HistoryCubit>().loadHistory();
+                          await context.read<HistoryCubit>().addMovementLocally(
+                            LocalHistory()
+                              ..appwriteId = doc.$id
+                              ..name = doc.data['name']
+                              ..money = amount
+                              ..type = 'expense'
+                              ..isIncome = false
+                              ..currentDate = doc.data['currentDate']
+                              ..currentHour = doc.data['currentHour']
+                              ..month = month
+                              ..year = year
+                              ..createdAt = DateTime.parse(doc.$createdAt)
+                          );
+
                           expensesCubit.resetCubit();
                           context.pop();
                         }

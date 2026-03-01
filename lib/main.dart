@@ -3,18 +3,21 @@ import 'package:ahorrapp/config/theme/app_theme.dart';
 import 'package:ahorrapp/core/auth/biometric_service.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
+import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'dart:io'; // Importado para salir de la app
+import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // INICIALIZACIÓN DE PREFERENCIAS Y BASE DE DATOS LOCAL
   await Preferences.init();
+  await LocalDbService().init();
 
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     systemNavigationBarColor: Colors.transparent,
@@ -38,7 +41,6 @@ void main() async {
       if (authenticated) {
         initialRoute = await authService.getInitialRoute();
       } else {
-        // SEGURIDAD EXTREMA: Cerramos la app si no se identifica al abrir
         exit(0); 
       }
     } else {
@@ -107,7 +109,6 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
     final authenticated = await biometricService.authenticate();
     
     if (!authenticated) {
-      // SEGURIDAD EXTREMA: Cerramos la app si falla al volver de segundo plano
       exit(0); 
     }
     

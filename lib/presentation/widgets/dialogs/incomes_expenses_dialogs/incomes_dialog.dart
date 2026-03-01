@@ -1,6 +1,7 @@
 import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
+import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,7 +35,7 @@ class _IncomesDialogState extends State<IncomesDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SingleChildScrollView( // PROTECCIÓN CONTRA OVERFLOW
+      child: SingleChildScrollView(
         child: Container(
           padding: const EdgeInsets.all(25),
           decoration: BoxDecoration(
@@ -111,18 +112,39 @@ class _IncomesDialogState extends State<IncomesDialog> {
                       onPressed: (incomesCubit.state.isValid) 
                       ? () async {
                         incomesCubit.onSubmit();
-                        await appwriteRepo.addHistory(
+                        
+                        final double amount = double.parse(incomesCubit.state.incomeMoney.value.replaceAll(',', '.'));
+                        final String month = date.monthNames();
+                        final int year = int.parse(date.year());
+
+                        // 1. Guardar en Appwrite (Nube)
+                        final doc = await appwriteRepo.addHistory(
                           userId: Preferences.uId,
                           name: incomesCubit.state.incomeName.value,
-                          money: double.parse(incomesCubit.state.incomeMoney.value.replaceAll(',', '.')),
+                          money: amount,
                           isIncome: true,
                           currentDate: date.currentDate(),
                           currentHour: date.currentHour(),
-                          month: date.monthNames(),
-                          year: int.parse(date.year()),
+                          month: month,
+                          year: year,
                         );
+
+                        // 2. Guardar en Isar (Local) para velocidad instantánea
                         if (context.mounted) {
-                          await context.read<HistoryCubit>().loadHistory();
+                          await context.read<HistoryCubit>().addMovementLocally(
+                            LocalHistory()
+                              ..appwriteId = doc.$id
+                              ..name = doc.data['name']
+                              ..money = amount
+                              ..type = 'income'
+                              ..isIncome = true
+                              ..currentDate = doc.data['currentDate']
+                              ..currentHour = doc.data['currentHour']
+                              ..month = month
+                              ..year = year
+                              ..createdAt = DateTime.parse(doc.$createdAt)
+                          );
+
                           incomesCubit.resetCubit();
                           context.pop();
                         }

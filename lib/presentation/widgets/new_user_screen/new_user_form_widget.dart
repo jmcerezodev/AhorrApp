@@ -20,9 +20,7 @@ class _UserInputWidgetState extends State<UserInputWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final newUserCubit = context.watch<NewUserCubit>();
-    
     final nameCubit = newUserCubit.state.name;
     final emailCubit = newUserCubit.state.email;
     final passwordCubit = newUserCubit.state.password;
@@ -44,13 +42,21 @@ class _UserInputWidgetState extends State<UserInputWidget> {
       child: Form(
         child: Column(
           children: [
-            SizedBox(height: size.height * 0.02),
-            const Text('Crea nueva cuenta', style: TextStyle(fontWeight: FontWeight.bold),),
-            SizedBox(height: size.height * 0.02),
+            const SizedBox(height: 10),
+            Text(
+              'REGISTRO',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: Colors.grey.shade400,
+                letterSpacing: 3.0,
+              ),
+            ),
+            const SizedBox(height: 25),
 
             //* Nombre
             CustomInputTextWidget(
-              prefixIcon: Icons.person,
+              prefixIcon: Icons.person_outline_rounded,
               label: 'Tu Nombre',
               hintText: 'Nombre',
               onChanged: newUserCubit.nameChanged,
@@ -60,11 +66,11 @@ class _UserInputWidgetState extends State<UserInputWidget> {
               textCapitalization: TextCapitalization.sentences,
             ),
             
-            SizedBox(height: size.height * 0.02),
+            const SizedBox(height: 20),
 
             //* Correo Electronico
             CustomInputTextWidget(
-              prefixIcon: Icons.email,
+              prefixIcon: Icons.email_outlined,
               label: 'Correo Electronico',
               hintText: 'tucorreo@correo.com',
               onChanged:  newUserCubit.emailChanged,
@@ -74,14 +80,14 @@ class _UserInputWidgetState extends State<UserInputWidget> {
               textCapitalization: TextCapitalization.none,
             ),
             
-            SizedBox(height: size.height * 0.02),
+            const SizedBox(height: 20),
 
             //* Contraseña
             CustomInputTextWidget(
-              prefixIcon: Icons.key,
+              prefixIcon: Icons.key_outlined,
               suffixIcon: (newUserCubit.state.passwordEncripted == false) 
-              ? Icons.visibility 
-              : Icons.visibility_off,
+              ? Icons.visibility_outlined 
+              : Icons.visibility_off_outlined,
               onPressedSuffixIcon: () => isPasswordVisible(context),
               label: 'Contraseña',
               obscureText: newUserCubit.state.passwordEncripted,
@@ -91,16 +97,29 @@ class _UserInputWidgetState extends State<UserInputWidget> {
               textCapitalization: TextCapitalization.none,
             ),
 
-            SizedBox(height: size.height * 0.03),
+            const SizedBox(height: 30),
 
-            FilledButton.tonalIcon(
-              onPressed: newUserCubit.state.formStatus == FormStatusNewUser.validating
-                ? null
-                : () => newUserCubit.onSubmit(),
-              icon: newUserCubit.state.formStatus == FormStatusNewUser.validating
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.person_add),
-              label: const Text('Crear Cuenta', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton.icon(
+                onPressed: newUserCubit.state.formStatus == FormStatusNewUser.validating
+                  ? null
+                  : () => newUserCubit.onSubmit(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange.shade600,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                ),
+                icon: newUserCubit.state.formStatus == FormStatusNewUser.validating
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.person_add_rounded),
+                label: const Text(
+                  'CREAR CUENTA', 
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.2)
+                ),
+              ),
             ),
           ],
         ),

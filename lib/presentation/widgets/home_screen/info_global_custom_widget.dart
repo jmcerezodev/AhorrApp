@@ -1,5 +1,4 @@
 import 'package:animate_do/animate_do.dart';
-import 'package:ahorrapp/core/filter_lists/filter_lists.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
@@ -12,14 +11,16 @@ class InfoGlogalWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final filterLists = FilterLists();
     final savingsState = context.watch<SavingsCubit>().state;
-    final historyCubit = context.watch<HistoryCubit>();
+    final double totalBalance = context.watch<TotalMoneyCubit>().state.totalMoney;
+    final historyState = context.watch<HistoryCubit>().state;
+    
     final humanizeNumbers = HumanizeNumbers();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final double totalMoneyResult = filterLists.calculateTotalMoney(context, historyCubit);
+    // Comprobamos si la app está en proceso de carga o sincronización inicial
+    final bool isLoading = historyState.formStatus == FormStatusHistory.validating || historyState.isSyncing;
 
     return FadeInDown(
       duration: const Duration(milliseconds: 600),
@@ -64,9 +65,10 @@ class InfoGlogalWidget extends StatelessWidget {
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        '${humanizeNumbers.number(totalMoneyResult)}€',
+                        // Si está cargando muestra '---', si no, el balance formateado
+                        isLoading ? '---' : '${humanizeNumbers.number(totalBalance)}€',
                         style: TextStyle(
-                          color: colorScheme.onSurface,
+                          color: isLoading ? colorScheme.onSurface.withValues(alpha: 0.2) : colorScheme.onSurface,
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -0.5,
@@ -111,10 +113,7 @@ class _SavingGoalCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    // Determinar si se ha alcanzado la meta
     final bool goalReached = goal > 0 && progress >= 1.0;
-    
-    // Colores dinámicos basados en el éxito
     final Color accentColor = goalReached ? Colors.green.shade400 : colorScheme.primary;
     final Color bgColor = goalReached 
         ? Colors.green.shade400.withValues(alpha: isDark ? 0.15 : 0.05)
@@ -175,7 +174,6 @@ class _SavingGoalCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            // Barra de progreso y meta
             if (goal > 0) ...[
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),

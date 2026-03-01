@@ -7,7 +7,7 @@ class Preferences {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  // Auth & Info
+  // --- SESIÓN Y AUTH (Lo único que se queda aquí) ---
   static String get uId => _prefs.getString('uId') ?? '';
   static set uId(String value) => _prefs.setString('uId', value);
 
@@ -23,14 +23,10 @@ class Preferences {
   static bool get isRemember => _prefs.getBool('isRemember') ?? false;
   static set isRemember(bool value) => _prefs.setBool('isRemember', value);
 
-  // Ajustes de App
+  // --- AJUSTES DE INTERFAZ ---
   static bool get isDarkMode => _prefs.getBool('isDarkMode') ?? false;
   static set isDarkMode(bool value) => _prefs.setBool('isDarkMode', value);
 
   static bool get isBiometricActive => _prefs.getBool('isBiometricActive') ?? false;
   static set isBiometricActive(bool value) => _prefs.setBool('isBiometricActive', value);
-
-  // Meta de Ahorro (NUEVO)
-  static double get savingGoal => _prefs.getDouble('savingGoal') ?? 0.0;
-  static set savingGoal(double value) => _prefs.setDouble('savingGoal', value);
 }

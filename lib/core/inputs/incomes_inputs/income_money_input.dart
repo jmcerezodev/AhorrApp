@@ -6,7 +6,7 @@ enum IncomeMoneyError { empty, format }
 // Extend FormzInput and provide the input type and error type.
 class IncomeMoneyInput extends FormzInput<String, IncomeMoneyError> {
 
-  static final RegExp incomeMoneyRegExp = RegExp(r'^[0-9]+(\.[0-9]+)?[0-9]*$');
+  static final RegExp incomeMoneyRegExp = RegExp(r'^[0-9]+([.,][0-9]+)?$');
   // Call super.pure to represent an unmodified form input.
   const IncomeMoneyInput.pure() : super.pure('');
 
@@ -17,7 +17,7 @@ class IncomeMoneyInput extends FormzInput<String, IncomeMoneyError> {
     
     if(isValid || isPure) return null;
     if(displayError == IncomeMoneyError.empty) return 'El Campo es obligatorio';
-    if(displayError == IncomeMoneyError.format) return 'Numero no valido';
+    if(displayError == IncomeMoneyError.format) return 'Número no válido';
     return null;
   }
 
@@ -26,7 +26,16 @@ class IncomeMoneyInput extends FormzInput<String, IncomeMoneyError> {
   IncomeMoneyError? validator(String value) {
     
     if(value.isEmpty || value.trim().isEmpty) return IncomeMoneyError.empty;
+    
+    // Validamos permitiendo tanto punto como coma
     if(!incomeMoneyRegExp.hasMatch(value)) return IncomeMoneyError.format;
+
+    // Verificamos que sea convertible a double
+    try {
+      double.parse(value.replaceAll(',', '.'));
+    } catch (_) {
+      return IncomeMoneyError.format;
+    }
 
     return null;
   }

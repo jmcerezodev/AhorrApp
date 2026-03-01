@@ -1,45 +1,75 @@
-import 'package:animate_do/animate_do.dart';
 import 'package:ahorrapp/core/date/date.dart';
-import 'package:ahorrapp/core/filter_lists/filter_lists.dart';
+import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:animate_do/animate_do.dart';
 
-class CalendarPanelWidget extends StatelessWidget {
+class CalendarPanelWidget extends StatefulWidget {
   const CalendarPanelWidget({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final filterLists = FilterLists();
-    final dateCubit = context.watch<DateCubit>().state;
-    final historyList = context.watch<HistoryCubit>().state.historyList;
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  State<CalendarPanelWidget> createState() => _CalendarPanelWidgetState();
+}
 
-    final int historyMinYear = filterLists.findMinYear(historyList);
-    final int minYear = historyMinYear < 2024 ? historyMinYear : 2024;
+class _CalendarPanelWidgetState extends State<CalendarPanelWidget> {
+  Map<String, Map<String, bool>> _activityMap = {};
+  int _minYear = 2024;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    final localDb = LocalDbService();
+    final minYear = await localDb.getMinYear();
+    if (mounted) {
+      setState(() {
+        _minYear = minYear;
+      });
+      _loadYearlyActivity();
+    }
+  }
+
+  Future<void> _loadYearlyActivity() async {
+    final dateCubit = context.read<DateCubit>().state;
+    final localDb = LocalDbService();
     
-    final DateTime now = DateTime.now();
-    final int currentYear = now.year;
-    final int currentMonthIndex = now.month; // 1-12
-
-    final Map<String, Map<String, bool>> activityMap = {};
-    for (var item in historyList) {
-      if (item['year'] == dateCubit.year) {
-        final String m = item['month'];
-        activityMap.putIfAbsent(m, () => {'hasIncome': false, 'hasExpense': false});
-        if (item['isIncome'] == true) {
-          activityMap[m]!['hasIncome'] = true;
-        } else {
-          activityMap[m]!['hasExpense'] = true;
-        }
+    final yearData = await localDb.getYearlyActivity(dateCubit.year);
+    
+    final Map<String, Map<String, bool>> newMap = {};
+    for (var item in yearData) {
+      final String m = item.month;
+      newMap.putIfAbsent(m, () => {'hasIncome': false, 'hasExpense': false});
+      if (item.type == 'income') {
+        newMap[m]!['hasIncome'] = true;
+      } else if (item.type == 'expense') {
+        newMap[m]!['hasExpense'] = true;
       }
     }
 
+    if (mounted) {
+      setState(() {
+        _activityMap = newMap;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateCubit = context.watch<DateCubit>().state;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final DateTime now = DateTime.now();
+    final int currentYear = now.year;
+    final int currentMonthIndex = now.month;
+
     final List<String> months = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 
-      'Mayo', 'Junio', 'Julio', 'Agosto', 
-      'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
     return FadeInDown(
@@ -73,26 +103,36 @@ class CalendarPanelWidget extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _YearButton(
-                        icon: Icons.chevron_left_rounded,
-                        enabled: dateCubit.year > minYear, 
-                        onPressed: () => context.read<DateCubit>().yearDecrement(1),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        icon: Icon(
+                          Icons.chevron_left_rounded, 
+                          color: dateCubit.year > _minYear ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.1), 
+                          size: 28
+                        ),
+                        onPressed: dateCubit.year > _minYear ? () {
+                          context.read<DateCubit>().yearDecrement(1);
+                          _loadYearlyActivity();
+                        } : null,
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15),
                         child: Text(
                           dateCubit.year.toString(),
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: colorScheme.onSurface,
-                          ),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: colorScheme.onSurface),
                         ),
                       ),
-                      _YearButton(
-                        icon: Icons.chevron_right_rounded,
-                        enabled: dateCubit.year < currentYear,
-                        onPressed: () => context.read<DateCubit>().yearIncrement(1),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        icon: Icon(
+                          Icons.chevron_right_rounded, 
+                          color: dateCubit.year < currentYear ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.1), 
+                          size: 28
+                        ),
+                        onPressed: dateCubit.year < currentYear ? () {
+                          context.read<DateCubit>().yearIncrement(1);
+                          _loadYearlyActivity();
+                        } : null,
                       ),
                     ],
                   ),
@@ -111,18 +151,17 @@ class CalendarPanelWidget extends StatelessWidget {
                 runSpacing: 10,
                 alignment: WrapAlignment.center,
                 children: months.asMap().entries.map((entry) {
-                  final int index = entry.key + 1; // 1-12
+                  final int index = entry.key + 1;
                   final String monthName = entry.value;
-                  
-                  // LÓGICA DE BLOQUEO: Si es año actual, no permitir meses futuros
                   final bool isFuture = (dateCubit.year == currentYear && index > currentMonthIndex);
                   
-                  final activity = activityMap[monthName] ?? {'hasIncome': false, 'hasExpense': false};
+                  final activity = _activityMap[monthName] ?? {'hasIncome': false, 'hasExpense': false};
+                  
                   return _MonthItem(
                     monthName: monthName,
                     hasIncome: activity['hasIncome']!,
                     hasExpense: activity['hasExpense']!,
-                    isEnabled: !isFuture, // Pasamos si está habilitado
+                    isEnabled: !isFuture,
                   );
                 }).toList(),
               ),
@@ -130,24 +169,6 @@ class CalendarPanelWidget extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _YearButton extends StatelessWidget {
-  final IconData icon;
-  final bool enabled;
-  final VoidCallback onPressed;
-
-  const _YearButton({required this.icon, required this.enabled, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return IconButton(
-      visualDensity: VisualDensity.compact,
-      onPressed: enabled ? onPressed : null,
-      icon: Icon(icon, color: enabled ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.1), size: 28),
     );
   }
 }
@@ -172,12 +193,12 @@ class _MonthItem extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Opacity(
-      opacity: isEnabled ? 1.0 : 0.2, // Visualmente deshabilitado si es futuro
+      opacity: isEnabled ? 1.0 : 0.2,
       child: InkWell(
         onTap: isEnabled ? () {
           context.read<DateCubit>().month(monthName);
           context.read<DateCubit>().isOpen(false);
-        } : null, // No permite pulsar si es futuro
+        } : null,
         borderRadius: BorderRadius.circular(15),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),

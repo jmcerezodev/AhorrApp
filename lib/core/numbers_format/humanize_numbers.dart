@@ -2,25 +2,29 @@ import 'package:intl/intl.dart';
 
 class HumanizeNumbers {
   String number(double input) {
-    // Asegurarse de que el número tiene 2 decimales.
-    String numberString = input.toStringAsFixed(2);
-    
-    // Separar la parte entera y decimal.
-    List<String> parts = numberString.split('.');
-    String integerPart = parts[0]; 
-    String decimalPart = parts[1]; 
+    // 1. Si el número es exactamente 0, mostramos 0,00
+    if (input == 0) {
+      return NumberFormat.currency(
+        locale: 'es_ES',
+        symbol: '',
+        decimalDigits: 2,
+      ).format(0).trim();
+    }
 
-    // Formatear la parte entera con puntos como separadores de miles solo si es mayor o igual a 1000
-    String formattedIntegerPart;
-    if (input >= 1000) {
-      final NumberFormat formatter = NumberFormat('#,##0', 'es_ES');
-      formattedIntegerPart = formatter.format(int.parse(integerPart)).replaceAll(',', '.');
-      // Combinar con la parte decimal usando coma si no es cero
-      return decimalPart == '00' ? formattedIntegerPart : '$formattedIntegerPart,$decimalPart';
+    // 2. Comprobamos si es un número entero (sin decimales significativos)
+    if (input == input.truncateToDouble()) {
+      return NumberFormat.currency(
+        locale: 'es_ES',
+        symbol: '',
+        decimalDigits: 0,
+      ).format(input).trim();
     } else {
-      // Para números menores de 1000, solo formatear con punto
-      return decimalPart == '00' ? integerPart : '$integerPart.$decimalPart';
+      // 3. Si tiene decimales, mostramos 2 dígitos
+      return NumberFormat.currency(
+        locale: 'es_ES',
+        symbol: '',
+        decimalDigits: 2,
+      ).format(input).trim();
     }
   }
 }
-

@@ -1,4 +1,5 @@
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
+import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/error_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog_no_go.dart';
@@ -9,11 +10,11 @@ import '../../core/appwrite/appwrite_service.dart';
 
 class AuthAppwrite {
   final Account _account = AppwriteService().account;
+  final LocalDbService _localDb = LocalDbService(); // Instancia para limpiar local
 
   Future<String> getInitialRoute() async {
     try {
       final user = await _account.get();
-      // Aseguramos que el nombre esté actualizado localmente al iniciar
       Preferences.name = user.name;
       Preferences.email = user.email;
       return '/home-screen';
@@ -33,7 +34,6 @@ class AuthAppwrite {
       
       await _account.createEmailPasswordSession(email: email, password: password);
       
-      // GUARDAMOS LOS DATOS LOCALMENTE
       Preferences.uId = user.$id;
       Preferences.name = user.name;
       Preferences.email = user.email;
@@ -56,7 +56,6 @@ class AuthAppwrite {
         password: password,
       );
       
-      // TRAS EL LOGIN, OBTENEMOS EL USUARIO COMPLETO PARA EL NOMBRE
       final user = await _account.get();
       
       Preferences.uId = user.$id;
@@ -99,7 +98,7 @@ class AuthAppwrite {
         ),
       );
 
-      _clearPreferences();
+      await _clearAllData(); // LIMPIEZA TOTAL
     } catch (e) {
       showDialog(
         barrierDismissible: false,
@@ -133,7 +132,7 @@ class AuthAppwrite {
   Future<void> singOut(BuildContext context) async {
     try {
       await _account.deleteSession(sessionId: 'current');
-      _clearPreferences();
+      await _clearAllData(); // LIMPIEZA TOTAL
 
       if (context.mounted) {
         showDialog(
@@ -158,19 +157,23 @@ class AuthAppwrite {
     }
   }
 
-  void _clearPreferences() {
+  // MÉTODO PARA LIMPIAR TODO EL RASTRO LOCAL
+  Future<void> _clearAllData() async {
+    // 1. Limpiar SharedPreferences
     Preferences.uId = '';
     Preferences.name = '';
     if (!Preferences.isRemember) {
       Preferences.email = '';
       Preferences.password = '';
     }
+    
+    // 2. Limpiar Base de Datos Local (Isar)
+    await _localDb.clearAll();
   }
 
   Future<void> checkUserAuthentication(BuildContext context) async {
     try {
       final user = await _account.get();
-      // Sincronizamos nombre por si acaso
       Preferences.name = user.name;
     } catch (e) {
       context.go('/login');

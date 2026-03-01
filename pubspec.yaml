@@ -1,7 +1,7 @@
 name: ahorrapp
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.0
+version: 1.0.0
 
 environment:
   sdk: ^3.5.0
@@ -21,11 +21,16 @@ dependencies:
   local_auth: ^2.3.0
   package_info_plus: ^9.0.0
   shared_preferences: ^2.5.3
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  path_provider: ^2.1.4
 
 dev_dependencies:
   flutter_lints: ^5.0.0
   flutter_test:
     sdk: flutter
+  isar_generator: ^3.1.0+1
+  build_runner: ^2.4.12
 
 flutter:
   uses-material-design: true

@@ -14,21 +14,27 @@ class DeleteItemHistoryDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final historyCubit = context.watch<HistoryCubit>();
+    final historyState = context.watch<HistoryCubit>().state;
     final appwriteRepo = AppwriteRepository();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    bool isIncomeResult = false;
 
-    final itemResult = historyCubit.state.historyList.firstWhere(
-      (map) => map["id"] == itemId, 
-      orElse: () => {}
-    );
-    
-    if(itemResult.isNotEmpty){
-      isIncomeResult = itemResult['isIncome'];
+    // BÚSQUEDA SEGURA CON TIPADO FUERTE
+    Map<String, dynamic>? itemResult;
+    for (final item in historyState.historyList) {
+      if (item['id'] == itemId) {
+        itemResult = item;
+        break;
+      }
     }
-      
+    
+    if (itemResult == null) return const SizedBox();
+
+    final isIncomeResult = itemResult['isIncome'] ?? false;
+    final double amount = (itemResult['money'] as num).toDouble();
+    final String month = itemResult['month'] ?? '';
+    final int year = itemResult['year'] ?? 0;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 30),
@@ -45,7 +51,6 @@ class DeleteItemHistoryDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icono de advertencia dinámico
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -101,7 +106,9 @@ class DeleteItemHistoryDialog extends StatelessWidget {
                     onPressed: () async {
                       await appwriteRepo.deleteHistory(itemId);
                       if (context.mounted) {
-                        context.read<HistoryCubit>().loadHistory();
+                        await context.read<HistoryCubit>().deleteMovementLocally(
+                          itemId, month, year, amount, isIncomeResult ? 'income' : 'expense'
+                        );
                         context.pop();
                       }
                     },

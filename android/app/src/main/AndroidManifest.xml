@@ -1,11 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Permiso obligatorio para biometría -->
+
+    <!-- PERMISOS OBLIGATORIOS PARA RELEASE -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 
     <application
         android:label="AhorrApp"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"> <!-- PERMITE CONEXIÓN HTTP AL SERVIDOR -->
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -29,9 +34,7 @@
         </activity>
         <meta-data
             android:name="flutterEmbedding"
-            android:value="2"
-            android:host="gestionfinanciera.page.link"
-            android:scheme="https" />
+            android:value="2" />
     </application>
     <queries>
         <intent>

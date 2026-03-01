@@ -14,17 +14,19 @@ class HistoryCubitState extends Equatable{
   final String currentMoney;
   final bool isChart;
   
-  // Filtros activos
   final bool showIncomes;
   final bool showExpenses;
   final bool showSavings;
-  final bool isFilterOpen; // NUEVO: Controlar si el panel de filtros está abierto
+  final bool isFilterOpen;
+
+  final bool isSyncing;
+  final double syncProgress;
 
   const HistoryCubitState({
     this.isValid = false,
     this.formStatus = FormStatusHistory.invalid,
     this.historyList = const [],
-    this.listOrder = 'descending', // CAMBIADO: 'descending' por defecto para ver lo último arriba
+    this.listOrder = 'descending',
     this.newName = const IncomeNameInput.pure(),
     this.newMoney = const IncomeMoneyInput.pure(),
     this.currentName = '',
@@ -34,10 +36,12 @@ class HistoryCubitState extends Equatable{
     this.showExpenses = true,
     this.showSavings = true,
     this.isFilterOpen = false,
+    this.isSyncing = false,
+    this.syncProgress = 0.0,
   });
   
 
-  HistoryCubitState copyWhith ({
+  HistoryCubitState copyWith ({
     bool? isValid,
     FormStatusHistory? formStatus,
     List<Map<String, dynamic>>? historyList,
@@ -51,6 +55,8 @@ class HistoryCubitState extends Equatable{
     bool? showExpenses,
     bool? showSavings,
     bool? isFilterOpen,
+    bool? isSyncing,
+    double? syncProgress,
   }) => HistoryCubitState(
     isValid: isValid ?? this.isValid,
     formStatus: formStatus ?? this.formStatus,
@@ -65,6 +71,8 @@ class HistoryCubitState extends Equatable{
     showExpenses: showExpenses ?? this.showExpenses,
     showSavings: showSavings ?? this.showSavings,
     isFilterOpen: isFilterOpen ?? this.isFilterOpen,
+    isSyncing: isSyncing ?? this.isSyncing,
+    syncProgress: syncProgress ?? this.syncProgress,
   );
   
   @override
@@ -81,6 +89,8 @@ class HistoryCubitState extends Equatable{
     showIncomes,
     showExpenses,
     showSavings,
-    isFilterOpen
+    isFilterOpen,
+    isSyncing,
+    syncProgress,
   ];
 }

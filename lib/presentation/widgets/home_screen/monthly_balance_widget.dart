@@ -14,16 +14,19 @@ class MonthlyBalanceWidget extends StatelessWidget {
     final dateState = context.watch<DateCubit>().state;
     final humanizeNumbers = HumanizeNumbers();
 
-    // Calcular balance del mes actual seleccionado
+    // Calcular balance del mes actual seleccionado (Solo Ingresos y Gastos)
     double monthlyTotal = 0;
     for (var item in historyList) {
       if (item['year'] == dateState.year && item['month'] == dateState.month) {
         final double money = (item['money'] as num).toDouble();
-        if (item['isIncome'] == true) {
+        final String type = item['type'] ?? '';
+
+        if (type == 'income') {
           monthlyTotal += money;
-        } else {
+        } else if (type == 'expense') {
           monthlyTotal -= money;
         }
+        // Los ahorros (type == 'saving') se ignoran para el balance
       }
     }
 

@@ -9,7 +9,7 @@ class SavingsCubitState extends Equatable{
   final SavingInput saving;
   final double savingTotal;
   final double savingGoal;
-  final List<Map<String, dynamic>> savingsList; // NUEVO: Lista de aportaciones
+  final List<Map<String, dynamic>> savingsList;
 
   const SavingsCubitState({
     this.formStatus = FormStatusSavings.invalid,
@@ -26,7 +26,7 @@ class SavingsCubitState extends Equatable{
     return p > 1.0 ? 1.0 : p;
   }
 
-  SavingsCubitState copyWhith({
+  SavingsCubitState copyWith({
     FormStatusSavings? formStatus,
     bool? isValid,
     SavingInput? saving,

@@ -21,12 +21,19 @@ class ExpenseMoneyInput extends FormzInput<String, ExpenseMoneyError> {
     return null;
   }
 
-  // El validador ahora solo se encarga del formato numérico
+  // El validador ahora permite tanto puntos como comas
   @override
   ExpenseMoneyError? validator(String value) {
     if(value.isEmpty || value.trim().isEmpty) return ExpenseMoneyError.empty;
-    // Permitimos tanto puntos como comas para los decimales
-    if(!expenseRegExp.hasMatch(value.replaceAll(',', '.'))) return ExpenseMoneyError.format;
+    
+    if(!expenseRegExp.hasMatch(value)) return ExpenseMoneyError.format;
+
+    // Verificamos que sea convertible a double
+    try {
+      double.parse(value.replaceAll(',', '.'));
+    } catch (_) {
+      return ExpenseMoneyError.format;
+    }
 
     return null;
   }
