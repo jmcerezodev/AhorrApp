@@ -2,6 +2,8 @@ import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/add_edit_recurrent_expense_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/delete_recurrent_expense_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,12 +33,10 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // CABECERA PROFESIONAL CON BOTÓN INTEGRADO
             Padding(
               padding: const EdgeInsets.fromLTRB(25, 20, 20, 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,8 +60,6 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                       ),
                     ],
                   ),
-                  
-                  // BOTÓN DE AÑADIR ELEGANTE
                   GestureDetector(
                     onTap: () {
                       showDialog(
@@ -86,7 +84,6 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
 
             const SizedBox(height: 10),
 
-            // LISTADO DE GASTOS
             Expanded(
               child: BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
                 builder: (context, state) {
@@ -110,7 +107,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                       final expense = state.expenses[index];
                       return FadeInUp(
                         delay: Duration(milliseconds: 100 * index),
-                        child: _RecurrentExpenseCard(
+                        child: _RecurrentExpenseDismissible(
                           expense: expense,
                           humanizeNumbers: humanizeNumbers,
                           colorScheme: colorScheme,
@@ -123,6 +120,66 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RecurrentExpenseDismissible extends StatelessWidget {
+  final RecurrentExpense expense;
+  final HumanizeNumbers humanizeNumbers;
+  final ColorScheme colorScheme;
+  final bool isDark;
+
+  const _RecurrentExpenseDismissible({
+    required this.expense,
+    required this.humanizeNumbers,
+    required this.colorScheme,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: Dismissible(
+        key: Key(expense.id),
+        background: const SwipeBackgroundWidget(
+          color: Colors.green,
+          icon: Icons.edit_note_rounded,
+          label: 'EDITAR',
+          alignment: Alignment.centerLeft,
+        ),
+        secondaryBackground: const SwipeBackgroundWidget(
+          color: Colors.red,
+          icon: Icons.delete_sweep_rounded,
+          label: 'ELIMINAR',
+          alignment: Alignment.centerRight,
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.startToEnd) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AddEditRecurrentExpenseDialog(expense: expense),
+            );
+            return false;
+          } else {
+            return await showDialog<bool>(
+              context: context,
+              builder: (context) => DeleteRecurrentExpenseDialog(
+                expenseId: expense.id,
+                expenseName: expense.name,
+              ),
+            );
+          }
+        },
+        child: _RecurrentExpenseCard(
+          expense: expense,
+          humanizeNumbers: humanizeNumbers,
+          colorScheme: colorScheme,
+          isDark: isDark,
         ),
       ),
     );
@@ -144,8 +201,9 @@ class _RecurrentExpenseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isAutomatic = expense.day != null;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(25),
@@ -163,17 +221,35 @@ class _RecurrentExpenseCard extends StatelessWidget {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        leading: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: expense.isActive ? 0.1 : 0.05),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            _getIconForCategory(expense.category),
-            color: expense.isActive ? Colors.orange : Colors.grey,
-            size: 24,
-          ),
+        leading: Stack(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: expense.isActive ? 0.1 : 0.05),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _getIconForCategory(expense.category),
+                color: expense.isActive ? Colors.orange : Colors.grey,
+                size: 24,
+              ),
+            ),
+            if (isAutomatic)
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: expense.isActive ? Colors.green.shade400 : Colors.grey.shade400,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: isDark ? const Color(0xFF1E1E1E) : Colors.white, width: 2),
+                  ),
+                ),
+              ),
+          ],
         ),
         title: Text(
           expense.name,
@@ -184,16 +260,15 @@ class _RecurrentExpenseCard extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          expense.day != null ? 'Día ${expense.day} de cada mes' : 'Sin día fijo de cobro',
+          isAutomatic ? 'Día ${expense.day} de cada mes' : 'Gasto manual',
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: colorScheme.onSurface.withValues(alpha: 0.4),
           ),
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               '-${humanizeNumbers.number(expense.amount)}€',
@@ -203,34 +278,42 @@ class _RecurrentExpenseCard extends StatelessWidget {
                 color: expense.isActive ? Colors.red.shade400 : Colors.grey,
               ),
             ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: () => context.read<RecurrentExpensesCubit>().toggleActive(expense),
-                  child: Icon(
-                    expense.isActive ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded,
-                    color: Colors.orange.withValues(alpha: 0.6),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) => AddEditRecurrentExpenseDialog(expense: expense),
-                    );
-                  },
-                  child: Icon(
-                    Icons.edit_rounded,
-                    color: colorScheme.onSurface.withValues(alpha: 0.3),
-                    size: 20,
-                  ),
-                ),
-              ],
+            const SizedBox(width: 15),
+            GestureDetector(
+              onTap: () {
+                if (isAutomatic) {
+                  context.read<RecurrentExpensesCubit>().toggleActive(expense);
+                } else {
+                  context.read<RecurrentExpensesCubit>().applyExpenseManually(expense);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Gasto "${expense.name}" anotado',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: Colors.green.shade600,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      duration: const Duration(seconds: 2),
+                    )
+                  );
+                }
+              },
+              child: Icon(
+                isAutomatic 
+                  ? (expense.isActive ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded)
+                  : Icons.playlist_add_rounded,
+                color: Colors.orange.withValues(alpha: 0.6),
+                size: 32,
+              ),
             ),
           ],
         ),

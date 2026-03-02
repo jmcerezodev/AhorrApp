@@ -1,9 +1,12 @@
+import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
+import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/delete_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/get_recurrent_expenses_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/save_recurrent_expense_usecase.dart';
+import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
@@ -14,6 +17,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
   final GetRecurrentExpensesUseCase _getRecurrentExpensesUseCase = getIt<GetRecurrentExpensesUseCase>();
   final SaveRecurrentExpenseUseCase _saveRecurrentExpenseUseCase = getIt<SaveRecurrentExpenseUseCase>();
   final DeleteRecurrentExpenseUseCase _deleteRecurrentExpenseUseCase = getIt<DeleteRecurrentExpenseUseCase>();
+  final SaveMovementUseCase _saveMovementUseCase = getIt<SaveMovementUseCase>();
 
   RecurrentExpensesCubit() : super(const RecurrentExpensesState());
 
@@ -43,7 +47,6 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
   }) async {
     emit(state.copyWith(status: RecurrentExpensesStatus.loading));
     
-    // Si es una edición (id != null), buscamos el gasto actual para preservar 'lastApplied'
     String? lastApplied;
     if (id != null) {
       final currentExpense = state.expenses.cast<RecurrentExpense?>().firstWhere(
@@ -61,7 +64,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       day: day,
       category: category,
       isActive: isActive,
-      lastApplied: lastApplied, // Preservamos el estado de aplicación
+      lastApplied: lastApplied,
     );
 
     try {
@@ -71,6 +74,32 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       emit(state.copyWith(
         status: RecurrentExpensesStatus.failure,
         errorMessage: 'Error técnico al guardar: $e',
+      ));
+    }
+  }
+
+  Future<void> applyExpenseManually(RecurrentExpense expense) async {
+    final dateService = Date();
+    
+    final movement = Movement(
+      id: const Uuid().v4(),
+      name: expense.name,
+      amount: expense.amount,
+      type: MovementType.expense,
+      isIncome: false,
+      date: dateService.currentDate(), // Corregido
+      hour: dateService.currentHour(), // Corregido
+      month: dateService.monthNames(), // Corregido
+      year: int.parse(dateService.year()),
+      createdAt: DateTime.now(),
+    );
+
+    try {
+      await _saveMovementUseCase(movement);
+    } catch (e) {
+      emit(state.copyWith(
+        status: RecurrentExpensesStatus.failure,
+        errorMessage: 'Error al añadir el gasto: $e',
       ));
     }
   }
@@ -89,7 +118,6 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
   }
 
   Future<void> toggleActive(RecurrentExpense expense) async {
-    // Al pausar/activar, mantenemos todos los datos originales
     await addOrUpdateExpense(
       id: expense.id,
       name: expense.name,

@@ -1,6 +1,7 @@
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -102,7 +103,6 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
               ),
               const SizedBox(height: 25),
               
-              // CATEGORÍA (Movida arriba y convertida en Dropdown)
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text('Categoría', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
@@ -137,13 +137,21 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
               ),
 
               const SizedBox(height: 20),
-              SwitchListTile(
-                value: _hasFixedDay, 
-                onChanged: _isLoading ? null : (val) => setState(() => _hasFixedDay = val),
-                title: const Text('¿Día de cobro fijo?', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                contentPadding: EdgeInsets.zero,
-                activeColor: Colors.orange,
-                dense: true,
+              
+              // SWITCH MÁS PEQUEÑO Y ELEGANTE
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('¿Día de cobro fijo?', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                  Transform.scale(
+                    scale: 0.7, // Reducimos el tamaño del switch
+                    child: CupertinoSwitch(
+                      value: _hasFixedDay, 
+                      onChanged: _isLoading ? null : (val) => setState(() => _hasFixedDay = val),
+                      activeColor: Colors.orange,
+                    ),
+                  ),
+                ],
               ),
 
               if (_hasFixedDay) ...[
@@ -219,14 +227,6 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                   ),
                 ],
               ),
-              if (widget.expense != null) ...[
-                const SizedBox(height: 10),
-                TextButton.icon(
-                  onPressed: _isLoading ? null : _delete,
-                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 18),
-                  label: const Text('ELIMINAR ESTE GASTO', style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold)),
-                ),
-              ],
             ],
           ),
         ),
@@ -253,12 +253,6 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
       category: _selectedCategory,
       isActive: widget.expense?.isActive ?? true,
     );
-    if (mounted) context.pop();
-  }
-
-  void _delete() async {
-    setState(() => _isLoading = true);
-    await context.read<RecurrentExpensesCubit>().deleteExpense(widget.expense!.id);
     if (mounted) context.pop();
   }
 }
