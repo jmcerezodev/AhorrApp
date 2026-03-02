@@ -33,4 +33,26 @@ class Preferences {
 
   static bool get isBiometricActive => _prefs.getBool('isBiometricActive') ?? false;
   static set isBiometricActive(bool value) => _prefs.setBool('isBiometricActive', value);
+
+  // --- LIMPIEZA ---
+  static Future<void> clearAll() async {
+    // 1. Guardamos lo que queremos preservar
+    final darkMode = isDarkMode;
+    final remember = isRemember;
+    final savedEmail = email;
+    final savedPassword = password;
+    
+    // 2. Limpiamos todo
+    await _prefs.clear();
+    
+    // 3. Restauramos los ajustes generales
+    isDarkMode = darkMode;
+
+    // 4. Si el usuario marcó "Recordarme", restauramos sus credenciales
+    if (remember) {
+      isRemember = true;
+      email = savedEmail;
+      password = savedPassword;
+    }
+  }
 }

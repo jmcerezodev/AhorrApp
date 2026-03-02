@@ -3,20 +3,21 @@ import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/error_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog_no_go.dart';
 import 'package:appwrite/appwrite.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/appwrite/appwrite_service.dart';
 import 'appwrite_repository.dart';
 
 class AuthAppwrite {
   final Account _account = AppwriteService().account;
   final LocalDbService _localDb = LocalDbService(); 
+  final AppwriteRepository _appwriteRepo = AppwriteRepository();
 
   Future<String> getInitialRoute() async {
-    // REGLA MAESTRA: Si el usuario ya validó red, vamos a Home (Modo Offline)
     if (Preferences.isLoggedIn && Preferences.uId.isNotEmpty) {
       return '/home-screen';
     }
@@ -74,10 +75,8 @@ class AuthAppwrite {
       Preferences.email = user.email;
       Preferences.isLoggedIn = true;
       
-      if (Preferences.isRemember) {
-        Preferences.email = email;
-        Preferences.password = password;
-      }
+      Preferences.email = email;
+      Preferences.password = password;
       
       return user.$id;
     } on AppwriteException catch (e) {
@@ -101,24 +100,59 @@ class AuthAppwrite {
 
   Future deleteAcount(BuildContext context) async {
     try {
-      Preferences.uId = '';
-      Preferences.name = '';
-      Preferences.isLoggedIn = false;
+      final String uid = Preferences.uId;
+
+      await _appwriteRepo.deleteAllHistory(uid);
+      await _appwriteRepo.deleteAllSavings(uid);
+      
+      await Preferences.clearAll();
+      await _localDb.clearAll();
 
       _resetAllCubits(context);
 
       try {
         await _account.deleteSession(sessionId: 'current');
       } catch (_) {}
-      await _localDb.clearAll();
       
       if (context.mounted) {
         showDialog(
           barrierDismissible: false,
           context: context,
-          builder: (dialogContext) => const SuccessfulDialog(
+          builder: (dialogContext) => SuccessfulDialog(
             sucessfulName: 'Cuenta cerrada y datos eliminados',
             routeScreen: '/login',
+            extraContent: RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                  height: 1.5,
+                ),
+                children: [
+                  const TextSpan(text: 'Si deseas borrar definitivamente tu correo y contraseña de nuestro sistema, por favor envía un correo a '),
+                  TextSpan(
+                    text: 'jmcerezodev@gmail.com',
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () async {
+                        final Uri emailLaunchUri = Uri(
+                          scheme: 'mailto',
+                          path: 'jmcerezodev@gmail.com',
+                          query: 'subject=Solicitud de borrado de datos personales - AhorrApp',
+                        );
+                        if (await canLaunchUrl(emailLaunchUri)) {
+                          await launchUrl(emailLaunchUri);
+                        }
+                      },
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       }
@@ -141,7 +175,10 @@ class AuthAppwrite {
       showDialog(
         barrierDismissible: false,
         context: context,
-        builder: (dialogContext) => const SuccessfulDialogNoGo(sucessfulName: 'Contraseña Cambiada'),
+        builder: (dialogContext) => const SuccessfulDialog(
+          sucessfulName: 'Contraseña Cambiada',
+          routeScreen: '/home-screen',
+        ),
       );
     } catch (e) {
       showDialog(
@@ -156,10 +193,7 @@ class AuthAppwrite {
 
   Future<void> singOut(BuildContext context) async {
     try {
-      Preferences.uId = '';
-      Preferences.name = '';
-      Preferences.isLoggedIn = false;
-      
+      await Preferences.clearAll();
       _resetAllCubits(context);
 
       try {

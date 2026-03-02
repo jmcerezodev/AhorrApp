@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 class SuccessfulDialog extends StatelessWidget {
   final String sucessfulName;
   final String routeScreen;
+  final Widget? extraContent;
   
   const SuccessfulDialog({
     super.key, 
     required this.sucessfulName, 
     required this.routeScreen,
+    this.extraContent,
   });
 
   @override
@@ -61,13 +63,19 @@ class SuccessfulDialog extends StatelessWidget {
                 height: 1.5,
               ),
             ),
+            
+            if (extraContent != null) ...[
+              const SizedBox(height: 20),
+              extraContent!,
+            ],
+
             const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
                   context.pop();
-                  context.go('/login');
+                  context.go(routeScreen);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green.shade600,

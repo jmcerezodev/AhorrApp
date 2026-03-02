@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-class DeleteAcountDialog extends StatelessWidget {
+class DeleteAcountDialog extends StatefulWidget {
   final String title;
   final String text;
   
@@ -15,6 +15,13 @@ class DeleteAcountDialog extends StatelessWidget {
     required this.title, 
     required this.text,
   });
+
+  @override
+  State<DeleteAcountDialog> createState() => _DeleteAcountDialogState();
+}
+
+class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -45,12 +52,14 @@ class DeleteAcountDialog extends StatelessWidget {
                 color: Colors.red.shade400.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.no_accounts_rounded, color: Colors.red.shade400, size: 32),
+              child: _isLoading 
+                ? const SizedBox(width: 32, height: 32, child: CircularProgressIndicator(color: Colors.red, strokeWidth: 3))
+                : Icon(Icons.no_accounts_rounded, color: Colors.red.shade400, size: 32),
             ),
             const SizedBox(height: 20),
             
             Text(
-              title.toUpperCase(),
+              widget.title.toUpperCase(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -62,7 +71,7 @@ class DeleteAcountDialog extends StatelessWidget {
             const SizedBox(height: 15),
             
             Text(
-              text,
+              widget.text,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -79,6 +88,7 @@ class DeleteAcountDialog extends StatelessWidget {
               onChanged: deleteAcountCubit.inputValueDeleteAcount,
               autoFocus: false,
               obscureText: true,
+              enabled: !_isLoading,
               textInputType: TextInputType.name,
               textCapitalization: TextCapitalization.none,
             ),
@@ -89,7 +99,7 @@ class DeleteAcountDialog extends StatelessWidget {
               children: [
                 Expanded(
                   child: TextButton(
-                    onPressed: () => context.pop(),
+                    onPressed: _isLoading ? null : () => context.pop(),
                     style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
                     child: Text(
                       'CANCELAR', 
@@ -104,10 +114,15 @@ class DeleteAcountDialog extends StatelessWidget {
                 const SizedBox(width: 15),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () async {
-                      if (deleteAcountCubit.state.deleteAcountValueInput == Preferences.password) {
-                        await authService.deleteAcount(context);
-                      }
+                    onPressed: (_isLoading || deleteAcountCubit.state.deleteAcountValueInput != Preferences.password) 
+                    ? null 
+                    : () async {
+                        setState(() => _isLoading = true);
+                        try {
+                          await authService.deleteAcount(context);
+                        } catch (e) {
+                          if (mounted) setState(() => _isLoading = false);
+                        }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red.shade400,
@@ -116,7 +131,9 @@ class DeleteAcountDialog extends StatelessWidget {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
-                    child: const Text('ELIMINAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: _isLoading 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('ELIMINAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
                 ),
               ],

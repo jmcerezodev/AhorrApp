@@ -160,10 +160,39 @@ class AppwriteRepository {
     );
   }
 
+  Future<void> deleteAllHistory(String userId) async {
+    bool hasMore = true;
+    while (hasMore) {
+      final response = await _databases.listDocuments(
+        databaseId: _databaseId,
+        collectionId: _historyId,
+        queries: [Query.equal('userId', [userId]), Query.limit(100)],
+      );
+      if (response.documents.isEmpty) {
+        hasMore = false;
+      } else {
+        for (var doc in response.documents) {
+          await deleteHistory(doc.$id);
+        }
+      }
+    }
+  }
+
   Future<void> deleteAllSavings(String userId) async {
-    final savings = await (await _databases.listDocuments(databaseId: _databaseId, collectionId: _savingsId, queries: [Query.equal('userId', [userId]), Query.limit(1000)])).documents;
-    for (var doc in savings) {
-      await deleteSaving(doc.$id);
+    bool hasMore = true;
+    while (hasMore) {
+      final response = await _databases.listDocuments(
+        databaseId: _databaseId,
+        collectionId: _savingsId,
+        queries: [Query.equal('userId', [userId]), Query.limit(100)],
+      );
+      if (response.documents.isEmpty) {
+        hasMore = false;
+      } else {
+        for (var doc in response.documents) {
+          await deleteSaving(doc.$id);
+        }
+      }
     }
   }
 }
