@@ -5,8 +5,8 @@ plugins {
 }
 
 android {
-    namespace = "dev.jmcerezo.ahorrapp" // CAMBIO DE NOMBRE DE PAQUETE
-    compileSdk = flutter.compileSdkVersion
+    namespace = "dev.jmcerezo.ahorrapp"
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -19,9 +19,9 @@ android {
     }
 
     defaultConfig {
-        applicationId = "dev.jmcerezo.ahorrapp" // CAMBIO DE NOMBRE DE PAQUETE
+        applicationId = "dev.jmcerezo.ahorrapp"
         minSdkVersion = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

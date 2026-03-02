@@ -106,6 +106,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
   late GoRouter router;
   bool _isAuthenticating = false;
   bool _wasPaused = false;
+  static const platform = MethodChannel('dev.jmcerezo.ahorrapp/security');
 
   // DEFINIMOS LOS CUBITS AQUÍ PARA QUE SEAN PERMANENTES
   late final TotalMoneyCubit _totalMoneyCubit;
@@ -122,6 +123,9 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
     _totalMoneyCubit = getIt<TotalMoneyCubit>();
     _historyCubit = HistoryCubit(totalMoneyCubit: _totalMoneyCubit);
     _loginCubit = LoginCubit(historyCubit: _historyCubit);
+
+    // Aplicar seguridad al iniciar si está activa
+    _updateAppSecurity();
   }
 
   @override
@@ -132,6 +136,9 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Sincronizar seguridad en cualquier cambio de estado (entrada o salida)
+    _updateAppSecurity();
+
     if (state == AppLifecycleState.paused) {
       _wasPaused = true;
     }
@@ -139,6 +146,14 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
     if (state == AppLifecycleState.resumed && _wasPaused) {
       _wasPaused = false;
       _checkBiometricsOnResume();
+    }
+  }
+
+  Future<void> _updateAppSecurity() async {
+    try {
+      await platform.invokeMethod('setSecure', {'secure': Preferences.isBiometricActive});
+    } on PlatformException catch (e) {
+      debugPrint("Error al configurar FLAG_SECURE: ${e.message}");
     }
   }
 
