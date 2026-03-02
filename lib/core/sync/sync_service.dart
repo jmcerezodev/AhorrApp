@@ -1,22 +1,23 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:ahorrapp/core/di/service_locator.dart';
+import 'package:ahorrapp/core/network/connectivity_service.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/pending_sync.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:appwrite/appwrite.dart';
 
 class SyncService {
-  // Ahora usamos getIt para obtener las dependencias
   final LocalDbService _localDb = getIt<LocalDbService>();
   final AppwriteRepository _appwriteRepo = getIt<AppwriteRepository>();
+  final ConnectivityService _connectivityService = getIt<ConnectivityService>();
   
-  StreamSubscription<List<ConnectivityResult>>? _subscription;
+  StreamSubscription<NetworkStatus>? _subscription;
   bool _isSyncing = false;
 
   void init() {
-    _subscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      if (results.any((result) => result != ConnectivityResult.none)) {
+    _subscription = _connectivityService.status.listen((status) {
+      if (status == NetworkStatus.online) {
         processQueue();
       }
     });
@@ -28,7 +29,7 @@ class SyncService {
   }
 
   Future<void> processQueue() async {
-    if (_isSyncing) return;
+    if (_isSyncing || !(await _connectivityService.isConnected)) return;
     _isSyncing = true;
 
     try {
@@ -55,11 +56,18 @@ class SyncService {
             await _localDb.deletePendingSync(pending.id);
           }
         } catch (e) {
-          break;
+          // Si el error es un 409 (Conflicto), el documento ya existe.
+          // En ese caso, lo borramos de la cola local porque ya está en el servidor
+          // o esperamos a que una tarea de 'update' posterior lo corrija.
+          if (e is AppwriteException && e.code == 409) {
+             await _localDb.deletePendingSync(pending.id);
+          }
+          // IMPORTANTE: Continuamos con el siguiente elemento en lugar de hacer 'break'
+          continue; 
         }
       }
     } catch (e) {
-      // Error manejado
+      // Error general manejado
     } finally {
       _isSyncing = false;
     }
@@ -67,7 +75,6 @@ class SyncService {
 
   Future<bool> _syncHistory(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'create') {
-      // CORREGIDO: Ahora pasamos el documentId que viene de Isar
       await _appwriteRepo.addHistory(
         documentId: pending.appwriteId!,
         userId: data['userId'],
@@ -92,7 +99,6 @@ class SyncService {
 
   Future<bool> _syncSavings(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'create') {
-      // CORREGIDO: Ahora pasamos el documentId que viene de Isar
       await _appwriteRepo.addSaving(
         documentId: pending.appwriteId!,
         userId: data['userId'],
@@ -100,10 +106,18 @@ class SyncService {
         month: data['month'],
         year: data['year'],
         description: data['description'],
+        isSpent: data['isSpent'] ?? false, // Sincronizamos el estado de gasto real
       );
       return true;
     } else if (pending.action == 'update') {
-      await _appwriteRepo.updateSaving(documentId: pending.appwriteId!, money: data['money']);
+      // Usamos los campos correctos de Appwrite
+      final Map<String, dynamic> cleanData = {};
+      if (data.containsKey('description')) cleanData['description'] = data['description'];
+      if (data.containsKey('name')) cleanData['description'] = data['name']; // Mapeo de seguridad
+      if (data.containsKey('money')) cleanData['money'] = data['money'];
+      if (data.containsKey('isSpent')) cleanData['isSpent'] = data['isSpent'];
+
+      await _appwriteRepo.updateSaving(documentId: pending.appwriteId!, data: cleanData);
       return true;
     } else if (pending.action == 'delete') {
       await _appwriteRepo.deleteSaving(pending.appwriteId!);

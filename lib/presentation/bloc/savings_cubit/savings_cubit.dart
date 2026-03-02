@@ -85,27 +85,30 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
   }
 
   Future<void> emptySavings(HistoryCubit historyCubit) async {
-    // 1. Iniciamos carga
     emit(state.copyWith(status: SavingsStatus.loading));
     
     try {
-      // 2. Marcamos localmente
+      // 1. Marcar localmente en Isar
       final List<String> appwriteIds = await _localDb.markSavingsAsSpent();
       
-      // 3. OPTIMIZACIÓN: Actualizamos en Appwrite en paralelo para evitar esperas largas
-      if (appwriteIds.isNotEmpty) {
-        await Future.wait(appwriteIds.map((id) => 
-          _repository.updateSaving(documentId: id, data: {'isSpent': true})
-        ).toList());
+      // 2. Intentar actualizar en Appwrite o añadir a cola offline
+      for (final id in appwriteIds) {
+        try {
+          await _repository.updateSaving(documentId: id, data: {'isSpent': true});
+        } catch (_) {
+          await _localDb.addPendingSync(
+            'update', 
+            'savings', 
+            {'isSpent': true}, 
+            appwriteId: id
+          );
+        }
       }
 
-      // 4. Refrescamos datos
       await loadSavings();
-      
       final date = Date();
       await historyCubit.loadHistoryByDate(date.monthNames(), int.parse(date.year()));
       
-      // 5. ÉXITO: Esto disparará el BlocListener para cerrar el diálogo
       emit(state.copyWith(status: SavingsStatus.success));
 
     } catch (e) {
@@ -119,7 +122,13 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
   Future<void> removeContribution(String id) async {
     emit(state.copyWith(status: SavingsStatus.loading));
     try {
-      await _repository.deleteSaving(id);
+      // Intentar borrar en remoto o añadir a cola offline
+      try {
+        await _repository.deleteSaving(id);
+      } catch (_) {
+        await _localDb.addPendingSync('delete', 'savings', {}, appwriteId: id);
+      }
+
       await _localDb.deleteItemByAppwriteId(id);
       await loadSavings();
       emit(state.copyWith(status: SavingsStatus.success));
@@ -135,8 +144,20 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
     emit(state.copyWith(status: SavingsStatus.loading));
     try {
       final String uid = Preferences.uId;
+      // Persistir localmente siempre
       await _localDb.saveSavingGoal(uid, value);
-      await _repository.updatePrefs({'savingGoal': value});
+      
+      // Intentar sincronizar o encolar
+      try {
+        await _repository.updatePrefs({'savingGoal': value});
+      } catch (_) {
+        await _localDb.addPendingSync(
+          'update_goal', 
+          'settings', 
+          {'savingGoal': value}
+        );
+      }
+
       emit(state.copyWith(savingGoal: value, status: SavingsStatus.success));
     } catch (e) {
       emit(state.copyWith(

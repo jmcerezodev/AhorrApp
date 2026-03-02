@@ -1,4 +1,6 @@
-import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
+import 'package:ahorrapp/core/di/service_locator.dart';
+import 'package:ahorrapp/domain/entities/movement.dart';
+import 'package:ahorrapp/domain/usecases/delete_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,7 +17,6 @@ class DeleteItemHistoryDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final historyState = context.watch<HistoryCubit>().state;
-    final appwriteRepo = AppwriteRepository();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -34,6 +35,7 @@ class DeleteItemHistoryDialog extends StatelessWidget {
     final double amount = (itemResult['money'] as num).toDouble();
     final String month = itemResult['month'] ?? '';
     final int year = itemResult['year'] ?? 0;
+    final String typeStr = itemResult['type'] ?? 'expense';
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -104,11 +106,26 @@ class DeleteItemHistoryDialog extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
-                      await appwriteRepo.deleteHistory(itemId);
+                      // Construimos el objeto Movement para el caso de uso
+                      final movement = Movement(
+                        id: itemId,
+                        name: itemResult!['name'] ?? '',
+                        amount: amount,
+                        type: typeStr == 'income' ? MovementType.income : MovementType.expense,
+                        isIncome: isIncomeResult,
+                        date: itemResult['currentDate'] ?? '',
+                        hour: itemResult['currentHour'] ?? '',
+                        month: month,
+                        year: year,
+                        createdAt: DateTime.parse(itemResult['createdAt']),
+                      );
+
+                      // Ejecutamos el caso de uso que maneja local + offline queue + remoto
+                      await getIt<DeleteMovementUseCase>().call(movement);
+                      
                       if (context.mounted) {
-                        await context.read<HistoryCubit>().deleteMovementLocally(
-                          itemId, month, year, amount, isIncomeResult ? 'income' : 'expense'
-                        );
+                        // Refrescamos la UI
+                        context.read<HistoryCubit>().loadHistoryByDate(month, year);
                         context.pop();
                       }
                     },

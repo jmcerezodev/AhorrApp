@@ -1,3 +1,6 @@
+import 'package:ahorrapp/core/di/service_locator.dart';
+import 'package:ahorrapp/domain/entities/movement.dart';
+import 'package:ahorrapp/domain/usecases/delete_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -71,16 +74,25 @@ class DeleteSavingItemDialog extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
-                      await context.read<SavingsCubit>().removeContribution(savingId);
+                      final movement = Movement(
+                        id: savingId,
+                        name: item!['name'] ?? (isWithdrawal ? 'Retirada de ahorros' : 'Aportación de ahorro'),
+                        amount: amount,
+                        type: MovementType.saving,
+                        isIncome: false,
+                        date: item['currentDate'] ?? '',
+                        hour: item['currentHour'] ?? '',
+                        month: item['month'] ?? '',
+                        year: item['year'] ?? 0,
+                        createdAt: DateTime.parse(item['createdAt']),
+                        isSpent: item['isSpent'] ?? false,
+                      );
+
+                      await getIt<DeleteMovementUseCase>().call(movement);
                       
                       if (context.mounted) {
-                        await historyCubit.deleteMovementLocally(
-                          savingId, 
-                          item!['month'] ?? '', 
-                          item['year'] ?? 0, 
-                          amount, 
-                          'saving'
-                        );
+                        context.read<HistoryCubit>().loadHistoryByDate(item['month'], item['year']);
+                        context.read<SavingsCubit>().loadSavings();
                         context.pop();
                       }
                     },

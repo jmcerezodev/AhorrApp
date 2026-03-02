@@ -37,7 +37,6 @@ class AppwriteRepository {
     try {
       await _account.updatePrefs(prefs: {'total_balance': newBalance});
     } catch (e) {
-      print('AppwriteRepo: Error al actualizar balance: $e');
       rethrow;
     }
   }
@@ -141,14 +140,12 @@ class AppwriteRepository {
     return await _databases.updateDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId, data: data);
   }
 
-  // CORREGIDO: Acepta documentId para sincronía total con Isar
   Future<Document> addHistory({required String documentId, required String userId, required String name, required double money, required bool isIncome, required String currentDate, required String currentHour, required String month, required int year}) async {
     return await _databases.createDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId, data: {'userId': userId, 'name': name, 'money': money, 'isIncome': isIncome, 'currentDate': currentDate, 'currentHour': currentHour, 'month': month, 'year': year});
   }
 
-  // CORREGIDO: Acepta documentId para sincronía total con Isar
-  Future<Document> addSaving({required String documentId, required String userId, required double money, required String month, required int year, String? description}) async {
-    return await _databases.createDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: documentId, data: {'userId': userId, 'money': money, 'month': month, 'year': year, 'description': description ?? 'Aportación de ahorro', 'isSpent': false});
+  Future<Document> addSaving({required String documentId, required String userId, required double money, required String month, required int year, String? description, bool isSpent = false}) async {
+    return await _databases.createDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: documentId, data: {'userId': userId, 'money': money, 'month': month, 'year': year, 'description': description ?? 'Aportación de ahorro', 'isSpent': isSpent});
   }
 
   Future<void> deleteHistory(String documentId) async => await _databases.deleteDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId);

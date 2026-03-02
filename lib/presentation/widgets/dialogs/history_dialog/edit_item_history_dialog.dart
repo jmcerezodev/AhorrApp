@@ -1,6 +1,6 @@
 import 'package:ahorrapp/core/di/service_locator.dart';
-import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
-import 'package:ahorrapp/data/local/models/local_history.dart';
+import 'package:ahorrapp/domain/entities/movement.dart';
+import 'package:ahorrapp/domain/usecases/update_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
@@ -35,7 +35,6 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
     if (item != null) {
       _nameController = TextEditingController(text: item['name']);
       _moneyController = TextEditingController(text: item['money'].toString());
-      // Inicializamos el Cubit con los valores actuales para que el botón se active
       WidgetsBinding.instance.addPostFrameCallback((_) {
         historyCubit.newNameChanged(item!['name']);
         historyCubit.newMoneyChanged(item['money'].toString());
@@ -55,7 +54,6 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final appwriteRepo = getIt<AppwriteRepository>();
     final historyState = context.watch<HistoryCubit>().state;
     final historyCubit = context.read<HistoryCubit>();
     final colorScheme = Theme.of(context).colorScheme;
@@ -72,6 +70,9 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
 
     final isIncomeResult = itemResult['isIncome'] ?? false;
     final double oldAmount = (itemResult['money'] as num).toDouble();
+    final String month = itemResult['month'] ?? '';
+    final int year = itemResult['year'] ?? 0;
+    final String typeStr = itemResult['type'] ?? 'expense';
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -115,29 +116,28 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
                           final String finalName = historyState.newName.value;
                           final double finalAmount = double.parse(historyState.newMoney.value.replaceAll(',', '.'));
 
-                          await appwriteRepo.updateHistory(documentId: widget.itemId, data: {'name': finalName, 'money': finalAmount});
+                          final movement = Movement(
+                            id: widget.itemId,
+                            name: finalName,
+                            amount: finalAmount,
+                            type: typeStr == 'income' ? MovementType.income : MovementType.expense,
+                            isIncome: isIncomeResult,
+                            date: itemResult!['currentDate'] ?? '',
+                            hour: itemResult['currentHour'] ?? '',
+                            month: month,
+                            year: year,
+                            createdAt: DateTime.parse(itemResult['createdAt']),
+                          );
+
+                          await getIt<UpdateMovementUseCase>().call(movement, oldAmount);
                           
                           if (context.mounted) {
-                            await historyCubit.updateMovementLocally(
-                              LocalHistory()
-                                ..appwriteId = widget.itemId
-                                ..name = finalName
-                                ..money = finalAmount
-                                ..isIncome = isIncomeResult
-                                ..type = isIncomeResult ? 'income' : 'expense'
-                                ..currentDate = itemResult!['currentDate']
-                                ..currentHour = itemResult['currentHour']
-                                ..month = itemResult['month']
-                                ..year = itemResult['year']
-                                ..createdAt = DateTime.parse(itemResult['createdAt']),
-                              oldAmount
-                            );
+                            historyCubit.loadHistoryByDate(month, year);
                             historyCubit.resetCubit();
                             context.pop();
                           }
                         } catch (e) {
                           if (mounted) setState(() => _isLoading = false);
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
                         }
                     } : null,
                     style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 15), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),

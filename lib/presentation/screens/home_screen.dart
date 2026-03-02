@@ -1,3 +1,5 @@
+import 'package:ahorrapp/core/di/service_locator.dart';
+import 'package:ahorrapp/core/network/connectivity_service.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
@@ -24,7 +26,6 @@ class _HomeScreenState extends State<HomeScreen> {
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        // CORRECCIÓN CRÍTICA: Forzamos al Cubit de nombre a refrescarse tras el login
         context.read<UpdateNameCubit>().resetCubit();
         
         final dateState = context.read<DateCubit>().state;
@@ -100,6 +101,36 @@ class _HomeScreenState extends State<HomeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // BANNER DE DESCONEXIÓN
+                  StreamBuilder<NetworkStatus>(
+                    stream: getIt<ConnectivityService>().status,
+                    initialData: getIt<ConnectivityService>().currentStatus,
+                    builder: (context, snapshot) {
+                      if (snapshot.data == NetworkStatus.offline) {
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 15),
+                          color: Colors.orange.shade800.withValues(alpha: 0.9),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.cloud_off_rounded, color: Colors.white, size: 18),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Sin conexión. Los datos se guardan localmente hasta sincronizar.',
+                                  style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 15, 20, 5),
                     child: Row(

@@ -1,7 +1,7 @@
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
-import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
-import 'package:ahorrapp/data/local/models/local_saving.dart';
+import 'package:ahorrapp/domain/entities/movement.dart';
+import 'package:ahorrapp/domain/usecases/update_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +28,6 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
     final historyCubit = context.read<HistoryCubit>();
     Map<String, dynamic>? item;
     
-    // Buscamos el item en la lista actual del historial
     for (final s in historyCubit.state.historyList) {
       if (s['id'] == widget.savingId) {
         item = s;
@@ -54,7 +53,6 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
   @override
   Widget build(BuildContext context) {
     final historyState = context.watch<HistoryCubit>().state;
-    final appwriteRepo = getIt<AppwriteRepository>();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -131,34 +129,31 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
                         if (inputMoney != null) {
                           final double money = isWithdrawal ? -inputMoney : inputMoney;
 
-                          // 1. Actualizar en Appwrite
-                          await appwriteRepo.updateSaving(documentId: widget.savingId, money: money);
+                          final movement = Movement(
+                            id: widget.savingId,
+                            name: item!['name'] ?? (isWithdrawal ? 'Retirada de ahorros' : 'Aportación de ahorro'),
+                            amount: money,
+                            type: MovementType.saving,
+                            isIncome: false,
+                            date: item['currentDate'] ?? '',
+                            hour: item['currentHour'] ?? '',
+                            month: item['month'] ?? '',
+                            year: item['year'] ?? 0,
+                            createdAt: DateTime.parse(item['createdAt']),
+                            isSpent: item['isSpent'] ?? false,
+                          );
+
+                          await getIt<UpdateMovementUseCase>().call(movement, oldAmount);
                           
                           if (mounted) {
-                            // 2. Sincronizar localmente (usando la nueva tabla LocalSaving)
-                            await context.read<HistoryCubit>().updateMovementLocally(
-                              LocalSaving()
-                                ..appwriteId = widget.savingId
-                                ..userId = Preferences.uId
-                                ..description = isWithdrawal ? 'Retirada de ahorros' : 'Aportación de ahorro'
-                                ..money = money
-                                ..month = item!['month'] ?? ''
-                                ..year = item['year'] ?? 0
-                                ..isSpent = item['isSpent'] ?? false
-                                ..createdAt = DateTime.parse(item['createdAt']),
-                              oldAmount
-                            );
-                            
-                            // 3. Refrescar total de ahorros
-                            await context.read<SavingsCubit>().loadSavings();
-                            
-                            if (mounted) context.pop();
+                            context.read<HistoryCubit>().loadHistoryByDate(item['month'], item['year']);
+                            context.read<SavingsCubit>().loadSavings();
+                            context.pop();
                           }
                         }
                       } catch (e) {
                         if (mounted) {
                           setState(() => _isLoading = false);
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
                         }
                       }
                     } : null,

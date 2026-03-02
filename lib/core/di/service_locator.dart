@@ -1,3 +1,6 @@
+import 'package:ahorrapp/core/network/connectivity_service.dart';
+import 'package:ahorrapp/domain/usecases/delete_movement_usecase.dart';
+import 'package:ahorrapp/domain/usecases/update_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:get_it/get_it.dart';
@@ -21,6 +24,7 @@ Future<void> setupServiceLocator() async {
   await localDbService.init();
   getIt.registerSingleton<LocalDbService>(localDbService);
 
+  getIt.registerLazySingleton<ConnectivityService>(() => ConnectivityService());
   getIt.registerLazySingleton<AppwriteRepository>(() => AppwriteRepository());
   getIt.registerLazySingleton<AuthAppwrite>(() => AuthAppwrite());
   getIt.registerLazySingleton<BiometricService>(() => BiometricService());
@@ -47,11 +51,24 @@ Future<void> setupServiceLocator() async {
         localRepository: getIt<IMovementRepository>(instanceName: 'local'),
         remoteRepository: getIt<IMovementRepository>(instanceName: 'remote'),
         localDbService: getIt<LocalDbService>(),
-        totalMoneyCubit: TotalMoneyCubit(), // Instancia temporal para el registro
+        totalMoneyCubit: getIt<TotalMoneyCubit>(), // Cambio a instancia inyectada
+      ));
+
+  getIt.registerLazySingleton<DeleteMovementUseCase>(() => DeleteMovementUseCase(
+        localRepository: getIt<IMovementRepository>(instanceName: 'local'),
+        remoteRepository: getIt<IMovementRepository>(instanceName: 'remote'),
+        localDbService: getIt<LocalDbService>(),
+        totalMoneyCubit: getIt<TotalMoneyCubit>(),
+      ));
+
+  getIt.registerLazySingleton<UpdateMovementUseCase>(() => UpdateMovementUseCase(
+        localRepository: getIt<IMovementRepository>(instanceName: 'local'),
+        localDbService: getIt<LocalDbService>(),
+        totalMoneyCubit: getIt<TotalMoneyCubit>(),
+        remoteDataSource: getIt<AppwriteRepository>(),
       ));
 
   // 4. CUBITS CORE (Permanentes)
-  // Ahora que GetMovementsUseCase está registrado, podemos registrar HistoryCubit
   final totalMoneyCubit = TotalMoneyCubit();
   getIt.registerSingleton<TotalMoneyCubit>(totalMoneyCubit);
   getIt.registerSingleton<DateCubit>(DateCubit());
