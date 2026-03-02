@@ -1,5 +1,6 @@
 import 'package:ahorrapp/core/auth/biometric_service.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
+import 'package:ahorrapp/presentation/bloc/total_money_cubit/total_money_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/authenticacion_dialogs/biometric_info_dialog.dart';
@@ -13,6 +14,7 @@ class SideMenuWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeCubit = context.watch<ThemeCubit>();
+    final totalMoneyCubit = context.watch<TotalMoneyCubit>();
     final isDark = themeCubit.state == ThemeMode.dark;
     final biometricService = BiometricService();
 
@@ -36,12 +38,21 @@ class SideMenuWidget extends StatelessWidget {
                 const _SectionTitle(title: 'AJUSTES DE LA APP'),
                 
                 _CustomSwitchItem(
-                  leadingIcon: Icons.dark_mode_outlined, // Icono de luna fijo
+                  leadingIcon: Icons.dark_mode_outlined,
                   label: 'Modo Oscuro',
                   value: isDark,
                   onChanged: (val) => themeCubit.toggleTheme(),
                   activeIcon: Icons.dark_mode_rounded,
                   inactiveIcon: Icons.light_mode_rounded,
+                ),
+
+                _CustomSwitchItem(
+                  leadingIcon: Icons.account_balance_wallet_outlined,
+                  label: 'Sumar Ahorros al Balance',
+                  value: totalMoneyCubit.state.isSavingsIncluded,
+                  onChanged: (val) => totalMoneyCubit.toggleSavingsInclusion(),
+                  activeIcon: Icons.account_balance_wallet_rounded,
+                  inactiveIcon: Icons.money_off_csred_rounded,
                 ),
 
                 _CustomSwitchItem(
@@ -105,7 +116,6 @@ class SideMenuWidget extends StatelessWidget {
                   },
                 ),
                 
-                // CERRAR SESIÓN ahora aquí, entre contraseña y eliminar
                 _DrawerItem(
                   icon: Icons.logout_rounded,
                   label: 'Cerrar Sesión',
@@ -193,15 +203,17 @@ class _CustomSwitchItem extends StatelessWidget {
         children: [
           Icon(leadingIcon, color: Colors.orange.shade400, size: 20),
           const SizedBox(width: 15),
-          Text(
-            label,
-            style: TextStyle(
-              color: isDark ? Colors.white70 : Colors.blueGrey.shade800,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isDark ? Colors.white70 : Colors.blueGrey.shade800,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: 10),
           GestureDetector(
             onTap: () => onChanged(!value),
             child: AnimatedContainer(

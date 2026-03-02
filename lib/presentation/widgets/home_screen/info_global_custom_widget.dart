@@ -22,6 +22,13 @@ class InfoGlogalWidget extends StatelessWidget {
     // Lógica de celebración: ¿Se ha cumplido la meta?
     final bool isGoalMet = savingsState.progress >= 1.0 && savingsState.savingGoal > 0;
 
+    // CORRECCIÓN DE LÓGICA:
+    // totalMoneyState.totalMoney = Cartera (Ingresos - Gastos)
+    // savingsState.savingTotal = Hucha (Ahorros acumulados)
+    final double displayedBalance = totalMoneyState.isSavingsIncluded 
+        ? (totalMoneyState.totalMoney + savingsState.savingTotal)
+        : totalMoneyState.totalMoney;
+
     return FadeInDown(
       duration: const Duration(milliseconds: 400),
       child: Container(
@@ -44,15 +51,17 @@ class InfoGlogalWidget extends StatelessWidget {
             // PARTE IZQUIERDA: BALANCE TOTAL
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center, // Centrado horizontal
                 children: [
                   Text(
-                    'BALANCE TOTAL',
+                    totalMoneyState.isSavingsIncluded ? 'BALANCE TOTAL\n(CON AHORROS)' : 'BALANCE EN\nCARTERA',
+                    textAlign: TextAlign.center, // Centrado interno de las líneas
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
                       color: Colors.grey.shade400,
                       letterSpacing: 1.5,
+                      height: 1.2,
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -62,7 +71,7 @@ class InfoGlogalWidget extends StatelessWidget {
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        '${humanizeNumbers.number(totalMoneyState.totalMoney)}€',
+                        '${humanizeNumbers.number(displayedBalance)}€',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
@@ -126,7 +135,6 @@ class InfoGlogalWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      // CORREGIDO: Usamos humanizeNumbers para mostrar decimales correctamente
                       '${humanizeNumbers.number(savingsState.savingTotal)}€',
                       style: TextStyle(
                         fontSize: 18,
@@ -147,7 +155,6 @@ class InfoGlogalWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      // CORREGIDO: Mostramos decimales si existen en la meta
                       'Meta: ${humanizeNumbers.number(savingsState.savingGoal)}€',
                       style: TextStyle(
                         fontSize: 10,

@@ -33,6 +33,9 @@ class Preferences {
   static bool get isBiometricActive => _prefs.getBool('isBiometricActive') ?? false;
   static set isBiometricActive(bool value) => _prefs.setBool('isBiometricActive', value);
 
+  static bool get isSavingsIncludedInBalance => _prefs.getBool('isSavingsIncludedInBalance') ?? true;
+  static set isSavingsIncludedInBalance(bool value) => _prefs.setBool('isSavingsIncludedInBalance', value);
+
   // --- LIMPIEZA SEGURA ---
   static Future<void> clearAll() async {
     // 1. Guardamos lo que queremos preservar
@@ -40,16 +43,18 @@ class Preferences {
     final currentRemember = isRemember;
     final currentEmail = email;
     final currentPassword = password;
+    final currentIsSavingsIncluded = isSavingsIncludedInBalance;
     
     // 2. En lugar de .clear(), reseteamos los valores a su estado inicial
-    // Esto evita que las llaves desaparezcan y DevTools muestre errores de nulos.
     uId = '';
     name = '';
     isLoggedIn = false;
     isBiometricActive = false;
+    isSavingsIncludedInBalance = true;
 
     // 3. Restauramos o limpiamos credenciales según la preferencia del usuario
     isDarkMode = currentDarkMode;
+    isSavingsIncludedInBalance = currentIsSavingsIncluded;
     
     if (currentRemember) {
       isRemember = true;
