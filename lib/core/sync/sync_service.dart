@@ -53,6 +53,8 @@ class SyncService {
             success = await _syncSavings(pending, data);
           } else if (pending.collection == 'settings') {
             success = await _syncSettings(pending, data);
+          } else if (pending.collection == 'recurrent_expenses') {
+            success = await _syncRecurrentExpenses(pending, data);
           }
 
           if (success) {
@@ -63,7 +65,6 @@ class SyncService {
             final reauthSuccess = await _attemptSilentLogin();
             if (reauthSuccess) {
               _isSyncing = false;
-              // Await the recursive call to ensure the whole process completes
               await processQueue();
               return;
             }
@@ -157,6 +158,28 @@ class SyncService {
       return true;
     } else if (pending.action == 'update_balance') {
       await _appwriteRepo.updateTotalBalance((data['totalBalance'] as num?)?.toDouble() ?? 0.0);
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> _syncRecurrentExpenses(PendingSync pending, Map<String, dynamic> data) async {
+    if (pending.action == 'create') {
+      await _appwriteRepo.addRecurrentExpense(
+        documentId: pending.appwriteId!,
+        userId: data['userId'] ?? '',
+        name: data['name'] ?? '',
+        money: (data['money'] as num?)?.toDouble() ?? 0.0,
+        day: data['day'] ?? 1,
+        category: data['category'] ?? 'general',
+        isActive: data['isActive'] ?? true,
+      );
+      return true;
+    } else if (pending.action == 'update') {
+      await _appwriteRepo.updateRecurrentExpense(documentId: pending.appwriteId!, data: data);
+      return true;
+    } else if (pending.action == 'delete') {
+      await _appwriteRepo.deleteRecurrentExpense(pending.appwriteId!);
       return true;
     }
     return false;

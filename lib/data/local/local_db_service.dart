@@ -38,9 +38,10 @@ class LocalDbService {
   // --- CONSULTAS ---
 
   Future<int> getTotalCount() async {
-    final historyCount = await _isar.localHistorys.count();
-    final savingsCount = await _isar.localSavings.count();
-    final recurrentCount = await _isar.localRecurrentExpenses.count();
+    final int historyCount = await _isar.localHistorys.count();
+    final int savingsCount = await _isar.localSavings.count();
+    // Una vez generado el código, esto será un int puro
+    final int recurrentCount = await _isar.localRecurrentExpenses.count();
     return historyCount + savingsCount + recurrentCount;
   }
 

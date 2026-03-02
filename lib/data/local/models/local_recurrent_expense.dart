@@ -12,11 +12,11 @@ class LocalRecurrentExpense {
   late String userId;
   late String name;
   late double money;
-  late int day; // Día del mes (1-31)
+  int? day; // Ahora es opcional (int?)
   late String category;
   late bool isActive;
   
-  String? lastApplied; // Formato "MM-YYYY" para saber si ya se aplicó este mes
+  String? lastApplied;
 
   late DateTime createdAt;
 }

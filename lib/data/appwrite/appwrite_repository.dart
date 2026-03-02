@@ -10,6 +10,7 @@ class AppwriteRepository {
   final String _databaseId = Env.appwriteDatabaseId;
   final String _historyId = Env.appwriteHistoryCollectionId;
   final String _savingsId = Env.appwriteSavingsCollectionId;
+  final String _recurrentId = Env.appwriteRecurrentExpensesCollectionId;
 
   // --- PREFERENCIAS DE USUARIO ---
 
@@ -46,15 +47,17 @@ class AppwriteRepository {
     double totalExpenses = 0;
     List<Document> allHistory = [];
     List<Document> allSavings = [];
+    List<Document> allRecurrent = [];
     
     try {
       final historyInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _historyId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
       final savingsInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _savingsId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
+      final recurrentInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _recurrentId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
       
-      final int totalDocsCount = historyInfo.total + savingsInfo.total;
+      final int totalDocsCount = historyInfo.total + savingsInfo.total + recurrentInfo.total;
       if (totalDocsCount == 0) {
         await updateTotalBalance(0.0);
-        return {'balance': 0.0, 'history': [], 'savings': [], 'savingGoal': 0.0};
+        return {'balance': 0.0, 'history': [], 'savings': [], 'recurrent': [], 'savingGoal': 0.0};
       }
 
       int processed = 0;
@@ -74,7 +77,7 @@ class AppwriteRepository {
           allHistory.add(doc);
         }
         processed += response.documents.length;
-        onProgress((processed / totalDocsCount) * 0.8);
+        onProgress((processed / totalDocsCount) * 0.6);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
 
@@ -88,6 +91,21 @@ class AppwriteRepository {
           queries: [Query.equal('userId', [userId]), Query.limit(100), Query.orderAsc('\$id'), if (lastId != null) Query.cursorAfter(lastId)],
         );
         allSavings.addAll(response.documents);
+        processed += response.documents.length;
+        onProgress((processed / totalDocsCount) * 0.85);
+        if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
+      }
+
+      // 3. Procesar Recurrentes
+      hasMore = true;
+      lastId = null;
+      while (hasMore) {
+        final response = await _databases.listDocuments(
+          databaseId: _databaseId,
+          collectionId: _recurrentId,
+          queries: [Query.equal('userId', [userId]), Query.limit(100), Query.orderAsc('\$id'), if (lastId != null) Query.cursorAfter(lastId)],
+        );
+        allRecurrent.addAll(response.documents);
         processed += response.documents.length;
         onProgress((processed / totalDocsCount) * 0.95);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
@@ -105,6 +123,7 @@ class AppwriteRepository {
         'balance': finalBalance,
         'history': allHistory,
         'savings': allSavings,
+        'recurrent': allRecurrent,
         'savingGoal': savingGoal,
       };
     } catch (e) {
@@ -134,6 +153,14 @@ class AppwriteRepository {
     }
   }
 
+  Future<List<Document>> getRecurrentExpenses(String userId) async {
+    return (await _databases.listDocuments(
+      databaseId: _databaseId,
+      collectionId: _recurrentId,
+      queries: [Query.equal('userId', [userId]), Query.limit(100)],
+    )).documents;
+  }
+
   // --- ACCIONES ---
 
   Future<Document> updateHistory({required String documentId, required Map<String, dynamic> data}) async {
@@ -148,8 +175,17 @@ class AppwriteRepository {
     return await _databases.createDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: documentId, data: {'userId': userId, 'money': money, 'month': month, 'year': year, 'description': description ?? 'Aportación de ahorro', 'isSpent': isSpent});
   }
 
+  Future<Document> addRecurrentExpense({required String documentId, required String userId, required String name, required double money, int? day, String category = 'general', bool isActive = true, String? lastApplied}) async {
+    return await _databases.createDocument(databaseId: _databaseId, collectionId: _recurrentId, documentId: documentId, data: {'userId': userId, 'name': name, 'money': money, 'day': day, 'category': category, 'isActive': isActive, 'lastApplied': lastApplied});
+  }
+
+  Future<Document> updateRecurrentExpense({required String documentId, required Map<String, dynamic> data}) async {
+    return await _databases.updateDocument(databaseId: _databaseId, collectionId: _recurrentId, documentId: documentId, data: data);
+  }
+
   Future<void> deleteHistory(String documentId) async => await _databases.deleteDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId);
   Future<void> deleteSaving(String documentId) async => await _databases.deleteDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: documentId);
+  Future<void> deleteRecurrentExpense(String documentId) async => await _databases.deleteDocument(databaseId: _databaseId, collectionId: _recurrentId, documentId: documentId);
   
   Future<Document> updateSaving({required String documentId, Map<String, dynamic>? data, double? money}) async {
     return await _databases.updateDocument(
@@ -163,7 +199,8 @@ class AppwriteRepository {
   Future<int> getTotalDocsToDelete(String userId) async {
     final historyInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _historyId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
     final savingsInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _savingsId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
-    return historyInfo.total + savingsInfo.total;
+    final recurrentInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _recurrentId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
+    return historyInfo.total + savingsInfo.total + recurrentInfo.total;
   }
 
   Future<int> deleteAllHistory(String userId, {Function(int)? onDeleted}) async {
@@ -202,6 +239,28 @@ class AppwriteRepository {
       } else {
         for (var doc in response.documents) {
           await deleteSaving(doc.$id);
+          deletedCount++;
+          if (onDeleted != null) onDeleted(deletedCount);
+        }
+      }
+    }
+    return deletedCount;
+  }
+
+  Future<int> deleteAllRecurrentExpenses(String userId, {Function(int)? onDeleted}) async {
+    int deletedCount = 0;
+    bool hasMore = true;
+    while (hasMore) {
+      final response = await _databases.listDocuments(
+        databaseId: _databaseId,
+        collectionId: _recurrentId,
+        queries: [Query.equal('userId', [userId]), Query.limit(100)],
+      );
+      if (response.documents.isEmpty) {
+        hasMore = false;
+      } else {
+        for (var doc in response.documents) {
+          await deleteRecurrentExpense(doc.$id);
           deletedCount++;
           if (onDeleted != null) onDeleted(deletedCount);
         }

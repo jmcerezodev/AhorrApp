@@ -6,6 +6,7 @@ export 'savings_cubit/savings_cubit.dart';
 export 'total_money_cubit/total_money_cubit.dart';
 export 'date_cubit/date_cubit.dart';
 export 'theme_cubit/theme_cubit.dart';
+export 'recurrent_expenses_cubit/recurrent_expenses_cubit.dart';
 
 // Autenticación (Carpeta corregida)
 export 'authentication_cubits/login_cubit/login_cubit.dart';

@@ -200,6 +200,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
         BlocProvider(create: (_) => DateCubit()),
         BlocProvider(create: (_) => IncomesCubit()),
         BlocProvider(create: (_) => ExpensesCubit()),
+        BlocProvider(create: (_) => getIt<RecurrentExpensesCubit>()), // AÑADIDO
       ],
       child: MaterialApp.router(
         title: 'AhorrApp',
