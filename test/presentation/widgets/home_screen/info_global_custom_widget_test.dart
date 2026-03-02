@@ -19,8 +19,9 @@ void main() {
     mockTotalMoneyCubit = MockTotalMoneyCubit();
     mockSavingsCubit = MockSavingsCubit();
 
+    // Estado inicial por defecto para los tests
     when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState(status: HistoryStatus.success));
-    when(() => mockTotalMoneyCubit.state).thenReturn(const TotalMoneyCubitState(totalMoney: 1250.50));
+    when(() => mockTotalMoneyCubit.state).thenReturn(const TotalMoneyCubitState(totalMoney: 1250.50, isSavingsIncluded: true));
     when(() => mockSavingsCubit.state).thenReturn(const SavingsCubitState(savingTotal: 500, savingGoal: 1000));
 
     when(() => mockHistoryCubit.stream).thenAnswer((_) => const Stream.empty());
@@ -44,12 +45,24 @@ void main() {
   }
 
   group('InfoGlogalWidget - Protección de Diseño y Datos', () {
-    testWidgets('Debe mostrar el balance total con formato correcto', (WidgetTester tester) async {
+    testWidgets('Debe mostrar el balance total (incluyendo ahorros) con formato correcto', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
-      // CORREGIDO: Esperamos a que la animación de animate_do termine
       await tester.pumpAndSettle();
 
-      expect(find.text('BALANCE TOTAL'), findsOneWidget);
+      // Buscamos el nuevo texto con el salto de línea
+      expect(find.text('BALANCE TOTAL\n(CON AHORROS)'), findsOneWidget);
+      // Balance = 1250.50 (cartera) + 500 (ahorros) = 1750.50
+      expect(find.text('1.750,50€'), findsOneWidget);
+    });
+
+    testWidgets('Debe mostrar solo el balance de cartera si la opción está desactivada', (WidgetTester tester) async {
+      when(() => mockTotalMoneyCubit.state).thenReturn(const TotalMoneyCubitState(totalMoney: 1250.50, isSavingsIncluded: false));
+      
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      expect(find.text('BALANCE EN\nCARTERA'), findsOneWidget);
+      // Solo muestra los 1250.50 de la cartera
       expect(find.text('1.250,50€'), findsOneWidget);
     });
 
@@ -59,7 +72,6 @@ void main() {
 
       expect(find.text('MIS AHORROS'), findsOneWidget);
       expect(find.text('500€'), findsOneWidget);
-      
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
     });
 
@@ -67,12 +79,10 @@ void main() {
       when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState(status: HistoryStatus.loading));
       
       await tester.pumpWidget(createWidgetUnderTest());
-      // Nota: Aquí no usamos pumpAndSettle porque el spinner es infinito. 
-      // Usamos pump con un tiempo fijo para que la animación de entrada termine.
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('1.250,50€'), findsNothing);
+      expect(find.text('1.750,50€'), findsNothing);
     });
   });
 }
