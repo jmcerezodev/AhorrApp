@@ -36,19 +36,25 @@ void main() async {
     final biometricService = getIt<BiometricService>();
     
     String initialRoute = '/login';
-    bool isAuthRequired = Preferences.uId.isNotEmpty;
+    
+    // Determinamos la ruta inicial basada en la sesión persistida (Soporte Offline)
+    final bool hasActiveSession = Preferences.uId.isNotEmpty && Preferences.isLoggedIn;
 
-    if (isAuthRequired) {
+    if (hasActiveSession) {
       if (Preferences.isBiometricActive) {
         final bool authenticated = await biometricService.authenticate();
         if (authenticated) {
-          initialRoute = await authService.getInitialRoute();
+          initialRoute = '/home-screen';
         } else {
           exit(0); 
         }
       } else {
-        initialRoute = await authService.getInitialRoute();
+        initialRoute = '/home-screen';
       }
+    } else {
+      // Si no hay sesión local confirmada, consultamos al servicio de Auth
+      // (Esto permitirá recuperar sesión si hay red, o mandará a login si no)
+      initialRoute = await authService.getInitialRoute();
     }
 
     SystemChrome.setPreferredOrientations([
