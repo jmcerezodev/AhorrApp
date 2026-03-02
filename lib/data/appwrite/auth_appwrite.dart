@@ -101,7 +101,7 @@ class AuthAppwrite {
 
   Future deleteAcount(BuildContext context) async {
     try {
-      Preferences.uId = ''; 
+      Preferences.uId = '';
       Preferences.name = '';
       Preferences.isLoggedIn = false;
 

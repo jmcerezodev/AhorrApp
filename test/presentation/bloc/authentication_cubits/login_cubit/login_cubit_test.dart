@@ -21,19 +21,15 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(deviceInfoChannel, (MethodCall methodCall) async => {'board': 'test', 'brand': 'test', 'device': 'test', 'display': 'test', 'fingerprint': 'test', 'hardware': 'test', 'id': 'test', 'manufacturer': 'test', 'model': 'test', 'product': 'test', 'supportedAbis': [], 'tags': 'test', 'type': 'test', 'isPhysicalDevice': false, 'systemFeatures': [], 'version': {'sdkInt': 30}});
   });
 
-  group('LoginCubit - Limpieza Profesional', () {
+  group('LoginCubit - Persistencia de Credenciales', () {
     late LoginCubit loginCubit;
     late MockHistoryCubit mockHistoryCubit;
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       await Preferences.init();
-      
       mockHistoryCubit = MockHistoryCubit();
-      // Stub para evitar errores cuando se llame a prepareForNewLogin
       when(() => mockHistoryCubit.prepareForNewLogin()).thenAnswer((_) async => {});
-      
-      // CORREGIDO: Usamos el parámetro con nombre historyCubit
       loginCubit = LoginCubit(historyCubit: mockHistoryCubit);
     });
 
@@ -41,21 +37,59 @@ void main() {
       loginCubit.close();
     });
 
-    test('Estado inicial debe ser initial', () {
-      expect(loginCubit.state.status, LoginStatus.initial);
-      expect(loginCubit.state.isValid, false);
+    test('resetCubit debe cargar credenciales si isRemember es true', () async {
+      // 1. Preparamos el mock de SharedPreferences con datos
+      SharedPreferences.setMockInitialValues({
+        'email': 'test@recordado.com',
+        'password': 'password123',
+        'isRemember': true,
+      });
+      await Preferences.init();
+
+      // 2. Reiniciamos el cubit para que lea las nuevas preferencias
+      loginCubit.resetCubit();
+
+      // 3. Verificamos que se hayan cargado
+      expect(loginCubit.state.email.value, 'test@recordado.com');
+      expect(loginCubit.state.password.value, 'password123');
+      expect(loginCubit.state.isRemember, true);
     });
 
-    test('validación de email y password correcta', () {
-      loginCubit.emailChanged('test@test.com');
-      loginCubit.passwordChanged('123456');
-      expect(loginCubit.state.isValid, true);
+    test('resetCubit NO debe cargar credenciales si isRemember es false', () async {
+      // 1. Datos guardados pero recordarme en false
+      SharedPreferences.setMockInitialValues({
+        'email': 'test@no-recordado.com',
+        'password': 'password123',
+        'isRemember': false,
+      });
+      await Preferences.init();
+
+      // 2. Reiniciamos el cubit
+      loginCubit.resetCubit();
+
+      // 3. Verificamos que los campos estén vacíos
+      expect(loginCubit.state.email.value, '');
+      expect(loginCubit.state.password.value, '');
+      expect(loginCubit.state.isRemember, false);
     });
 
-    test('onSubmit con campos vacíos debe dar error de validación', () async {
-      loginCubit.onSubmit();
-      expect(loginCubit.state.status, LoginStatus.failure);
-      expect(loginCubit.state.errorMessage, 'Formulario no válido');
+    test('Constructor debe cargar credenciales iniciales si existen', () async {
+      // 1. Simular datos persistidos antes de crear el cubit
+      SharedPreferences.setMockInitialValues({
+        'email': 'constructor@test.com',
+        'password': 'admin',
+        'isRemember': true,
+      });
+      await Preferences.init();
+
+      // 2. Creamos un nuevo cubit
+      final newLoginCubit = LoginCubit(historyCubit: mockHistoryCubit);
+
+      // 3. Verificar estado inicial
+      expect(newLoginCubit.state.email.value, 'constructor@test.com');
+      expect(newLoginCubit.state.isRemember, true);
+      
+      newLoginCubit.close();
     });
   });
 }

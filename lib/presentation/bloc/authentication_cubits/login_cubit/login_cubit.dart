@@ -12,7 +12,15 @@ class LoginCubit extends Cubit<LoginCubitState> {
   final AuthAppwrite _auth = AuthAppwrite();
   final HistoryCubit historyCubit; // NECESARIO PARA FORZAR SINCRONIZACIÓN
 
-  LoginCubit({required this.historyCubit}) : super(const LoginCubitState());
+  LoginCubit({required this.historyCubit}) : super(LoginCubitState(
+    email: Preferences.isRemember && Preferences.email.isNotEmpty 
+        ? EmailLogin.dirty(value: Preferences.email) 
+        : const EmailLogin.pure(),
+    password: Preferences.isRemember && Preferences.password.isNotEmpty 
+        ? PasswordLogin.dirty(value: Preferences.password) 
+        : const PasswordLogin.pure(),
+    isRemember: Preferences.isRemember,
+  ));
 
   void onSubmit() async {
     final email = EmailLogin.dirty(value: state.email.value);
@@ -44,10 +52,13 @@ class LoginCubit extends Cubit<LoginCubitState> {
         await historyCubit.prepareForNewLogin();
 
         Preferences.isLoggedIn = true;
-        if (state.isRemember) {
-          Preferences.email = state.email.value;
-          Preferences.password = state.password.value;
-        }
+        
+        // Se guardan las credenciales siempre en Preferences para uso interno (como biometría)
+        Preferences.email = state.email.value;
+        Preferences.password = state.password.value;
+        
+        // Guardamos si el usuario quiere que se rellenen visualmente en el próximo login
+        Preferences.isRemember = state.isRemember;
         
         emit(state.copyWith(status: LoginStatus.success));
       } else {
@@ -71,7 +82,15 @@ class LoginCubit extends Cubit<LoginCubitState> {
   }
 
   void resetCubit() {
-    emit(const LoginCubitState());
+    emit(LoginCubitState(
+      email: Preferences.isRemember && Preferences.email.isNotEmpty 
+          ? EmailLogin.dirty(value: Preferences.email) 
+          : const EmailLogin.pure(),
+      password: Preferences.isRemember && Preferences.password.isNotEmpty 
+          ? PasswordLogin.dirty(value: Preferences.password) 
+          : const PasswordLogin.pure(),
+      isRemember: Preferences.isRemember,
+    ));
   }
 
   void emailChanged(String value) {
