@@ -1,5 +1,4 @@
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
-import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/delete_acount/delete_acount_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
@@ -21,14 +20,13 @@ class DeleteAcountDialog extends StatefulWidget {
 }
 
 class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
-  bool _isLoading = false;
-
   @override
   Widget build(BuildContext context) {
-    final authService = AuthAppwrite();
     final deleteAcountCubit = context.watch<DeleteAcountCubit>();
+    final state = deleteAcountCubit.state;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isSubmitting = state.status == DeleteAccountStatus.submitting;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -52,7 +50,7 @@ class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
                 color: Colors.red.shade400.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: _isLoading 
+              child: isSubmitting 
                 ? const SizedBox(width: 32, height: 32, child: CircularProgressIndicator(color: Colors.red, strokeWidth: 3))
                 : Icon(Icons.no_accounts_rounded, color: Colors.red.shade400, size: 32),
             ),
@@ -71,7 +69,7 @@ class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
             const SizedBox(height: 15),
             
             Text(
-              widget.text,
+              isSubmitting ? 'Eliminando tus datos de forma segura...' : widget.text,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -81,63 +79,75 @@ class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
             ),
             const SizedBox(height: 20),
 
-            CustomInputTextWidget(
-              prefixIcon: Icons.key_rounded,
-              label: 'Contraseña para confirmar',
-              hintText: 'Tu contraseña',
-              onChanged: deleteAcountCubit.inputValueDeleteAcount,
-              autoFocus: false,
-              obscureText: true,
-              enabled: !_isLoading,
-              textInputType: TextInputType.name,
-              textCapitalization: TextCapitalization.none,
-            ),
+            if (!isSubmitting)
+              CustomInputTextWidget(
+                prefixIcon: Icons.key_rounded,
+                label: 'Contraseña para confirmar',
+                hintText: 'Tu contraseña',
+                onChanged: deleteAcountCubit.inputValueDeleteAcount,
+                autoFocus: false,
+                obscureText: true,
+                textInputType: TextInputType.name,
+                textCapitalization: TextCapitalization.none,
+              ),
+
+            if (isSubmitting) ...[
+              const SizedBox(height: 10),
+              LinearProgressIndicator(
+                value: state.deleteProgress,
+                backgroundColor: colorScheme.onSurface.withValues(alpha: 0.1),
+                color: Colors.red.shade400,
+                borderRadius: BorderRadius.circular(10),
+                minHeight: 8,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '${(state.deleteProgress * 100).toInt()}%',
+                style: TextStyle(
+                  fontSize: 12, 
+                  fontWeight: FontWeight.bold, 
+                  color: Colors.red.shade400
+                ),
+              ),
+            ],
 
             const SizedBox(height: 30),
 
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: _isLoading ? null : () => context.pop(),
-                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text(
-                      'CANCELAR', 
-                      style: TextStyle(
-                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                        fontWeight: FontWeight.bold, 
-                        letterSpacing: 1
-                      )
+            if (!isSubmitting)
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => context.pop(),
+                      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
+                      child: Text(
+                        'CANCELAR', 
+                        style: TextStyle(
+                          color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                          fontWeight: FontWeight.bold, 
+                          letterSpacing: 1
+                        )
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: (_isLoading || deleteAcountCubit.state.deleteAcountValueInput != Preferences.password) 
-                    ? null 
-                    : () async {
-                        setState(() => _isLoading = true);
-                        try {
-                          await authService.deleteAcount(context);
-                        } catch (e) {
-                          if (mounted) setState(() => _isLoading = false);
-                        }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade400,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: state.deleteAcountValueInput != Preferences.password
+                      ? null 
+                      : () => deleteAcountCubit.onSubmit(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade400,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
+                      child: const Text('ELIMINAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                     ),
-                    child: _isLoading 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('ELIMINAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),

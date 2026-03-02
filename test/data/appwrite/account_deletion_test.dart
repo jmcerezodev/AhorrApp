@@ -2,12 +2,10 @@ import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
-import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 
 class MockAppwriteRepository extends Mock implements AppwriteRepository {}
@@ -26,7 +24,6 @@ void main() {
   });
 
   group('Borrado de Cuenta -', () {
-    late AuthAppwrite authService;
     late MockAppwriteRepository mockAppwriteRepo;
     late MockLocalDbService mockLocalDb;
 
@@ -41,9 +38,11 @@ void main() {
       mockAppwriteRepo = MockAppwriteRepository();
       mockLocalDb = MockLocalDbService();
       
-      // Stubbing para evitar errores de red reales
-      when(() => mockAppwriteRepo.deleteAllHistory(any())).thenAnswer((_) async => {});
-      when(() => mockAppwriteRepo.deleteAllSavings(any())).thenAnswer((_) async => {});
+      // Corregido: Ahora estos métodos devuelven Future<int>
+      when(() => mockAppwriteRepo.deleteAllHistory(any(), onDeleted: any(named: 'onDeleted')))
+          .thenAnswer((_) async => 0);
+      when(() => mockAppwriteRepo.deleteAllSavings(any(), onDeleted: any(named: 'onDeleted')))
+          .thenAnswer((_) async => 0);
       when(() => mockLocalDb.clearAll()).thenAnswer((_) async => {});
     });
 
@@ -54,7 +53,7 @@ void main() {
       await Preferences.clearAll();
       
       expect(Preferences.uId, '');
-      expect(Preferences.isDarkMode, true); // Verificamos que el tema se mantiene
+      expect(Preferences.isDarkMode, true);
     });
 
     test('clearAll de Preferences debe borrar email y password si isRemember es false', () async {

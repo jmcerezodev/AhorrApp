@@ -98,13 +98,33 @@ class AuthAppwrite {
     }
   }
 
-  Future deleteAcount(BuildContext context) async {
+  Future deleteAcount(BuildContext context, {Function(double)? onProgress}) async {
     try {
       final String uid = Preferences.uId;
 
-      await _appwriteRepo.deleteAllHistory(uid);
-      await _appwriteRepo.deleteAllSavings(uid);
+      // 1. Obtener total para calcular porcentaje
+      final int totalDocs = await _appwriteRepo.getTotalDocsToDelete(uid);
+      int deletedCount = 0;
+
+      void updateProgress(int currentDeleted) {
+        if (onProgress != null && totalDocs > 0) {
+          onProgress(currentDeleted / totalDocs);
+        }
+      }
+
+      // 2. Borrar datos con reporte de progreso
+      await _appwriteRepo.deleteAllHistory(uid, onDeleted: (count) {
+        deletedCount = count;
+        updateProgress(deletedCount);
+      });
+
+      final int historyDeleted = deletedCount;
+      await _appwriteRepo.deleteAllSavings(uid, onDeleted: (count) {
+        deletedCount = historyDeleted + count;
+        updateProgress(deletedCount);
+      });
       
+      // 3. Limpiar local
       await Preferences.clearAll();
       await _localDb.clearAll();
 

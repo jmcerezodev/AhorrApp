@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,6 @@ class DeleteAcountCubit extends Cubit<DeleteCubitState> {
   DeleteAcountCubit() : super(const DeleteCubitState());
 
   void inputValueDeleteAcount(String value) {
-    // CORREGIDO: copyWith con W mayúscula y parámetro 'status'
     emit(state.copyWith(
       deleteAcountValueInput: value,
       status: DeleteAccountStatus.initial,
@@ -19,18 +19,24 @@ class DeleteAcountCubit extends Cubit<DeleteCubitState> {
   }
 
   void onSubmit(BuildContext context) async {
-    if (state.deleteAcountValueInput != 'ELIMINAR MI CUENTA') {
+    // Blindaje: Validamos que la contraseña introducida coincida con la del usuario actual
+    if (state.deleteAcountValueInput != Preferences.password) {
       emit(state.copyWith(
         status: DeleteAccountStatus.failure,
-        errorMessage: 'Confirmación incorrecta',
+        errorMessage: 'Contraseña incorrecta',
       ));
       return;
     }
 
-    emit(state.copyWith(status: DeleteAccountStatus.submitting));
+    emit(state.copyWith(status: DeleteAccountStatus.submitting, deleteProgress: 0.0));
 
     try {
-      await _auth.deleteAcount(context);
+      await _auth.deleteAcount(
+        context,
+        onProgress: (progress) {
+          emit(state.copyWith(deleteProgress: progress));
+        },
+      );
       emit(state.copyWith(status: DeleteAccountStatus.success));
     } catch (e) {
       emit(state.copyWith(

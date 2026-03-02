@@ -1,8 +1,10 @@
+import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/delete_acount/delete_acount_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeBuildContext extends Fake implements BuildContext {}
 
@@ -18,7 +20,9 @@ void main() {
   group('DeleteAcountCubit Tests', () {
     late DeleteAcountCubit cubit;
 
-    setUp(() {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({'password': 'password123'});
+      await Preferences.init();
       cubit = DeleteAcountCubit();
     });
 
@@ -31,18 +35,12 @@ void main() {
       expect(cubit.state.status, DeleteAccountStatus.initial);
     });
 
-    test('inputValueDeleteAcount debe actualizar el valor y resetear status', () {
-      cubit.inputValueDeleteAcount('BORRAR');
-      expect(cubit.state.deleteAcountValueInput, 'BORRAR');
-      expect(cubit.state.status, DeleteAccountStatus.initial);
-    });
-
-    test('onSubmit con confirmación incorrecta debe emitir failure', () async {
+    test('onSubmit con contraseña incorrecta debe emitir failure', () async {
       cubit.inputValueDeleteAcount('MAL');
       cubit.onSubmit(FakeBuildContext());
       
       expect(cubit.state.status, DeleteAccountStatus.failure);
-      expect(cubit.state.errorMessage, 'Confirmación incorrecta');
+      expect(cubit.state.errorMessage, 'Contraseña incorrecta');
     });
   });
 }

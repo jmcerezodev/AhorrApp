@@ -160,7 +160,14 @@ class AppwriteRepository {
     );
   }
 
-  Future<void> deleteAllHistory(String userId) async {
+  Future<int> getTotalDocsToDelete(String userId) async {
+    final historyInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _historyId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
+    final savingsInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _savingsId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
+    return historyInfo.total + savingsInfo.total;
+  }
+
+  Future<int> deleteAllHistory(String userId, {Function(int)? onDeleted}) async {
+    int deletedCount = 0;
     bool hasMore = true;
     while (hasMore) {
       final response = await _databases.listDocuments(
@@ -173,12 +180,16 @@ class AppwriteRepository {
       } else {
         for (var doc in response.documents) {
           await deleteHistory(doc.$id);
+          deletedCount++;
+          if (onDeleted != null) onDeleted(deletedCount);
         }
       }
     }
+    return deletedCount;
   }
 
-  Future<void> deleteAllSavings(String userId) async {
+  Future<int> deleteAllSavings(String userId, {Function(int)? onDeleted}) async {
+    int deletedCount = 0;
     bool hasMore = true;
     while (hasMore) {
       final response = await _databases.listDocuments(
@@ -191,8 +202,18 @@ class AppwriteRepository {
       } else {
         for (var doc in response.documents) {
           await deleteSaving(doc.$id);
+          deletedCount++;
+          if (onDeleted != null) onDeleted(deletedCount);
         }
       }
+    }
+    return deletedCount;
+  }
+
+  Future<void> deleteAllSavingsSync(String userId) async {
+    final savings = await (await _databases.listDocuments(databaseId: _databaseId, collectionId: _savingsId, queries: [Query.equal('userId', [userId]), Query.limit(1000)])).documents;
+    for (var doc in savings) {
+      await deleteSaving(doc.$id);
     }
   }
 }
