@@ -1,6 +1,7 @@
 import 'package:ahorrapp/core/inputs/inputs.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
+import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:formz/formz.dart';
@@ -9,8 +10,9 @@ part 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginCubitState> {
   final AuthAppwrite _auth = AuthAppwrite();
+  final HistoryCubit historyCubit; // NECESARIO PARA FORZAR SINCRONIZACIÓN
 
-  LoginCubit() : super(const LoginCubitState());
+  LoginCubit({required this.historyCubit}) : super(const LoginCubitState());
 
   void onSubmit() async {
     final email = EmailLogin.dirty(value: state.email.value);
@@ -36,18 +38,19 @@ class LoginCubit extends Cubit<LoginCubitState> {
         state.password.value,
       );
 
-      if (result is String) { // Éxito (retorna el userId)
+      if (result is String) { // Éxito
+        
+        // CORRECCIÓN CRÍTICA: Preparamos Isar y el Historial para el nuevo usuario
+        await historyCubit.prepareForNewLogin();
+
+        Preferences.isLoggedIn = true;
         if (state.isRemember) {
           Preferences.email = state.email.value;
           Preferences.password = state.password.value;
-        } else {
-          Preferences.email = '';
-          Preferences.password = '';
         }
         
         emit(state.copyWith(status: LoginStatus.success));
       } else {
-        // Manejo de errores específicos según lo que retorna AuthAppwrite
         String message = 'Error al iniciar sesión';
         if (result == 0) message = 'Credenciales incorrectas';
         if (result == 3) message = 'Error de conexión con el servidor';

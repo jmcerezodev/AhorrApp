@@ -1,4 +1,4 @@
-import 'package:ahorrapp/core/inputs/inputs.dart';
+import 'package:ahorrapp/core/inputs/authentication_inputs/name_input.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -11,11 +11,7 @@ class UpdateNameCubit extends Cubit<UpdateNameState> {
 
   void onSubmit() {
     if (!state.isValid) return;
-
     emit(state.copyWith(status: UpdateNameStatus.submitting));
-    
-    // Aquí se llamaría al repositorio para actualizar el nombre
-    // Por ahora, simulamos el éxito si es válido
     onUpdateSuccess(state.newName.value);
   }
 
@@ -28,9 +24,10 @@ class UpdateNameCubit extends Cubit<UpdateNameState> {
     ));
   }
 
+  // REINICIO MAESTRO MEJORADO
   void resetCubit() {
     emit(UpdateNameState(
-      name: Preferences.name,
+      name: Preferences.name, // Tomará el valor vacío o el nuevo tras el login
       newName: const Name.pure(),
       status: UpdateNameStatus.initial,
     ));

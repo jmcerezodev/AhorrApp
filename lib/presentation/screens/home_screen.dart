@@ -24,6 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        // CORRECCIÓN CRÍTICA: Forzamos al Cubit de nombre a refrescarse tras el login
+        context.read<UpdateNameCubit>().resetCubit();
+        
         final dateState = context.read<DateCubit>().state;
         context.read<HistoryCubit>().loadHistoryByDate(dateState.month, dateState.year);
         context.read<SavingsCubit>().loadSavings();
@@ -39,7 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final colorScheme = theme.colorScheme;
     final isCalendarOpen = context.watch<DateCubit>().state.isOpen;
 
-    // LÓGICA INTELIGENTE DE GÉNERO RESTAURADA
     String greeting = 'Bienvenido';
     if (userName.isNotEmpty) {
       final String firstWord = userName.trim().split(' ').first.toLowerCase();

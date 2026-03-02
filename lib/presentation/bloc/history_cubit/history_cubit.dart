@@ -24,6 +24,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
   HistoryCubit({required this.totalMoneyCubit}) : super(const HistoryCubitState());
 
   Future<void> loadHistory() async {
+    if (Preferences.uId.isEmpty) return;
     final date = Date();
     await loadHistoryByDate(date.monthNames(), int.parse(date.year()));
   }
@@ -32,14 +33,20 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     emit(const HistoryCubitState());
   }
 
+  // MÉTODO PARA FORZAR LIMPIEZA DESDE EL LOGIN
+  Future<void> prepareForNewLogin() async {
+    await _localDb.clearAll();
+    emit(const HistoryCubitState());
+  }
+
   Future<void> forceBalanceResync(TotalMoneyCubit totalMoneyCubit) async {
+    if (state.isSyncing || Preferences.uId.isEmpty) return;
+
     emit(state.copyWith(status: HistoryStatus.loading, isSyncing: true, syncProgress: 0.0));
     try {
       await _localDb.clearAll();
-      final fullData = await _repository.syncFullData(
-        Preferences.uId, 
-        (progress) => emit(state.copyWith(syncProgress: progress))
-      );
+      final String uid = Preferences.uId;
+      final fullData = await _repository.syncFullData(uid, (progress) => emit(state.copyWith(syncProgress: progress)));
       
       final List<LocalHistory> historyItems = _convertToLocalHistory(fullData['history']);
       await _localDb.saveHistoryItems(historyItems);
@@ -47,63 +54,56 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       final List<LocalSaving> savingItems = _convertToLocalSaving(fullData['savings']);
       await _localDb.saveSavingItems(savingItems);
 
-      await _localDb.saveSavingGoal(Preferences.uId, fullData['savingGoal']);
+      await _localDb.saveSavingGoal(uid, fullData['savingGoal']);
       final double correctBalance = fullData['balance'];
-      await _localDb.saveTotalBalance(Preferences.uId, correctBalance);
+      await _localDb.saveTotalBalance(uid, correctBalance);
       totalMoneyCubit.totalMoney(correctBalance);
       
       emit(state.copyWith(isSyncing: false, syncProgress: 1.0, status: HistoryStatus.success));
       final date = Date();
-      await loadHistoryByDate(date.monthNames(), int.parse(date.year()));
+      await _loadRawHistory(date.monthNames(), int.parse(date.year()));
     } catch (e) {
       emit(state.copyWith(isSyncing: false, status: HistoryStatus.failure));
     }
   }
 
+  Future<void> _loadRawHistory(String month, int year) async {
+    final movements = await _getMovementsUseCase(Preferences.uId, month, year);
+    final uiList = movements.map((e) => {
+      'id': e.id, 'name': e.name, 'money': e.amount, 'type': e.type.name, 'isIncome': e.isIncome,
+      'isSpent': e.isSpent, 'currentDate': e.date, 'currentHour': e.hour, 'month': e.month, 'year': e.year,
+      'createdAt': e.createdAt.toIso8601String(),
+    }).toList();
+    emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
+  }
+
   Future<void> loadHistoryByDate(String month, int year) async {
-    if (year == 0) return;
+    if (year == 0 || Preferences.uId.isEmpty) return;
+    if (state.isSyncing) return;
+
+    final localTotalCount = await _localDb.getTotalCount();
+    if (localTotalCount == 0 && state.syncProgress == 0.0) {
+      await forceBalanceResync(totalMoneyCubit);
+      return;
+    }
+
     emit(state.copyWith(status: HistoryStatus.loading));
     try {
-      final localTotalCount = await _localDb.getTotalCount();
       double globalBalance = await _localDb.getTotalBalance(Preferences.uId);
-      
-      if (localTotalCount == 0) {
-        await forceBalanceResync(totalMoneyCubit);
-        return;
-      }
-      
       totalMoneyCubit.totalMoney(globalBalance);
       final movements = await _getMovementsUseCase(Preferences.uId, month, year);
-      
-      final List<Map<String, dynamic>> uiList = movements.map((e) => {
-        'id': e.id,
-        'name': e.name,
-        'money': e.amount,
-        'type': e.type.name,
-        'isIncome': e.isIncome,
-        'isSpent': e.isSpent,
-        'currentDate': e.date,
-        'currentHour': e.hour,
-        'month': e.month,
-        'year': e.year,
+      final uiList = movements.map((e) => {
+        'id': e.id, 'name': e.name, 'money': e.amount, 'type': e.type.name, 'isIncome': e.isIncome,
+        'isSpent': e.isSpent, 'currentDate': e.date, 'currentHour': e.hour, 'month': e.month, 'year': e.year,
         'createdAt': e.createdAt.toIso8601String(),
       }).toList();
-      
       emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
     } catch (e) {
       emit(state.copyWith(status: HistoryStatus.failure, isSyncing: false));
     }
   }
 
-  Future<void> addMovementLocally(dynamic item) async {
-    if (item is LocalSaving) {
-      await _localDb.saveSavingItems([item]);
-    } else if (item is LocalHistory) {
-      await _localDb.saveHistoryItems([item]);
-      await _updateBalance(item.money, item.type == 'income');
-    }
-    await loadHistoryByDate(item.month, item.year);
-  }
+  // --- MÉTODOS RESTAURADOS PARA DIÁLOGOS ---
 
   Future<void> updateMovementLocally(dynamic item, double oldAmount) async {
     final isar = _localDb.isar;

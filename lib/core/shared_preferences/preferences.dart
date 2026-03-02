@@ -7,7 +7,7 @@ class Preferences {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  // --- SESIÓN Y AUTH (Lo único que se queda aquí) ---
+  // --- SESIÓN Y AUTH ---
   static String get uId => _prefs.getString('uId') ?? '';
   static set uId(String value) => _prefs.setString('uId', value);
 
@@ -22,6 +22,10 @@ class Preferences {
 
   static bool get isRemember => _prefs.getBool('isRemember') ?? false;
   static set isRemember(bool value) => _prefs.setBool('isRemember', value);
+
+  // NUEVA: Indica si el usuario ha iniciado sesión con red al menos una vez
+  static bool get isLoggedIn => _prefs.getBool('isLoggedIn') ?? false;
+  static set isLoggedIn(bool value) => _prefs.setBool('isLoggedIn', value);
 
   // --- AJUSTES DE INTERFAZ ---
   static bool get isDarkMode => _prefs.getBool('isDarkMode') ?? false;

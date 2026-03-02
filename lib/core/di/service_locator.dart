@@ -1,3 +1,5 @@
+import 'package:ahorrapp/presentation/bloc/cubits.dart';
+import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:get_it/get_it.dart';
 import '../../data/appwrite/appwrite_repository.dart';
 import '../../data/appwrite/auth_appwrite.dart';
@@ -7,17 +9,14 @@ import '../../data/repositories/isar_movement_repository.dart';
 import '../../domain/repositories/i_movement_repository.dart';
 import '../../domain/usecases/get_movements_usecase.dart';
 import '../../domain/usecases/save_movement_usecase.dart';
-import '../../presentation/bloc/total_money_cubit/total_money_cubit.dart';
 import '../auth/biometric_service.dart';
 import '../sync/sync_service.dart';
 
 final getIt = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
-  // --- Cubits Globales ---
-  getIt.registerSingleton<TotalMoneyCubit>(TotalMoneyCubit());
-
-  // --- Data Sources & Services ---
+  
+  // 1. DATA SOURCES & SERVICIOS BÁSICOS
   final localDbService = LocalDbService();
   await localDbService.init();
   getIt.registerSingleton<LocalDbService>(localDbService);
@@ -27,7 +26,7 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<BiometricService>(() => BiometricService());
   getIt.registerLazySingleton<SyncService>(() => SyncService());
 
-  // --- Repositories ---
+  // 2. REPOSITORIOS
   getIt.registerLazySingleton<IMovementRepository>(
     () => AppwriteMovementRepository(),
     instanceName: 'remote',
@@ -38,7 +37,7 @@ Future<void> setupServiceLocator() async {
     instanceName: 'local',
   );
 
-  // --- Use Cases ---
+  // 3. CASOS DE USO (Cimientos de los Cubits)
   getIt.registerLazySingleton<GetMovementsUseCase>(() => GetMovementsUseCase(
         localRepository: getIt<IMovementRepository>(instanceName: 'local'),
         remoteRepository: getIt<IMovementRepository>(instanceName: 'remote'),
@@ -48,6 +47,26 @@ Future<void> setupServiceLocator() async {
         localRepository: getIt<IMovementRepository>(instanceName: 'local'),
         remoteRepository: getIt<IMovementRepository>(instanceName: 'remote'),
         localDbService: getIt<LocalDbService>(),
-        totalMoneyCubit: getIt<TotalMoneyCubit>(), // Inyectamos el cubit de balance
+        totalMoneyCubit: TotalMoneyCubit(), // Instancia temporal para el registro
       ));
+
+  // 4. CUBITS CORE (Permanentes)
+  // Ahora que GetMovementsUseCase está registrado, podemos registrar HistoryCubit
+  final totalMoneyCubit = TotalMoneyCubit();
+  getIt.registerSingleton<TotalMoneyCubit>(totalMoneyCubit);
+  getIt.registerSingleton<DateCubit>(DateCubit());
+  getIt.registerSingleton<ThemeCubit>(ThemeCubit());
+  
+  getIt.registerSingleton<HistoryCubit>(HistoryCubit(totalMoneyCubit: totalMoneyCubit));
+  getIt.registerSingleton<SavingsCubit>(SavingsCubit());
+  getIt.registerSingleton<LoginCubit>(LoginCubit(historyCubit: getIt<HistoryCubit>()));
+  getIt.registerSingleton<UpdateNameCubit>(UpdateNameCubit());
+  
+  // 5. CUBITS DE FÁBRICA (Se crean bajo demanda)
+  getIt.registerFactory<NewUserCubit>(() => NewUserCubit());
+  getIt.registerFactory<ResetPasswordCubit>(() => ResetPasswordCubit());
+  getIt.registerFactory<UpdatePasswordCubit>(() => UpdatePasswordCubit());
+  getIt.registerFactory<DeleteAcountCubit>(() => DeleteAcountCubit());
+  getIt.registerFactory<IncomesCubit>(() => IncomesCubit());
+  getIt.registerFactory<ExpensesCubit>(() => ExpensesCubit());
 }

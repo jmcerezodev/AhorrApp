@@ -9,16 +9,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/appwrite/appwrite_service.dart';
+import 'appwrite_repository.dart';
 
 class AuthAppwrite {
   final Account _account = AppwriteService().account;
   final LocalDbService _localDb = LocalDbService(); 
 
   Future<String> getInitialRoute() async {
+    // REGLA MAESTRA: Si el usuario ya validó red, vamos a Home (Modo Offline)
+    if (Preferences.isLoggedIn && Preferences.uId.isNotEmpty) {
+      return '/home-screen';
+    }
+
     try {
       final user = await _account.get();
+      Preferences.uId = user.$id;
       Preferences.name = user.name;
       Preferences.email = user.email;
+      Preferences.isLoggedIn = true;
       return '/home-screen';
     } catch (e) {
       return '/login';
@@ -39,6 +47,7 @@ class AuthAppwrite {
       Preferences.uId = user.$id;
       Preferences.name = user.name;
       Preferences.email = user.email;
+      Preferences.isLoggedIn = true;
       
       return user.$id;
     } on AppwriteException catch (e) {
@@ -63,6 +72,7 @@ class AuthAppwrite {
       Preferences.uId = user.$id;
       Preferences.name = user.name;
       Preferences.email = user.email;
+      Preferences.isLoggedIn = true;
       
       if (Preferences.isRemember) {
         Preferences.email = email;
@@ -71,7 +81,9 @@ class AuthAppwrite {
       
       return user.$id;
     } on AppwriteException catch (e) {
-      if (e.code == 401) return 0;
+      if (e.code == 401 || e.code == 400) return 0;
+      return 3;
+    } catch (e) {
       return 3;
     }
   }
@@ -89,27 +101,35 @@ class AuthAppwrite {
 
   Future deleteAcount(BuildContext context) async {
     try {
-      await _account.deleteSession(sessionId: 'current');
-      
-      // RESET TOTAL DE ESTADOS
+      Preferences.uId = ''; 
+      Preferences.name = '';
+      Preferences.isLoggedIn = false;
+
       _resetAllCubits(context);
 
-      showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (dialogContext) => const SuccessfulDialog(
-          sucessfulName: 'Cuenta cerrada/eliminada',
-          routeScreen: '/login',
-        ),
-      );
-
-      await _clearAllData(); 
+      try {
+        await _account.deleteSession(sessionId: 'current');
+      } catch (_) {}
+      await _localDb.clearAll();
+      
+      if (context.mounted) {
+        showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (dialogContext) => const SuccessfulDialog(
+            sucessfulName: 'Cuenta cerrada y datos eliminados',
+            routeScreen: '/login',
+          ),
+        );
+      }
     } catch (e) {
-      showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (dialogContext) => const ErrorDialog(),
-      );
+      if (context.mounted) {
+        showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (dialogContext) => const ErrorDialog(),
+        );
+      }
     }
   }
 
@@ -136,13 +156,17 @@ class AuthAppwrite {
 
   Future<void> singOut(BuildContext context) async {
     try {
-      await _account.deleteSession(sessionId: 'current');
+      Preferences.uId = '';
+      Preferences.name = '';
+      Preferences.isLoggedIn = false;
       
-      // RESET TOTAL DE ESTADOS ANTES DE SALIR
       _resetAllCubits(context);
 
-      await _clearAllData();
-
+      try {
+        await _account.deleteSession(sessionId: 'current');
+      } catch (_) {}
+      await _localDb.clearAll();
+      
       if (context.mounted) {
         showDialog(
           barrierDismissible: false,
@@ -158,7 +182,7 @@ class AuthAppwrite {
         showDialog(
           barrierDismissible: false,
           context: context,
-          builder: (context) => const ErrorDialog(
+          builder: (dialogContext) => const ErrorDialog(
             errorMessage: '!Se ha producido un Error!\n La sesión no se ha cerrado',
           ),
         );
@@ -172,22 +196,13 @@ class AuthAppwrite {
       context.read<TotalMoneyCubit>().resetCubit();
       context.read<HistoryCubit>().resetCubit();
       context.read<SavingsCubit>().resetCubit();
-    } catch (e) {
-      // Ignoramos errores si algún cubit no está disponible
-    }
-  }
-
-  Future<void> _clearAllData() async {
-    Preferences.uId = '';
-    Preferences.name = '';
-    if (!Preferences.isRemember) {
-      Preferences.email = '';
-      Preferences.password = '';
-    }
-    await _localDb.clearAll();
+      context.read<LoginCubit>().resetCubit();
+      context.read<UpdateNameCubit>().resetCubit();
+    } catch (e) {}
   }
 
   Future<void> checkUserAuthentication(BuildContext context) async {
+    if (Preferences.isLoggedIn) return;
     try {
       final user = await _account.get();
       Preferences.name = user.name;

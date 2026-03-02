@@ -17,11 +17,9 @@ void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // 1. INICIALIZAMOS PREFERENCIAS Y EL SERVICE LOCATOR (Clean Architecture)
     await Preferences.init();
     await setupServiceLocator();
     
-    // 2. INICIALIZAMOS EL SERVICIO DE SINCRONIZACIÓN OFFLINE
     getIt<SyncService>().init();
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -109,11 +107,21 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
   bool _isAuthenticating = false;
   bool _wasPaused = false;
 
+  // DEFINIMOS LOS CUBITS AQUÍ PARA QUE SEAN PERMANENTES
+  late final TotalMoneyCubit _totalMoneyCubit;
+  late final HistoryCubit _historyCubit;
+  late final LoginCubit _loginCubit;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     router = getAppRouter(widget.initialRoute);
+
+    // INICIALIZACIÓN ÚNICA DE LOS CUBITS CORE
+    _totalMoneyCubit = getIt<TotalMoneyCubit>();
+    _historyCubit = HistoryCubit(totalMoneyCubit: _totalMoneyCubit);
+    _loginCubit = LoginCubit(historyCubit: _historyCubit);
   }
 
   @override
@@ -157,20 +165,20 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => LoginCubit()),
+        // USAMOS .value PARA QUE LOS CUBITS NO SE DESTRUYAN AL REDIBUJAR
+        BlocProvider<HistoryCubit>.value(value: _historyCubit),
+        BlocProvider<TotalMoneyCubit>.value(value: _totalMoneyCubit),
+        BlocProvider<LoginCubit>.value(value: _loginCubit),
+
         BlocProvider(create: (_) => NewUserCubit()),
         BlocProvider(create: (_) => ResetPasswordCubit()),
         BlocProvider(create: (_) => UpdatePasswordCubit()),
         BlocProvider(create: (_) => UpdateNameCubit()),
         BlocProvider(create: (_) => DeleteAcountCubit()),
         BlocProvider(create: (_) => SavingsCubit()),
-        // USAMOS LA INSTANCIA ÚNICA DE GETIT PARA QUE TODO ESTÉ SINCRONIZADO
-        BlocProvider.value(value: getIt<TotalMoneyCubit>()),
         BlocProvider(create: (_) => DateCubit()),
         BlocProvider(create: (_) => IncomesCubit()),
         BlocProvider(create: (_) => ExpensesCubit()),
-        // PASAMOS LA INSTANCIA DE GETIT TAMBIÉN AQUÍ
-        BlocProvider(create: (_) => HistoryCubit(totalMoneyCubit: getIt<TotalMoneyCubit>())),
       ],
       child: MaterialApp.router(
         title: 'AhorrApp',
