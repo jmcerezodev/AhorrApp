@@ -19,9 +19,14 @@ class Env {
     defaultValue: '',
   );
 
-  // NUEVA COLECCIÓN DE AHORROS
   static const String appwriteSavingsCollectionId = String.fromEnvironment(
     'APPWRITE_SAVINGS_COLLECTION_ID',
+    defaultValue: '',
+  );
+
+  // NUEVA COLECCIÓN DE GASTOS RECURRENTES
+  static const String appwriteRecurrentExpensesCollectionId = String.fromEnvironment(
+    'APPWRITE_RECURRENT_EXPENSES_COLLECTION_ID',
     defaultValue: '',
   );
 }

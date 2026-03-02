@@ -5,6 +5,7 @@ import 'models/local_history.dart';
 import 'models/local_saving.dart';
 import 'models/financial_summary.dart';
 import 'models/pending_sync.dart';
+import 'models/local_recurrent_expense.dart';
 
 class LocalDbService {
   static final LocalDbService _instance = LocalDbService._internal();
@@ -24,7 +25,8 @@ class LocalDbService {
           LocalHistorySchema,
           LocalSavingSchema,
           FinancialSummarySchema,
-          PendingSyncSchema
+          PendingSyncSchema,
+          LocalRecurrentExpenseSchema
         ],
         directory: dir.path,
       );
@@ -38,7 +40,8 @@ class LocalDbService {
   Future<int> getTotalCount() async {
     final historyCount = await _isar.localHistorys.count();
     final savingsCount = await _isar.localSavings.count();
-    return historyCount + savingsCount;
+    final recurrentCount = await _isar.localRecurrentExpenses.count();
+    return historyCount + savingsCount + recurrentCount;
   }
 
   Future<int> getMinYear() async {
@@ -108,7 +111,6 @@ class LocalDbService {
         .isSpentEqualTo(false)
         .findAll();
     
-    // CORREGIDO: Usamos un bucle simple para evitar errores de FutureOr
     double total = 0.0;
     for (var s in savings) {
       total += s.money;
@@ -133,6 +135,27 @@ class LocalDbService {
     });
     
     return idsToUpdate;
+  }
+
+  // --- GASTOS RECURRENTES (FIJOS) ---
+
+  Future<void> saveRecurrentExpenses(List<LocalRecurrentExpense> items) async {
+    await _isar.writeTxn(() async {
+      await _isar.localRecurrentExpenses.putAll(items);
+    });
+  }
+
+  Future<List<LocalRecurrentExpense>> getRecurrentExpenses(String userId) async {
+    return await _isar.localRecurrentExpenses
+        .filter()
+        .userIdEqualTo(userId)
+        .findAll();
+  }
+
+  Future<void> deleteRecurrentExpenseByAppwriteId(String appwriteId) async {
+    await _isar.writeTxn(() async {
+      await _isar.localRecurrentExpenses.filter().appwriteIdEqualTo(appwriteId).deleteAll();
+    });
   }
 
   // --- RESUMEN FINANCIERO ---
@@ -195,6 +218,7 @@ class LocalDbService {
       await _isar.localSavings.clear();
       await _isar.financialSummarys.clear();
       await _isar.pendingSyncs.clear();
+      await _isar.localRecurrentExpenses.clear();
     });
   }
 
@@ -202,6 +226,7 @@ class LocalDbService {
     await _isar.writeTxn(() async {
       await _isar.localHistorys.filter().appwriteIdEqualTo(appwriteId).deleteAll();
       await _isar.localSavings.filter().appwriteIdEqualTo(appwriteId).deleteAll();
+      await _isar.localRecurrentExpenses.filter().appwriteIdEqualTo(appwriteId).deleteAll();
     });
   }
 }

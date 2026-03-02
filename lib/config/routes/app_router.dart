@@ -1,6 +1,7 @@
 import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/presentation/screens/screens.dart';
 import 'package:ahorrapp/presentation/screens/authentication/confirm_reset_password_screen.dart';
+import 'package:ahorrapp/presentation/screens/main_navigator_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,7 +21,6 @@ GoRouter getAppRouter(String initialLocation) {
         path: '/reset-password',
         builder: (context, state) => const ResetPasswordScreen(),
       ),
-      // NUEVA RUTA PARA DEEP LINKING
       GoRoute(
         path: '/reset-password-confirm',
         builder: (context, state) {
@@ -29,9 +29,10 @@ GoRouter getAppRouter(String initialLocation) {
           return ConfirmResetPasswordScreen(userId: userId, secret: secret);
         },
       ),
+      // Cambiamos /home-screen para que use el nuevo MainNavigatorScreen
       GoRoute(
         path: '/home-screen',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const MainNavigatorScreen(),
       ),
       GoRoute(
         path: '/licenses',
