@@ -138,13 +138,12 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
 
               const SizedBox(height: 20),
               
-              // SWITCH MÁS PEQUEÑO Y ELEGANTE
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('¿Día de cobro fijo?', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                  const Text('Cobro automático', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                   Transform.scale(
-                    scale: 0.7, // Reducimos el tamaño del switch
+                    scale: 0.7,
                     child: CupertinoSwitch(
                       value: _hasFixedDay, 
                       onChanged: _isLoading ? null : (val) => setState(() => _hasFixedDay = val),
@@ -155,6 +154,11 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
               ),
 
               if (_hasFixedDay) ...[
+                const SizedBox(height: 15),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Día de cobro', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
+                ),
                 const SizedBox(height: 10),
                 SizedBox(
                   height: 60, 
