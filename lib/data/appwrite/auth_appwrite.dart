@@ -91,10 +91,28 @@ class AuthAppwrite {
     try {
       await _account.createRecovery(
         email: email,
-        url: 'http://62.171.133.118:8081/v1/auth/recovery',
+        // Usamos tu dominio real con HTTPS para que Appwrite Cloud lo autorice
+        url: 'https://jmcerezo.dev/reset-password-confirm',
       );
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<bool> confirmResetPassword({
+    required String userId, 
+    required String secret, 
+    required String password
+  }) async {
+    try {
+      await _account.updateRecovery(
+        userId: userId,
+        secret: secret,
+        password: password,
+      );
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -102,7 +120,6 @@ class AuthAppwrite {
     try {
       final String uid = Preferences.uId;
 
-      // 1. Obtener total para calcular porcentaje
       final int totalDocs = await _appwriteRepo.getTotalDocsToDelete(uid);
       int deletedCount = 0;
 
@@ -112,7 +129,6 @@ class AuthAppwrite {
         }
       }
 
-      // 2. Borrar datos con reporte de progreso
       await _appwriteRepo.deleteAllHistory(uid, onDeleted: (count) {
         deletedCount = count;
         updateProgress(deletedCount);
@@ -124,7 +140,6 @@ class AuthAppwrite {
         updateProgress(deletedCount);
       });
       
-      // 3. Limpiar local
       await Preferences.clearAll();
       await _localDb.clearAll();
 

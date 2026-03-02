@@ -1,5 +1,6 @@
 import 'package:ahorrapp/core/inputs/inputs.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
+import 'package:appwrite/appwrite.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:formz/formz.dart';
@@ -30,8 +31,17 @@ class ResetPasswordCubit extends Cubit<ResetPasswordState> {
     try {
       await _auth.resetPassword(state.resetPassword.value);
       emit(state.copyWith(status: ResetPasswordStatus.success));
+    } on AppwriteException catch (e) {
+      String message = 'Error: ${e.message}'; // Mostramos el mensaje real de Appwrite
+      if (e.code == 404) message = 'El correo electrónico no está registrado';
+      if (e.code == 429) message = 'Demasiados intentos. Espera unos minutos';
+      
+      emit(state.copyWith(
+        status: ResetPasswordStatus.failure, 
+        errorMessage: message
+      ));
     } catch (e) {
-      emit(state.copyWith(status: ResetPasswordStatus.failure, errorMessage: 'Error al enviar el correo de recuperación'));
+      emit(state.copyWith(status: ResetPasswordStatus.failure, errorMessage: 'Error inesperado: $e'));
     }
   }
 
