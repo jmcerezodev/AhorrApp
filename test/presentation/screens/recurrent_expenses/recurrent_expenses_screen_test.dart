@@ -28,7 +28,7 @@ void main() {
   }
 
   group('RecurrentExpensesScreen - Pruebas de Interfaz', () {
-    testWidgets('Debe mostrar el estado vacío si no hay gastos', (WidgetTester tester) async {
+    testWidgets('Debe mostrar el estado vacío con el logo si no hay gastos', (WidgetTester tester) async {
       when(() => mockCubit.state).thenReturn(const RecurrentExpensesState(
         status: RecurrentExpensesStatus.success,
         expenses: [],
@@ -38,13 +38,29 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('SIN GASTOS FIJOS'), findsOneWidget);
-      expect(find.byType(Image), findsOneWidget); // El logo
+      // Verificamos que el logo de la app esté presente
+      expect(find.byType(Image), findsOneWidget);
     });
 
-    testWidgets('Debe mostrar la lista de gastos si existen', (WidgetTester tester) async {
+    testWidgets('Debe mostrar la lista de gastos con información dinámica', (WidgetTester tester) async {
       final expenses = [
-        RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 15.99, day: 10),
-        RecurrentExpense(id: '2', userId: 'u1', name: 'Gimnasio', amount: 30.0, day: null),
+        RecurrentExpense(
+          id: '1', 
+          userId: 'u1', 
+          name: 'Netflix', 
+          amount: 15.99, 
+          day: 10, 
+          frequency: RecurrentFrequency.monthly,
+          startDate: DateTime.now()
+        ),
+        RecurrentExpense(
+          id: '2', 
+          userId: 'u1', 
+          name: 'Seguro', 
+          amount: 100.0, 
+          day: null, 
+          startDate: DateTime.now()
+        ),
       ];
 
       when(() => mockCubit.state).thenReturn(RecurrentExpensesState(
@@ -56,12 +72,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Netflix'), findsOneWidget);
-      expect(find.text('Gimnasio'), findsOneWidget);
+      expect(find.text('Seguro'), findsOneWidget);
+      
+      // Verificamos los nuevos textos dinámicos
       expect(find.text('Día 10 de cada mes'), findsOneWidget);
-      expect(find.text('Gasto manual'), findsOneWidget);
+      expect(find.text('Cobro manual'), findsOneWidget);
     });
 
-    testWidgets('Debe abrir el diálogo de añadir al pulsar el botón circular', (WidgetTester tester) async {
+    testWidgets('Debe abrir el diálogo de añadir al pulsar el botón circular de la cabecera', (WidgetTester tester) async {
       when(() => mockCubit.state).thenReturn(const RecurrentExpensesState(
         status: RecurrentExpensesStatus.success,
         expenses: [],
@@ -70,6 +88,7 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
+      // Buscamos el botón de añadir (el circular en la esquina superior derecha)
       await tester.tap(find.byIcon(Icons.add_rounded));
       await tester.pumpAndSettle();
 

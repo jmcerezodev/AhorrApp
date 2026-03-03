@@ -25,7 +25,14 @@ void main() {
   late MockSaveMovementUseCase mockSaveMovement;
 
   setUpAll(() {
-    registerFallbackValue(RecurrentExpense(id: '', userId: '', name: '', amount: 0, day: 1));
+    registerFallbackValue(RecurrentExpense(
+      id: '', 
+      userId: '', 
+      name: '', 
+      amount: 0, 
+      day: 1, 
+      startDate: DateTime.now()
+    ));
     registerFallbackValue(Movement(
       id: '',
       name: '',
@@ -65,7 +72,14 @@ void main() {
     });
 
     test('loadExpenses debe emitir success con lista de gastos', () async {
-      final expenses = [RecurrentExpense(id: '1', userId: 'u1', name: 'Gasto', amount: 10, day: 1)];
+      final expenses = [RecurrentExpense(
+        id: '1', 
+        userId: 'u1', 
+        name: 'Gasto', 
+        amount: 10, 
+        day: 1, 
+        startDate: DateTime.now()
+      )];
       when(() => mockGet(any())).thenAnswer((_) async => expenses);
 
       await cubit.loadExpenses();
@@ -78,7 +92,7 @@ void main() {
       when(() => mockSave(any())).thenAnswer((_) async => {});
       when(() => mockGet(any())).thenAnswer((_) async => []);
 
-      await cubit.addOrUpdateExpense(name: 'Netflix', amount: 15.99, day: 10);
+      await cubit.addOrUpdateExpense(name: 'Netflix', amount: 15.99, day: 10, startDate: DateTime.now());
 
       verify(() => mockSave(any())).called(1);
       verify(() => mockGet('user123')).called(1);
@@ -95,19 +109,33 @@ void main() {
     });
 
     test('toggleActive debe invertir el estado isActive del gasto', () async {
-      final expense = RecurrentExpense(id: '1', userId: 'u1', name: 'Gasto', amount: 10, day: 1, isActive: true);
+      final expense = RecurrentExpense(
+        id: '1', 
+        userId: 'u1', 
+        name: 'Gasto', 
+        amount: 10, 
+        day: 1, 
+        isActive: true, 
+        startDate: DateTime.now()
+      );
       when(() => mockSave(any())).thenAnswer((_) async => {});
       when(() => mockGet(any())).thenAnswer((_) async => []);
 
       await cubit.toggleActive(expense);
 
-      // Verificamos que se llamó a guardar con isActive false
       final captured = verify(() => mockSave(captureAny())).captured.first as RecurrentExpense;
       expect(captured.isActive, false);
     });
 
     test('applyExpenseManually debe crear un movimiento real', () async {
-      final expense = RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 10, day: 1);
+      final expense = RecurrentExpense(
+        id: '1', 
+        userId: 'u1', 
+        name: 'Netflix', 
+        amount: 10, 
+        day: 1, 
+        startDate: DateTime.now()
+      );
       when(() => mockSaveMovement(any())).thenAnswer((_) async => {});
 
       await cubit.applyExpenseManually(expense);
