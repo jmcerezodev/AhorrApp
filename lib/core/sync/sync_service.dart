@@ -170,9 +170,12 @@ class SyncService {
         userId: data['userId'] ?? '',
         name: data['name'] ?? '',
         money: (data['money'] as num?)?.toDouble() ?? 0.0,
-        day: data['day'] ?? 1,
+        day: data['day'],
         category: data['category'] ?? 'general',
         isActive: data['isActive'] ?? true,
+        lastApplied: data['lastApplied'],
+        frequency: data['frequency'] ?? 'monthly',
+        startDate: DateTime.parse(data['startDate'] ?? DateTime.now().toIso8601String()),
       );
       return true;
     } else if (pending.action == 'update') {

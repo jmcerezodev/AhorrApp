@@ -23,7 +23,7 @@ class SaveRecurrentExpenseUseCase {
     } catch (e) {
       // Cola de sincronización si falla internet
       await localDbService.addPendingSync(
-        'create', // Usamos create, el repo remoto manejará si es update internamente
+        'create', 
         'recurrent_expenses',
         {
           'userId': expense.userId,
@@ -33,9 +33,20 @@ class SaveRecurrentExpenseUseCase {
           'category': expense.category,
           'isActive': expense.isActive,
           'lastApplied': expense.lastApplied,
+          'frequency': _mapFrequencyToString(expense.frequency),
+          'startDate': expense.startDate.toIso8601String(),
         },
         appwriteId: expense.id,
       );
+    }
+  }
+
+  String _mapFrequencyToString(RecurrentFrequency frequency) {
+    switch (frequency) {
+      case RecurrentFrequency.monthly: return 'monthly';
+      case RecurrentFrequency.quarterly: return 'quarterly';
+      case RecurrentFrequency.semiAnnually: return 'semiAnnually';
+      case RecurrentFrequency.annually: return 'annually';
     }
   }
 }

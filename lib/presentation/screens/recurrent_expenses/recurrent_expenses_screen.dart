@@ -202,6 +202,9 @@ class _RecurrentExpenseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isAutomatic = expense.day != null;
+    final DateTime nextPaymentDate = _calculateNextPaymentDate();
+    final int daysRemaining = nextPaymentDate.difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)).inDays;
+    final double progress = _calculateProgress(nextPaymentDate);
 
     return Container(
       decoration: BoxDecoration(
@@ -219,106 +222,203 @@ class _RecurrentExpenseCard extends StatelessWidget {
           )
         ],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        leading: Stack(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: expense.isActive ? 0.1 : 0.05),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                _getIconForCategory(expense.category),
-                color: expense.isActive ? Colors.orange : Colors.grey,
-                size: 24,
+      child: Column(
+        children: [
+          ListTile(
+            contentPadding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
+            leading: Stack(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: expense.isActive ? 0.1 : 0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _getIconForCategory(expense.category),
+                    color: expense.isActive ? Colors.orange : Colors.grey,
+                    size: 24,
+                  ),
+                ),
+                if (isAutomatic)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: expense.isActive ? Colors.green.shade400 : Colors.grey.shade400,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: isDark ? const Color(0xFF1E1E1E) : Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            title: Text(
+              expense.name,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: expense.isActive ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ),
-            if (isAutomatic)
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: expense.isActive ? Colors.green.shade400 : Colors.grey.shade400,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: isDark ? const Color(0xFF1E1E1E) : Colors.white, width: 2),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getSubtitleText(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface.withValues(alpha: 0.4),
+                  ),
+                ),
+                if (isAutomatic && expense.isActive) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 3,
+                      backgroundColor: Colors.orange.withValues(alpha: 0.05),
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.orange.withValues(alpha: 0.4)),
+                    ),
+                  ),
+                ]
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '-${humanizeNumbers.number(expense.amount)}€',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    color: expense.isActive ? Colors.red.shade400 : Colors.grey,
+                  ),
+                ),
+                const SizedBox(width: 15),
+                GestureDetector(
+                  onTap: () {
+                    if (isAutomatic) {
+                      context.read<RecurrentExpensesCubit>().toggleActive(expense);
+                    } else {
+                      context.read<RecurrentExpensesCubit>().applyExpenseManually(expense);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Gasto "${expense.name}" anotado',
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          backgroundColor: Colors.green.shade600,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          duration: const Duration(seconds: 2),
+                        )
+                      );
+                    }
+                  },
+                  child: Icon(
+                    isAutomatic 
+                      ? (expense.isActive ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded)
+                      : Icons.add_circle_outline_rounded,
+                    color: Colors.orange.withValues(alpha: 0.6),
+                    size: 32,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isAutomatic && expense.isActive)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  daysRemaining == 0 ? '¡Se cobra hoy!' : 'Próximo cobro en $daysRemaining días',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
-          ],
-        ),
-        title: Text(
-          expense.name,
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 15,
-            color: expense.isActive ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.4),
-          ),
-        ),
-        subtitle: Text(
-          isAutomatic ? 'Día ${expense.day} de cada mes' : 'Gasto manual',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onSurface.withValues(alpha: 0.4),
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '-${humanizeNumbers.number(expense.amount)}€',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                color: expense.isActive ? Colors.red.shade400 : Colors.grey,
-              ),
             ),
-            const SizedBox(width: 15),
-            GestureDetector(
-              onTap: () {
-                if (isAutomatic) {
-                  context.read<RecurrentExpensesCubit>().toggleActive(expense);
-                } else {
-                  context.read<RecurrentExpensesCubit>().applyExpenseManually(expense);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Gasto "${expense.name}" anotado',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                      backgroundColor: Colors.green.shade600,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      duration: const Duration(seconds: 2),
-                    )
-                  );
-                }
-              },
-              child: Icon(
-                isAutomatic 
-                  ? (expense.isActive ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded)
-                  : Icons.playlist_add_rounded,
-                color: Colors.orange.withValues(alpha: 0.6),
-                size: 32,
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
+  }
+
+  DateTime _calculateNextPaymentDate() {
+    final now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    DateTime nextDate = DateTime(expense.startDate.year, expense.startDate.month, expense.day ?? expense.startDate.day);
+    
+    int monthsToAdd = 0;
+    switch (expense.frequency) {
+      case RecurrentFrequency.monthly: monthsToAdd = 1; break;
+      case RecurrentFrequency.quarterly: monthsToAdd = 3; break;
+      case RecurrentFrequency.semiAnnually: monthsToAdd = 6; break;
+      case RecurrentFrequency.annually: monthsToAdd = 12; break;
+    }
+
+    // Si la fecha de inicio es futura, esa es la próxima.
+    if (nextDate.isAfter(now) || nextDate.isAtSameMomentAs(now)) {
+      return nextDate;
+    }
+
+    // Si ya pasó, buscamos la siguiente iteración del ciclo
+    while (nextDate.isBefore(now)) {
+      nextDate = DateTime(nextDate.year, nextDate.month + monthsToAdd, nextDate.day);
+    }
+    
+    return nextDate;
+  }
+
+  double _calculateProgress(DateTime nextDate) {
+    final now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    
+    int monthsInCycle = 1;
+    switch (expense.frequency) {
+      case RecurrentFrequency.monthly: monthsInCycle = 1; break;
+      case RecurrentFrequency.quarterly: monthsInCycle = 3; break;
+      case RecurrentFrequency.semiAnnually: monthsInCycle = 6; break;
+      case RecurrentFrequency.annually: monthsInCycle = 12; break;
+    }
+
+    final prevDate = DateTime(nextDate.year, nextDate.month - monthsInCycle, nextDate.day);
+    
+    final totalDays = nextDate.difference(prevDate).inDays;
+    final elapsedDays = now.difference(prevDate).inDays;
+
+    if (totalDays <= 0) return 0.0;
+    return (elapsedDays / totalDays).clamp(0.0, 1.0);
+  }
+
+  String _getSubtitleText() {
+    if (expense.day == null) return 'Cobro manual';
+
+    switch (expense.frequency) {
+      case RecurrentFrequency.monthly:
+        return 'Día ${expense.day} de cada mes';
+      case RecurrentFrequency.quarterly:
+        return 'Día ${expense.day} cada trimestre';
+      case RecurrentFrequency.semiAnnually:
+        return 'Día ${expense.day} cada 6 meses';
+      case RecurrentFrequency.annually:
+        return 'Día ${expense.day} cada año';
+    }
   }
 
   IconData _getIconForCategory(String category) {

@@ -64,8 +64,13 @@ const LocalRecurrentExpenseSchema = CollectionSchema(
       name: r'name',
       type: IsarType.string,
     ),
-    r'userId': PropertySchema(
+    r'startDate': PropertySchema(
       id: 9,
+      name: r'startDate',
+      type: IsarType.dateTime,
+    ),
+    r'userId': PropertySchema(
+      id: 10,
       name: r'userId',
       type: IsarType.string,
     )
@@ -132,7 +137,8 @@ void _localRecurrentExpenseSerialize(
   writer.writeString(offsets[6], object.lastApplied);
   writer.writeDouble(offsets[7], object.money);
   writer.writeString(offsets[8], object.name);
-  writer.writeString(offsets[9], object.userId);
+  writer.writeDateTime(offsets[9], object.startDate);
+  writer.writeString(offsets[10], object.userId);
 }
 
 LocalRecurrentExpense _localRecurrentExpenseDeserialize(
@@ -154,7 +160,8 @@ LocalRecurrentExpense _localRecurrentExpenseDeserialize(
   object.lastApplied = reader.readStringOrNull(offsets[6]);
   object.money = reader.readDouble(offsets[7]);
   object.name = reader.readString(offsets[8]);
-  object.userId = reader.readString(offsets[9]);
+  object.startDate = reader.readDateTime(offsets[9]);
+  object.userId = reader.readString(offsets[10]);
   return object;
 }
 
@@ -186,6 +193,8 @@ P _localRecurrentExpenseDeserializeProp<P>(
     case 8:
       return (reader.readString(offset)) as P;
     case 9:
+      return (reader.readDateTime(offset)) as P;
+    case 10:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1295,6 +1304,62 @@ extension LocalRecurrentExpenseQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> startDateEqualTo(DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'startDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> startDateGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'startDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> startDateLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'startDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> startDateBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'startDate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
       QAfterFilterCondition> userIdEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1568,6 +1633,20 @@ extension LocalRecurrentExpenseQuerySortBy
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      sortByStartDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      sortByStartDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
       sortByUserId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'userId', Sort.asc);
@@ -1725,6 +1804,20 @@ extension LocalRecurrentExpenseQuerySortThenBy
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      thenByStartDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      thenByStartDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'startDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
       thenByUserId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'userId', Sort.asc);
@@ -1805,6 +1898,13 @@ extension LocalRecurrentExpenseQueryWhereDistinct
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QDistinct>
+      distinctByStartDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'startDate');
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QDistinct>
       distinctByUserId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'userId', caseSensitive: caseSensitive);
@@ -1878,6 +1978,13 @@ extension LocalRecurrentExpenseQueryProperty on QueryBuilder<
   QueryBuilder<LocalRecurrentExpense, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, DateTime, QQueryOperations>
+      startDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'startDate');
     });
   }
 

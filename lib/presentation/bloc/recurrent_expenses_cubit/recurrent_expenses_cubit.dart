@@ -45,16 +45,23 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     String category = 'general',
     bool isActive = true,
     RecurrentFrequency frequency = RecurrentFrequency.monthly,
+    DateTime? startDate, // AÑADIDO
   }) async {
     emit(state.copyWith(status: RecurrentExpensesStatus.loading));
     
     String? lastApplied;
+    DateTime finalStartDate = startDate ?? DateTime.now(); // Valor por defecto
+
     if (id != null) {
       final currentExpense = state.expenses.cast<RecurrentExpense?>().firstWhere(
         (e) => e?.id == id, 
         orElse: () => null
       );
       lastApplied = currentExpense?.lastApplied;
+      // Si estamos editando y no se pasó una fecha nueva, mantenemos la que tenía
+      if (startDate == null && currentExpense != null) {
+        finalStartDate = currentExpense.startDate;
+      }
     }
 
     final expense = RecurrentExpense(
@@ -67,6 +74,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       isActive: isActive,
       lastApplied: lastApplied,
       frequency: frequency,
+      startDate: finalStartDate, // AÑADIDO
     );
 
     try {
@@ -128,6 +136,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       category: expense.category,
       isActive: !expense.isActive,
       frequency: expense.frequency,
+      startDate: expense.startDate, // AÑADIDO
     );
   }
 }

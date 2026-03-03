@@ -10,6 +10,7 @@ import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'; // AÑADIDO
 import 'package:go_router/go_router.dart';
 import 'dart:io';
 
@@ -200,7 +201,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
         BlocProvider(create: (_) => DateCubit()),
         BlocProvider(create: (_) => IncomesCubit()),
         BlocProvider(create: (_) => ExpensesCubit()),
-        BlocProvider(create: (_) => getIt<RecurrentExpensesCubit>()), // AÑADIDO
+        BlocProvider(create: (_) => getIt<RecurrentExpensesCubit>()),
       ],
       child: MaterialApp.router(
         title: 'AhorrApp',
@@ -209,6 +210,15 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
         darkTheme: AppTheme().getTheme(isDarkMode: true),
         themeMode: themeMode,
         routerConfig: router,
+        // CONFIGURACIÓN DE IDIOMA ESPAÑOL
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('es', 'ES'),
+        ],
       ),
     );
   }

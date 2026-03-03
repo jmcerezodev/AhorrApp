@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 class AddEditRecurrentExpenseDialog extends StatefulWidget {
   final RecurrentExpense? expense;
@@ -17,12 +18,11 @@ class AddEditRecurrentExpenseDialog extends StatefulWidget {
 class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseDialog> {
   late TextEditingController _nameController;
   late TextEditingController _amountController;
-  late int _selectedDay;
   late bool _hasFixedDay;
   late RecurrentFrequency _selectedFrequency;
+  late DateTime _selectedStartDate;
   String _selectedCategory = 'general';
   bool _isLoading = false;
-  late ScrollController _dayScrollController;
 
   final List<Map<String, dynamic>> _categories = [
     {'id': 'general', 'icon': Icons.receipt_long_rounded, 'name': 'General'},
@@ -39,18 +39,56 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
     _nameController = TextEditingController(text: widget.expense?.name ?? '');
     _amountController = TextEditingController(text: widget.expense?.amount.toString() ?? '');
     _hasFixedDay = widget.expense?.day != null;
-    _selectedDay = widget.expense?.day ?? 1;
     _selectedCategory = widget.expense?.category ?? 'general';
     _selectedFrequency = widget.expense?.frequency ?? RecurrentFrequency.monthly;
-    _dayScrollController = ScrollController(initialScrollOffset: (_selectedDay - 1) * 57.0);
+    _selectedStartDate = widget.expense?.startDate ?? DateTime.now();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _amountController.dispose();
-    _dayScrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedStartDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      locale: const Locale('es', 'ES'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: isDark 
+              ? const ColorScheme.dark(
+                  primary: Colors.orange,
+                  onPrimary: Colors.white,
+                  surface: Color(0xFF1E1E1E),
+                  onSurface: Colors.white,
+                )
+              : const ColorScheme.light(
+                  primary: Colors.orange,
+                  onPrimary: Colors.white,
+                  surface: Colors.white,
+                  onSurface: Colors.black87,
+                ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedStartDate) {
+      setState(() {
+        _selectedStartDate = picked;
+      });
+    }
   }
 
   @override
@@ -97,7 +135,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
               const SizedBox(height: 15),
               CustomInputTextWidget(
                 controller: _amountController,
-                label: 'Importe', // ACTUALIZADO: Solo "Importe"
+                label: 'Importe',
                 hintText: '0.00',
                 enabled: !_isLoading,
                 autoFocus: false,
@@ -105,140 +143,170 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
               ),
               const SizedBox(height: 25),
               
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Categoría y Frecuencia', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
-              ),
-              const SizedBox(height: 10),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedCategory,
-                          isExpanded: true,
-                          borderRadius: BorderRadius.circular(15),
-                          items: _categories.map((cat) {
-                            return DropdownMenuItem<String>(
-                              value: cat['id'],
-                              child: Row(
-                                children: [
-                                  Icon(cat['icon'], size: 16, color: Colors.orange),
-                                  const SizedBox(width: 8),
-                                  Flexible(child: Text(cat['name'], style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis)),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: _isLoading ? null : (val) => setState(() => _selectedCategory = val ?? 'general'),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Opacity(
-                      opacity: _hasFixedDay ? 1.0 : 0.5,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<RecurrentFrequency>(
-                            value: _selectedFrequency,
-                            isExpanded: true,
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Categoría', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(15),
-                            items: const [
-                              DropdownMenuItem(value: RecurrentFrequency.monthly, child: Text('Mensual', style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: RecurrentFrequency.quarterly, child: Text('Trimestral', style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: RecurrentFrequency.semiAnnually, child: Text('Semestral', style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: RecurrentFrequency.annually, child: Text('Anual', style: TextStyle(fontSize: 13))),
-                            ],
-                            onChanged: (_isLoading || !_hasFixedDay) ? null : (val) => setState(() => _selectedFrequency = val!),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedCategory,
+                              isExpanded: true,
+                              borderRadius: BorderRadius.circular(15),
+                              items: _categories.map((cat) {
+                                return DropdownMenuItem<String>(
+                                  value: cat['id'],
+                                  child: Row(
+                                    children: [
+                                      Icon(cat['icon'], size: 16, color: Colors.orange),
+                                      const SizedBox(width: 8),
+                                      Flexible(child: Text(cat['name'], style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis)),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: _isLoading ? null : (val) => setState(() => _selectedCategory = val ?? 'general'),
+                            ),
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text('Automático', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
+                        const SizedBox(height: 5),
+                        Transform.scale(
+                          scale: 0.8,
+                          child: CupertinoSwitch(
+                            value: _hasFixedDay, 
+                            onChanged: _isLoading ? null : (val) => setState(() => _hasFixedDay = val),
+                            activeColor: Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              // SECCIÓN ANIMADA
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SizeTransition(
+                        sizeFactor: animation,
+                        axisAlignment: -1.0,
+                        child: child,
                       ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-              
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Cobro automático', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                  Transform.scale(
-                    scale: 0.7,
-                    child: CupertinoSwitch(
-                      value: _hasFixedDay, 
-                      onChanged: _isLoading ? null : (val) => setState(() => _hasFixedDay = val),
-                      activeColor: Colors.orange,
-                    ),
-                  ),
-                ],
-              ),
-
-              if (_hasFixedDay) ...[
-                const SizedBox(height: 15),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Día de cobro', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 60, 
-                  child: ListView.builder(
-                    controller: _dayScrollController,
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: 31,
-                    itemBuilder: (context, index) {
-                      final day = index + 1;
-                      final isSelected = _selectedDay == day;
-                      return GestureDetector(
-                        onTap: () => setState(() => _selectedDay = day),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 45,
-                          height: 45,
-                          margin: const EdgeInsets.only(right: 12, bottom: 5, top: 5),
-                          clipBehavior: Clip.antiAlias,
-                          decoration: ShapeDecoration(
-                            color: isSelected ? Colors.orange : colorScheme.onSurface.withValues(alpha: 0.03),
-                            shape: CircleBorder(
-                              side: BorderSide(
-                                color: isSelected ? Colors.orange : colorScheme.onSurface.withValues(alpha: 0.15),
-                                width: 1.5,
-                              ),
-                            ),
-                            shadows: isSelected ? [BoxShadow(color: Colors.orange.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))] : null,
+                    );
+                  },
+                  child: _hasFixedDay 
+                    ? Column(
+                        key: const ValueKey('automatic_settings'),
+                        children: [
+                          const SizedBox(height: 25),
+                          const Divider(height: 1, thickness: 0.5),
+                          const SizedBox(height: 20),
+                          
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text('Configuración del Ciclo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
                           ),
-                          child: Center(
-                            child: Text(
-                              day.toString(),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? Colors.white : colorScheme.onSurface.withValues(alpha: 0.6),
+                          const SizedBox(height: 15),
+                          
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Frecuencia', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(color: Colors.grey.shade300),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<RecurrentFrequency>(
+                                          value: _selectedFrequency,
+                                          isExpanded: true,
+                                          borderRadius: BorderRadius.circular(15),
+                                          items: const [
+                                            DropdownMenuItem(value: RecurrentFrequency.monthly, child: Text('Mensual', style: TextStyle(fontSize: 13))),
+                                            DropdownMenuItem(value: RecurrentFrequency.quarterly, child: Text('Trimestral', style: TextStyle(fontSize: 13))),
+                                            DropdownMenuItem(value: RecurrentFrequency.semiAnnually, child: Text('Semestral', style: TextStyle(fontSize: 13))),
+                                            DropdownMenuItem(value: RecurrentFrequency.annually, child: Text('Anual', style: TextStyle(fontSize: 13))),
+                                          ],
+                                          onChanged: _isLoading ? null : (val) => setState(() => _selectedFrequency = val!),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Fecha de cobro', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                                    const SizedBox(height: 8),
+                                    GestureDetector(
+                                      onTap: _isLoading ? null : () => _selectDate(context),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(15),
+                                          border: Border.all(color: Colors.grey.shade300),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                DateFormat('dd/MM/yy').format(_selectedStartDate),
+                                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const Icon(Icons.calendar_month_rounded, color: Colors.orange, size: 16),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      );
-                    },
-                  ),
+                        ],
+                      )
+                    : const SizedBox.shrink(key: ValueKey('empty')),
                 ),
-              ],
+              ),
 
               const SizedBox(height: 35),
               Row(
@@ -288,10 +356,11 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
       id: widget.expense?.id,
       name: name,
       amount: amount,
-      day: _hasFixedDay ? _selectedDay : null,
+      day: _hasFixedDay ? _selectedStartDate.day : null,
       category: _selectedCategory,
       isActive: widget.expense?.isActive ?? true,
       frequency: _selectedFrequency,
+      startDate: _selectedStartDate,
     );
     if (mounted) context.pop();
   }

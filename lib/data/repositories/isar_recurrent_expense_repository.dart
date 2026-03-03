@@ -34,6 +34,7 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
       ..isActive = expense.isActive
       ..lastApplied = expense.lastApplied
       ..frequency = _mapToLocalFrequency(expense.frequency)
+      ..startDate = expense.startDate // NUEVO
       ..createdAt = existingItem?.createdAt ?? DateTime.now();
 
     await _localDb.saveRecurrentExpenses([localItem]);
@@ -65,6 +66,7 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
       isActive: local.isActive,
       lastApplied: local.lastApplied,
       frequency: _mapToDomainFrequency(local.frequency),
+      startDate: local.startDate, // NUEVO
     );
   }
 

@@ -10,6 +10,7 @@ class RecurrentExpense {
   final bool isActive;
   final String? lastApplied;
   final RecurrentFrequency frequency;
+  final DateTime startDate; // NUEVO: Fecha de referencia para el ciclo
 
   RecurrentExpense({
     required this.id,
@@ -21,5 +22,6 @@ class RecurrentExpense {
     this.isActive = true,
     this.lastApplied,
     this.frequency = RecurrentFrequency.monthly,
+    required this.startDate,
   });
 }

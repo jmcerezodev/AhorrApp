@@ -25,6 +25,7 @@ class AppwriteRecurrentExpenseRepository implements IRecurrentExpenseRepository 
         isActive: expense.isActive,
         lastApplied: expense.lastApplied,
         frequency: _mapFromDomainFrequency(expense.frequency),
+        startDate: expense.startDate,
       );
     } catch (e) {
       if (e is AppwriteException && e.code == 409) {
@@ -38,6 +39,7 @@ class AppwriteRecurrentExpenseRepository implements IRecurrentExpenseRepository 
             'isActive': expense.isActive,
             'lastApplied': expense.lastApplied,
             'frequency': _mapFromDomainFrequency(expense.frequency),
+            'startDate': expense.startDate.toIso8601String(),
           },
         );
       } else {
@@ -71,6 +73,7 @@ class AppwriteRecurrentExpenseRepository implements IRecurrentExpenseRepository 
       isActive: data['isActive'] ?? true,
       lastApplied: data['lastApplied'],
       frequency: _mapToDomainFrequency(data['frequency'] ?? 'monthly'),
+      startDate: DateTime.parse(data['startDate'] ?? DateTime.now().toIso8601String()),
     );
   }
 
