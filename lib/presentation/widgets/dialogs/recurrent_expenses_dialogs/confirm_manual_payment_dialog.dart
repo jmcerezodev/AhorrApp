@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 class ConfirmManualPaymentDialog extends StatefulWidget {
   final dynamic expense; 
@@ -20,6 +20,13 @@ class ConfirmManualPaymentDialog extends StatefulWidget {
 
 class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog> {
   bool _isSuccess = false;
+  Timer? _autoCloseTimer;
+
+  @override
+  void dispose() {
+    _autoCloseTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +52,7 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // ICONO ANIMADO (ZoomIn)
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 400),
               child: _isSuccess 
@@ -66,56 +74,50 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
             
             const SizedBox(height: 20),
             
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: Text(
-                _isSuccess ? '¡ANOTADO CON ÉXITO!' : '¿ANOTAR GASTO AHORA?',
-                key: ValueKey(_isSuccess),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: _isSuccess ? Colors.green : colorScheme.onSurface,
-                  letterSpacing: 1.5,
-                ),
+            // TÍTULO
+            Text(
+              _isSuccess ? '¡ANOTADO CON ÉXITO!' : '¿ANOTAR GASTO AHORA?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: _isSuccess ? Colors.green : colorScheme.onSurface,
+                letterSpacing: 1.5,
               ),
             ),
             
             const SizedBox(height: 15),
             
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _isSuccess 
-                ? FadeIn(
-                    child: Text(
-                      'El gasto "${widget.expense.name}" se ha añadido a tu historial.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
-                    ),
-                  )
-                : Text.rich(
-                    TextSpan(
-                      style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
-                      children: [
-                        const TextSpan(text: 'Se va a registrar un gasto de '),
-                        TextSpan(text: '${widget.amount}€', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                        const TextSpan(text: ' bajo el nombre de '),
-                        TextSpan(text: widget.expense.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-                        const TextSpan(text: ' en tu historial principal.'),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
+            // MENSAJE
+            _isSuccess 
+              ? Text(
+                  'El gasto "${widget.expense.name}" se ha añadido a tu historial.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
+                )
+              : Text.rich(
+                  TextSpan(
+                    style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
+                    children: [
+                      const TextSpan(text: 'Se va a registrar un gasto de '),
+                      TextSpan(text: '${widget.amount}€', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                      const TextSpan(text: ' bajo el nombre de '),
+                      TextSpan(text: widget.expense.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                      const TextSpan(text: ' en tu historial principal.'),
+                    ],
                   ),
-            ),
+                  textAlign: TextAlign.center,
+                ),
             
             const SizedBox(height: 30),
 
+            // BOTONES (Sin animación de entrada para el de cerrar)
             if (!_isSuccess)
               Row(
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: () => context.pop(false),
+                      onPressed: () => Navigator.of(context).pop(false),
                       child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1)),
                     ),
                   ),
@@ -139,7 +141,7 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => context.pop(true),
+                  onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -156,12 +158,14 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
     );
   }
 
-  void _handleAccept() async {
+  void _handleAccept() {
     context.read<RecurrentExpensesCubit>().applyExpenseManually(widget.expense);
     setState(() => _isSuccess = true);
     
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted && _isSuccess) context.pop(true);
+    _autoCloseTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted && _isSuccess) {
+        Navigator.of(context).pop(true);
+      }
     });
   }
 }
