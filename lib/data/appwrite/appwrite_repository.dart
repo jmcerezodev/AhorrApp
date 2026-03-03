@@ -175,8 +175,8 @@ class AppwriteRepository {
     return await _databases.createDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: documentId, data: {'userId': userId, 'money': money, 'month': month, 'year': year, 'description': description ?? 'Aportación de ahorro', 'isSpent': isSpent});
   }
 
-  Future<Document> addRecurrentExpense({required String documentId, required String userId, required String name, required double money, int? day, String category = 'general', bool isActive = true, String? lastApplied}) async {
-    return await _databases.createDocument(databaseId: _databaseId, collectionId: _recurrentId, documentId: documentId, data: {'userId': userId, 'name': name, 'money': money, 'day': day, 'category': category, 'isActive': isActive, 'lastApplied': lastApplied});
+  Future<Document> addRecurrentExpense({required String documentId, required String userId, required String name, required double money, int? day, String category = 'general', bool isActive = true, String? lastApplied, String frequency = 'monthly'}) async {
+    return await _databases.createDocument(databaseId: _databaseId, collectionId: _recurrentId, documentId: documentId, data: {'userId': userId, 'name': name, 'money': money, 'day': day, 'category': category, 'isActive': isActive, 'lastApplied': lastApplied, 'frequency': frequency});
   }
 
   Future<Document> updateRecurrentExpense({required String documentId, required Map<String, dynamic> data}) async {

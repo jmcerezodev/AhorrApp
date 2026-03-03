@@ -5,6 +5,7 @@ import 'package:ahorrapp/domain/repositories/i_recurrent_expense_repository.dart
 import 'package:ahorrapp/domain/usecases/delete_movement_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/delete_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/get_recurrent_expenses_usecase.dart';
+import 'package:ahorrapp/domain/usecases/recurrent_expenses/process_recurrent_expenses_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/save_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/update_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
@@ -99,6 +100,12 @@ Future<void> setupServiceLocator() async {
         localRepository: getIt<IRecurrentExpenseRepository>(instanceName: 'recurrent_local'),
         remoteRepository: getIt<IRecurrentExpenseRepository>(instanceName: 'recurrent_remote'),
         localDbService: getIt<LocalDbService>(),
+      ));
+
+  getIt.registerLazySingleton<ProcessRecurrentExpensesUseCase>(() => ProcessRecurrentExpensesUseCase(
+        localRepository: getIt<IRecurrentExpenseRepository>(instanceName: 'recurrent_local'),
+        remoteRepository: getIt<IRecurrentExpenseRepository>(instanceName: 'recurrent_remote'),
+        saveMovementUseCase: getIt<SaveMovementUseCase>(),
       ));
 
   // 4. CUBITS CORE (Permanentes)

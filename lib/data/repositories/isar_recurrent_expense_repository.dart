@@ -18,14 +18,13 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
   Future<void> saveRecurrentExpense(RecurrentExpense expense) async {
     final isar = _localDb.isar;
     
-    // Buscamos si ya existe localmente para obtener su ID interno de Isar
     final existingItem = await isar.localRecurrentExpenses
         .filter()
         .appwriteIdEqualTo(expense.id)
         .findFirst();
 
     final localItem = LocalRecurrentExpense()
-      ..id = existingItem?.id ?? Isar.autoIncrement // Si existe, usamos su ID para actualizar
+      ..id = existingItem?.id ?? Isar.autoIncrement
       ..appwriteId = expense.id
       ..userId = expense.userId
       ..name = expense.name
@@ -34,6 +33,7 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
       ..category = expense.category
       ..isActive = expense.isActive
       ..lastApplied = expense.lastApplied
+      ..frequency = _mapToLocalFrequency(expense.frequency)
       ..createdAt = existingItem?.createdAt ?? DateTime.now();
 
     await _localDb.saveRecurrentExpenses([localItem]);
@@ -64,6 +64,25 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
       category: local.category,
       isActive: local.isActive,
       lastApplied: local.lastApplied,
+      frequency: _mapToDomainFrequency(local.frequency),
     );
+  }
+
+  LocalRecurrentFrequency _mapToLocalFrequency(RecurrentFrequency frequency) {
+    switch (frequency) {
+      case RecurrentFrequency.monthly: return LocalRecurrentFrequency.monthly;
+      case RecurrentFrequency.quarterly: return LocalRecurrentFrequency.quarterly;
+      case RecurrentFrequency.semiAnnually: return LocalRecurrentFrequency.semiAnnually;
+      case RecurrentFrequency.annually: return LocalRecurrentFrequency.annually;
+    }
+  }
+
+  RecurrentFrequency _mapToDomainFrequency(LocalRecurrentFrequency local) {
+    switch (local) {
+      case LocalRecurrentFrequency.monthly: return RecurrentFrequency.monthly;
+      case LocalRecurrentFrequency.quarterly: return RecurrentFrequency.quarterly;
+      case LocalRecurrentFrequency.semiAnnually: return RecurrentFrequency.semiAnnually;
+      case LocalRecurrentFrequency.annually: return RecurrentFrequency.annually;
+    }
   }
 }

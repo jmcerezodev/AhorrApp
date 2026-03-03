@@ -2,6 +2,8 @@ import 'package:isar/isar.dart';
 
 part 'local_recurrent_expense.g.dart';
 
+enum LocalRecurrentFrequency { monthly, quarterly, semiAnnually, annually }
+
 @collection
 class LocalRecurrentExpense {
   Id id = Isar.autoIncrement;
@@ -12,11 +14,14 @@ class LocalRecurrentExpense {
   late String userId;
   late String name;
   late double money;
-  int? day; // Ahora es opcional (int?)
+  int? day;
   late String category;
   late bool isActive;
   
   String? lastApplied;
+
+  @enumerated
+  late LocalRecurrentFrequency frequency;
 
   late DateTime createdAt;
 }

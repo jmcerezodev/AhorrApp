@@ -1,10 +1,14 @@
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/network/connectivity_service.dart';
+import 'package:ahorrapp/core/shared_preferences/preferences.dart';
+import 'package:ahorrapp/domain/usecases/recurrent_expenses/process_recurrent_expenses_usecase.dart';
+import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/screens/home_screen.dart';
 import 'package:ahorrapp/presentation/screens/recurrent_expenses/recurrent_expenses_screen.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MainNavigatorScreen extends StatefulWidget {
   const MainNavigatorScreen({super.key});
@@ -23,6 +27,26 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
     const Center(child: Text('Escaneo de Tickets\n(Próximamente)', textAlign: TextAlign.center)),
     const Center(child: Text('Más Ajustes\n(Próximamente)', textAlign: TextAlign.center)),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _processRecurrentExpenses();
+  }
+
+  Future<void> _processRecurrentExpenses() async {
+    final String userId = Preferences.uId;
+    if (userId.isEmpty) return;
+
+    // Procesamos los gastos fijos
+    await getIt<ProcessRecurrentExpensesUseCase>().call(userId);
+    
+    // Una vez procesados, recargamos el historial por si se ha añadido alguno nuevo
+    if (mounted) {
+      final dateState = context.read<DateCubit>().state;
+      context.read<HistoryCubit>().loadHistoryByDate(dateState.month, dateState.year);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

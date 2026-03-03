@@ -44,6 +44,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     int? day,
     String category = 'general',
     bool isActive = true,
+    RecurrentFrequency frequency = RecurrentFrequency.monthly,
   }) async {
     emit(state.copyWith(status: RecurrentExpensesStatus.loading));
     
@@ -65,6 +66,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       category: category,
       isActive: isActive,
       lastApplied: lastApplied,
+      frequency: frequency,
     );
 
     try {
@@ -87,9 +89,9 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       amount: expense.amount,
       type: MovementType.expense,
       isIncome: false,
-      date: dateService.currentDate(), // Corregido
-      hour: dateService.currentHour(), // Corregido
-      month: dateService.monthNames(), // Corregido
+      date: dateService.currentDate(),
+      hour: dateService.currentHour(),
+      month: dateService.monthNames(),
       year: int.parse(dateService.year()),
       createdAt: DateTime.now(),
     );
@@ -125,6 +127,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       day: expense.day,
       category: expense.category,
       isActive: !expense.isActive,
+      frequency: expense.frequency,
     );
   }
 }

@@ -15,7 +15,6 @@ class AppwriteRecurrentExpenseRepository implements IRecurrentExpenseRepository 
   @override
   Future<void> saveRecurrentExpense(RecurrentExpense expense) async {
     try {
-      // Intentamos crear el documento
       await _dataSource.addRecurrentExpense(
         documentId: expense.id,
         userId: expense.userId,
@@ -25,9 +24,9 @@ class AppwriteRecurrentExpenseRepository implements IRecurrentExpenseRepository 
         category: expense.category,
         isActive: expense.isActive,
         lastApplied: expense.lastApplied,
+        frequency: _mapFromDomainFrequency(expense.frequency),
       );
     } catch (e) {
-      // Si el error es 409 (ya existe), procedemos a actualizar
       if (e is AppwriteException && e.code == 409) {
         await _dataSource.updateRecurrentExpense(
           documentId: expense.id,
@@ -38,10 +37,10 @@ class AppwriteRecurrentExpenseRepository implements IRecurrentExpenseRepository 
             'category': expense.category,
             'isActive': expense.isActive,
             'lastApplied': expense.lastApplied,
+            'frequency': _mapFromDomainFrequency(expense.frequency),
           },
         );
       } else {
-        // Si es otro error (red, permisos), lo lanzamos para que el Cubit lo capture
         rethrow;
       }
     }
@@ -67,10 +66,30 @@ class AppwriteRecurrentExpenseRepository implements IRecurrentExpenseRepository 
       userId: data['userId'] ?? '',
       name: data['name'] ?? '',
       amount: (data['money'] as num).toDouble(),
-      day: data['day'], // Es int?
+      day: data['day'],
       category: data['category'] ?? 'general',
       isActive: data['isActive'] ?? true,
       lastApplied: data['lastApplied'],
+      frequency: _mapToDomainFrequency(data['frequency'] ?? 'monthly'),
     );
+  }
+
+  String _mapFromDomainFrequency(RecurrentFrequency frequency) {
+    switch (frequency) {
+      case RecurrentFrequency.monthly: return 'monthly';
+      case RecurrentFrequency.quarterly: return 'quarterly';
+      case RecurrentFrequency.semiAnnually: return 'semiAnnually';
+      case RecurrentFrequency.annually: return 'annually';
+    }
+  }
+
+  RecurrentFrequency _mapToDomainFrequency(String frequency) {
+    switch (frequency) {
+      case 'monthly': return RecurrentFrequency.monthly;
+      case 'quarterly': return RecurrentFrequency.quarterly;
+      case 'semiAnnually': return RecurrentFrequency.semiAnnually;
+      case 'annually': return RecurrentFrequency.annually;
+      default: return RecurrentFrequency.monthly;
+    }
   }
 }

@@ -38,28 +38,34 @@ const LocalRecurrentExpenseSchema = CollectionSchema(
       name: r'day',
       type: IsarType.long,
     ),
-    r'isActive': PropertySchema(
+    r'frequency': PropertySchema(
       id: 4,
+      name: r'frequency',
+      type: IsarType.byte,
+      enumMap: _LocalRecurrentExpensefrequencyEnumValueMap,
+    ),
+    r'isActive': PropertySchema(
+      id: 5,
       name: r'isActive',
       type: IsarType.bool,
     ),
     r'lastApplied': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'lastApplied',
       type: IsarType.string,
     ),
     r'money': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'money',
       type: IsarType.double,
     ),
     r'name': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'name',
       type: IsarType.string,
     ),
     r'userId': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'userId',
       type: IsarType.string,
     )
@@ -121,11 +127,12 @@ void _localRecurrentExpenseSerialize(
   writer.writeString(offsets[1], object.category);
   writer.writeDateTime(offsets[2], object.createdAt);
   writer.writeLong(offsets[3], object.day);
-  writer.writeBool(offsets[4], object.isActive);
-  writer.writeString(offsets[5], object.lastApplied);
-  writer.writeDouble(offsets[6], object.money);
-  writer.writeString(offsets[7], object.name);
-  writer.writeString(offsets[8], object.userId);
+  writer.writeByte(offsets[4], object.frequency.index);
+  writer.writeBool(offsets[5], object.isActive);
+  writer.writeString(offsets[6], object.lastApplied);
+  writer.writeDouble(offsets[7], object.money);
+  writer.writeString(offsets[8], object.name);
+  writer.writeString(offsets[9], object.userId);
 }
 
 LocalRecurrentExpense _localRecurrentExpenseDeserialize(
@@ -139,12 +146,15 @@ LocalRecurrentExpense _localRecurrentExpenseDeserialize(
   object.category = reader.readString(offsets[1]);
   object.createdAt = reader.readDateTime(offsets[2]);
   object.day = reader.readLongOrNull(offsets[3]);
+  object.frequency = _LocalRecurrentExpensefrequencyValueEnumMap[
+          reader.readByteOrNull(offsets[4])] ??
+      LocalRecurrentFrequency.monthly;
   object.id = id;
-  object.isActive = reader.readBool(offsets[4]);
-  object.lastApplied = reader.readStringOrNull(offsets[5]);
-  object.money = reader.readDouble(offsets[6]);
-  object.name = reader.readString(offsets[7]);
-  object.userId = reader.readString(offsets[8]);
+  object.isActive = reader.readBool(offsets[5]);
+  object.lastApplied = reader.readStringOrNull(offsets[6]);
+  object.money = reader.readDouble(offsets[7]);
+  object.name = reader.readString(offsets[8]);
+  object.userId = reader.readString(offsets[9]);
   return object;
 }
 
@@ -164,19 +174,36 @@ P _localRecurrentExpenseDeserializeProp<P>(
     case 3:
       return (reader.readLongOrNull(offset)) as P;
     case 4:
-      return (reader.readBool(offset)) as P;
+      return (_LocalRecurrentExpensefrequencyValueEnumMap[
+              reader.readByteOrNull(offset)] ??
+          LocalRecurrentFrequency.monthly) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
+
+const _LocalRecurrentExpensefrequencyEnumValueMap = {
+  'monthly': 0,
+  'quarterly': 1,
+  'semiAnnually': 2,
+  'annually': 3,
+};
+const _LocalRecurrentExpensefrequencyValueEnumMap = {
+  0: LocalRecurrentFrequency.monthly,
+  1: LocalRecurrentFrequency.quarterly,
+  2: LocalRecurrentFrequency.semiAnnually,
+  3: LocalRecurrentFrequency.annually,
+};
 
 Id _localRecurrentExpenseGetId(LocalRecurrentExpense object) {
   return object.id;
@@ -777,6 +804,62 @@ extension LocalRecurrentExpenseQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'day',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> frequencyEqualTo(LocalRecurrentFrequency value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'frequency',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> frequencyGreaterThan(
+    LocalRecurrentFrequency value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'frequency',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> frequencyLessThan(
+    LocalRecurrentFrequency value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'frequency',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> frequencyBetween(
+    LocalRecurrentFrequency lower,
+    LocalRecurrentFrequency upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'frequency',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1415,6 +1498,20 @@ extension LocalRecurrentExpenseQuerySortBy
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      sortByFrequency() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'frequency', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      sortByFrequencyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'frequency', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
       sortByIsActive() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isActive', Sort.asc);
@@ -1544,6 +1641,20 @@ extension LocalRecurrentExpenseQuerySortThenBy
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      thenByFrequency() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'frequency', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      thenByFrequencyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'frequency', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
       thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1659,6 +1770,13 @@ extension LocalRecurrentExpenseQueryWhereDistinct
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QDistinct>
+      distinctByFrequency() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'frequency');
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QDistinct>
       distinctByIsActive() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isActive');
@@ -1726,6 +1844,13 @@ extension LocalRecurrentExpenseQueryProperty on QueryBuilder<
   QueryBuilder<LocalRecurrentExpense, int?, QQueryOperations> dayProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'day');
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentFrequency, QQueryOperations>
+      frequencyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'frequency');
     });
   }
 
