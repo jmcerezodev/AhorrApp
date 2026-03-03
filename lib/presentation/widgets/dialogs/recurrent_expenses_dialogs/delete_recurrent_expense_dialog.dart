@@ -16,44 +16,95 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-      title: const Row(
-        children: [
-          Icon(Icons.warning_amber_rounded, color: Colors.red),
-          SizedBox(width: 10),
-          Text('¿Eliminar gasto fijo?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        ],
-      ),
-      content: RichText(
-        text: TextSpan(
-          style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 30),
+      child: Container(
+        padding: const EdgeInsets.all(25),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4), 
+            width: 1.5
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const TextSpan(text: '¿Estás seguro de que deseas eliminar '),
-            TextSpan(text: expenseName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-            const TextSpan(text: '? Esta acción no se puede deshacer.'),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade400.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 32),
+            ),
+            const SizedBox(height: 20),
+            
+            Text(
+              '¿ELIMINAR PAGO FIJO?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 15),
+            
+            Text(
+              'Estás a punto de borrar "$expenseName". Esta acción eliminará la automatización y no se puede deshacer.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 30),
+
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => context.pop(false),
+                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
+                    child: Text(
+                      'CANCELAR', 
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                        fontWeight: FontWeight.bold, 
+                        letterSpacing: 1
+                      )
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      context.read<RecurrentExpensesCubit>().deleteExpense(expenseId);
+                      context.pop(true);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade400,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    ),
+                    child: const Text('ELIMINAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(false),
-          child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold)),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            context.read<RecurrentExpensesCubit>().deleteExpense(expenseId);
-            context.pop(true);
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          child: const Text('ELIMINAR', style: TextStyle(fontWeight: FontWeight.bold)),
-        ),
-      ],
     );
   }
 }

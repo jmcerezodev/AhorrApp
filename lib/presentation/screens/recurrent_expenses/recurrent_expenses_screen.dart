@@ -2,6 +2,7 @@ import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/add_edit_recurrent_expense_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/confirm_manual_payment_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/delete_recurrent_expense_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:animate_do/animate_do.dart';
@@ -302,30 +303,18 @@ class _RecurrentExpenseCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 15),
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     if (isAutomatic) {
                       context.read<RecurrentExpensesCubit>().toggleActive(expense);
                     } else {
-                      context.read<RecurrentExpensesCubit>().applyExpenseManually(expense);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Gasto "${expense.name}" anotado',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                          ),
-                          backgroundColor: Colors.green.shade600,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                          duration: const Duration(seconds: 2),
-                        )
+                      // El diálogo ahora maneja internamente la lógica y el éxito
+                      await showDialog<bool>(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => ConfirmManualPaymentDialog(
+                          expense: expense,
+                          amount: humanizeNumbers.number(expense.amount),
+                        ),
                       );
                     }
                   },
@@ -373,12 +362,10 @@ class _RecurrentExpenseCard extends StatelessWidget {
       case RecurrentFrequency.annually: monthsToAdd = 12; break;
     }
 
-    // Si la fecha de inicio es futura, esa es la próxima.
     if (nextDate.isAfter(now) || nextDate.isAtSameMomentAs(now)) {
       return nextDate;
     }
 
-    // Si ya pasó, buscamos la siguiente iteración del ciclo
     while (nextDate.isBefore(now)) {
       nextDate = DateTime(nextDate.year, nextDate.month + monthsToAdd, nextDate.day);
     }
