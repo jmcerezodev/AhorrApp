@@ -23,9 +23,11 @@ class LocalRecurrentExpense {
   @enumerated
   late LocalRecurrentFrequency frequency;
 
-  late DateTime startDate; // NUEVO: Fecha de referencia para el ciclo
+  late DateTime startDate; 
 
   late DateTime createdAt;
 
-  late int position; // NUEVO: Para organización manual
+  late int position; 
+
+  late bool includeInSummary; // NUEVO: Para incluir o no en el resumen
 }

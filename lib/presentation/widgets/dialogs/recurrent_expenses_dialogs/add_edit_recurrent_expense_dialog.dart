@@ -19,6 +19,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
   late TextEditingController _nameController;
   late TextEditingController _amountController;
   late bool _hasFixedDay;
+  late bool _includeInSummary; // NUEVO
   late RecurrentFrequency _selectedFrequency;
   late DateTime _selectedStartDate;
   String _selectedCategory = 'general';
@@ -39,6 +40,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
     _nameController = TextEditingController(text: widget.expense?.name ?? '');
     _amountController = TextEditingController(text: widget.expense?.amount.toString() ?? '');
     _hasFixedDay = widget.expense?.day != null;
+    _includeInSummary = widget.expense?.includeInSummary ?? true; // Por defecto true
     _selectedCategory = widget.expense?.category ?? 'general';
     _selectedFrequency = widget.expense?.frequency ?? RecurrentFrequency.monthly;
     _selectedStartDate = widget.expense?.startDate ?? DateTime.now();
@@ -195,7 +197,13 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                           scale: 0.8,
                           child: CupertinoSwitch(
                             value: _hasFixedDay, 
-                            onChanged: _isLoading ? null : (val) => setState(() => _hasFixedDay = val),
+                            onChanged: _isLoading ? null : (val) {
+                              setState(() {
+                                _hasFixedDay = val;
+                                // Si se activa automático, forzamos que se incluya en el resumen
+                                if (val) _includeInSummary = true;
+                              });
+                            },
                             activeColor: Colors.orange,
                           ),
                         ),
@@ -205,7 +213,45 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                 ],
               ),
 
-              // SECCIÓN ANIMADA
+              // OPCIÓN DE INCLUIR EN RESUMEN (SOLO SI NO ES AUTOMÁTICO)
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                child: !_hasFixedDay 
+                  ? Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.analytics_rounded, color: Colors.orange, size: 18),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  'Incluir en el resumen de gastos mensuales',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              Checkbox(
+                                value: _includeInSummary, 
+                                activeColor: Colors.orange,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                onChanged: _isLoading ? null : (val) => setState(() => _includeInSummary = val ?? true),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
+              ),
+
+              // SECCIÓN ANIMADA DE AUTOMÁTICO
               AnimatedSize(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -361,6 +407,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
       isActive: widget.expense?.isActive ?? true,
       frequency: _selectedFrequency,
       startDate: _selectedStartDate,
+      includeInSummary: _includeInSummary, // NUEVO
     );
     if (mounted) context.pop();
   }

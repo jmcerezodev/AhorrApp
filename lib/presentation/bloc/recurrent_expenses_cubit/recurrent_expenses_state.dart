@@ -15,11 +15,19 @@ class RecurrentExpensesState extends Equatable {
     this.showProrated = false, // Valor por defecto: Mensual
   });
 
+  // Lógica centralizada para determinar si un gasto debe sumarse a los totales
+  bool _shouldInclude(RecurrentExpense e) {
+    if (!e.isActive) return false;
+    // Si es automático (tiene día fijo), se suma siempre.
+    // Si es manual, depende de la elección del usuario (includeInSummary).
+    return (e.day != null) || e.includeInSummary;
+  }
+
   // Cálculo de la carga mensual normalizada (prorrateo)
   double get totalMonthlyNormalized {
     double total = 0;
     for (var expense in expenses) {
-      if (expense.isActive) {
+      if (_shouldInclude(expense)) {
         switch (expense.frequency) {
           case RecurrentFrequency.monthly:
             total += expense.amount;
@@ -42,7 +50,7 @@ class RecurrentExpensesState extends Equatable {
   // Cálculo de gastos estrictamente mensuales
   double get totalStrictlyMonthly {
     return expenses
-        .where((e) => e.isActive && e.frequency == RecurrentFrequency.monthly)
+        .where((e) => _shouldInclude(e) && e.frequency == RecurrentFrequency.monthly)
         .fold(0, (sum, e) => sum + e.amount);
   }
 

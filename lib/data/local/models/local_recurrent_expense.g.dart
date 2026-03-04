@@ -44,38 +44,43 @@ const LocalRecurrentExpenseSchema = CollectionSchema(
       type: IsarType.byte,
       enumMap: _LocalRecurrentExpensefrequencyEnumValueMap,
     ),
-    r'isActive': PropertySchema(
+    r'includeInSummary': PropertySchema(
       id: 5,
+      name: r'includeInSummary',
+      type: IsarType.bool,
+    ),
+    r'isActive': PropertySchema(
+      id: 6,
       name: r'isActive',
       type: IsarType.bool,
     ),
     r'lastApplied': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'lastApplied',
       type: IsarType.string,
     ),
     r'money': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'money',
       type: IsarType.double,
     ),
     r'name': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'name',
       type: IsarType.string,
     ),
     r'position': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'position',
       type: IsarType.long,
     ),
     r'startDate': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'startDate',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'userId',
       type: IsarType.string,
     )
@@ -138,13 +143,14 @@ void _localRecurrentExpenseSerialize(
   writer.writeDateTime(offsets[2], object.createdAt);
   writer.writeLong(offsets[3], object.day);
   writer.writeByte(offsets[4], object.frequency.index);
-  writer.writeBool(offsets[5], object.isActive);
-  writer.writeString(offsets[6], object.lastApplied);
-  writer.writeDouble(offsets[7], object.money);
-  writer.writeString(offsets[8], object.name);
-  writer.writeLong(offsets[9], object.position);
-  writer.writeDateTime(offsets[10], object.startDate);
-  writer.writeString(offsets[11], object.userId);
+  writer.writeBool(offsets[5], object.includeInSummary);
+  writer.writeBool(offsets[6], object.isActive);
+  writer.writeString(offsets[7], object.lastApplied);
+  writer.writeDouble(offsets[8], object.money);
+  writer.writeString(offsets[9], object.name);
+  writer.writeLong(offsets[10], object.position);
+  writer.writeDateTime(offsets[11], object.startDate);
+  writer.writeString(offsets[12], object.userId);
 }
 
 LocalRecurrentExpense _localRecurrentExpenseDeserialize(
@@ -162,13 +168,14 @@ LocalRecurrentExpense _localRecurrentExpenseDeserialize(
           reader.readByteOrNull(offsets[4])] ??
       LocalRecurrentFrequency.monthly;
   object.id = id;
-  object.isActive = reader.readBool(offsets[5]);
-  object.lastApplied = reader.readStringOrNull(offsets[6]);
-  object.money = reader.readDouble(offsets[7]);
-  object.name = reader.readString(offsets[8]);
-  object.position = reader.readLong(offsets[9]);
-  object.startDate = reader.readDateTime(offsets[10]);
-  object.userId = reader.readString(offsets[11]);
+  object.includeInSummary = reader.readBool(offsets[5]);
+  object.isActive = reader.readBool(offsets[6]);
+  object.lastApplied = reader.readStringOrNull(offsets[7]);
+  object.money = reader.readDouble(offsets[8]);
+  object.name = reader.readString(offsets[9]);
+  object.position = reader.readLong(offsets[10]);
+  object.startDate = reader.readDateTime(offsets[11]);
+  object.userId = reader.readString(offsets[12]);
   return object;
 }
 
@@ -194,16 +201,18 @@ P _localRecurrentExpenseDeserializeProp<P>(
     case 5:
       return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 7:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 9:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 10:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 11:
+      return (reader.readDateTime(offset)) as P;
+    case 12:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -943,6 +952,16 @@ extension LocalRecurrentExpenseQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> includeInSummaryEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'includeInSummary',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
       QAfterFilterCondition> isActiveEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1642,6 +1661,20 @@ extension LocalRecurrentExpenseQuerySortBy
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      sortByIncludeInSummary() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'includeInSummary', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      sortByIncludeInSummaryDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'includeInSummary', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
       sortByIsActive() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isActive', Sort.asc);
@@ -1827,6 +1860,20 @@ extension LocalRecurrentExpenseQuerySortThenBy
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      thenByIncludeInSummary() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'includeInSummary', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      thenByIncludeInSummaryDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'includeInSummary', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
       thenByIsActive() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isActive', Sort.asc);
@@ -1963,6 +2010,13 @@ extension LocalRecurrentExpenseQueryWhereDistinct
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QDistinct>
+      distinctByIncludeInSummary() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'includeInSummary');
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QDistinct>
       distinctByIsActive() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isActive');
@@ -2051,6 +2105,13 @@ extension LocalRecurrentExpenseQueryProperty on QueryBuilder<
       frequencyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'frequency');
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, bool, QQueryOperations>
+      includeInSummaryProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'includeInSummary');
     });
   }
 

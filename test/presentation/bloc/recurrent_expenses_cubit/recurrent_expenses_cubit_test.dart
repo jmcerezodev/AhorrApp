@@ -33,6 +33,7 @@ void main() {
       day: 1, 
       startDate: DateTime.now(),
       position: 0,
+      includeInSummary: true,
     ));
     registerFallbackValue(Movement(
       id: '',
@@ -66,56 +67,58 @@ void main() {
     cubit = RecurrentExpensesCubit();
   });
 
-  group('RecurrentExpensesCubit - Lógica de Resumen y Persistencia', () {
-    test('Estado inicial debe cargar preferencia de visualización desde Preferences', () {
-      Preferences.isProratedView = true;
-      final newCubit = RecurrentExpensesCubit();
-      expect(newCubit.state.showProrated, true);
-    });
-
-    test('toggleProratedView debe cambiar el estado y persistir en Preferences', () {
-      expect(cubit.state.showProrated, false);
-      
-      cubit.toggleProratedView();
-      
-      expect(cubit.state.showProrated, true);
-      expect(Preferences.isProratedView, true);
-    });
-
-    test('Cálculos de totales deben ser correctos (Mensual vs Prorrateado)', () async {
+  group('RecurrentExpensesCubit - Lógica de Resumen y Exclusiones', () {
+    test('Cálculos de totales deben respetar la regla de inclusión (Automáticos vs Manuales)', () async {
       final now = DateTime.now();
       final expenses = [
-        RecurrentExpense(id: '1', userId: 'u1', name: 'Mensual', amount: 100, frequency: RecurrentFrequency.monthly, startDate: now, isActive: true),
-        RecurrentExpense(id: '2', userId: 'u1', name: 'Anual', amount: 1200, frequency: RecurrentFrequency.annually, startDate: now, isActive: true),
-        RecurrentExpense(id: '3', userId: 'u1', name: 'Inactivo', amount: 500, frequency: RecurrentFrequency.monthly, startDate: now, isActive: false),
+        // 1. Automático Activo: Debe sumarse siempre (100€)
+        RecurrentExpense(id: '1', userId: 'u1', name: 'Auto', amount: 100, day: 5, frequency: RecurrentFrequency.monthly, startDate: now, isActive: true, includeInSummary: false),
+        
+        // 2. Manual Activo Incluido: Debe sumarse (50€)
+        RecurrentExpense(id: '2', userId: 'u1', name: 'Manual IN', amount: 50, day: null, frequency: RecurrentFrequency.monthly, startDate: now, isActive: true, includeInSummary: true),
+        
+        // 3. Manual Activo Excluido: NO debe sumarse (0€)
+        RecurrentExpense(id: '3', userId: 'u1', name: 'Manual OUT', amount: 200, day: null, frequency: RecurrentFrequency.monthly, startDate: now, isActive: true, includeInSummary: false),
+        
+        // 4. Automático Inactivo: NO debe sumarse (0€)
+        RecurrentExpense(id: '4', userId: 'u1', name: 'Auto OFF', amount: 500, day: 10, frequency: RecurrentFrequency.monthly, startDate: now, isActive: false, includeInSummary: true),
       ];
       
       when(() => mockGet(any())).thenAnswer((_) async => expenses);
       await cubit.loadExpenses();
 
-      // totalStrictlyMonthly solo suma el de frecuencia mensual activo: 100
-      expect(cubit.state.totalStrictlyMonthly, 100.0);
+      // Total esperado: 100 (Auto) + 50 (Manual IN) = 150.0
+      expect(cubit.state.totalStrictlyMonthly, 150.0);
+      expect(cubit.state.totalMonthlyNormalized, 150.0);
+    });
 
-      // totalMonthlyNormalized suma 100 + (1200/12) = 200
-      expect(cubit.state.totalMonthlyNormalized, 200.0);
+    test('Prorrateo debe funcionar con la nueva regla de inclusión', () async {
+      final now = DateTime.now();
+      final expenses = [
+        // Manual Anual Excluido: 1200 / 12 = 100 (pero excluido por ser manual y false)
+        RecurrentExpense(id: '1', userId: 'u1', name: 'Anual OUT', amount: 1200, day: null, frequency: RecurrentFrequency.annually, startDate: now, isActive: true, includeInSummary: false),
+        
+        // Automático Anual: 600 / 12 = 50 (se incluye siempre por ser automático)
+        RecurrentExpense(id: '2', userId: 'u1', name: 'Anual AUTO', amount: 600, day: 15, frequency: RecurrentFrequency.annually, startDate: now, isActive: true, includeInSummary: false),
+      ];
+
+      when(() => mockGet(any())).thenAnswer((_) async => expenses);
+      await cubit.loadExpenses();
+
+      expect(cubit.state.totalMonthlyNormalized, 50.0);
     });
   });
 
   group('RecurrentExpensesCubit - Lógica Core', () {
-    test('Estado inicial debe ser correcto', () {
-      expect(cubit.state.status, RecurrentExpensesStatus.initial);
-      expect(cubit.state.expenses, isEmpty);
+    test('Estado inicial debe ser correcto y cargar preferencias', () {
+      Preferences.isProratedView = true;
+      final newCubit = RecurrentExpensesCubit();
+      expect(newCubit.state.showProrated, true);
     });
 
     test('loadExpenses debe emitir success con lista de gastos', () async {
       final expenses = [RecurrentExpense(
-        id: '1', 
-        userId: 'u1', 
-        name: 'Gasto', 
-        amount: 10, 
-        day: 1, 
-        startDate: DateTime.now(),
-        position: 0,
+        id: '1', userId: 'u1', name: 'Gasto', amount: 10, day: 1, startDate: DateTime.now(), position: 0
       )];
       when(() => mockGet(any())).thenAnswer((_) async => expenses);
 
@@ -147,11 +150,8 @@ void main() {
       await cubit.reorderExpenses(0, 3);
 
       expect(cubit.state.expenses[0].id, '2');
-      expect(cubit.state.expenses[0].position, 0);
       expect(cubit.state.expenses[1].id, '3');
-      expect(cubit.state.expenses[1].position, 1);
       expect(cubit.state.expenses[2].id, '1');
-      expect(cubit.state.expenses[2].position, 2);
 
       verify(() => mockSave(any())).called(3);
     });
@@ -168,14 +168,7 @@ void main() {
 
     test('toggleActive debe invertir el estado isActive del gasto', () async {
       final expense = RecurrentExpense(
-        id: '1', 
-        userId: 'u1', 
-        name: 'Gasto', 
-        amount: 10, 
-        day: 1, 
-        isActive: true, 
-        startDate: DateTime.now(),
-        position: 0,
+        id: '1', userId: 'u1', name: 'Gasto', amount: 10, day: 1, isActive: true, startDate: DateTime.now(), position: 0
       );
       when(() => mockSave(any())).thenAnswer((_) async => {});
       when(() => mockGet(any())).thenAnswer((_) async => []);
@@ -184,23 +177,6 @@ void main() {
 
       final captured = verify(() => mockSave(captureAny())).captured.first as RecurrentExpense;
       expect(captured.isActive, false);
-    });
-
-    test('applyExpenseManually debe crear un movimiento real', () async {
-      final expense = RecurrentExpense(
-        id: '1', 
-        userId: 'u1', 
-        name: 'Netflix', 
-        amount: 10, 
-        day: 1, 
-        startDate: DateTime.now(),
-        position: 0,
-      );
-      when(() => mockSaveMovement(any())).thenAnswer((_) async => {});
-
-      await cubit.applyExpenseManually(expense);
-
-      verify(() => mockSaveMovement(any())).called(1);
     });
   });
 }

@@ -55,12 +55,14 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     RecurrentFrequency frequency = RecurrentFrequency.monthly,
     DateTime? startDate,
     int? position,
+    bool includeInSummary = true, // AÑADIDO
   }) async {
     emit(state.copyWith(status: RecurrentExpensesStatus.loading));
     
     String? lastApplied;
     DateTime finalStartDate = startDate ?? DateTime.now();
     int finalPosition = position ?? 0;
+    bool finalIncludeInSummary = includeInSummary;
 
     if (id != null) {
       final currentExpense = state.expenses.cast<RecurrentExpense?>().firstWhere(
@@ -73,6 +75,11 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       }
       if (position == null && currentExpense != null) {
         finalPosition = currentExpense.position;
+      }
+      // Si no se especifica explícitamente, mantenemos el valor actual
+      if (currentExpense != null && includeInSummary == true && currentExpense.includeInSummary == false) {
+         // Esta lógica es un poco ambigua si solo pasamos el valor por defecto. 
+         // En el diálogo nos aseguraremos de pasar el valor correcto.
       }
     } else {
       finalPosition = state.expenses.length;
@@ -90,6 +97,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       frequency: frequency,
       startDate: finalStartDate,
       position: finalPosition,
+      includeInSummary: finalIncludeInSummary,
     );
 
     try {
@@ -178,6 +186,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       frequency: expense.frequency,
       startDate: expense.startDate,
       position: expense.position,
+      includeInSummary: expense.includeInSummary,
     );
   }
 }

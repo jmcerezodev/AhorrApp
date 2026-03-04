@@ -10,8 +10,9 @@ class RecurrentExpense {
   final bool isActive;
   final String? lastApplied;
   final RecurrentFrequency frequency;
-  final DateTime startDate; // NUEVO: Fecha de referencia para el ciclo
-  final int position; // NUEVO: Para organización manual
+  final DateTime startDate; 
+  final int position; 
+  final bool includeInSummary; // NUEVO: Para incluir o no gastos manuales en el resumen
 
   RecurrentExpense({
     required this.id,
@@ -25,6 +26,7 @@ class RecurrentExpense {
     this.frequency = RecurrentFrequency.monthly,
     required this.startDate,
     this.position = 0,
+    this.includeInSummary = true, // Por defecto true
   });
 
   RecurrentExpense copyWith({
@@ -39,6 +41,7 @@ class RecurrentExpense {
     RecurrentFrequency? frequency,
     DateTime? startDate,
     int? position,
+    bool? includeInSummary,
   }) {
     return RecurrentExpense(
       id: id ?? this.id,
@@ -52,6 +55,7 @@ class RecurrentExpense {
       frequency: frequency ?? this.frequency,
       startDate: startDate ?? this.startDate,
       position: position ?? this.position,
+      includeInSummary: includeInSummary ?? this.includeInSummary,
     );
   }
 }
