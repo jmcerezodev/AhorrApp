@@ -5,6 +5,7 @@ import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/local_history.dart';
+import 'package:ahorrapp/data/local/models/local_recurrent_expense.dart';
 import 'package:ahorrapp/data/local/models/local_saving.dart';
 import 'package:ahorrapp/domain/usecases/get_movements_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
@@ -53,6 +54,9 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       
       final List<LocalSaving> savingItems = _convertToLocalSaving(fullData['savings']);
       await _localDb.saveSavingItems(savingItems);
+
+      final List<LocalRecurrentExpense> recurrentItems = _convertToLocalRecurrent(fullData['recurrent']);
+      await _localDb.saveRecurrentExpenses(recurrentItems);
 
       await _localDb.saveSavingGoal(uid, fullData['savingGoal']);
       final double correctBalance = fullData['balance'];
@@ -165,6 +169,36 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         ..isSpent = doc.data['isSpent'] ?? false
         ..createdAt = date;
     }).toList();
+  }
+
+  List<LocalRecurrentExpense> _convertToLocalRecurrent(dynamic recurrentDocs) {
+    return (recurrentDocs as List).map((doc) {
+      return LocalRecurrentExpense()
+        ..appwriteId = doc.$id
+        ..userId = doc.data['userId'] ?? ''
+        ..name = doc.data['name'] ?? 'Gasto Fijo'
+        ..money = (doc.data['money'] as num).toDouble()
+        ..day = doc.data['day']
+        ..category = doc.data['category'] ?? 'general'
+        ..isActive = doc.data['isActive'] ?? true
+        ..lastApplied = doc.data['lastApplied']
+        ..frequency = _mapFrequency(doc.data['frequency'] ?? 'monthly')
+        ..startDate = DateTime.parse(doc.data['startDate'] ?? doc.$createdAt)
+        ..createdAt = DateTime.parse(doc.$createdAt);
+    }).toList();
+  }
+
+  LocalRecurrentFrequency _mapFrequency(String freq) {
+    switch (freq) {
+      case 'annually':
+        return LocalRecurrentFrequency.annually;
+      case 'semiAnnually':
+        return LocalRecurrentFrequency.semiAnnually;
+      case 'quarterly':
+        return LocalRecurrentFrequency.quarterly;
+      default:
+        return LocalRecurrentFrequency.monthly;
+    }
   }
 
   void toggleIncomes(bool value) => emit(state.copyWith(showIncomes: value));
