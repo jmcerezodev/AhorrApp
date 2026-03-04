@@ -11,6 +11,7 @@ class RecurrentExpense {
   final String? lastApplied;
   final RecurrentFrequency frequency;
   final DateTime startDate; // NUEVO: Fecha de referencia para el ciclo
+  final int position; // NUEVO: Para organización manual
 
   RecurrentExpense({
     required this.id,
@@ -23,5 +24,34 @@ class RecurrentExpense {
     this.lastApplied,
     this.frequency = RecurrentFrequency.monthly,
     required this.startDate,
+    this.position = 0,
   });
+
+  RecurrentExpense copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    double? amount,
+    int? day,
+    String? category,
+    bool? isActive,
+    String? lastApplied,
+    RecurrentFrequency? frequency,
+    DateTime? startDate,
+    int? position,
+  }) {
+    return RecurrentExpense(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      amount: amount ?? this.amount,
+      day: day ?? this.day,
+      category: category ?? this.category,
+      isActive: isActive ?? this.isActive,
+      lastApplied: lastApplied ?? this.lastApplied,
+      frequency: frequency ?? this.frequency,
+      startDate: startDate ?? this.startDate,
+      position: position ?? this.position,
+    );
+  }
 }

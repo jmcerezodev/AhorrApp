@@ -184,6 +184,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         ..lastApplied = doc.data['lastApplied']
         ..frequency = _mapFrequency(doc.data['frequency'] ?? 'monthly')
         ..startDate = DateTime.parse(doc.data['startDate'] ?? doc.$createdAt)
+        ..position = doc.data['position'] ?? 0 // NUEVO
         ..createdAt = DateTime.parse(doc.$createdAt);
     }).toList();
   }

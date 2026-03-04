@@ -64,13 +64,18 @@ const LocalRecurrentExpenseSchema = CollectionSchema(
       name: r'name',
       type: IsarType.string,
     ),
-    r'startDate': PropertySchema(
+    r'position': PropertySchema(
       id: 9,
+      name: r'position',
+      type: IsarType.long,
+    ),
+    r'startDate': PropertySchema(
+      id: 10,
       name: r'startDate',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'userId',
       type: IsarType.string,
     )
@@ -137,8 +142,9 @@ void _localRecurrentExpenseSerialize(
   writer.writeString(offsets[6], object.lastApplied);
   writer.writeDouble(offsets[7], object.money);
   writer.writeString(offsets[8], object.name);
-  writer.writeDateTime(offsets[9], object.startDate);
-  writer.writeString(offsets[10], object.userId);
+  writer.writeLong(offsets[9], object.position);
+  writer.writeDateTime(offsets[10], object.startDate);
+  writer.writeString(offsets[11], object.userId);
 }
 
 LocalRecurrentExpense _localRecurrentExpenseDeserialize(
@@ -160,8 +166,9 @@ LocalRecurrentExpense _localRecurrentExpenseDeserialize(
   object.lastApplied = reader.readStringOrNull(offsets[6]);
   object.money = reader.readDouble(offsets[7]);
   object.name = reader.readString(offsets[8]);
-  object.startDate = reader.readDateTime(offsets[9]);
-  object.userId = reader.readString(offsets[10]);
+  object.position = reader.readLong(offsets[9]);
+  object.startDate = reader.readDateTime(offsets[10]);
+  object.userId = reader.readString(offsets[11]);
   return object;
 }
 
@@ -193,8 +200,10 @@ P _localRecurrentExpenseDeserializeProp<P>(
     case 8:
       return (reader.readString(offset)) as P;
     case 9:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 10:
+      return (reader.readDateTime(offset)) as P;
+    case 11:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1304,6 +1313,62 @@ extension LocalRecurrentExpenseQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> positionEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'position',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> positionGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'position',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> positionLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'position',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> positionBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'position',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
       QAfterFilterCondition> startDateEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1633,6 +1698,20 @@ extension LocalRecurrentExpenseQuerySortBy
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      sortByPosition() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'position', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      sortByPositionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'position', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
       sortByStartDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'startDate', Sort.asc);
@@ -1804,6 +1883,20 @@ extension LocalRecurrentExpenseQuerySortThenBy
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      thenByPosition() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'position', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      thenByPositionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'position', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
       thenByStartDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'startDate', Sort.asc);
@@ -1898,6 +1991,13 @@ extension LocalRecurrentExpenseQueryWhereDistinct
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QDistinct>
+      distinctByPosition() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'position');
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QDistinct>
       distinctByStartDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'startDate');
@@ -1978,6 +2078,13 @@ extension LocalRecurrentExpenseQueryProperty on QueryBuilder<
   QueryBuilder<LocalRecurrentExpense, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, int, QQueryOperations>
+      positionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'position');
     });
   }
 

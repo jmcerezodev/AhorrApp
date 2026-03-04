@@ -3,6 +3,7 @@ import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/screens/recurrent_expenses/recurrent_expenses_screen.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/add_edit_recurrent_expense_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/confirm_manual_payment_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,6 +17,7 @@ void main() {
   setUp(() {
     mockCubit = MockRecurrentExpensesCubit();
     when(() => mockCubit.loadExpenses()).thenAnswer((_) async => {});
+    when(() => mockCubit.reorderExpenses(any(), any())).thenAnswer((_) async => {});
     when(() => mockCubit.stream).thenAnswer((_) => const Stream.empty());
   });
 
@@ -49,9 +51,10 @@ void main() {
           userId: 'u1', 
           name: 'Netflix', 
           amount: 15.99, 
-          day: DateTime.now().day, // Hoy para que diga "¡Se cobra hoy!"
+          day: DateTime.now().day, 
           frequency: RecurrentFrequency.monthly,
-          startDate: DateTime.now()
+          startDate: DateTime.now(),
+          position: 0,
         ),
         RecurrentExpense(
           id: '2', 
@@ -59,7 +62,8 @@ void main() {
           name: 'Seguro', 
           amount: 100.0, 
           day: null, 
-          startDate: DateTime.now()
+          startDate: DateTime.now(),
+          position: 1,
         ),
       ];
 
@@ -73,8 +77,6 @@ void main() {
 
       expect(find.text('Netflix'), findsOneWidget);
       expect(find.text('Seguro'), findsOneWidget);
-      
-      // Verificamos los textos dinámicos
       expect(find.text('¡Se cobra hoy!'), findsOneWidget);
       expect(find.text('Cobro manual'), findsOneWidget);
     });
@@ -87,7 +89,8 @@ void main() {
           name: 'Gasto Manual', 
           amount: 10.0, 
           day: null, 
-          startDate: DateTime.now()
+          startDate: DateTime.now(),
+          position: 0,
         ),
       ];
 
@@ -99,7 +102,6 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      // Pulsamos el botón de añadir (playlist_add_rounded)
       await tester.tap(find.byIcon(Icons.add_circle_outline_rounded));
       await tester.pumpAndSettle();
 
@@ -120,7 +122,8 @@ void main() {
 
       expect(find.byType(AddEditRecurrentExpenseDialog), findsOneWidget);
     });
-   group('RecurrentExpensesScreen - Gestos de Deslizamiento', () {
+
+    group('RecurrentExpensesScreen - Gestos de Deslizamiento', () {
       testWidgets('Debe mostrar el fondo de edición al deslizar a la derecha', (WidgetTester tester) async {
         final expenses = [
           RecurrentExpense(
@@ -130,7 +133,8 @@ void main() {
             amount: 15.99, 
             day: 10, 
             frequency: RecurrentFrequency.monthly,
-            startDate: DateTime.now()
+            startDate: DateTime.now(),
+            position: 0,
           ),
         ];
 
@@ -142,11 +146,14 @@ void main() {
         await tester.pumpWidget(createWidgetUnderTest());
         await tester.pumpAndSettle();
 
-        // Deslizamos a la derecha (start to end)
         await tester.drag(find.text('Netflix'), const Offset(500.0, 0.0));
-        await tester.pump();
+        await tester.pump(); 
+        await tester.pump(const Duration(milliseconds: 500)); 
 
-        expect(find.text('EDITAR'), findsOneWidget);
+        // Usamos un finder más específico para evitar ambigüedades
+        expect(find.descendant(of: find.byType(SwipeBackgroundWidget), matching: find.text('EDITAR')), findsOneWidget);
+        
+        await tester.pumpAndSettle();
       });
 
       testWidgets('Debe mostrar el fondo de eliminación al deslizar a la izquierda', (WidgetTester tester) async {
@@ -158,7 +165,8 @@ void main() {
             amount: 15.99, 
             day: 10, 
             frequency: RecurrentFrequency.monthly,
-            startDate: DateTime.now()
+            startDate: DateTime.now(),
+            position: 0,
           ),
         ];
 
@@ -170,12 +178,45 @@ void main() {
         await tester.pumpWidget(createWidgetUnderTest());
         await tester.pumpAndSettle();
 
-        // Deslizamos a la izquierda (end to start)
         await tester.drag(find.text('Netflix'), const Offset(-500.0, 0.0));
         await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
 
-        expect(find.text('ELIMINAR'), findsOneWidget);
+        // Usamos un finder más específico para evitar ambigüedades con otros textos "ELIMINAR"
+        expect(find.descendant(of: find.byType(SwipeBackgroundWidget), matching: find.text('ELIMINAR')), findsOneWidget);
+
+        await tester.pumpAndSettle();
       });
+    });
+
+    testWidgets('Debe permitir reordenar elementos en la lista', (WidgetTester tester) async {
+      final expenses = [
+        RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 15.99, day: 10, startDate: DateTime.now(), position: 0),
+        RecurrentExpense(id: '2', userId: 'u1', name: 'HBO', amount: 9.99, day: 15, startDate: DateTime.now(), position: 1),
+      ];
+
+      when(() => mockCubit.state).thenReturn(RecurrentExpensesState(
+        status: RecurrentExpensesStatus.success,
+        expenses: expenses,
+      ));
+
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      final firstItem = find.text('Netflix');
+      final secondItem = find.text('HBO');
+
+      final TestGesture gesture = await tester.startGesture(tester.getCenter(firstItem));
+      await tester.pump(const Duration(milliseconds: 1000)); // Más tiempo para asegurar el long press
+      
+      await gesture.moveTo(tester.getCenter(secondItem));
+      await tester.pump(const Duration(milliseconds: 200));
+      await gesture.up();
+      
+      // Limpieza crítica de timers para ReorderableListView
+      await tester.pumpAndSettle();
+
+      verify(() => mockCubit.reorderExpenses(any(), any())).called(1);
     });
   });
 }

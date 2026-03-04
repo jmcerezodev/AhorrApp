@@ -176,6 +176,7 @@ class SyncService {
         lastApplied: data['lastApplied'],
         frequency: data['frequency'] ?? 'monthly',
         startDate: DateTime.parse(data['startDate'] ?? DateTime.now().toIso8601String()),
+        position: data['position'] ?? 0, // AÑADIDO
       );
       return true;
     } else if (pending.action == 'update') {

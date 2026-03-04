@@ -35,6 +35,7 @@ class SaveRecurrentExpenseUseCase {
           'lastApplied': expense.lastApplied,
           'frequency': _mapFrequencyToString(expense.frequency),
           'startDate': expense.startDate.toIso8601String(),
+          'position': expense.position, // AÑADIDO: Para que funcione sin conexión
         },
         appwriteId: expense.id,
       );

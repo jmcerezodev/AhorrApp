@@ -100,13 +100,17 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                     return _EmptyState(colorScheme: colorScheme);
                   }
 
-                  return ListView.builder(
+                  return ReorderableListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     physics: const BouncingScrollPhysics(),
                     itemCount: state.expenses.length,
+                    onReorder: (oldIndex, newIndex) {
+                      context.read<RecurrentExpensesCubit>().reorderExpenses(oldIndex, newIndex);
+                    },
                     itemBuilder: (context, index) {
                       final expense = state.expenses[index];
                       return FadeInUp(
+                        key: ValueKey(expense.id),
                         delay: Duration(milliseconds: 100 * index),
                         child: _RecurrentExpenseDismissible(
                           expense: expense,
@@ -145,7 +149,7 @@ class _RecurrentExpenseDismissible extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: Dismissible(
-        key: Key(expense.id),
+        key: Key('dismiss_${expense.id}'),
         background: const SwipeBackgroundWidget(
           color: Colors.green,
           icon: Icons.edit_note_rounded,
@@ -206,6 +210,7 @@ class _RecurrentExpenseCard extends StatelessWidget {
     final DateTime nextPaymentDate = _calculateNextPaymentDate();
     final int daysRemaining = nextPaymentDate.difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)).inDays;
     final double progress = _calculateProgress(nextPaymentDate);
+    final bool showProgress = isAutomatic && expense.isActive;
 
     return Container(
       decoration: BoxDecoration(
@@ -259,6 +264,8 @@ class _RecurrentExpenseCard extends StatelessWidget {
             ),
             title: Text(
               expense.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 15,
@@ -276,18 +283,20 @@ class _RecurrentExpenseCard extends StatelessWidget {
                     color: colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
                 ),
-                if (isAutomatic && expense.isActive) ...[
-                  const SizedBox(height: 8),
-                  ClipRRect(
+                const SizedBox(height: 8),
+                // Siempre mantenemos el espacio de la barra aunque no se vea para uniformidad
+                Opacity(
+                  opacity: showProgress ? 1.0 : 0.0,
+                  child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
-                      value: progress,
+                      value: showProgress ? progress : 0,
                       minHeight: 3,
                       backgroundColor: Colors.orange.withValues(alpha: 0.05),
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.orange.withValues(alpha: 0.4)),
                     ),
                   ),
-                ]
+                ),
               ],
             ),
             trailing: Row(
@@ -307,7 +316,6 @@ class _RecurrentExpenseCard extends StatelessWidget {
                     if (isAutomatic) {
                       context.read<RecurrentExpensesCubit>().toggleActive(expense);
                     } else {
-                      // El diálogo ahora maneja internamente la lógica y el éxito
                       await showDialog<bool>(
                         context: context,
                         barrierDismissible: false,
@@ -329,22 +337,25 @@ class _RecurrentExpenseCard extends StatelessWidget {
               ],
             ),
           ),
-          if (isAutomatic && expense.isActive)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  daysRemaining == 0 ? '¡Se cobra hoy!' : 'Próximo cobro en $daysRemaining días',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
-                    letterSpacing: 0.5,
-                  ),
+          
+          // Espacio inferior uniforme
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                showProgress 
+                  ? (daysRemaining == 0 ? '¡Se cobra hoy!' : 'Próximo cobro en $daysRemaining días')
+                  : ' ', // Espacio vacío para mantener altura
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
+          ),
         ],
       ),
     );

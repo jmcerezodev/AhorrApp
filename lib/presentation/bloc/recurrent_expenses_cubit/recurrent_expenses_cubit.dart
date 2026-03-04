@@ -45,12 +45,14 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     String category = 'general',
     bool isActive = true,
     RecurrentFrequency frequency = RecurrentFrequency.monthly,
-    DateTime? startDate, // AÑADIDO
+    DateTime? startDate,
+    int? position, // AÑADIDO
   }) async {
     emit(state.copyWith(status: RecurrentExpensesStatus.loading));
     
     String? lastApplied;
-    DateTime finalStartDate = startDate ?? DateTime.now(); // Valor por defecto
+    DateTime finalStartDate = startDate ?? DateTime.now();
+    int finalPosition = position ?? 0; // Valor por defecto
 
     if (id != null) {
       final currentExpense = state.expenses.cast<RecurrentExpense?>().firstWhere(
@@ -58,10 +60,15 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
         orElse: () => null
       );
       lastApplied = currentExpense?.lastApplied;
-      // Si estamos editando y no se pasó una fecha nueva, mantenemos la que tenía
       if (startDate == null && currentExpense != null) {
         finalStartDate = currentExpense.startDate;
       }
+      if (position == null && currentExpense != null) {
+        finalPosition = currentExpense.position;
+      }
+    } else {
+      // Si es nuevo, lo ponemos al final de la lista
+      finalPosition = state.expenses.length;
     }
 
     final expense = RecurrentExpense(
@@ -74,7 +81,8 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       isActive: isActive,
       lastApplied: lastApplied,
       frequency: frequency,
-      startDate: finalStartDate, // AÑADIDO
+      startDate: finalStartDate,
+      position: finalPosition, // AÑADIDO
     );
 
     try {
@@ -85,6 +93,34 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
         status: RecurrentExpensesStatus.failure,
         errorMessage: 'Error técnico al guardar: $e',
       ));
+    }
+  }
+
+  Future<void> reorderExpenses(int oldIndex, int newIndex) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+
+    final List<RecurrentExpense> items = List.from(state.expenses);
+    final RecurrentExpense item = items.removeAt(oldIndex);
+    items.insert(newIndex, item);
+
+    // Actualizamos las posiciones localmente de forma optimista
+    final List<RecurrentExpense> updatedItems = [];
+    for (int i = 0; i < items.length; i++) {
+      updatedItems.add(items[i].copyWith(position: i));
+    }
+
+    emit(state.copyWith(expenses: updatedItems));
+
+    // Persistimos los cambios
+    try {
+      for (var expense in updatedItems) {
+        await _saveRecurrentExpenseUseCase(expense);
+      }
+    } catch (e) {
+      // Si falla la persistencia, recargamos para volver al estado anterior
+      await loadExpenses();
     }
   }
 
@@ -136,7 +172,8 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       category: expense.category,
       isActive: !expense.isActive,
       frequency: expense.frequency,
-      startDate: expense.startDate, // AÑADIDO
+      startDate: expense.startDate,
+      position: expense.position, // AÑADIDO
     );
   }
 }

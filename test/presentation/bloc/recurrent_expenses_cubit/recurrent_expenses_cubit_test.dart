@@ -31,7 +31,8 @@ void main() {
       name: '', 
       amount: 0, 
       day: 1, 
-      startDate: DateTime.now()
+      startDate: DateTime.now(),
+      position: 0,
     ));
     registerFallbackValue(Movement(
       id: '',
@@ -78,7 +79,8 @@ void main() {
         name: 'Gasto', 
         amount: 10, 
         day: 1, 
-        startDate: DateTime.now()
+        startDate: DateTime.now(),
+        position: 0,
       )];
       when(() => mockGet(any())).thenAnswer((_) async => expenses);
 
@@ -96,6 +98,32 @@ void main() {
 
       verify(() => mockSave(any())).called(1);
       verify(() => mockGet('user123')).called(1);
+    });
+
+    test('reorderExpenses debe actualizar posiciones y persistir cambios', () async {
+      // GIVEN: Una lista con 3 elementos
+      final e1 = RecurrentExpense(id: '1', userId: 'u1', name: 'A', amount: 10, startDate: DateTime.now(), position: 0);
+      final e2 = RecurrentExpense(id: '2', userId: 'u1', name: 'B', amount: 20, startDate: DateTime.now(), position: 1);
+      final e3 = RecurrentExpense(id: '3', userId: 'u1', name: 'C', amount: 30, startDate: DateTime.now(), position: 2);
+      
+      when(() => mockGet(any())).thenAnswer((_) async => [e1, e2, e3]);
+      when(() => mockSave(any())).thenAnswer((_) async => {});
+      
+      await cubit.loadExpenses();
+
+      // WHEN: Movemos el primer elemento (A) al final
+      await cubit.reorderExpenses(0, 3);
+
+      // THEN: El estado debe reflejar el nuevo orden [B, C, A] con posiciones [0, 1, 2]
+      expect(cubit.state.expenses[0].id, '2');
+      expect(cubit.state.expenses[0].position, 0);
+      expect(cubit.state.expenses[1].id, '3');
+      expect(cubit.state.expenses[1].position, 1);
+      expect(cubit.state.expenses[2].id, '1');
+      expect(cubit.state.expenses[2].position, 2);
+
+      // Y debe haber llamado a guardar para cada uno de los 3 elementos
+      verify(() => mockSave(any())).called(3);
     });
 
     test('deleteExpense debe eliminar y recargar', () async {
@@ -116,7 +144,8 @@ void main() {
         amount: 10, 
         day: 1, 
         isActive: true, 
-        startDate: DateTime.now()
+        startDate: DateTime.now(),
+        position: 0,
       );
       when(() => mockSave(any())).thenAnswer((_) async => {});
       when(() => mockGet(any())).thenAnswer((_) async => []);
@@ -134,7 +163,8 @@ void main() {
         name: 'Netflix', 
         amount: 10, 
         day: 1, 
-        startDate: DateTime.now()
+        startDate: DateTime.now(),
+        position: 0,
       );
       when(() => mockSaveMovement(any())).thenAnswer((_) async => {});
 

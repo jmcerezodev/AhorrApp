@@ -11,7 +11,9 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
   @override
   Future<List<RecurrentExpense>> getRecurrentExpenses(String userId) async {
     final localItems = await _localDb.getRecurrentExpenses(userId);
-    return localItems.map((e) => _mapToEntity(e)).toList();
+    // Ordenamos por posición antes de mapear
+    final sortedItems = [...localItems]..sort((a, b) => a.position.compareTo(b.position));
+    return sortedItems.map((e) => _mapToEntity(e)).toList();
   }
 
   @override
@@ -34,7 +36,8 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
       ..isActive = expense.isActive
       ..lastApplied = expense.lastApplied
       ..frequency = _mapToLocalFrequency(expense.frequency)
-      ..startDate = expense.startDate // NUEVO
+      ..startDate = expense.startDate
+      ..position = expense.position // NUEVO
       ..createdAt = existingItem?.createdAt ?? DateTime.now();
 
     await _localDb.saveRecurrentExpenses([localItem]);
@@ -66,7 +69,8 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
       isActive: local.isActive,
       lastApplied: local.lastApplied,
       frequency: _mapToDomainFrequency(local.frequency),
-      startDate: local.startDate, // NUEVO
+      startDate: local.startDate,
+      position: local.position, // NUEVO
     );
   }
 

@@ -26,4 +26,6 @@ class LocalRecurrentExpense {
   late DateTime startDate; // NUEVO: Fecha de referencia para el ciclo
 
   late DateTime createdAt;
+
+  late int position; // NUEVO: Para organización manual
 }
