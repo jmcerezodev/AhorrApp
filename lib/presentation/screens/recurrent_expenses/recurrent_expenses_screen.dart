@@ -85,6 +85,128 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
 
             const SizedBox(height: 10),
 
+            // TARJETA DE RESUMEN OPTIMIZADA POR MODOS
+            BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
+              builder: (context, state) {
+                if (state.expenses.isEmpty) return const SizedBox.shrink();
+                
+                final double totalToShow = state.showProrated 
+                    ? state.totalMonthlyNormalized 
+                    : state.totalStrictlyMonthly;
+
+                return FadeInDown(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                    child: GestureDetector(
+                      onTap: () => context.read<RecurrentExpensesCubit>().toggleProratedView(),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: isDark ? null : Colors.white,
+                          gradient: isDark 
+                            ? const LinearGradient(
+                                colors: [Color(0xFF2C2C2C), Color(0xFF1E1E1E)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.2), 
+                            width: 1.5
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDark ? 0.05 : 0.03),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            )
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      state.showProrated 
+                                        ? 'GASTOS FIJOS (PRORRATEADOS)' 
+                                        : 'PAGOS FIJOS MENSUALES',
+                                      style: TextStyle(
+                                        color: Colors.orange.shade400,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      '${humanizeNumbers.number(totalToShow)}€',
+                                      style: TextStyle(
+                                        color: isDark ? Colors.white : colorScheme.onSurface,
+                                        fontSize: 34,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: -1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.repeat_rounded,
+                                    color: Colors.orange,
+                                    size: 28,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            const SizedBox(height: 15),
+                            
+                            Row(
+                              children: [
+                                _ModeChip(
+                                  label: state.showProrated ? 'PRORRATEADO' : 'SOLO MENSUALES',
+                                  color: Colors.orange.shade400,
+                                ),
+                                const SizedBox(width: 10),
+                                Icon(
+                                  Icons.sync_rounded, 
+                                  color: isDark ? Colors.white30 : Colors.grey.shade400, 
+                                  size: 14
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  state.showProrated ? 'Cambiar a mensual' : 'Cambiar a prorrateado',
+                                  style: TextStyle(
+                                    color: isDark ? Colors.white30 : Colors.grey.shade500,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 5),
+
             Expanded(
               child: BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
                 builder: (context, state) {
@@ -125,6 +247,34 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _ModeChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
         ),
       ),
     );

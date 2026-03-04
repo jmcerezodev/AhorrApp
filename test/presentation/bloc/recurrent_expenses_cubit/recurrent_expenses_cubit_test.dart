@@ -49,7 +49,7 @@ void main() {
   });
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({'uId': 'user123'});
+    SharedPreferences.setMockInitialValues({'uId': 'user123', 'isProratedView': false});
     await Preferences.init();
 
     mockGet = MockGetRecurrentExpensesUseCase();
@@ -66,7 +66,42 @@ void main() {
     cubit = RecurrentExpensesCubit();
   });
 
-  group('RecurrentExpensesCubit Tests', () {
+  group('RecurrentExpensesCubit - Lógica de Resumen y Persistencia', () {
+    test('Estado inicial debe cargar preferencia de visualización desde Preferences', () {
+      Preferences.isProratedView = true;
+      final newCubit = RecurrentExpensesCubit();
+      expect(newCubit.state.showProrated, true);
+    });
+
+    test('toggleProratedView debe cambiar el estado y persistir en Preferences', () {
+      expect(cubit.state.showProrated, false);
+      
+      cubit.toggleProratedView();
+      
+      expect(cubit.state.showProrated, true);
+      expect(Preferences.isProratedView, true);
+    });
+
+    test('Cálculos de totales deben ser correctos (Mensual vs Prorrateado)', () async {
+      final now = DateTime.now();
+      final expenses = [
+        RecurrentExpense(id: '1', userId: 'u1', name: 'Mensual', amount: 100, frequency: RecurrentFrequency.monthly, startDate: now, isActive: true),
+        RecurrentExpense(id: '2', userId: 'u1', name: 'Anual', amount: 1200, frequency: RecurrentFrequency.annually, startDate: now, isActive: true),
+        RecurrentExpense(id: '3', userId: 'u1', name: 'Inactivo', amount: 500, frequency: RecurrentFrequency.monthly, startDate: now, isActive: false),
+      ];
+      
+      when(() => mockGet(any())).thenAnswer((_) async => expenses);
+      await cubit.loadExpenses();
+
+      // totalStrictlyMonthly solo suma el de frecuencia mensual activo: 100
+      expect(cubit.state.totalStrictlyMonthly, 100.0);
+
+      // totalMonthlyNormalized suma 100 + (1200/12) = 200
+      expect(cubit.state.totalMonthlyNormalized, 200.0);
+    });
+  });
+
+  group('RecurrentExpensesCubit - Lógica Core', () {
     test('Estado inicial debe ser correcto', () {
       expect(cubit.state.status, RecurrentExpensesStatus.initial);
       expect(cubit.state.expenses, isEmpty);
@@ -101,7 +136,6 @@ void main() {
     });
 
     test('reorderExpenses debe actualizar posiciones y persistir cambios', () async {
-      // GIVEN: Una lista con 3 elementos
       final e1 = RecurrentExpense(id: '1', userId: 'u1', name: 'A', amount: 10, startDate: DateTime.now(), position: 0);
       final e2 = RecurrentExpense(id: '2', userId: 'u1', name: 'B', amount: 20, startDate: DateTime.now(), position: 1);
       final e3 = RecurrentExpense(id: '3', userId: 'u1', name: 'C', amount: 30, startDate: DateTime.now(), position: 2);
@@ -110,11 +144,8 @@ void main() {
       when(() => mockSave(any())).thenAnswer((_) async => {});
       
       await cubit.loadExpenses();
-
-      // WHEN: Movemos el primer elemento (A) al final
       await cubit.reorderExpenses(0, 3);
 
-      // THEN: El estado debe reflejar el nuevo orden [B, C, A] con posiciones [0, 1, 2]
       expect(cubit.state.expenses[0].id, '2');
       expect(cubit.state.expenses[0].position, 0);
       expect(cubit.state.expenses[1].id, '3');
@@ -122,7 +153,6 @@ void main() {
       expect(cubit.state.expenses[2].id, '1');
       expect(cubit.state.expenses[2].position, 2);
 
-      // Y debe haber llamado a guardar para cada uno de los 3 elementos
       verify(() => mockSave(any())).called(3);
     });
 
