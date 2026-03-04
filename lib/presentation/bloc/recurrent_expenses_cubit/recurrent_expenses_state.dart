@@ -6,20 +6,26 @@ class RecurrentExpensesState extends Equatable {
   final List<RecurrentExpense> expenses;
   final RecurrentExpensesStatus status;
   final String? errorMessage;
-  final bool showProrated; // Preferencia de visualización
+  final bool showProrated; 
+  final bool isFilterOpen;
+  final bool showAutomatic;
+  final bool showManual;
+  final List<String> selectedCategories; // NUEVO: Categorías seleccionadas para filtrar
 
   const RecurrentExpensesState({
     this.expenses = const [],
     this.status = RecurrentExpensesStatus.initial,
     this.errorMessage,
-    this.showProrated = false, // Valor por defecto: Mensual
+    this.showProrated = false,
+    this.isFilterOpen = false,
+    this.showAutomatic = true,
+    this.showManual = true,
+    this.selectedCategories = const [], // Por defecto vacío (todas visibles)
   });
 
   // Lógica centralizada para determinar si un gasto debe sumarse a los totales
   bool _shouldInclude(RecurrentExpense e) {
     if (!e.isActive) return false;
-    // Si es automático (tiene día fijo), se suma siempre.
-    // Si es manual, depende de la elección del usuario (includeInSummary).
     return (e.day != null) || e.includeInSummary;
   }
 
@@ -59,15 +65,32 @@ class RecurrentExpensesState extends Equatable {
     RecurrentExpensesStatus? status,
     String? errorMessage,
     bool? showProrated,
+    bool? isFilterOpen,
+    bool? showAutomatic,
+    bool? showManual,
+    List<String>? selectedCategories,
   }) {
     return RecurrentExpensesState(
       expenses: expenses ?? this.expenses,
       status: status ?? this.status,
       errorMessage: errorMessage,
       showProrated: showProrated ?? this.showProrated,
+      isFilterOpen: isFilterOpen ?? this.isFilterOpen,
+      showAutomatic: showAutomatic ?? this.showAutomatic,
+      showManual: showManual ?? this.showManual,
+      selectedCategories: selectedCategories ?? this.selectedCategories,
     );
   }
 
   @override
-  List<Object?> get props => [expenses, status, errorMessage, showProrated];
+  List<Object?> get props => [
+    expenses, 
+    status, 
+    errorMessage, 
+    showProrated, 
+    isFilterOpen, 
+    showAutomatic, 
+    showManual,
+    selectedCategories,
+  ];
 }

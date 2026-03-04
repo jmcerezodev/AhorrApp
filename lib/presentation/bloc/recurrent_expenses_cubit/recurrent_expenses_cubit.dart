@@ -45,6 +45,28 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     emit(state.copyWith(showProrated: newValue));
   }
 
+  void toggleFilterPanel() {
+    emit(state.copyWith(isFilterOpen: !state.isFilterOpen));
+  }
+
+  void toggleAutomaticFilter(bool value) {
+    emit(state.copyWith(showAutomatic: value));
+  }
+
+  void toggleManualFilter(bool value) {
+    emit(state.copyWith(showManual: value));
+  }
+
+  void toggleCategoryFilter(String category) {
+    final currentSelected = List<String>.from(state.selectedCategories);
+    if (currentSelected.contains(category)) {
+      currentSelected.remove(category);
+    } else {
+      currentSelected.add(category);
+    }
+    emit(state.copyWith(selectedCategories: currentSelected));
+  }
+
   Future<void> addOrUpdateExpense({
     String? id,
     required String name,
@@ -55,7 +77,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     RecurrentFrequency frequency = RecurrentFrequency.monthly,
     DateTime? startDate,
     int? position,
-    bool includeInSummary = true, // AÑADIDO
+    bool includeInSummary = true,
   }) async {
     emit(state.copyWith(status: RecurrentExpensesStatus.loading));
     
@@ -75,11 +97,6 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       }
       if (position == null && currentExpense != null) {
         finalPosition = currentExpense.position;
-      }
-      // Si no se especifica explícitamente, mantenemos el valor actual
-      if (currentExpense != null && includeInSummary == true && currentExpense.includeInSummary == false) {
-         // Esta lógica es un poco ambigua si solo pasamos el valor por defecto. 
-         // En el diálogo nos aseguraremos de pasar el valor correcto.
       }
     } else {
       finalPosition = state.expenses.length;

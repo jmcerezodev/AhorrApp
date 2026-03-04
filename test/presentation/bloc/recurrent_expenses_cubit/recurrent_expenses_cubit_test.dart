@@ -67,27 +67,54 @@ void main() {
     cubit = RecurrentExpensesCubit();
   });
 
+  group('RecurrentExpensesCubit - Lógica de Filtrado', () {
+    test('toggleFilterPanel debe alternar la visibilidad del panel', () {
+      expect(cubit.state.isFilterOpen, false);
+      cubit.toggleFilterPanel();
+      expect(cubit.state.isFilterOpen, true);
+      cubit.toggleFilterPanel();
+      expect(cubit.state.isFilterOpen, false);
+    });
+
+    test('Filtros de tipo deben actualizar el estado correctamente', () {
+      expect(cubit.state.showAutomatic, true);
+      expect(cubit.state.showManual, true);
+
+      cubit.toggleAutomaticFilter(false);
+      expect(cubit.state.showAutomatic, false);
+
+      cubit.toggleManualFilter(false);
+      expect(cubit.state.showManual, false);
+    });
+
+    test('toggleCategoryFilter debe añadir y eliminar categorías correctamente', () {
+      expect(cubit.state.selectedCategories, isEmpty);
+
+      cubit.toggleCategoryFilter('hogar');
+      expect(cubit.state.selectedCategories, contains('hogar'));
+
+      cubit.toggleCategoryFilter('ocio');
+      expect(cubit.state.selectedCategories, containsAll(['hogar', 'ocio']));
+
+      cubit.toggleCategoryFilter('hogar');
+      expect(cubit.state.selectedCategories, isNot(contains('hogar')));
+      expect(cubit.state.selectedCategories, contains('ocio'));
+    });
+  });
+
   group('RecurrentExpensesCubit - Lógica de Resumen y Exclusiones', () {
     test('Cálculos de totales deben respetar la regla de inclusión (Automáticos vs Manuales)', () async {
       final now = DateTime.now();
       final expenses = [
-        // 1. Automático Activo: Debe sumarse siempre (100€)
         RecurrentExpense(id: '1', userId: 'u1', name: 'Auto', amount: 100, day: 5, frequency: RecurrentFrequency.monthly, startDate: now, isActive: true, includeInSummary: false),
-        
-        // 2. Manual Activo Incluido: Debe sumarse (50€)
         RecurrentExpense(id: '2', userId: 'u1', name: 'Manual IN', amount: 50, day: null, frequency: RecurrentFrequency.monthly, startDate: now, isActive: true, includeInSummary: true),
-        
-        // 3. Manual Activo Excluido: NO debe sumarse (0€)
         RecurrentExpense(id: '3', userId: 'u1', name: 'Manual OUT', amount: 200, day: null, frequency: RecurrentFrequency.monthly, startDate: now, isActive: true, includeInSummary: false),
-        
-        // 4. Automático Inactivo: NO debe sumarse (0€)
         RecurrentExpense(id: '4', userId: 'u1', name: 'Auto OFF', amount: 500, day: 10, frequency: RecurrentFrequency.monthly, startDate: now, isActive: false, includeInSummary: true),
       ];
       
       when(() => mockGet(any())).thenAnswer((_) async => expenses);
       await cubit.loadExpenses();
 
-      // Total esperado: 100 (Auto) + 50 (Manual IN) = 150.0
       expect(cubit.state.totalStrictlyMonthly, 150.0);
       expect(cubit.state.totalMonthlyNormalized, 150.0);
     });
@@ -95,10 +122,7 @@ void main() {
     test('Prorrateo debe funcionar con la nueva regla de inclusión', () async {
       final now = DateTime.now();
       final expenses = [
-        // Manual Anual Excluido: 1200 / 12 = 100 (pero excluido por ser manual y false)
         RecurrentExpense(id: '1', userId: 'u1', name: 'Anual OUT', amount: 1200, day: null, frequency: RecurrentFrequency.annually, startDate: now, isActive: true, includeInSummary: false),
-        
-        // Automático Anual: 600 / 12 = 50 (se incluye siempre por ser automático)
         RecurrentExpense(id: '2', userId: 'u1', name: 'Anual AUTO', amount: 600, day: 15, frequency: RecurrentFrequency.annually, startDate: now, isActive: true, includeInSummary: false),
       ];
 

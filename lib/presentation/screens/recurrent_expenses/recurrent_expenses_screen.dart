@@ -33,6 +33,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(25, 20, 20, 10),
@@ -85,7 +86,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
 
             const SizedBox(height: 10),
 
-            // TARJETA DE RESUMEN OPTIMIZADA POR MODOS
+            // TARJETA DE RESUMEN
             BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
               builder: (context, state) {
                 if (state.expenses.isEmpty) return const SizedBox.shrink();
@@ -103,7 +104,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: isDark ? null : Colors.white,
+                          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                           gradient: isDark 
                             ? const LinearGradient(
                                 colors: [Color(0xFF2C2C2C), Color(0xFF1E1E1E)],
@@ -113,12 +114,12 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                             : null,
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(
-                            color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.2), 
+                            color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.3), 
                             width: 1.5
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.05 : 0.03),
+                              color: Colors.black.withValues(alpha: isDark ? 0.05 : 0.08),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             )
@@ -148,7 +149,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                                     Text(
                                       '${humanizeNumbers.number(totalToShow)}€',
                                       style: TextStyle(
-                                        color: isDark ? Colors.white : colorScheme.onSurface,
+                                        color: isDark ? Colors.white : Colors.black87,
                                         fontSize: 34,
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: -1,
@@ -205,6 +206,53 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
               },
             ),
 
+            const SizedBox(height: 20),
+
+            // CABECERA DE LISTADO CON FILTRO
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 25),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'LISTADO DE GASTOS',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.onSurface.withValues(alpha: 0.4),
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                  BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
+                    builder: (context, state) {
+                      return IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => context.read<RecurrentExpensesCubit>().toggleFilterPanel(),
+                        icon: Icon(
+                          state.isFilterOpen ? Icons.filter_list_off_rounded : Icons.filter_list_rounded, 
+                          color: colorScheme.primary.withValues(alpha: 0.6), 
+                          size: 20
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // PANEL DE FILTROS DESPLEGABLE
+            BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
+              builder: (context, state) {
+                if (state.isFilterOpen) {
+                  return FadeInDown(
+                    duration: const Duration(milliseconds: 200),
+                    child: _FilterPanel(cubit: context.read<RecurrentExpensesCubit>()),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+
             const SizedBox(height: 5),
 
             Expanded(
@@ -218,19 +266,43 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                     return Center(child: Text(state.errorMessage ?? 'Error al cargar gastos fijos'));
                   }
 
-                  if (state.expenses.isEmpty) {
-                    return _EmptyState(colorScheme: colorScheme);
+                  // Aplicamos los filtros
+                  final filteredExpenses = state.expenses.where((e) {
+                    final bool isAutomatic = e.day != null;
+                    if (isAutomatic && !state.showAutomatic) return false;
+                    if (!isAutomatic && !state.showManual) return false;
+                    
+                    if (state.selectedCategories.isNotEmpty && !state.selectedCategories.contains(e.category.toLowerCase())) {
+                      return false;
+                    }
+                    
+                    return true;
+                  }).toList();
+
+                  if (filteredExpenses.isEmpty) {
+                    return _EmptyState(colorScheme: colorScheme, isFiltered: state.isFilterOpen);
                   }
 
                   return ReorderableListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                     physics: const BouncingScrollPhysics(),
-                    itemCount: state.expenses.length,
+                    itemCount: filteredExpenses.length,
                     onReorder: (oldIndex, newIndex) {
-                      context.read<RecurrentExpensesCubit>().reorderExpenses(oldIndex, newIndex);
+                      final item = filteredExpenses[oldIndex];
+                      final actualOldIndex = state.expenses.indexOf(item);
+                      
+                      int actualNewIndex;
+                      if (newIndex < filteredExpenses.length) {
+                        final targetItem = filteredExpenses[newIndex];
+                        actualNewIndex = state.expenses.indexOf(targetItem);
+                      } else {
+                        actualNewIndex = state.expenses.indexOf(filteredExpenses.last) + 1;
+                      }
+                      
+                      context.read<RecurrentExpensesCubit>().reorderExpenses(actualOldIndex, actualNewIndex);
                     },
                     itemBuilder: (context, index) {
-                      final expense = state.expenses[index];
+                      final expense = filteredExpenses[index];
                       return FadeInUp(
                         key: ValueKey(expense.id),
                         delay: Duration(milliseconds: 100 * index),
@@ -248,6 +320,129 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FilterPanel extends StatelessWidget {
+  final RecurrentExpensesCubit cubit;
+  const _FilterPanel({required this.cubit});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final state = cubit.state;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10, top: 5, left: 20, right: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: isDark ? 0.1 : 0.2)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _FilterChip(
+                label: 'Automáticos',
+                value: state.showAutomatic,
+                activeColor: Colors.orange,
+                onChanged: (val) => cubit.toggleAutomaticFilter(val),
+              ),
+              _FilterChip(
+                label: 'Manuales',
+                value: state.showManual,
+                activeColor: Colors.orange,
+                onChanged: (val) => cubit.toggleManualFilter(val),
+              ),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+            child: Divider(height: 1, thickness: 0.5),
+          ),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.center,
+            children: [
+              _CategoryFilterItem(id: 'general', icon: Icons.receipt_long_rounded, isSelected: state.selectedCategories.contains('general'), onTap: () => cubit.toggleCategoryFilter('general')),
+              _CategoryFilterItem(id: 'hogar', icon: Icons.home_work_rounded, isSelected: state.selectedCategories.contains('hogar'), onTap: () => cubit.toggleCategoryFilter('hogar')),
+              _CategoryFilterItem(id: 'suscripción', icon: Icons.subscriptions_rounded, isSelected: state.selectedCategories.contains('suscripción'), onTap: () => cubit.toggleCategoryFilter('suscripción')),
+              _CategoryFilterItem(id: 'salud', icon: Icons.favorite_rounded, isSelected: state.selectedCategories.contains('salud'), onTap: () => cubit.toggleCategoryFilter('salud')),
+              _CategoryFilterItem(id: 'transporte', icon: Icons.directions_car_rounded, isSelected: state.selectedCategories.contains('transporte'), onTap: () => cubit.toggleCategoryFilter('transporte')),
+              _CategoryFilterItem(id: 'ocio', icon: Icons.sports_esports_rounded, isSelected: state.selectedCategories.contains('ocio'), onTap: () => cubit.toggleCategoryFilter('ocio')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryFilterItem extends StatelessWidget {
+  final String id;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CategoryFilterItem({required this.id, required this.icon, required this.isSelected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.orange : Colors.orange.withValues(alpha: 0.05),
+          shape: BoxShape.circle,
+          border: Border.all(color: isSelected ? Colors.orange : Colors.orange.withValues(alpha: 0.2), width: 1.5),
+        ),
+        child: Icon(icon, size: 18, color: isSelected ? Colors.white : Colors.orange.withValues(alpha: 0.6)),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool value;
+  final Color activeColor;
+  final Function(bool) onChanged;
+
+  const _FilterChip({required this.label, required this.value, required this.activeColor, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Checkbox(
+            value: value,
+            onChanged: (val) => onChanged(val!),
+            activeColor: activeColor,
+            visualDensity: VisualDensity.compact,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: value ? activeColor : colorScheme.onSurface.withValues(alpha: 0.4),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -434,7 +629,6 @@ class _RecurrentExpenseCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Siempre mantenemos el espacio de la barra aunque no se vea para uniformidad
                 Opacity(
                   opacity: showProgress ? 1.0 : 0.0,
                   child: ClipRRect(
@@ -488,7 +682,6 @@ class _RecurrentExpenseCard extends StatelessWidget {
             ),
           ),
           
-          // Espacio inferior uniforme
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
             child: Align(
@@ -496,7 +689,7 @@ class _RecurrentExpenseCard extends StatelessWidget {
               child: Text(
                 showProgress 
                   ? (daysRemaining == 0 ? '¡Se cobra hoy!' : 'Próximo cobro en $daysRemaining días')
-                  : ' ', // Espacio vacío para mantener altura
+                  : ' ', 
                 style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w800,
@@ -583,58 +776,64 @@ class _RecurrentExpenseCard extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final ColorScheme colorScheme;
-  const _EmptyState({required this.colorScheme});
+  final bool isFiltered;
+  const _EmptyState({required this.colorScheme, this.isFiltered = false});
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          FadeInDown(
-            child: Container(
-              padding: const EdgeInsets.all(30),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.05),
-                shape: BoxShape.circle,
-              ),
-              child: Opacity(
-                opacity: 0.2,
-                child: Image.asset('assets/Logo.png', height: 80, fit: BoxFit.contain),
-              ),
-            ),
-          ),
-          const SizedBox(height: 30),
-          FadeIn(
-            delay: const Duration(milliseconds: 400),
-            child: Text(
-              'SIN GASTOS FIJOS',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: colorScheme.onSurface.withValues(alpha: 0.7),
-                letterSpacing: 1.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          FadeIn(
-            delay: const Duration(milliseconds: 600),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 50),
-              child: Text(
-                'Añade tus suscripciones o facturas mensuales para que la app las anote automáticamente por ti.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurface.withValues(alpha: 0.4),
-                  fontWeight: FontWeight.w600,
-                  height: 1.5,
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FadeInDown(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.05),
+                  shape: BoxShape.circle,
+                ),
+                child: Opacity(
+                  opacity: 0.2,
+                  child: Image.asset('assets/Logo.png', height: 60, fit: BoxFit.contain),
                 ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            FadeIn(
+              delay: const Duration(milliseconds: 400),
+              child: Text(
+                isFiltered ? 'SIN RESULTADOS' : 'SIN GASTOS FIJOS',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            FadeIn(
+              delay: const Duration(milliseconds: 600),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 50),
+                child: Text(
+                  isFiltered 
+                    ? 'No hay gastos que coincidan con los filtros seleccionados.'
+                    : 'Añade tus suscripciones o facturas mensuales para que la app las anote automáticamente por ti.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurface.withValues(alpha: 0.4),
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
