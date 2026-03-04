@@ -36,7 +36,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(25, 20, 20, 10),
+              padding: const EdgeInsets.fromLTRB(25, 10, 20, 5),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -46,7 +46,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                       Text(
                         'MIS PAGOS FIJOS',
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.w900,
                           color: colorScheme.onSurface,
                           letterSpacing: -0.5,
@@ -55,7 +55,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                       Text(
                         'Planifica tus gastos mensuales',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: colorScheme.onSurface.withValues(alpha: 0.5),
                           fontWeight: FontWeight.w600,
                         ),
@@ -71,22 +71,21 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                       );
                     },
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Colors.orange.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.orange.withValues(alpha: 0.2), width: 1.5)
                       ),
-                      child: const Icon(Icons.add_rounded, color: Colors.orange, size: 28),
+                      child: const Icon(Icons.add_rounded, color: Colors.orange, size: 24),
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 5),
 
-            // TARJETA DE RESUMEN
             BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
               builder: (context, state) {
                 if (state.expenses.isEmpty) return const SizedBox.shrink();
@@ -102,7 +101,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                       onTap: () => context.read<RecurrentExpensesCubit>().toggleProratedView(),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
                           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                           gradient: isDark 
@@ -112,7 +111,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                                 end: Alignment.bottomRight,
                               )
                             : null,
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(25),
                           border: Border.all(
                             color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.3), 
                             width: 1.5
@@ -120,8 +119,8 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: isDark ? 0.05 : 0.08),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
                             )
                           ],
                         ),
@@ -140,17 +139,17 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                                         : 'PAGOS FIJOS MENSUALES',
                                       style: TextStyle(
                                         color: Colors.orange.shade400,
-                                        fontSize: 11,
+                                        fontSize: 10,
                                         fontWeight: FontWeight.w800,
                                         letterSpacing: 1.2,
                                       ),
                                     ),
-                                    const SizedBox(height: 5),
+                                    const SizedBox(height: 2),
                                     Text(
                                       '${humanizeNumbers.number(totalToShow)}€',
                                       style: TextStyle(
                                         color: isDark ? Colors.white : Colors.black87,
-                                        fontSize: 34,
+                                        fontSize: 30,
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: -1,
                                       ),
@@ -158,7 +157,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                                   ],
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
                                     color: Colors.orange.withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
@@ -166,13 +165,13 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                                   child: const Icon(
                                     Icons.repeat_rounded,
                                     color: Colors.orange,
-                                    size: 28,
+                                    size: 24,
                                   ),
                                 ),
                               ],
                             ),
                             
-                            const SizedBox(height: 15),
+                            const SizedBox(height: 12),
                             
                             Row(
                               children: [
@@ -184,14 +183,14 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                                 Icon(
                                   Icons.sync_rounded, 
                                   color: isDark ? Colors.white30 : Colors.grey.shade400, 
-                                  size: 14
+                                  size: 12
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 Text(
                                   state.showProrated ? 'Cambiar a mensual' : 'Cambiar a prorrateado',
                                   style: TextStyle(
                                     color: isDark ? Colors.white30 : Colors.grey.shade500,
-                                    fontSize: 10,
+                                    fontSize: 9,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -206,9 +205,8 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
               },
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
-            // CABECERA DE LISTADO CON FILTRO
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25),
               child: Row(
@@ -217,7 +215,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                   Text(
                     'LISTADO DE GASTOS',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: colorScheme.onSurface.withValues(alpha: 0.4),
                       letterSpacing: 2.0,
@@ -231,7 +229,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                         icon: Icon(
                           state.isFilterOpen ? Icons.filter_list_off_rounded : Icons.filter_list_rounded, 
                           color: colorScheme.primary.withValues(alpha: 0.6), 
-                          size: 20
+                          size: 18
                         ),
                       );
                     },
@@ -240,7 +238,6 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
               ),
             ),
 
-            // PANEL DE FILTROS DESPLEGABLE
             BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
               builder: (context, state) {
                 if (state.isFilterOpen) {
@@ -253,7 +250,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
               },
             ),
 
-            const SizedBox(height: 5),
+            const SizedBox(height: 2),
 
             Expanded(
               child: BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
@@ -266,7 +263,6 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                     return Center(child: Text(state.errorMessage ?? 'Error al cargar gastos fijos'));
                   }
 
-                  // Aplicamos los filtros
                   final filteredExpenses = state.expenses.where((e) {
                     final bool isAutomatic = e.day != null;
                     if (isAutomatic && !state.showAutomatic) return false;
@@ -305,7 +301,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
                       final expense = filteredExpenses[index];
                       return FadeInUp(
                         key: ValueKey(expense.id),
-                        delay: Duration(milliseconds: 100 * index),
+                        delay: Duration(milliseconds: 50 * index),
                         child: _RecurrentExpenseDismissible(
                           expense: expense,
                           humanizeNumbers: humanizeNumbers,
@@ -336,11 +332,11 @@ class _FilterPanel extends StatelessWidget {
     final state = cubit.state;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10, top: 5, left: 20, right: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 8, top: 2, left: 20, right: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: colorScheme.primary.withValues(alpha: isDark ? 0.1 : 0.2)),
       ),
       child: Column(
@@ -363,12 +359,12 @@ class _FilterPanel extends StatelessWidget {
             ],
           ),
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+            padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
             child: Divider(height: 1, thickness: 0.5),
           ),
           Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: 8,
+            runSpacing: 8,
             alignment: WrapAlignment.center,
             children: [
               _CategoryFilterItem(id: 'general', icon: Icons.receipt_long_rounded, isSelected: state.selectedCategories.contains('general'), onTap: () => cubit.toggleCategoryFilter('general')),
@@ -399,13 +395,13 @@ class _CategoryFilterItem extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isSelected ? Colors.orange : Colors.orange.withValues(alpha: 0.05),
           shape: BoxShape.circle,
           border: Border.all(color: isSelected ? Colors.orange : Colors.orange.withValues(alpha: 0.2), width: 1.5),
         ),
-        child: Icon(icon, size: 18, color: isSelected ? Colors.white : Colors.orange.withValues(alpha: 0.6)),
+        child: Icon(icon, size: 16, color: isSelected ? Colors.white : Colors.orange.withValues(alpha: 0.6)),
       ),
     );
   }
@@ -437,7 +433,7 @@ class _FilterChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.bold,
               color: value ? activeColor : colorScheme.onSurface.withValues(alpha: 0.4),
             ),
@@ -457,17 +453,17 @@ class _ModeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
-          fontSize: 9,
+          fontSize: 8,
           fontWeight: FontWeight.w900,
           letterSpacing: 0.5,
         ),
@@ -492,7 +488,7 @@ class _RecurrentExpenseDismissible extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Dismissible(
         key: Key('dismiss_${expense.id}'),
         background: const SwipeBackgroundWidget(
@@ -558,6 +554,7 @@ class _RecurrentExpenseCard extends StatelessWidget {
     final bool showProgress = isAutomatic && expense.isActive;
 
     return Container(
+      constraints: const BoxConstraints(minHeight: 92), // UNIFORMIDAD: Altura mínima para todas
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(25),
@@ -574,6 +571,7 @@ class _RecurrentExpenseCard extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center, // CENTRADO VERTICAL: Para los manuales
         children: [
           ListTile(
             contentPadding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
@@ -628,19 +626,18 @@ class _RecurrentExpenseCard extends StatelessWidget {
                     color: colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Opacity(
-                  opacity: showProgress ? 1.0 : 0.0,
-                  child: ClipRRect(
+                if (showProgress) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
-                      value: showProgress ? progress : 0,
+                      value: progress,
                       minHeight: 3,
                       backgroundColor: Colors.orange.withValues(alpha: 0.05),
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.orange.withValues(alpha: 0.4)),
                     ),
                   ),
-                ),
+                ]
               ],
             ),
             trailing: Row(
@@ -682,23 +679,22 @@ class _RecurrentExpenseCard extends StatelessWidget {
             ),
           ),
           
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                showProgress 
-                  ? (daysRemaining == 0 ? '¡Se cobra hoy!' : 'Próximo cobro en $daysRemaining días')
-                  : ' ', 
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
-                  letterSpacing: 0.5,
+          if (showProgress)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  daysRemaining == 0 ? '¡Se cobra hoy!' : 'Próximo cobro en $daysRemaining días',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
