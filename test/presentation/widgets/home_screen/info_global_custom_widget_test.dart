@@ -49,19 +49,20 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      // Buscamos el nuevo texto con el salto de línea
+      // Buscamos el nuevo texto organizado en dos líneas
       expect(find.text('BALANCE TOTAL\n(CON AHORROS)'), findsOneWidget);
       // Balance = 1250.50 (cartera) + 500 (ahorros) = 1750.50
       expect(find.text('1.750,50€'), findsOneWidget);
     });
 
-    testWidgets('Debe mostrar solo el balance de cartera si la opción está desactivada', (WidgetTester tester) async {
+    testWidgets('Debe mostrar solo el balance total si la opción de ahorros está desactivada', (WidgetTester tester) async {
       when(() => mockTotalMoneyCubit.state).thenReturn(const TotalMoneyCubitState(totalMoney: 1250.50, isSavingsIncluded: false));
       
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('BALANCE EN\nCARTERA'), findsOneWidget);
+      // ACTUALIZADO: Buscamos "BALANCE TOTAL" sin los ahorros
+      expect(find.text('BALANCE TOTAL'), findsOneWidget);
       // Solo muestra los 1250.50 de la cartera
       expect(find.text('1.250,50€'), findsOneWidget);
     });

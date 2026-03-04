@@ -15,6 +15,7 @@ class InfoGlogalWidget extends StatelessWidget {
     final totalMoneyState = context.watch<TotalMoneyCubit>().state;
     final savingsState = context.watch<SavingsCubit>().state;
     final humanizeNumbers = HumanizeNumbers();
+    final colorScheme = Theme.of(context).colorScheme;
     
     final bool isLoading = historyState.status == HistoryStatus.loading || historyState.isSyncing;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -22,9 +23,7 @@ class InfoGlogalWidget extends StatelessWidget {
     // Lógica de celebración: ¿Se ha cumplido la meta?
     final bool isGoalMet = savingsState.progress >= 1.0 && savingsState.savingGoal > 0;
 
-    // CORRECCIÓN DE LÓGICA:
-    // totalMoneyState.totalMoney = Cartera (Ingresos - Gastos)
-    // savingsState.savingTotal = Hucha (Ahorros acumulados)
+    // LÓGICA DE BALANCE:
     final double displayedBalance = totalMoneyState.isSavingsIncluded 
         ? (totalMoneyState.totalMoney + savingsState.savingTotal)
         : totalMoneyState.totalMoney;
@@ -35,9 +34,9 @@ class InfoGlogalWidget extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isDark ? Colors.grey.shade900 : Colors.white,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.orange.withValues(alpha: 0.15), width: 1.5),
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          borderRadius: BorderRadius.circular(25), // Unificado a 25 como en Gastos Fijos
+          border: Border.all(color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.15), width: 1.5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -51,17 +50,17 @@ class InfoGlogalWidget extends StatelessWidget {
             // PARTE IZQUIERDA: BALANCE TOTAL
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center, // Centrado horizontal
+                crossAxisAlignment: CrossAxisAlignment.center, 
                 children: [
                   Text(
-                    totalMoneyState.isSavingsIncluded ? 'BALANCE TOTAL\n(CON AHORROS)' : 'BALANCE EN\nCARTERA',
-                    textAlign: TextAlign.center, // Centrado interno de las líneas
+                    totalMoneyState.isSavingsIncluded ? 'BALANCE TOTAL\n(CON AHORROS)' : 'BALANCE TOTAL',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 9,
+                      fontSize: 10,
                       fontWeight: FontWeight.w800,
-                      color: Colors.grey.shade400,
-                      letterSpacing: 1.5,
-                      height: 1.2,
+                      color: Colors.orange.shade400,
+                      letterSpacing: 1.2,
+                      height: 1.1,
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -73,9 +72,10 @@ class InfoGlogalWidget extends StatelessWidget {
                       child: Text(
                         '${humanizeNumbers.number(displayedBalance)}€',
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: 30, // Unificado a 30 como en Gastos Fijos
                           fontWeight: FontWeight.w900,
-                          color: isDark ? Colors.white : Colors.black87,
+                          color: isDark ? Colors.white : colorScheme.onSurface,
+                          letterSpacing: -1,
                         ),
                       ),
                     ),

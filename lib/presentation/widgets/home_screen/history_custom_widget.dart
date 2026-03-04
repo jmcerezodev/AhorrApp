@@ -34,48 +34,57 @@ class HistoryCustomWidget extends StatelessWidget {
     }).toList();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                historyCubit.state.isChart ? 'ANÁLISIS ANUAL' : 'MOVIMIENTOS',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: colorScheme.onSurface.withValues(alpha: 0.4),
-                  letterSpacing: 2.0,
+          // CABECERA COMPACTADA
+          SizedBox(
+            height: 35, 
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  historyCubit.state.isChart ? 'ANÁLISIS ANUAL' : 'MOVIMIENTOS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface.withValues(alpha: 0.4),
+                    letterSpacing: 1.5,
+                  ),
                 ),
-              ),
-              Row(
-                children: [
-                  if (!historyCubit.state.isChart)
-                    _FilterMenuButton(),
-                  
-                  if (!historyCubit.state.isChart)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!historyCubit.state.isChart)
+                      _FilterMenuButton(),
+                    
+                    if (!historyCubit.state.isChart)
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(6), 
+                        onPressed: () {
+                          final newOrder = historyCubit.state.listOrder == 'descending' ? 'ascending' : 'descending';
+                          context.read<HistoryCubit>().listOrder(newOrder);
+                        },
+                        icon: Icon(Icons.sort_rounded, color: colorScheme.primary.withValues(alpha: 0.6), size: 18),
+                      ),
                     IconButton(
                       visualDensity: VisualDensity.compact,
-                      onPressed: () {
-                        final newOrder = historyCubit.state.listOrder == 'descending' ? 'ascending' : 'descending';
-                        context.read<HistoryCubit>().listOrder(newOrder);
-                      },
-                      icon: Icon(Icons.sort_rounded, color: colorScheme.primary.withValues(alpha: 0.6), size: 20),
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.all(6), 
+                      icon: Icon(
+                        historyCubit.state.isChart ? Icons.list_alt_rounded : Icons.bar_chart_rounded,
+                        color: colorScheme.primary.withValues(alpha: 0.6),
+                        size: 20,
+                      ),
+                      onPressed: () => historyCubit.isChart(!historyCubit.state.isChart),
                     ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: Icon(
-                      historyCubit.state.isChart ? Icons.list_alt_rounded : Icons.bar_chart_rounded,
-                      color: colorScheme.primary.withValues(alpha: 0.6),
-                      size: 22,
-                    ),
-                    onPressed: () => historyCubit.isChart(!historyCubit.state.isChart),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
           
           if (historyCubit.state.isFilterOpen && !historyCubit.state.isChart)
@@ -84,7 +93,7 @@ class HistoryCustomWidget extends StatelessWidget {
               child: _FilterPanel(historyCubit: historyCubit),
             ),
 
-          const SizedBox(height: 5),
+          const SizedBox(height: 2), 
           
           Expanded(
             child: historyCubit.state.isChart
@@ -109,11 +118,13 @@ class _FilterMenuButton extends StatelessWidget {
 
     return IconButton(
       visualDensity: VisualDensity.compact,
+      constraints: const BoxConstraints(),
+      padding: const EdgeInsets.all(6), 
       onPressed: () => historyCubit.toggleFilterPanel(),
       icon: Icon(
         historyCubit.state.isFilterOpen ? Icons.filter_list_off_rounded : Icons.filter_list_rounded, 
         color: colorScheme.primary.withValues(alpha: 0.6), 
-        size: 20
+        size: 18
       ),
     );
   }
@@ -129,8 +140,8 @@ class _FilterPanel extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10, top: 5),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      margin: const EdgeInsets.only(bottom: 8, top: 2), 
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2), 
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(15),
@@ -194,7 +205,7 @@ class _FilterChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10, 
               fontWeight: FontWeight.bold,
               color: value ? activeColor : colorScheme.onSurface.withValues(alpha: 0.4),
             ),
@@ -299,7 +310,7 @@ class _HistoryItem extends StatelessWidget {
     final bool showSpentLabel = isSpent && amount >= 0;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8), // Reducido de 12 a 8 para uniformidad con Gastos Fijos
       child: Opacity(
         opacity: showSpentLabel ? 0.7 : 1.0, 
         child: Dismissible(
