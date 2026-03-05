@@ -6,6 +6,7 @@ import 'models/local_saving.dart';
 import 'models/financial_summary.dart';
 import 'models/pending_sync.dart';
 import 'models/local_recurrent_expense.dart';
+import 'models/local_shopping_item.dart';
 
 class LocalDbService {
   static final LocalDbService _instance = LocalDbService._internal();
@@ -26,7 +27,8 @@ class LocalDbService {
           LocalSavingSchema,
           FinancialSummarySchema,
           PendingSyncSchema,
-          LocalRecurrentExpenseSchema
+          LocalRecurrentExpenseSchema,
+          LocalShoppingItemSchema,
         ],
         directory: dir.path,
       );
@@ -40,7 +42,6 @@ class LocalDbService {
   Future<int> getTotalCount() async {
     final int historyCount = await _isar.localHistorys.count();
     final int savingsCount = await _isar.localSavings.count();
-    // Una vez generado el código, esto será un int puro
     final int recurrentCount = await _isar.localRecurrentExpenses.count();
     return historyCount + savingsCount + recurrentCount;
   }
@@ -63,7 +64,6 @@ class LocalDbService {
     return historyYear < savingYear ? historyYear : savingYear;
   }
 
-  // MÉTODO RESTAURADO PARA EL CALENDARIO
   Future<List<LocalHistory>> getYearlyActivity(int year) async {
     return await _isar.localHistorys
         .filter()
@@ -159,6 +159,27 @@ class LocalDbService {
     });
   }
 
+  // --- LISTA DE LA COMPRA ---
+
+  Future<void> saveShoppingItems(List<LocalShoppingItem> items) async {
+    await _isar.writeTxn(() async {
+      await _isar.localShoppingItems.putAll(items);
+    });
+  }
+
+  Future<List<LocalShoppingItem>> getShoppingList(String userId) async {
+    return await _isar.localShoppingItems
+        .filter()
+        .userIdEqualTo(userId)
+        .findAll();
+  }
+
+  Future<void> deleteShoppingItemByAppwriteId(String appwriteId) async {
+    await _isar.writeTxn(() async {
+      await _isar.localShoppingItems.filter().appwriteIdEqualTo(appwriteId).deleteAll();
+    });
+  }
+
   // --- RESUMEN FINANCIERO ---
 
   Future<void> saveSavingGoal(String userId, double goal) async {
@@ -220,6 +241,7 @@ class LocalDbService {
       await _isar.financialSummarys.clear();
       await _isar.pendingSyncs.clear();
       await _isar.localRecurrentExpenses.clear();
+      await _isar.localShoppingItems.clear();
     });
   }
 
@@ -228,6 +250,7 @@ class LocalDbService {
       await _isar.localHistorys.filter().appwriteIdEqualTo(appwriteId).deleteAll();
       await _isar.localSavings.filter().appwriteIdEqualTo(appwriteId).deleteAll();
       await _isar.localRecurrentExpenses.filter().appwriteIdEqualTo(appwriteId).deleteAll();
+      await _isar.localShoppingItems.filter().appwriteIdEqualTo(appwriteId).deleteAll();
     });
   }
 }

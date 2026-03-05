@@ -6,11 +6,12 @@ import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/core/sync/sync_service.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
+import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart'; // AÑADIDO
+import 'package:flutter_localizations/flutter_localizations.dart'; 
 import 'package:go_router/go_router.dart';
 import 'dart:io';
 
@@ -38,7 +39,6 @@ void main() async {
     
     String initialRoute = '/login';
     
-    // Determinamos la ruta inicial basada en la sesión persistida (Soporte Offline)
     final bool hasActiveSession = Preferences.uId.isNotEmpty && Preferences.isLoggedIn;
 
     if (hasActiveSession) {
@@ -53,8 +53,6 @@ void main() async {
         initialRoute = '/home-screen';
       }
     } else {
-      // Si no hay sesión local confirmada, consultamos al servicio de Auth
-      // (Esto permitirá recuperar sesión si hay red, o mandará a login si no)
       initialRoute = await authService.getInitialRoute();
     }
 
@@ -115,10 +113,10 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
   bool _wasPaused = false;
   static const platform = MethodChannel('dev.jmcerezo.ahorrapp/security');
 
-  // DEFINIMOS LOS CUBITS AQUÍ PARA QUE SEAN PERMANENTES
   late final TotalMoneyCubit _totalMoneyCubit;
   late final HistoryCubit _historyCubit;
   late final LoginCubit _loginCubit;
+  late final ShoppingCubit _shoppingCubit; // NUEVO
 
   @override
   void initState() {
@@ -126,12 +124,11 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
     WidgetsBinding.instance.addObserver(this);
     router = getAppRouter(widget.initialRoute);
 
-    // INICIALIZACIÓN ÚNICA DE LOS CUBITS CORE
     _totalMoneyCubit = getIt<TotalMoneyCubit>();
     _historyCubit = HistoryCubit(totalMoneyCubit: _totalMoneyCubit);
     _loginCubit = LoginCubit(historyCubit: _historyCubit);
+    _shoppingCubit = getIt<ShoppingCubit>(); // NUEVO
 
-    // Aplicar seguridad al iniciar si está activa
     _updateAppSecurity();
   }
 
@@ -143,7 +140,6 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Sincronizar seguridad en cualquier cambio de estado (entrada o salida)
     _updateAppSecurity();
 
     if (state == AppLifecycleState.paused) {
@@ -187,10 +183,10 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
 
     return MultiBlocProvider(
       providers: [
-        // USAMOS .value PARA QUE LOS CUBITS NO SE DESTRUYAN AL REDIBUJAR
         BlocProvider<HistoryCubit>.value(value: _historyCubit),
         BlocProvider<TotalMoneyCubit>.value(value: _totalMoneyCubit),
         BlocProvider<LoginCubit>.value(value: _loginCubit),
+        BlocProvider<ShoppingCubit>.value(value: _shoppingCubit), // NUEVO
 
         BlocProvider(create: (_) => NewUserCubit()),
         BlocProvider(create: (_) => ResetPasswordCubit()),
@@ -210,7 +206,6 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
         darkTheme: AppTheme().getTheme(isDarkMode: true),
         themeMode: themeMode,
         routerConfig: router,
-        // CONFIGURACIÓN DE IDIOMA ESPAÑOL
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,

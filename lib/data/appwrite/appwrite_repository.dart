@@ -11,6 +11,7 @@ class AppwriteRepository {
   final String _historyId = Env.appwriteHistoryCollectionId;
   final String _savingsId = Env.appwriteSavingsCollectionId;
   final String _recurrentId = Env.appwriteRecurrentExpensesCollectionId;
+  final String _shoppingId = "shoppingList"; // NUEVA COLECCIÓN (Añadir a Env si prefieres)
 
   // --- PREFERENCIAS DE USUARIO ---
 
@@ -48,6 +49,7 @@ class AppwriteRepository {
     List<Document> allHistory = [];
     List<Document> allSavings = [];
     List<Document> allRecurrent = [];
+    List<Document> allShopping = [];
     
     try {
       final historyInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _historyId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
@@ -57,7 +59,7 @@ class AppwriteRepository {
       final int totalDocsCount = historyInfo.total + savingsInfo.total + recurrentInfo.total;
       if (totalDocsCount == 0) {
         await updateTotalBalance(0.0);
-        return {'balance': 0.0, 'history': [], 'savings': [], 'recurrent': [], 'savingGoal': 0.0};
+        return {'balance': 0.0, 'history': [], 'savings': [], 'recurrent': [], 'shopping': [], 'savingGoal': 0.0};
       }
 
       int processed = 0;
@@ -77,7 +79,7 @@ class AppwriteRepository {
           allHistory.add(doc);
         }
         processed += response.documents.length;
-        onProgress((processed / totalDocsCount) * 0.6);
+        onProgress((processed / totalDocsCount) * 0.5);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
 
@@ -92,7 +94,7 @@ class AppwriteRepository {
         );
         allSavings.addAll(response.documents);
         processed += response.documents.length;
-        onProgress((processed / totalDocsCount) * 0.85);
+        onProgress((processed / totalDocsCount) * 0.7);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
 
@@ -107,9 +109,24 @@ class AppwriteRepository {
         );
         allRecurrent.addAll(response.documents);
         processed += response.documents.length;
-        onProgress((processed / totalDocsCount) * 0.95);
+        onProgress((processed / totalDocsCount) * 0.85);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
+
+      // 4. Procesar Compra
+      hasMore = true;
+      lastId = null;
+      try {
+        while (hasMore) {
+          final response = await _databases.listDocuments(
+            databaseId: _databaseId,
+            collectionId: _shoppingId,
+            queries: [Query.equal('userId', [userId]), Query.limit(100), Query.orderAsc('\$id'), if (lastId != null) Query.cursorAfter(lastId)],
+          );
+          allShopping.addAll(response.documents);
+          if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
+        }
+      } catch (_) {}
 
       final double finalBalance = totalIncomes - totalExpenses;
       await updateTotalBalance(finalBalance);
@@ -124,12 +141,33 @@ class AppwriteRepository {
         'history': allHistory,
         'savings': allSavings,
         'recurrent': allRecurrent,
+        'shopping': allShopping,
         'savingGoal': savingGoal,
       };
     } catch (e) {
       rethrow;
     }
   }
+
+  // --- LISTA DE LA COMPRA ---
+
+  Future<List<Document>> getShoppingList(String userId) async {
+    return (await _databases.listDocuments(
+      databaseId: _databaseId,
+      collectionId: _shoppingId,
+      queries: [Query.equal('userId', [userId]), Query.limit(100)],
+    )).documents;
+  }
+
+  Future<Document> addShoppingItem({required String documentId, required String userId, required String name, required double amount, String category = 'general', bool isBought = false, int position = 0}) async {
+    return await _databases.createDocument(databaseId: _databaseId, collectionId: _shoppingId, documentId: documentId, data: {'userId': userId, 'name': name, 'amount': amount, 'category': category, 'isBought': isBought, 'position': position});
+  }
+
+  Future<Document> updateShoppingItem({required String documentId, required Map<String, dynamic> data}) async {
+    return await _databases.updateDocument(databaseId: _databaseId, collectionId: _shoppingId, documentId: documentId, data: data);
+  }
+
+  Future<void> deleteShoppingItem(String documentId) async => await _databases.deleteDocument(databaseId: _databaseId, collectionId: _shoppingId, documentId: documentId);
 
   // --- CONSULTAS FILTRADAS ---
   

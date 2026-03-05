@@ -5,6 +5,7 @@ import 'package:ahorrapp/domain/usecases/recurrent_expenses/process_recurrent_ex
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/screens/home_screen.dart';
 import 'package:ahorrapp/presentation/screens/recurrent_expenses/recurrent_expenses_screen.dart';
+import 'package:ahorrapp/presentation/screens/shopping_list/shopping_list_screen.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
 
   final List<Widget> _screens = [
     const RecurrentExpensesScreen(), // Pestaña de Gastos Recurrentes
-    const Center(child: Text('Lista de la Compra\n(Próximamente)', textAlign: TextAlign.center)),
+    const ShoppingListScreen(), // NUEVO: Pantalla Lista de la Compra
     const HomeScreen(), // Botón central: Inicio
     const Center(child: Text('Escaneo de Tickets\n(Próximamente)', textAlign: TextAlign.center)),
     const Center(child: Text('Más Ajustes\n(Próximamente)', textAlign: TextAlign.center)),
