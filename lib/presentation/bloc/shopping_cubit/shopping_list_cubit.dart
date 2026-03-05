@@ -93,16 +93,17 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
   // MÉTODO PARA VOLCAR A GASTOS
   Future<void> transferToExpenses({
     required bool asPack, 
-    required HistoryCubit historyCubit
+    required HistoryCubit historyCubit,
+    String? packName, // Nuevo: nombre personalizado del pack
   }) async {
     final boughtItems = state.items.where((item) => item.isBought).toList();
     
-    // 1. Verificación de precios
+    // Verificación de precios (Ya se debería haber hecho en la UI, pero blindamos aquí también)
     final itemsWithoutPrice = boughtItems.where((item) => item.amount <= 0).toList();
     if (itemsWithoutPrice.isNotEmpty) {
       emit(state.copyWith(
         status: ShoppingStatus.failure, 
-        errorMessage: 'Hay productos en la cesta sin precio. Por favor, añádeles un precio para poder guardarlos como gasto.'
+        errorMessage: 'Hay productos sin precio en la cesta.'
       ));
       return;
     }
@@ -115,11 +116,10 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
       final int year = int.parse(date.year());
 
       if (asPack) {
-        // Opción A: Guardar como un solo gasto total
         final totalAmount = boughtItems.fold(0.0, (sum, item) => sum + item.amount);
         final movement = Movement(
           id: const Uuid().v4(),
-          name: 'Compra Supermercado',
+          name: packName ?? 'Compra Supermercado',
           amount: totalAmount,
           type: MovementType.expense,
           isIncome: false,
@@ -128,11 +128,10 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
           month: month,
           year: year,
           createdAt: DateTime.now(),
-          category: 'general', // O una categoría específica de compra
+          category: 'general',
         );
         await _saveMovementUseCase(movement);
       } else {
-        // Opción B: Guardar producto a producto
         for (var item in boughtItems) {
           final movement = Movement(
             id: const Uuid().v4(),
@@ -151,12 +150,8 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
         }
       }
 
-      // 2. Limpiar items comprados tras el volcado exitoso
       await clearBoughtItems();
-      
-      // 3. Refrescar historial
       await historyCubit.loadHistoryByDate(month, year);
-      
       emit(state.copyWith(status: ShoppingStatus.success));
     } catch (e) {
       emit(state.copyWith(status: ShoppingStatus.failure, errorMessage: 'Error al transferir gastos: $e'));

@@ -1,5 +1,7 @@
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/confirm_shopping_transfer_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/pack_config_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -39,15 +41,49 @@ class TransferToExpensesDialog extends StatelessWidget {
           icon: Icons.inventory_2_rounded,
           onPressed: () {
             Navigator.pop(context);
-            shoppingCubit.transferToExpenses(asPack: true, historyCubit: historyCubit);
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => BlocProvider.value(
+                value: shoppingCubit,
+                child: BlocProvider.value(
+                  value: historyCubit,
+                  child: const PackConfigDialog(),
+                ),
+              ),
+            );
           },
         ),
         _DialogButton(
           label: 'PRODUCTO A PRODUCTO',
           icon: Icons.list_alt_rounded,
-          onPressed: () {
-            Navigator.pop(context);
-            shoppingCubit.transferToExpenses(asPack: false, historyCubit: historyCubit);
+          onPressed: () async {
+            final boughtItems = shoppingCubit.state.items.where((item) => item.isBought).toList();
+            final itemsWithoutPrice = boughtItems.where((item) => item.amount <= 0).toList();
+
+            if (itemsWithoutPrice.isNotEmpty) {
+              Navigator.pop(context);
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => BlocProvider.value(
+                  value: shoppingCubit,
+                  child: BlocProvider.value(
+                    value: historyCubit,
+                    child: const PackConfigDialog(onlyPrices: true),
+                  ),
+                ),
+              );
+            } else {
+              Navigator.pop(context);
+              await shoppingCubit.transferToExpenses(asPack: false, historyCubit: historyCubit);
+              if (context.mounted) {
+                showDialog(
+                  context: context, 
+                  builder: (_) => const ConfirmShoppingTransferDialog(message: 'Los productos se han añadido individualmente a tu historial.')
+                );
+              }
+            }
           },
         ),
         TextButton(
