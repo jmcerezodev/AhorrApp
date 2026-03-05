@@ -78,7 +78,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       'isSpent': e.isSpent, 'currentDate': e.date, 'currentHour': e.hour, 'month': e.month, 'year': e.year,
       'createdAt': e.createdAt.toIso8601String(),
       'isRecurrent': e.isRecurrent,
-      'category': e.category, // AÑADIDO
+      'category': e.category,
     }).toList();
     emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
   }
@@ -103,12 +103,22 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         'isSpent': e.isSpent, 'currentDate': e.date, 'currentHour': e.hour, 'month': e.month, 'year': e.year,
         'createdAt': e.createdAt.toIso8601String(),
         'isRecurrent': e.isRecurrent,
-        'category': e.category, // AÑADIDO
+        'category': e.category,
       }).toList();
       emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
     } catch (e) {
       emit(state.copyWith(status: HistoryStatus.failure, isSyncing: false));
     }
+  }
+
+  void toggleCategoryFilter(String category) {
+    final currentSelected = List<String>.from(state.selectedCategories);
+    if (currentSelected.contains(category)) {
+      currentSelected.remove(category);
+    } else {
+      currentSelected.add(category);
+    }
+    emit(state.copyWith(selectedCategories: currentSelected));
   }
 
   // --- MÉTODOS RESTAURADOS PARA DIÁLOGOS ---
@@ -158,7 +168,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       ..year = int.tryParse(doc.data['year']?.toString() ?? '0') ?? 0
       ..createdAt = DateTime.parse(doc.$createdAt)
       ..isRecurrent = doc.data['isRecurrent'] ?? false
-      ..category = doc.data['category'] ?? (doc.data['isIncome'] == true ? 'otro' : 'general') // AÑADIDO
+      ..category = doc.data['category'] ?? (doc.data['isIncome'] == true ? 'otro' : 'general')
     ).toList();
   }
 

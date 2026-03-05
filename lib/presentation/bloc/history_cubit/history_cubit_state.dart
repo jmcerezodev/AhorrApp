@@ -17,6 +17,7 @@ class HistoryCubitState extends Equatable {
   final bool showExpenses;
   final bool showSavings;
   final bool isFilterOpen;
+  final List<String> selectedCategories; // NUEVO: Categorías seleccionadas para filtrar
 
   final bool isSyncing;
   final double syncProgress;
@@ -36,6 +37,7 @@ class HistoryCubitState extends Equatable {
     this.showExpenses = true,
     this.showSavings = true,
     this.isFilterOpen = false,
+    this.selectedCategories = const [], // Por defecto todas visibles
     this.isSyncing = false,
     this.syncProgress = 0.0,
     this.errorMessage,
@@ -55,6 +57,7 @@ class HistoryCubitState extends Equatable {
     bool? showExpenses,
     bool? showSavings,
     bool? isFilterOpen,
+    List<String>? selectedCategories,
     bool? isSyncing,
     double? syncProgress,
     String? errorMessage,
@@ -73,6 +76,7 @@ class HistoryCubitState extends Equatable {
         showExpenses: showExpenses ?? this.showExpenses,
         showSavings: showSavings ?? this.showSavings,
         isFilterOpen: isFilterOpen ?? this.isFilterOpen,
+        selectedCategories: selectedCategories ?? this.selectedCategories,
         isSyncing: isSyncing ?? this.isSyncing,
         syncProgress: syncProgress ?? this.syncProgress,
         errorMessage: errorMessage ?? this.errorMessage,
@@ -93,6 +97,7 @@ class HistoryCubitState extends Equatable {
         showExpenses,
         showSavings,
         isFilterOpen,
+        selectedCategories,
         isSyncing,
         syncProgress,
         errorMessage,
