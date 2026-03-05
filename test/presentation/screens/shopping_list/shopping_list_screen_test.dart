@@ -73,7 +73,6 @@ void main() {
     });
 
     testWidgets('Debe mostrar el botón de transferencia si hay items en la cesta', (WidgetTester tester) async {
-      // Configuramos estado con un item comprado (userId es obligatorio)
       when(() => mockShoppingCubit.state).thenReturn(const ShoppingState(
         items: [ShoppingListItem(id: '1', userId: 'u1', name: 'Leche', amount: 1.5, isBought: true, position: 0)]
       ));
@@ -82,6 +81,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('AÑADIR COMPRA A LA LISTA DE GASTOS'), findsOneWidget);
+    });
+
+    testWidgets('El botón de transferencia debe ocultarse si no hay items comprados', (WidgetTester tester) async {
+      when(() => mockShoppingCubit.state).thenReturn(const ShoppingState(
+        items: [ShoppingListItem(id: '1', userId: 'u1', name: 'Leche', amount: 1.5, isBought: false, position: 0)]
+      ));
+
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      expect(find.text('AÑADIR COMPRA A LA LISTA DE GASTOS'), findsNothing);
     });
   });
 }

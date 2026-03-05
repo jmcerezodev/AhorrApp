@@ -119,7 +119,6 @@ class _PackConfigDialogState extends State<PackConfigDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
     final shoppingCubit = context.watch<ShoppingListCubit>();
     final historyCubit = context.read<HistoryCubit>();
@@ -157,7 +156,6 @@ class _PackConfigDialogState extends State<PackConfigDialog> {
             ),
             const SizedBox(height: 20),
             
-            // CONTENIDO SCROLLABLE SI ES NECESARIO
             Flexible(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -224,7 +222,6 @@ class _PackConfigDialogState extends State<PackConfigDialog> {
 
             const SizedBox(height: 30),
 
-            // BOTONES EN HORIZONTAL
             Row(
               children: [
                 Expanded(
@@ -247,9 +244,9 @@ class _PackConfigDialogState extends State<PackConfigDialog> {
                     onPressed: () async {
                       if (_isFixingPrices) {
                         bool allFilled = true;
-                        for (var entry in _priceControllers.entries) {
-                          final price = double.tryParse(entry.value.text.replaceAll(',', '.'));
-                          if (price == null || price <= 0) {
+                        for (var controller in _priceControllers.values) {
+                          final p = double.tryParse(controller.text.replaceAll(',', '.'));
+                          if (p == null || p <= 0) {
                             allFilled = false;
                             break;
                           }
@@ -267,24 +264,34 @@ class _PackConfigDialogState extends State<PackConfigDialog> {
                         }
 
                         if (widget.onlyPrices) {
+                          final navigator = Navigator.of(context);
                           await shoppingCubit.transferToExpenses(asPack: false, historyCubit: historyCubit);
+                          navigator.pop(); 
                           if (mounted) {
-                            context.pop();
-                            showDialog(context: context, builder: (_) => const ConfirmShoppingTransferDialog(message: 'Los productos se han añadido individualmente.'));
+                            showDialog(
+                              context: navigator.context, 
+                              builder: (_) => const ConfirmShoppingTransferDialog(message: 'Los productos se han añadido individualmente.')
+                            );
                           }
                         } else {
                           setState(() => _isFixingPrices = false);
                         }
                       } else {
+                        final navigator = Navigator.of(context);
                         final packName = _nameController.text.trim().isEmpty ? 'Compra Supermercado' : _nameController.text.trim();
+                        
                         await shoppingCubit.transferToExpenses(
                           asPack: !widget.onlyPrices, 
                           historyCubit: historyCubit,
                           packName: widget.onlyPrices ? null : packName
                         );
+                        
+                        navigator.pop(); 
                         if (mounted) {
-                          context.pop();
-                          showDialog(context: context, builder: (_) => ConfirmShoppingTransferDialog(message: 'La compra \'$packName\' se ha añadido a tu historial.'));
+                          showDialog(
+                            context: navigator.context, 
+                            builder: (_) => ConfirmShoppingTransferDialog(message: 'La compra \'$packName\' se ha añadido a tu historial.')
+                          );
                         }
                       }
                     },

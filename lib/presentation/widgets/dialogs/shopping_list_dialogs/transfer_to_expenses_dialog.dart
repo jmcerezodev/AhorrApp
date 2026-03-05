@@ -40,9 +40,10 @@ class TransferToExpensesDialog extends StatelessWidget {
           label: 'TODO EN UN PACK',
           icon: Icons.inventory_2_rounded,
           onPressed: () {
-            Navigator.pop(context);
+            final navigator = Navigator.of(context);
+            navigator.pop();
             showDialog(
-              context: context,
+              context: navigator.context,
               barrierDismissible: false,
               builder: (_) => BlocProvider.value(
                 value: shoppingCubit,
@@ -60,11 +61,12 @@ class TransferToExpensesDialog extends StatelessWidget {
           onPressed: () async {
             final boughtItems = shoppingCubit.state.items.where((item) => item.isBought).toList();
             final itemsWithoutPrice = boughtItems.where((item) => item.amount <= 0).toList();
+            final navigator = Navigator.of(context);
 
             if (itemsWithoutPrice.isNotEmpty) {
-              Navigator.pop(context);
+              navigator.pop();
               showDialog(
-                context: context,
+                context: navigator.context,
                 barrierDismissible: false,
                 builder: (_) => BlocProvider.value(
                   value: shoppingCubit,
@@ -75,14 +77,12 @@ class TransferToExpensesDialog extends StatelessWidget {
                 ),
               );
             } else {
-              Navigator.pop(context);
+              navigator.pop();
               await shoppingCubit.transferToExpenses(asPack: false, historyCubit: historyCubit);
-              if (context.mounted) {
-                showDialog(
-                  context: context, 
-                  builder: (_) => const ConfirmShoppingTransferDialog(message: 'Los productos se han añadido individualmente a tu historial.')
-                );
-              }
+              showDialog(
+                context: navigator.context, 
+                builder: (_) => const ConfirmShoppingTransferDialog(message: 'Los productos se han añadido individualmente a tu historial.')
+              );
             }
           },
         ),
