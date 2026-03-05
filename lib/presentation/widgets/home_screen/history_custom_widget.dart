@@ -198,13 +198,13 @@ class _FilterPanel extends StatelessWidget {
               _FilterChip(
                 label: 'Gastos',
                 value: state.showExpenses,
-                activeColor: Colors.red,
+                activeColor: Colors.red.shade400,
                 onChanged: (val) => historyCubit.toggleExpenses(val),
               ),
               _FilterChip(
                 label: 'Ahorros',
                 value: state.showSavings,
-                activeColor: colorScheme.primary,
+                activeColor: Colors.orange,
                 onChanged: (val) => historyCubit.toggleSavings(val),
               ),
             ],
@@ -327,25 +327,36 @@ class _FilterChip extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () => onChanged(!value),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Checkbox(
-            value: value,
-            onChanged: (val) => onChanged(val!),
-            activeColor: activeColor,
-            visualDensity: VisualDensity.compact,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10, 
-              fontWeight: FontWeight.bold,
-              color: value ? activeColor : colorScheme.onSurface.withValues(alpha: 0.4),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: (value ? activeColor : colorScheme.onSurface).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                value ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                color: value ? activeColor : colorScheme.onSurface.withValues(alpha: 0.3),
+                size: 16,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10, 
+                fontWeight: FontWeight.w900,
+                color: value ? activeColor : colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
