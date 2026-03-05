@@ -7,6 +7,7 @@ import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/data/local/models/local_recurrent_expense.dart';
 import 'package:ahorrapp/data/local/models/local_saving.dart';
+import 'package:ahorrapp/data/local/models/local_shopping_list_item.dart';
 import 'package:ahorrapp/domain/usecases/get_movements_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:equatable/equatable.dart';
@@ -56,6 +57,10 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
 
       final List<LocalRecurrentExpense> recurrentItems = _convertToLocalRecurrent(fullData['recurrent']);
       await _localDb.saveRecurrentExpenses(recurrentItems);
+
+      // NUEVO: Guardar Lista de la Compra
+      final List<LocalShoppingItem> shoppingItems = _convertToLocalShopping(fullData['shopping']);
+      await _localDb.saveShoppingListItems(shoppingItems);
 
       await _localDb.saveSavingGoal(uid, fullData['savingGoal']);
       final double correctBalance = (fullData['balance'] as num).toDouble();
@@ -220,6 +225,20 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         ..startDate = DateTime.parse(doc.data['startDate'] ?? doc.$createdAt)
         ..position = doc.data['position'] ?? 0 
         ..includeInSummary = doc.data['includeInSummary'] ?? true
+        ..createdAt = DateTime.parse(doc.$createdAt);
+    }).toList();
+  }
+
+  List<LocalShoppingItem> _convertToLocalShopping(dynamic shoppingDocs) {
+    return (shoppingDocs as List).map((doc) {
+      return LocalShoppingItem()
+        ..appwriteId = doc.$id
+        ..userId = doc.data['userId'] ?? ''
+        ..name = doc.data['name'] ?? 'Producto'
+        ..amount = (doc.data['amount'] as num).toDouble()
+        ..category = doc.data['category'] ?? 'general'
+        ..isBought = doc.data['isBought'] ?? false
+        ..position = doc.data['position'] ?? 0
         ..createdAt = DateTime.parse(doc.$createdAt);
     }).toList();
   }
