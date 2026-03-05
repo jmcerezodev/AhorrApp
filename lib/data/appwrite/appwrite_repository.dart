@@ -167,8 +167,8 @@ class AppwriteRepository {
     return await _databases.updateDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId, data: data);
   }
 
-  Future<Document> addHistory({required String documentId, required String userId, required String name, required double money, required bool isIncome, required String currentDate, required String currentHour, required String month, required int year}) async {
-    return await _databases.createDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId, data: {'userId': userId, 'name': name, 'money': money, 'isIncome': isIncome, 'currentDate': currentDate, 'currentHour': currentHour, 'month': month, 'year': year});
+  Future<Document> addHistory({required String documentId, required String userId, required String name, required double money, required bool isIncome, required String currentDate, required String currentHour, required String month, required int year, bool isRecurrent = false, String category = 'general'}) async {
+    return await _databases.createDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId, data: {'userId': userId, 'name': name, 'money': money, 'isIncome': isIncome, 'currentDate': currentDate, 'currentHour': currentHour, 'month': month, 'year': year, 'isRecurrent': isRecurrent, 'category': category});
   }
 
   Future<Document> addSaving({required String documentId, required String userId, required double money, required String month, required int year, String? description, bool isSpent = false}) async {

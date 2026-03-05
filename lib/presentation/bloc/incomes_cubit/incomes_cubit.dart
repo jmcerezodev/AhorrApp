@@ -17,10 +17,8 @@ class IncomesCubit extends Cubit<IncomesCubitState> {
   IncomesCubit() : super(const IncomesCubitState());
 
   Future<void> saveIncome(HistoryCubit historyCubit) async {
-    // 1. Verificar validez antes de proceder
     if (!state.isValid) return;
 
-    // 2. Estado de "Posting" (guardando...)
     emit(state.copyWith(status: IncomesStatus.posting));
 
     final date = Date();
@@ -41,18 +39,14 @@ class IncomesCubit extends Cubit<IncomesCubitState> {
       month: month,
       year: year,
       createdAt: DateTime.now(),
+      category: state.category, // AÑADIDO
     );
 
     try {
-      // 3. Intento de guardado
       await _saveMovementUseCase(movement);
-      
-      // 4. Éxito: Actualizar historial y emitir éxito
       await historyCubit.loadHistoryByDate(month, year);
       emit(state.copyWith(status: IncomesStatus.success));
-      
     } catch (e) {
-      // 5. Fallo: Emitir error detallado
       emit(state.copyWith(
         status: IncomesStatus.failure,
         errorMessage: 'Error al conectar con el servidor: $e',
@@ -64,12 +58,16 @@ class IncomesCubit extends Cubit<IncomesCubitState> {
     emit(const IncomesCubitState());
   }
 
+  void categoryChanged(String value) { // NUEVO
+    emit(state.copyWith(category: value));
+  }
+
   void incomeNameChanged(String value) {
     final incomeName = IncomeNameInput.dirty(value: value);
     emit(state.copyWith(
       incomeName: incomeName,
       isValid: Formz.validate([incomeName, state.incomeMoney]),
-      status: IncomesStatus.initial, // Resetear status al editar
+      status: IncomesStatus.initial,
     ));
   }
 
@@ -78,7 +76,7 @@ class IncomesCubit extends Cubit<IncomesCubitState> {
     emit(state.copyWith(
       incomeMoney: incomeMoney,
       isValid: Formz.validate([incomeMoney, state.incomeName]),
-      status: IncomesStatus.initial, // Resetear status al editar
+      status: IncomesStatus.initial,
     ));
   }
 }

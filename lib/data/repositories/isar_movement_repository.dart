@@ -34,12 +34,12 @@ class IsarMovementRepository implements IMovementRepository {
 
   @override
   Future<void> saveMovement(Movement movement) async {
-    final String uid = Preferences.uId; // OBTENEMOS EL ID REAL DEL USUARIO
+    final String uid = Preferences.uId;
 
     if (movement.type == MovementType.saving) {
       final localSaving = LocalSaving()
         ..appwriteId = movement.id
-        ..userId = uid // CORREGIDO: Usamos el UID real
+        ..userId = uid 
         ..money = movement.amount
         ..month = movement.month
         ..year = movement.year
@@ -59,7 +59,9 @@ class IsarMovementRepository implements IMovementRepository {
         ..currentHour = movement.hour
         ..month = movement.month
         ..year = movement.year
-        ..createdAt = movement.createdAt;
+        ..createdAt = movement.createdAt
+        ..isRecurrent = movement.isRecurrent
+        ..category = movement.category; // NUEVO
 
       await _localDb.saveHistoryItems([localItem]);
     }
@@ -97,6 +99,8 @@ class IsarMovementRepository implements IMovementRepository {
       month: local.month,
       year: local.year,
       createdAt: local.createdAt,
+      isRecurrent: local.isRecurrent,
+      category: local.category, // NUEVO
     );
   }
 
@@ -113,6 +117,8 @@ class IsarMovementRepository implements IMovementRepository {
       year: local.year,
       createdAt: local.createdAt,
       isSpent: local.isSpent,
+      isRecurrent: false,
+      category: 'ahorro', // Los ahorros tienen su propia categoría lógica
     );
   }
 

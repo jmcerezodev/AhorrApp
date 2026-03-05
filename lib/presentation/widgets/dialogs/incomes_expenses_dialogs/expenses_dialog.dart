@@ -12,6 +12,15 @@ class ExpensesDialog extends StatefulWidget {
 }
 
 class _ExpensesDialogState extends State<ExpensesDialog> {
+  final List<Map<String, dynamic>> _categories = [
+    {'id': 'general', 'icon': Icons.receipt_long_rounded, 'name': 'General'},
+    {'id': 'hogar', 'icon': Icons.home_work_rounded, 'name': 'Hogar'},
+    {'id': 'suscripción', 'icon': Icons.subscriptions_rounded, 'name': 'Suscripción'},
+    {'id': 'salud', 'icon': Icons.favorite_rounded, 'name': 'Salud'},
+    {'id': 'transporte', 'icon': Icons.directions_car_rounded, 'name': 'Transporte'},
+    {'id': 'ocio', 'icon': Icons.sports_esports_rounded, 'name': 'Ocio'},
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -114,6 +123,41 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
                 textInputType: const TextInputType.numberWithOptions(decimal: true),
                 enabled: expensesCubit.state.status != ExpensesStatus.posting,
               ),
+              const SizedBox(height: 25),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Categoría', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: expensesCubit.state.category,
+                    isExpanded: true,
+                    borderRadius: BorderRadius.circular(15),
+                    items: _categories.map((cat) {
+                      return DropdownMenuItem<String>(
+                        value: cat['id'],
+                        child: Row(
+                          children: [
+                            Icon(cat['icon'], size: 16, color: colorScheme.primary),
+                            const SizedBox(width: 8),
+                            Flexible(child: Text(cat['name'], style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis)),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) => expensesCubit.categoryChanged(val ?? 'general'),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 30),
 
               Row(

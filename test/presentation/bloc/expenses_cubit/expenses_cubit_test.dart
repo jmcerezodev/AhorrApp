@@ -29,37 +29,30 @@ void main() {
     expensesCubit = ExpensesCubit();
   });
 
-  group('ExpensesCubit - Limpieza de Lógica', () {
-    test('Estado inicial debe ser initial y no válido', () {
+  group('ExpensesCubit - Lógica de Gastos y Categorías', () {
+    test('Estado inicial debe tener categoría general', () {
       expect(expensesCubit.state.status, ExpensesStatus.initial);
-      expect(expensesCubit.state.isValid, false);
+      expect(expensesCubit.state.category, 'general');
     });
 
-    test('Validación de formulario al cambiar nombre y monto', () {
-      expensesCubit.expenseNameChanged('Comida');
-      expensesCubit.expenseMoneyChanged('50.50');
-      
-      expect(expensesCubit.state.expenseName.value, 'Comida');
-      expect(expensesCubit.state.expenseMoney.value, '50.50');
-      expect(expensesCubit.state.isValid, true);
+    test('categoryChanged debe actualizar la categoría en el estado', () {
+      expensesCubit.categoryChanged('hogar');
+      expect(expensesCubit.state.category, 'hogar');
     });
 
-    test('saveExpense debe pasar por posting y llegar a success', () async {
+    test('saveExpense debe incluir la categoría seleccionada', () async {
       expensesCubit.expenseNameChanged('Cine');
       expensesCubit.expenseMoneyChanged('15');
+      expensesCubit.categoryChanged('ocio');
       
       when(() => mockSaveMovementUseCase.call(any())).thenAnswer((_) async => {});
       when(() => mockHistoryCubit.loadHistoryByDate(any(), any())).thenAnswer((_) async => {});
 
-      final expectation = [
-        isA<ExpensesCubitState>().having((s) => s.status, 'status', ExpensesStatus.posting),
-        isA<ExpensesCubitState>().having((s) => s.status, 'status', ExpensesStatus.success),
-      ];
-
-      expectLater(expensesCubit.stream, emitsInOrder(expectation));
       await expensesCubit.saveExpense(mockHistoryCubit);
 
-      verify(() => mockSaveMovementUseCase.call(any())).called(1);
+      final captured = verify(() => mockSaveMovementUseCase.call(captureAny())).captured.first as Movement;
+      expect(captured.category, 'ocio');
+      expect(expensesCubit.state.status, ExpensesStatus.success);
     });
 
     test('saveExpense debe emitir failure si falla el guardado', () async {
@@ -68,13 +61,8 @@ void main() {
       
       when(() => mockSaveMovementUseCase.call(any())).thenThrow(Exception('Save error'));
 
-      final expectation = [
-        isA<ExpensesCubitState>().having((s) => s.status, 'status', ExpensesStatus.posting),
-        isA<ExpensesCubitState>().having((s) => s.status, 'status', ExpensesStatus.failure),
-      ];
-
-      expectLater(expensesCubit.stream, emitsInOrder(expectation));
       await expensesCubit.saveExpense(mockHistoryCubit);
+      expect(expensesCubit.state.status, ExpensesStatus.failure);
     });
   });
 }

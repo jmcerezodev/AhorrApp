@@ -22,48 +22,58 @@ const LocalHistorySchema = CollectionSchema(
       name: r'appwriteId',
       type: IsarType.string,
     ),
-    r'createdAt': PropertySchema(
+    r'category': PropertySchema(
       id: 1,
+      name: r'category',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 2,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'currentDate': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'currentDate',
       type: IsarType.string,
     ),
     r'currentHour': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'currentHour',
       type: IsarType.string,
     ),
     r'isIncome': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'isIncome',
       type: IsarType.bool,
     ),
+    r'isRecurrent': PropertySchema(
+      id: 6,
+      name: r'isRecurrent',
+      type: IsarType.bool,
+    ),
     r'money': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'money',
       type: IsarType.double,
     ),
     r'month': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'month',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'name',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'type',
       type: IsarType.string,
     ),
     r'year': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'year',
       type: IsarType.long,
     )
@@ -103,6 +113,7 @@ int _localHistoryEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.appwriteId.length * 3;
+  bytesCount += 3 + object.category.length * 3;
   bytesCount += 3 + object.currentDate.length * 3;
   bytesCount += 3 + object.currentHour.length * 3;
   bytesCount += 3 + object.month.length * 3;
@@ -118,15 +129,17 @@ void _localHistorySerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.appwriteId);
-  writer.writeDateTime(offsets[1], object.createdAt);
-  writer.writeString(offsets[2], object.currentDate);
-  writer.writeString(offsets[3], object.currentHour);
-  writer.writeBool(offsets[4], object.isIncome);
-  writer.writeDouble(offsets[5], object.money);
-  writer.writeString(offsets[6], object.month);
-  writer.writeString(offsets[7], object.name);
-  writer.writeString(offsets[8], object.type);
-  writer.writeLong(offsets[9], object.year);
+  writer.writeString(offsets[1], object.category);
+  writer.writeDateTime(offsets[2], object.createdAt);
+  writer.writeString(offsets[3], object.currentDate);
+  writer.writeString(offsets[4], object.currentHour);
+  writer.writeBool(offsets[5], object.isIncome);
+  writer.writeBool(offsets[6], object.isRecurrent);
+  writer.writeDouble(offsets[7], object.money);
+  writer.writeString(offsets[8], object.month);
+  writer.writeString(offsets[9], object.name);
+  writer.writeString(offsets[10], object.type);
+  writer.writeLong(offsets[11], object.year);
 }
 
 LocalHistory _localHistoryDeserialize(
@@ -137,16 +150,18 @@ LocalHistory _localHistoryDeserialize(
 ) {
   final object = LocalHistory();
   object.appwriteId = reader.readString(offsets[0]);
-  object.createdAt = reader.readDateTime(offsets[1]);
-  object.currentDate = reader.readString(offsets[2]);
-  object.currentHour = reader.readString(offsets[3]);
+  object.category = reader.readString(offsets[1]);
+  object.createdAt = reader.readDateTime(offsets[2]);
+  object.currentDate = reader.readString(offsets[3]);
+  object.currentHour = reader.readString(offsets[4]);
   object.id = id;
-  object.isIncome = reader.readBool(offsets[4]);
-  object.money = reader.readDouble(offsets[5]);
-  object.month = reader.readString(offsets[6]);
-  object.name = reader.readString(offsets[7]);
-  object.type = reader.readString(offsets[8]);
-  object.year = reader.readLong(offsets[9]);
+  object.isIncome = reader.readBool(offsets[5]);
+  object.isRecurrent = reader.readBool(offsets[6]);
+  object.money = reader.readDouble(offsets[7]);
+  object.month = reader.readString(offsets[8]);
+  object.name = reader.readString(offsets[9]);
+  object.type = reader.readString(offsets[10]);
+  object.year = reader.readLong(offsets[11]);
   return object;
 }
 
@@ -160,22 +175,26 @@ P _localHistoryDeserializeProp<P>(
     case 0:
       return (reader.readString(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
-    case 2:
       return (reader.readString(offset)) as P;
+    case 2:
+      return (reader.readDateTime(offset)) as P;
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 8:
       return (reader.readString(offset)) as P;
     case 9:
+      return (reader.readString(offset)) as P;
+    case 10:
+      return (reader.readString(offset)) as P;
+    case 11:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -508,6 +527,142 @@ extension LocalHistoryQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'appwriteId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      categoryEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'category',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      categoryGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'category',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      categoryLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'category',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      categoryBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'category',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      categoryStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'category',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      categoryEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'category',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      categoryContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'category',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      categoryMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'category',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      categoryIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'category',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      categoryIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'category',
         value: '',
       ));
     });
@@ -899,6 +1054,16 @@ extension LocalHistoryQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isIncome',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      isRecurrentEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isRecurrent',
         value: value,
       ));
     });
@@ -1445,6 +1610,18 @@ extension LocalHistoryQuerySortBy
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByCategory() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'category', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByCategoryDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'category', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1492,6 +1669,19 @@ extension LocalHistoryQuerySortBy
   QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByIsIncomeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isIncome', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByIsRecurrent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isRecurrent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy>
+      sortByIsRecurrentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isRecurrent', Sort.desc);
     });
   }
 
@@ -1571,6 +1761,18 @@ extension LocalHistoryQuerySortThenBy
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByCategory() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'category', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByCategoryDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'category', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1630,6 +1832,19 @@ extension LocalHistoryQuerySortThenBy
   QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByIsIncomeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isIncome', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByIsRecurrent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isRecurrent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy>
+      thenByIsRecurrentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isRecurrent', Sort.desc);
     });
   }
 
@@ -1703,6 +1918,13 @@ extension LocalHistoryQueryWhereDistinct
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QDistinct> distinctByCategory(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'category', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QDistinct> distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
@@ -1726,6 +1948,12 @@ extension LocalHistoryQueryWhereDistinct
   QueryBuilder<LocalHistory, LocalHistory, QDistinct> distinctByIsIncome() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isIncome');
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QDistinct> distinctByIsRecurrent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isRecurrent');
     });
   }
 
@@ -1777,6 +2005,12 @@ extension LocalHistoryQueryProperty
     });
   }
 
+  QueryBuilder<LocalHistory, String, QQueryOperations> categoryProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'category');
+    });
+  }
+
   QueryBuilder<LocalHistory, DateTime, QQueryOperations> createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
@@ -1798,6 +2032,12 @@ extension LocalHistoryQueryProperty
   QueryBuilder<LocalHistory, bool, QQueryOperations> isIncomeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isIncome');
+    });
+  }
+
+  QueryBuilder<LocalHistory, bool, QQueryOperations> isRecurrentProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isRecurrent');
     });
   }
 

@@ -39,6 +39,7 @@ class ExpensesCubit extends Cubit<ExpensesCubitState> {
       month: month,
       year: year,
       createdAt: DateTime.now(),
+      category: state.category, // AÑADIDO
     );
 
     try {
@@ -55,6 +56,10 @@ class ExpensesCubit extends Cubit<ExpensesCubitState> {
 
   void resetCubit() {
     emit(const ExpensesCubitState());
+  }
+
+  void categoryChanged(String value) { // NUEVO
+    emit(state.copyWith(category: value));
   }
 
   void expenseNameChanged(String value) {

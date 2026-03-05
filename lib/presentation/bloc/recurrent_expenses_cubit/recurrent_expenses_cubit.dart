@@ -167,6 +167,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       month: dateService.monthNames(),
       year: int.parse(dateService.year()),
       createdAt: DateTime.now(),
+      isRecurrent: true, // NUEVO
     );
 
     try {

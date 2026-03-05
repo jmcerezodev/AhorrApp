@@ -77,6 +77,8 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       'id': e.id, 'name': e.name, 'money': e.amount, 'type': e.type.name, 'isIncome': e.isIncome,
       'isSpent': e.isSpent, 'currentDate': e.date, 'currentHour': e.hour, 'month': e.month, 'year': e.year,
       'createdAt': e.createdAt.toIso8601String(),
+      'isRecurrent': e.isRecurrent,
+      'category': e.category, // AÑADIDO
     }).toList();
     emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
   }
@@ -100,6 +102,8 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         'id': e.id, 'name': e.name, 'money': e.amount, 'type': e.type.name, 'isIncome': e.isIncome,
         'isSpent': e.isSpent, 'currentDate': e.date, 'currentHour': e.hour, 'month': e.month, 'year': e.year,
         'createdAt': e.createdAt.toIso8601String(),
+        'isRecurrent': e.isRecurrent,
+        'category': e.category, // AÑADIDO
       }).toList();
       emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
     } catch (e) {
@@ -153,6 +157,8 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       ..month = doc.data['month']?.toString() ?? ''
       ..year = int.tryParse(doc.data['year']?.toString() ?? '0') ?? 0
       ..createdAt = DateTime.parse(doc.$createdAt)
+      ..isRecurrent = doc.data['isRecurrent'] ?? false
+      ..category = doc.data['category'] ?? (doc.data['isIncome'] == true ? 'otro' : 'general') // AÑADIDO
     ).toList();
   }
 
@@ -185,7 +191,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         ..frequency = _mapFrequency(doc.data['frequency'] ?? 'monthly')
         ..startDate = DateTime.parse(doc.data['startDate'] ?? doc.$createdAt)
         ..position = doc.data['position'] ?? 0 
-        ..includeInSummary = doc.data['includeInSummary'] ?? true // AÑADIDO: Respetamos valor de la nube
+        ..includeInSummary = doc.data['includeInSummary'] ?? true
         ..createdAt = DateTime.parse(doc.$createdAt);
     }).toList();
   }

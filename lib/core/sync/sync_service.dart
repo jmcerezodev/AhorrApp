@@ -112,6 +112,8 @@ class SyncService {
         currentHour: data['currentHour'] ?? data['hour'] ?? '',
         month: data['month'] ?? '',
         year: data['year'] ?? 0,
+        isRecurrent: data['isRecurrent'] ?? false,
+        category: data['category'] ?? (data['isIncome'] == true ? 'otro' : 'general'), // AÑADIDO
       );
       return true;
     } else if (pending.action == 'update') {
@@ -177,7 +179,7 @@ class SyncService {
         frequency: data['frequency'] ?? 'monthly',
         startDate: DateTime.parse(data['startDate'] ?? DateTime.now().toIso8601String()),
         position: data['position'] ?? 0,
-        includeInSummary: data['includeInSummary'] ?? true, // AÑADIDO
+        includeInSummary: data['includeInSummary'] ?? true,
       );
       return true;
     } else if (pending.action == 'update') {

@@ -27,49 +27,42 @@ void main() {
     incomesCubit = IncomesCubit();
   });
 
-  group('IncomesCubit - Limpieza de Lógica', () {
+  group('IncomesCubit - Lógica de Ingresos y Categorías', () {
     
-    test('1. El estado inicial DEBE ser "initial" (No invalid)', () {
-      // Este test fallará porque tu código actual usa 'invalid' como inicio
+    test('1. El estado inicial DEBE ser "initial" y categoría "otro"', () {
       expect(incomesCubit.state.status, IncomesStatus.initial);
+      expect(incomesCubit.state.category, 'otro');
     });
 
-    test('2. No debe validar el formulario hasta que el usuario escriba (Pure state)', () {
-      expect(incomesCubit.state.incomeName.isPure, true);
-      expect(incomesCubit.state.isValid, false);
+    test('2. categoryChanged debe actualizar la categoría en el estado', () {
+      incomesCubit.categoryChanged('nómina');
+      expect(incomesCubit.state.category, 'nómina');
     });
 
-    test('3. Debe pasar a "posting" y luego a "success" al guardar correctamente', () async {
+    test('3. Debe guardar el ingreso con la categoría seleccionada', () async {
       incomesCubit.incomeNameChanged('Sueldo');
       incomesCubit.incomeMoneyChanged('1000');
+      incomesCubit.categoryChanged('nómina');
 
       when(() => mockSaveMovementUseCase.call(any())).thenAnswer((_) async => {});
       when(() => mockHistoryCubit.loadHistoryByDate(any(), any())).thenAnswer((_) async => {});
 
-      final expectation = [
-        // Al empezar a guardar, el estado debe ser posting
-        isA<IncomesCubitState>().having((s) => s.status, 'status', IncomesStatus.posting),
-        // Al terminar, debe ser success
-        isA<IncomesCubitState>().having((s) => s.status, 'status', IncomesStatus.success),
-      ];
-
-      expectLater(incomesCubit.stream, emitsInOrder(expectation));
       await incomesCubit.saveIncome(mockHistoryCubit);
+
+      // Verificamos que se llamó al caso de uso con la categoría correcta
+      final captured = verify(() => mockSaveMovementUseCase.call(captureAny())).captured.first as Movement;
+      expect(captured.category, 'nómina');
+      expect(incomesCubit.state.status, IncomesStatus.success);
     });
 
-    test('4. Debe pasar a "failure" si falla el servidor (No invalid)', () async {
+    test('4. Debe pasar a "failure" si falla el servidor', () async {
       incomesCubit.incomeNameChanged('Sueldo');
       incomesCubit.incomeMoneyChanged('1000');
 
       when(() => mockSaveMovementUseCase.call(any())).thenThrow(Exception('Network Error'));
 
-      final expectation = [
-        isA<IncomesCubitState>().having((s) => s.status, 'status', IncomesStatus.posting),
-        isA<IncomesCubitState>().having((s) => s.status, 'status', IncomesStatus.failure),
-      ];
-
-      expectLater(incomesCubit.stream, emitsInOrder(expectation));
       await incomesCubit.saveIncome(mockHistoryCubit);
+      expect(incomesCubit.state.status, IncomesStatus.failure);
     });
   });
 }

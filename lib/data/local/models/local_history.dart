@@ -18,4 +18,7 @@ class LocalHistory {
   late String month;
   late int year;
   late DateTime createdAt;
+  
+  late bool isRecurrent; 
+  late String category; // NUEVO: Categoría del movimiento
 }

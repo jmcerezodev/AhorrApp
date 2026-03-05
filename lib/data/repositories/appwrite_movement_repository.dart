@@ -31,7 +31,7 @@ class AppwriteMovementRepository implements IMovementRepository {
 
     if (movement.type == MovementType.saving) {
       await _dataSource.addSaving(
-        documentId: movement.id, // Usamos el ID del movimiento como ID del documento en Appwrite
+        documentId: movement.id, 
         userId: uid, 
         money: movement.amount,
         month: movement.month,
@@ -40,7 +40,7 @@ class AppwriteMovementRepository implements IMovementRepository {
       );
     } else {
       await _dataSource.addHistory(
-        documentId: movement.id, // Usamos el ID del movimiento como ID del documento en Appwrite
+        documentId: movement.id, 
         userId: uid,
         name: movement.name,
         money: movement.amount,
@@ -49,6 +49,8 @@ class AppwriteMovementRepository implements IMovementRepository {
         currentHour: movement.hour,
         month: movement.month,
         year: movement.year,
+        isRecurrent: movement.isRecurrent,
+        category: movement.category, // NUEVO
       );
     }
   }
@@ -99,6 +101,8 @@ class AppwriteMovementRepository implements IMovementRepository {
       year: int.tryParse(data['year']?.toString() ?? '0') ?? 0,
       createdAt: DateTime.parse(doc.$createdAt),
       isSpent: data['isSpent'] ?? false,
+      isRecurrent: data['isRecurrent'] ?? false,
+      category: data['category'] ?? (isSaving ? 'ahorro' : 'general'), // NUEVO
     );
   }
 }

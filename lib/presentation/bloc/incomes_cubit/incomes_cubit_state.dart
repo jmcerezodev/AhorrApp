@@ -7,6 +7,7 @@ class IncomesCubitState extends Equatable {
   final bool isValid;
   final IncomeNameInput incomeName;
   final IncomeMoneyInput incomeMoney;
+  final String category; 
   final String? errorMessage;
 
   const IncomesCubitState({
@@ -14,6 +15,7 @@ class IncomesCubitState extends Equatable {
     this.isValid = false,
     this.incomeName = const IncomeNameInput.pure(),
     this.incomeMoney = const IncomeMoneyInput.pure(),
+    this.category = 'otro', // CORREGIDO: De 'general' a 'otro' para coincidir con la lista de IncomesDialog
     this.errorMessage,
   });
 
@@ -22,6 +24,7 @@ class IncomesCubitState extends Equatable {
     bool? isValid,
     IncomeNameInput? incomeName,
     IncomeMoneyInput? incomeMoney,
+    String? category,
     String? errorMessage,
   }) =>
       IncomesCubitState(
@@ -29,9 +32,10 @@ class IncomesCubitState extends Equatable {
         isValid: isValid ?? this.isValid,
         incomeName: incomeName ?? this.incomeName,
         incomeMoney: incomeMoney ?? this.incomeMoney,
+        category: category ?? this.category,
         errorMessage: errorMessage ?? this.errorMessage,
       );
 
   @override
-  List<Object?> get props => [status, isValid, incomeName, incomeMoney, errorMessage];
+  List<Object?> get props => [status, isValid, incomeName, incomeMoney, category, errorMessage];
 }

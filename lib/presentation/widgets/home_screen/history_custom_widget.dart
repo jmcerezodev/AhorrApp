@@ -281,6 +281,8 @@ class _HistoryItem extends StatelessWidget {
     final double amount = (item['money'] as num).toDouble();
     final type = item['type'];
     final bool isSpent = item['isSpent'] ?? false;
+    final bool isRecurrent = item['isRecurrent'] ?? false;
+    final String category = item['category'] ?? (type == 'income' ? 'otro' : 'general');
 
     Color accentColor = Colors.orange;
     IconData icon = Icons.help_outline_rounded;
@@ -310,7 +312,7 @@ class _HistoryItem extends StatelessWidget {
     final bool showSpentLabel = isSpent && amount >= 0;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8), // Reducido de 12 a 8 para uniformidad con Gastos Fijos
+      padding: const EdgeInsets.only(bottom: 8), 
       child: Opacity(
         opacity: showSpentLabel ? 0.7 : 1.0, 
         child: Dismissible(
@@ -402,6 +404,10 @@ class _HistoryItem extends StatelessWidget {
                               ),
                             ),
                           ),
+                          if (isRecurrent) ...[
+                            const SizedBox(width: 6),
+                            Icon(Icons.repeat_rounded, size: 14, color: Colors.orange.withValues(alpha: 0.8)),
+                          ],
                           if (showSpentLabel) ...[
                             const SizedBox(width: 8),
                             Container(
@@ -423,9 +429,31 @@ class _HistoryItem extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        '${item['currentDate']} • ${item['currentHour']}',
-                        style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.4)),
+                      Row(
+                        children: [
+                          Text(
+                            '${item['currentDate']} • ${item['currentHour']}',
+                            style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.4)),
+                          ),
+                          if (type != 'saving') ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: accentColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                category.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 7, 
+                                  fontWeight: FontWeight.w900, 
+                                  color: accentColor.withValues(alpha: 0.6)
+                                )
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),

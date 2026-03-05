@@ -38,6 +38,7 @@ class ProcessRecurrentExpensesUseCase {
           month: dateService.monthNames(),
           year: now.year,
           createdAt: DateTime.now(),
+          isRecurrent: true, // MARCADO COMO RECURRENTE
         );
 
         await saveMovementUseCase(movement);

@@ -32,18 +32,20 @@ void main() {
           'month': 'Enero',
           'currentDate': '01/01/2024',
           'currentHour': '09:00 AM',
-          'createdAt': '2024-01-01T09:00:00Z'
+          'createdAt': '2024-01-01T09:00:00Z',
+          'isRecurrent': false
         },
         {
           'id': '2',
-          'name': 'Compra Super',
-          'money': 85.50,
+          'name': 'Netflix',
+          'money': 15.99,
           'type': 'expense',
           'year': 2024,
           'month': 'Enero',
           'currentDate': '02/01/2024',
           'currentHour': '10:30 AM',
-          'createdAt': '2024-01-02T10:30:00Z'
+          'createdAt': '2024-01-02T10:30:00Z',
+          'isRecurrent': true // MOVIMIENTO RECURRENTE
         },
       ],
     ));
@@ -75,22 +77,27 @@ void main() {
       await tester.pump();
 
       expect(find.text('Sueldo Mensual'), findsOneWidget);
-      expect(find.text('Compra Super'), findsOneWidget);
-      
-      // Verificamos los montos formateados
+      expect(find.text('Netflix'), findsOneWidget);
       expect(find.textContaining('2.500'), findsOneWidget);
-      expect(find.textContaining('85,50'), findsOneWidget);
+      expect(find.textContaining('15,99'), findsOneWidget);
+    });
+
+    testWidgets('Debe mostrar el icono identificador solo en gastos recurrentes', (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pump();
+
+      // El icono repeat_rounded debe aparecer (para Netflix)
+      expect(find.byIcon(Icons.repeat_rounded), findsOneWidget);
     });
 
     testWidgets('Debe ocultar los gastos si el filtro está desactivado', (WidgetTester tester) async {
-      // Cambiamos el estado para ocultar gastos
       when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState(
         showIncomes: true,
-        showExpenses: false, // OCULTAR
+        showExpenses: false,
         showSavings: true,
         historyList: [
-          {'id': '1', 'name': 'Sueldo Mensual', 'money': 2500.0, 'type': 'income', 'year': 2024, 'month': 'Enero'},
-          {'id': '2', 'name': 'Compra Super', 'money': 85.50, 'type': 'expense', 'year': 2024, 'month': 'Enero'},
+          {'id': '1', 'name': 'Sueldo Mensual', 'money': 2500.0, 'type': 'income', 'year': 2024, 'month': 'Enero', 'isRecurrent': false},
+          {'id': '2', 'name': 'Netflix', 'money': 15.99, 'type': 'expense', 'year': 2024, 'month': 'Enero', 'isRecurrent': true},
         ],
       ));
 
@@ -98,7 +105,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Sueldo Mensual'), findsOneWidget);
-      expect(find.text('Compra Super'), findsNothing); // Confirmamos que ha desaparecido
+      expect(find.text('Netflix'), findsNothing);
     });
   });
 }

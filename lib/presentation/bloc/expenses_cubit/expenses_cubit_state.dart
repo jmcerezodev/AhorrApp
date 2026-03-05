@@ -7,6 +7,7 @@ class ExpensesCubitState extends Equatable {
   final ExpensesStatus status;
   final ExpenseNameInput expenseName;
   final ExpenseMoneyInput expenseMoney;
+  final String category; // NUEVO
   final String? errorMessage;
 
   const ExpensesCubitState({
@@ -14,6 +15,7 @@ class ExpensesCubitState extends Equatable {
     this.status = ExpensesStatus.initial,
     this.expenseMoney = const ExpenseMoneyInput.pure(),
     this.expenseName = const ExpenseNameInput.pure(),
+    this.category = 'general', // NUEVO
     this.errorMessage,
   });
 
@@ -22,6 +24,7 @@ class ExpensesCubitState extends Equatable {
     bool? isValid,
     ExpenseNameInput? expenseName,
     ExpenseMoneyInput? expenseMoney,
+    String? category,
     String? errorMessage,
   }) =>
       ExpensesCubitState(
@@ -29,9 +32,10 @@ class ExpensesCubitState extends Equatable {
         isValid: isValid ?? this.isValid,
         expenseName: expenseName ?? this.expenseName,
         expenseMoney: expenseMoney ?? this.expenseMoney,
+        category: category ?? this.category,
         errorMessage: errorMessage ?? this.errorMessage,
       );
 
   @override
-  List<Object?> get props => [status, isValid, expenseName, expenseMoney, errorMessage];
+  List<Object?> get props => [status, isValid, expenseName, expenseMoney, category, errorMessage];
 }
