@@ -1,6 +1,6 @@
 import 'package:ahorrapp/domain/entities/shopping_item.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_cubit.dart';
-import 'package:ahorrapp/presentation/screens/shopping_list/shopping_list_screen.dart';
+import 'package:ahorrapp/presentation/screens/shopping_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,12 +29,12 @@ void main() {
     return MaterialApp(
       home: BlocProvider<ShoppingCubit>.value(
         value: mockShoppingCubit,
-        child: const ShoppingListScreen(),
+        child: const ShoppingScreen(),
       ),
     );
   }
 
-  group('ShoppingListScreen Widget Tests', () {
+  group('ShoppingScreen Widget Tests', () {
     testWidgets('Debe mostrar el título y los elementos de la lista', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
