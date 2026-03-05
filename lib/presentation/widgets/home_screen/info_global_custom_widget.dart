@@ -31,17 +31,17 @@ class InfoGlogalWidget extends StatelessWidget {
     return FadeInDown(
       duration: const Duration(milliseconds: 400),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        padding: const EdgeInsets.all(20),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5), // Unificado a 5 como en Gastos Fijos
+        padding: const EdgeInsets.all(18), // Unificado a 18 como en Gastos Fijos
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: BorderRadius.circular(25), // Unificado a 25 como en Gastos Fijos
-          border: Border.all(color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.15), width: 1.5),
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.3), width: 1.5), // Unificado el alpha del borde
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: Colors.black.withValues(alpha: isDark ? 0.05 : 0.08),
               blurRadius: 15,
-              offset: const Offset(0, 10),
+              offset: const Offset(0, 8), // Unificado el offset
             )
           ],
         ),
@@ -72,7 +72,7 @@ class InfoGlogalWidget extends StatelessWidget {
                       child: Text(
                         '${humanizeNumbers.number(displayedBalance)}€',
                         style: TextStyle(
-                          fontSize: 30, // Unificado a 30 como en Gastos Fijos
+                          fontSize: 30,
                           fontWeight: FontWeight.w900,
                           color: isDark ? Colors.white : colorScheme.onSurface,
                           letterSpacing: -1,
@@ -143,7 +143,6 @@ class InfoGlogalWidget extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // BARRA DE PROGRESO CON CAMBIO DE COLOR
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: LinearProgressIndicator(
