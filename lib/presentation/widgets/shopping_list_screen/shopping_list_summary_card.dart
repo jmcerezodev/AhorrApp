@@ -12,7 +12,6 @@ class ShoppingSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final humanizeNumbers = HumanizeNumbers();
-    final colorScheme = Theme.of(context).colorScheme;
 
     return FadeInDown(
       child: Padding(
@@ -42,59 +41,100 @@ class ShoppingSummaryCard extends StatelessWidget {
               )
             ],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'TOTAL EN LA CESTA',
-                    style: TextStyle(
-                      color: Colors.orange.shade400,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.2,
-                    ),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'TOTAL EN LA CESTA',
+                        style: TextStyle(
+                          color: Colors.orange.shade400,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${humanizeNumbers.number(state.totalBoughtPrice)}€',
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontSize: 30,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      _BasketChip(
+                        totalBought: state.totalBought,
+                        totalItems: state.items.length,
+                        isDark: isDark,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${humanizeNumbers.number(state.totalBoughtPrice)}€',
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -1,
-                    ),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'PROGRESO',
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withValues(alpha: 0.4),
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${state.totalBought}/${state.items.length}',
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _BasketChip extends StatelessWidget {
+  final int totalBought;
+  final int totalItems;
+  final bool isDark;
+
+  const _BasketChip({
+    required this.totalBought,
+    required this.totalItems,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Colors.orange.shade400;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'EN LA CESTA',
+            style: TextStyle(
+              color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
+              fontSize: 8,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '$totalBought/$totalItems',
+            style: TextStyle(
+              color: isDark ? Colors.white : colorScheme.onSurface,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }

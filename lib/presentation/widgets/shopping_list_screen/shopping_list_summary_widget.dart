@@ -49,7 +49,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // COLUMNA 1: INFO (Total + En la cesta)
+                    // COLUMNA 1: INFO (Total + Chip en la cesta)
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,28 +77,14 @@ class ShoppingSummaryWidget extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Text(
-                                'Progreso:',
-                                style: TextStyle(
-                                  color: colorScheme.onSurface.withValues(alpha: 0.4),
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${state.totalBought}/${state.items.length}',
-                                style: TextStyle(
-                                  color: colorScheme.onSurface,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
+                          
+                          const SizedBox(height: 12), // AJUSTADO: Igual que en Gastos Fijos
+                          
+                          // CHIP "EN LA CESTA" DEBAJO DEL TOTAL
+                          _BasketChip(
+                            totalBought: state.totalBought,
+                            totalItems: state.items.length,
+                            isDark: isDark,
                           ),
                         ],
                       ),
@@ -163,6 +149,56 @@ class _AddProductBubble extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BasketChip extends StatelessWidget {
+  final int totalBought;
+  final int totalItems;
+  final bool isDark;
+
+  const _BasketChip({
+    required this.totalBought,
+    required this.totalItems,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Colors.orange.shade400;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'EN LA CESTA',
+            style: TextStyle(
+              color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
+              fontSize: 8,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '$totalBought/$totalItems',
+            style: TextStyle(
+              color: isDark ? Colors.white : colorScheme.onSurface,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }

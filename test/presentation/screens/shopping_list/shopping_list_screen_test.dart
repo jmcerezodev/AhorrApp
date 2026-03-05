@@ -80,6 +80,7 @@ void main() {
 
       expect(find.byType(ShoppingSummaryWidget), findsOneWidget);
       expect(find.text('TOTAL EN LA CESTA'), findsOneWidget);
+      expect(find.text('EN LA CESTA'), findsOneWidget);
       expect(find.text('LISTA VACÍA'), findsOneWidget);
     });
 
@@ -91,7 +92,6 @@ void main() {
     });
 
     testWidgets('Debe mostrar el botón de transferencia desactivado si no hay items en la cesta', (WidgetTester tester) async {
-      // Configuramos estado sin items comprados
       when(() => mockShoppingCubit.state).thenReturn(const ShoppingState(
         items: [ShoppingListItem(id: '1', userId: 'u1', name: 'Leche', amount: 1.5, isBought: false)]
       ));
@@ -99,18 +99,15 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      // Buscamos el texto del botón
       final buttonText = find.text('AÑADIR COMPRA A LA LISTA DE GASTOS');
       expect(buttonText, findsOneWidget);
       
-      // Buscamos el ElevatedButton que lo contiene
       final button = find.ancestor(of: buttonText, matching: find.byType(ElevatedButton));
       final ElevatedButton btnWidget = tester.widget(button);
       expect(btnWidget.enabled, isFalse);
     });
 
     testWidgets('Debe mostrar el botón de transferencia activado si hay items en la cesta', (WidgetTester tester) async {
-      // Configuramos estado con un item comprado
       when(() => mockShoppingCubit.state).thenReturn(const ShoppingState(
         items: [ShoppingListItem(id: '1', userId: 'u1', name: 'Leche', amount: 1.5, isBought: true, position: 0)]
       ));

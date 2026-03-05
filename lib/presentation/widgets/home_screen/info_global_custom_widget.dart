@@ -90,7 +90,7 @@ class InfoGlogalWidget extends StatelessWidget {
                         ),
                       ),
                     
-                    const Spacer(),
+                    const SizedBox(height: 12), // AJUSTADO: Igual que en Gastos Fijos
                     
                     GestureDetector(
                       onTap: () => context.read<TotalMoneyCubit>().toggleSavingsInclusion(),
