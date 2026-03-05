@@ -5,7 +5,7 @@ void main() {
   group('HumanizeNumbers Tests', () {
     final formatter = HumanizeNumbers();
 
-    test('debe formatear el cero correctamente como entero', () {
+    test('debe formatear el cero correctamente', () {
       expect(formatter.number(0), '0');
     });
 

@@ -91,9 +91,9 @@ class ShoppingItemCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               child: const Text(
-                                'EN EL CARRITO', 
+                                'En la cesta', // TEXTO ACTUALIZADO
                                 style: TextStyle(
-                                  fontSize: 7, 
+                                  fontSize: 8,
                                   fontWeight: FontWeight.w900, 
                                   color: Colors.green
                                 )
@@ -116,6 +116,7 @@ class ShoppingItemCard extends StatelessWidget {
                 ),
               ),
               
+              // SECCIÓN DE PRECIO O BOTÓN DE AÑADIR
               if (item.amount > 0)
                 Text(
                   '${humanizeNumbers.number(item.amount)}€',

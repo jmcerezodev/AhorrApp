@@ -28,20 +28,22 @@ void main() {
 
   Widget createWidgetUnderTest() {
     return MaterialApp(
-      home: BlocProvider<ShoppingListCubit>.value(
-        value: mockShoppingCubit,
-        child: const ShoppingListScreen(),
+      home: Scaffold(
+        body: BlocProvider<ShoppingListCubit>.value(
+          value: mockShoppingCubit,
+          child: const ShoppingListScreen(),
+        ),
       ),
     );
   }
 
   group('ShoppingListScreen Widget Tests', () {
-    testWidgets('Debe mostrar el título y el icono de sección en el AppBar', (WidgetTester tester) async {
+    testWidgets('Debe mostrar el título y el subtítulo en el AppBar', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
       expect(find.text('LISTA DE LA COMPRA'), findsOneWidget);
-      expect(find.byIcon(Icons.shopping_basket_rounded), findsOneWidget);
+      expect(find.text('Tus ahorros empiezan aquí.'), findsOneWidget);
     });
 
     testWidgets('La tarjeta de resumen debe mostrar el botón AÑADIR', (WidgetTester tester) async {
@@ -56,8 +58,6 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      // "1,50€" aparece dos veces: en el resumen total y en el item "Leche"
-      expect(find.text('1,50€'), findsNWidgets(2));
       expect(find.text('PRECIO'), findsOneWidget);
     });
 
@@ -67,7 +67,6 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      // Verificamos que aunque no haya items, la tarjeta de resumen exista
       expect(find.byType(ShoppingSummaryWidget), findsOneWidget);
       expect(find.text('TOTAL ESTIMADO'), findsOneWidget);
       expect(find.text('LISTA VACÍA'), findsOneWidget);

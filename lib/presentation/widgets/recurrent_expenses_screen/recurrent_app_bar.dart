@@ -20,39 +20,25 @@ class RecurrentAppBar extends StatelessWidget {
             ),
           ),
 
-          // DERECHA: INFO SECCIÓN (Título, Subtítulo e Icono)
-          Row(
+          // DERECHA: INFO SECCIÓN (Solo Título y Subtítulo)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'MIS PAGOS FIJOS',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const Text(
-                    'Gastos mensuales',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.orange,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 15),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.orange.withValues(alpha: 0.2), width: 1.5)
+              Text(
+                'MIS PAGOS FIJOS',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface,
                 ),
-                child: const Icon(Icons.repeat_rounded, color: Colors.orange, size: 24),
+              ),
+              const Text(
+                'Controla hoy, ahorra siempre.',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.orange,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

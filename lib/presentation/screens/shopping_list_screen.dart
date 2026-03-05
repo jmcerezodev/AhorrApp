@@ -16,30 +16,26 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargamos los items al entrar
     context.read<ShoppingListCubit>().loadItems();
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. APPBAR (Añadir producto)
-            ShoppingAppBar(),
+    return const SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. APPBAR
+          ShoppingAppBar(),
 
-            // 2. RESUMEN (Total y Progreso)
-            ShoppingSummaryWidget(),
+          // 2. RESUMEN
+          ShoppingSummaryWidget(),
 
-            // 3. LISTADO (Lista reordenable y acciones)
-            Expanded(
-              child: ShoppingListHistoryWidget(),
-            ),
-          ],
-        ),
+          // 3. LISTADO
+          Expanded(
+            child: ShoppingListHistoryWidget(),
+          ),
+        ],
       ),
     );
   }

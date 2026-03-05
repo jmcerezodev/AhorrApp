@@ -12,7 +12,7 @@ class ShoppingAppBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // IZQUIERDA: BOTÓN DRAWER (Como en la Home)
+          // IZQUIERDA: BOTÓN DRAWER
           Builder(
             builder: (context) => IconButton(
               onPressed: () => Scaffold.of(context).openDrawer(),
@@ -20,39 +20,25 @@ class ShoppingAppBar extends StatelessWidget {
             ),
           ),
 
-          // DERECHA: INFO SECCIÓN
-          Row(
+          // DERECHA: INFO SECCIÓN (Solo Título y Subtítulo)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'LISTA DE LA COMPRA',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const Text(
-                    'Productos pendientes',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.orange,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 15),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.orange.withValues(alpha: 0.2), width: 1.5)
+              Text(
+                'LISTA DE LA COMPRA',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface,
                 ),
-                child: const Icon(Icons.shopping_basket_rounded, color: Colors.orange, size: 24),
+              ),
+              const Text(
+                'Tus ahorros empiezan aquí.',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.orange,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

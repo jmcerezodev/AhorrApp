@@ -16,32 +16,28 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargamos los gastos al iniciar la pantalla
     context.read<RecurrentExpensesCubit>().loadExpenses();
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. APPBAR COMPACTA
-            RecurrentAppBar(),
+    return const SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. APPBAR COMPACTA
+          RecurrentAppBar(),
 
-            // 2. TARJETA DE RESUMEN
-            RecurrentSummaryWidget(),
+          // 2. TARJETA DE RESUMEN
+          RecurrentSummaryWidget(),
 
-            const SizedBox(height: 10),
+          const SizedBox(height: 10),
 
-            // 3. LISTADO Y FILTROS
-            Expanded(
-              child: RecurrentHistoryWidget(),
-            ),
-          ],
-        ),
+          // 3. LISTADO Y FILTROS
+          Expanded(
+            child: RecurrentHistoryWidget(),
+          ),
+        ],
       ),
     );
   }

@@ -55,7 +55,7 @@ class InfoGlogalWidget extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // COLUMNA 1: BALANCE Y CHIP
+              // COLUMNA 1: BALANCE Y CONTROL
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,7 +66,7 @@ class InfoGlogalWidget extends StatelessWidget {
                         color: Colors.orange.shade400,
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
+                        letterSpacing: 1.0,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -90,7 +90,7 @@ class InfoGlogalWidget extends StatelessWidget {
                         ),
                       ),
                     
-                    const SizedBox(height: 12), // GAP UNIFICADO
+                    const Spacer(),
                     
                     GestureDetector(
                       onTap: () => context.read<TotalMoneyCubit>().toggleSavingsInclusion(),
@@ -105,7 +105,7 @@ class InfoGlogalWidget extends StatelessWidget {
 
               const SizedBox(width: 15),
 
-              // COLUMNA 2: BURBUJA DE AHORROS (Aprovecha el espacio vertical)
+              // COLUMNA 2: BURBUJA DE AHORROS
               _SavingsBubble(savingsState: savingsState, isGoalMet: isGoalMet, humanizeNumbers: humanizeNumbers),
             ],
           ),
@@ -144,7 +144,7 @@ class _SavingsBubble extends StatelessWidget {
           border: Border.all(color: isGoalMet ? Colors.green.withValues(alpha: 0.2) : Colors.orange.withValues(alpha: 0.1)),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, // CENTRADO VERTICAL PARA QUITAR AIRE
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -202,21 +202,24 @@ class _ModeChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.sync_rounded, color: color.withValues(alpha: 0.8), size: 12),
-          const SizedBox(width: 6),
-          Text(
-            isSavingsIncluded ? 'AHORROS SUMADOS' : 'SOLO CARTERA',
-            style: TextStyle(
-              color: isSavingsIncluded ? color : (isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7)),
-              fontSize: 8,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.5,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.sync_rounded, color: color.withValues(alpha: 0.8), size: 12),
+            const SizedBox(width: 6),
+            Text(
+              isSavingsIncluded ? 'AHORROS SUMADOS' : 'SOLO CARTERA',
+              style: TextStyle(
+                color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
+                fontSize: 8,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

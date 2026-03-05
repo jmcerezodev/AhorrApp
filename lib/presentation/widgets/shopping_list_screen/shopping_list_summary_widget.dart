@@ -50,7 +50,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // COLUMNA 1: INFO (Total + Progreso)
+                    // COLUMNA 1: INFO (Total + En la cesta)
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,11 +79,11 @@ class ShoppingSummaryWidget extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          // PROGRESO DEBAJO DEL TOTAL
+                          // "EN LA CESTA" DEBAJO DEL TOTAL
                           Row(
                             children: [
                               Text(
-                                'PROGRESO:',
+                                'En la cesta:',
                                 style: TextStyle(
                                   color: colorScheme.onSurface.withValues(alpha: 0.4),
                                   fontSize: 9,
