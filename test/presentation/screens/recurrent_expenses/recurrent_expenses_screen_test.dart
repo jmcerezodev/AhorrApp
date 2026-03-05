@@ -108,16 +108,20 @@ void main() {
       expect(find.byType(ConfirmManualPaymentDialog), findsOneWidget);
     });
 
-    testWidgets('Debe abrir el diálogo de añadir al pulsar el botón circular de la cabecera', (WidgetTester tester) async {
-      when(() => mockCubit.state).thenReturn(const RecurrentExpensesState(
+    testWidgets('Debe abrir el diálogo de añadir al pulsar la burbuja de la tarjeta de resumen', (WidgetTester tester) async {
+      final expenses = [
+        RecurrentExpense(id: '1', userId: 'u1', name: 'Test', amount: 10.0, day: 1, startDate: DateTime.now()),
+      ];
+
+      when(() => mockCubit.state).thenReturn(RecurrentExpensesState(
         status: RecurrentExpensesStatus.success,
-        expenses: [],
+        expenses: expenses,
       ));
 
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.add_rounded));
+      await tester.tap(find.text('NUEVO GASTO'));
       await tester.pumpAndSettle();
 
       expect(find.byType(AddEditRecurrentExpenseDialog), findsOneWidget);
@@ -126,16 +130,7 @@ void main() {
     group('RecurrentExpensesScreen - Gestos de Deslizamiento', () {
       testWidgets('Debe mostrar el fondo de edición al deslizar a la derecha', (WidgetTester tester) async {
         final expenses = [
-          RecurrentExpense(
-            id: '1', 
-            userId: 'u1', 
-            name: 'Netflix', 
-            amount: 15.99, 
-            day: 10, 
-            frequency: RecurrentFrequency.monthly,
-            startDate: DateTime.now(),
-            position: 0,
-          ),
+          RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 15.99, day: 10, startDate: DateTime.now()),
         ];
 
         when(() => mockCubit.state).thenReturn(RecurrentExpensesState(
@@ -150,24 +145,12 @@ void main() {
         await tester.pump(); 
         await tester.pump(const Duration(milliseconds: 500)); 
 
-        // Usamos un finder más específico para evitar ambigüedades
         expect(find.descendant(of: find.byType(SwipeBackgroundWidget), matching: find.text('EDITAR')), findsOneWidget);
-        
-        await tester.pumpAndSettle();
       });
 
       testWidgets('Debe mostrar el fondo de eliminación al deslizar a la izquierda', (WidgetTester tester) async {
         final expenses = [
-          RecurrentExpense(
-            id: '1', 
-            userId: 'u1', 
-            name: 'Netflix', 
-            amount: 15.99, 
-            day: 10, 
-            frequency: RecurrentFrequency.monthly,
-            startDate: DateTime.now(),
-            position: 0,
-          ),
+          RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 15.99, day: 10, startDate: DateTime.now()),
         ];
 
         when(() => mockCubit.state).thenReturn(RecurrentExpensesState(
@@ -182,10 +165,7 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 500));
 
-        // Usamos un finder más específico para evitar ambigüedades con otros textos "ELIMINAR"
         expect(find.descendant(of: find.byType(SwipeBackgroundWidget), matching: find.text('ELIMINAR')), findsOneWidget);
-
-        await tester.pumpAndSettle();
       });
     });
 
@@ -207,13 +187,12 @@ void main() {
       final secondItem = find.text('HBO');
 
       final TestGesture gesture = await tester.startGesture(tester.getCenter(firstItem));
-      await tester.pump(const Duration(milliseconds: 1000)); // Más tiempo para asegurar el long press
+      await tester.pump(const Duration(milliseconds: 1000));
       
       await gesture.moveTo(tester.getCenter(secondItem));
       await tester.pump(const Duration(milliseconds: 200));
       await gesture.up();
       
-      // Limpieza crítica de timers para ReorderableListView
       await tester.pumpAndSettle();
 
       verify(() => mockCubit.reorderExpenses(any(), any())).called(1);

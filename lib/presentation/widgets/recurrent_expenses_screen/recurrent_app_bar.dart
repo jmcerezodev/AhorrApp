@@ -1,4 +1,3 @@
-import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/add_edit_recurrent_expense_dialog.dart';
 import 'package:flutter/material.dart';
 
 class RecurrentAppBar extends StatelessWidget {
@@ -35,23 +34,15 @@ class RecurrentAppBar extends StatelessWidget {
               ),
             ],
           ),
-          GestureDetector(
-            onTap: () {
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const AddEditRecurrentExpenseDialog(),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.orange.withValues(alpha: 0.2), width: 1.5)
-              ),
-              child: const Icon(Icons.add_rounded, color: Colors.orange, size: 24),
+          // ICONO DE SECCIÓN (Antes era el botón de añadir)
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.2), width: 1.5)
             ),
+            child: const Icon(Icons.repeat_rounded, color: Colors.orange, size: 24),
           ),
         ],
       ),

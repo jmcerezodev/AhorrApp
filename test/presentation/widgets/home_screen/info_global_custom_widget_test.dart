@@ -19,7 +19,6 @@ void main() {
     mockTotalMoneyCubit = MockTotalMoneyCubit();
     mockSavingsCubit = MockSavingsCubit();
 
-    // Estado inicial por defecto para los tests
     when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState(status: HistoryStatus.success));
     when(() => mockTotalMoneyCubit.state).thenReturn(const TotalMoneyCubitState(totalMoney: 1250.50, isSavingsIncluded: true));
     when(() => mockSavingsCubit.state).thenReturn(const SavingsCubitState(savingTotal: 500, savingGoal: 1000));
@@ -45,35 +44,50 @@ void main() {
   }
 
   group('InfoGlogalWidget - Protección de Diseño y Datos', () {
-    testWidgets('Debe mostrar el balance total (incluyendo ahorros) con formato correcto', (WidgetTester tester) async {
+    testWidgets('Debe mostrar el título fijo y el balance total correctamente', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1200);
+      tester.view.devicePixelRatio = 1.0;
+
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      // Buscamos el nuevo texto organizado en dos líneas
-      expect(find.text('BALANCE TOTAL\n(CON AHORROS)'), findsOneWidget);
-      // Balance = 1250.50 (cartera) + 500 (ahorros) = 1750.50
+      expect(find.text('BALANCE DE CUENTA'), findsOneWidget);
+      expect(find.text('AHORROS SUMADOS'), findsOneWidget);
       expect(find.text('1.750,50€'), findsOneWidget);
+      
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
     });
 
-    testWidgets('Debe mostrar solo el balance total si la opción de ahorros está desactivada', (WidgetTester tester) async {
+    testWidgets('Debe mostrar solo el balance de cartera si la opción está desactivada', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1200);
+      tester.view.devicePixelRatio = 1.0;
       when(() => mockTotalMoneyCubit.state).thenReturn(const TotalMoneyCubitState(totalMoney: 1250.50, isSavingsIncluded: false));
       
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      // ACTUALIZADO: Buscamos "BALANCE TOTAL" sin los ahorros
-      expect(find.text('BALANCE TOTAL'), findsOneWidget);
-      // Solo muestra los 1250.50 de la cartera
+      expect(find.text('BALANCE DE CUENTA'), findsOneWidget);
+      expect(find.text('SOLO CARTERA'), findsOneWidget);
       expect(find.text('1.250,50€'), findsOneWidget);
+      
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
     });
 
-    testWidgets('Debe mostrar la sección de ahorros y la barra de progreso', (WidgetTester tester) async {
+    testWidgets('Debe mostrar la sección de ahorros y la meta', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1200);
+      tester.view.devicePixelRatio = 1.0;
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('MIS AHORROS'), findsOneWidget);
+      // ACTUALIZADO: El texto cambió de "MIS AHORROS" a "AHORROS" para compactar
+      expect(find.text('AHORROS'), findsOneWidget);
       expect(find.text('500€'), findsOneWidget);
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.text('Meta: 1.000€'), findsOneWidget);
+      
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
     });
 
     testWidgets('Debe mostrar un spinner cuando el historial está cargando', (WidgetTester tester) async {

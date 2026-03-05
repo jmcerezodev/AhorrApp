@@ -5,8 +5,8 @@ void main() {
   group('HumanizeNumbers Tests', () {
     final formatter = HumanizeNumbers();
 
-    test('debe formatear el cero correctamente', () {
-      expect(formatter.number(0), '0,00');
+    test('debe formatear el cero correctamente como entero', () {
+      expect(formatter.number(0), '0');
     });
 
     test('debe formatear números enteros sin decimales innecesarios', () {
