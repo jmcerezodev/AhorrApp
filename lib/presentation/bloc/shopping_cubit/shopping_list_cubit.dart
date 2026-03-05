@@ -3,6 +3,7 @@ import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
+import 'package:ahorrapp/domain/entities/shopping_template.dart';
 import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/delete_shopping_list_item_usecase.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/get_shopping_list_usecase.dart';
@@ -50,6 +51,28 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
     }
   }
 
+  // NUEVO: Añadir productos desde una plantilla
+  Future<void> addItemsFromTemplate(List<ShoppingTemplateItem> templateItems) async {
+    emit(state.copyWith(status: ShoppingStatus.loading));
+    try {
+      int currentPos = state.items.length;
+      for (var tItem in templateItems) {
+        final newItem = ShoppingListItem(
+          id: const Uuid().v4(),
+          userId: Preferences.uId,
+          name: tItem.name,
+          amount: tItem.amount,
+          category: tItem.category,
+          position: currentPos++,
+        );
+        await _saveShoppingItemUseCase(newItem);
+      }
+      await loadItems();
+    } catch (e) {
+      emit(state.copyWith(status: ShoppingStatus.failure, errorMessage: e.toString()));
+    }
+  }
+
   Future<void> toggleItem(ShoppingListItem item) async {
     final updatedItem = item.copyWith(isBought: !item.isBought);
     try {
@@ -90,20 +113,18 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
     }
   }
 
-  // MÉTODO PARA VOLCAR A GASTOS
   Future<void> transferToExpenses({
     required bool asPack, 
     required HistoryCubit historyCubit,
-    String? packName, // Nuevo: nombre personalizado del pack
+    String? packName,
   }) async {
     final boughtItems = state.items.where((item) => item.isBought).toList();
     
-    // Verificación de precios (Ya se debería haber hecho en la UI, pero blindamos aquí también)
     final itemsWithoutPrice = boughtItems.where((item) => item.amount <= 0).toList();
     if (itemsWithoutPrice.isNotEmpty) {
       emit(state.copyWith(
         status: ShoppingStatus.failure, 
-        errorMessage: 'Hay productos sin precio en la cesta.'
+        errorMessage: 'Hay productos en la cesta sin precio. Por favor, añádeles un precio para poder guardarlos como gasto.'
       ));
       return;
     }

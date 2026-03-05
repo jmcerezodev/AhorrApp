@@ -7,6 +7,7 @@ import 'models/financial_summary.dart';
 import 'models/pending_sync.dart';
 import 'models/local_recurrent_expense.dart';
 import 'models/local_shopping_list_item.dart';
+import 'models/local_shopping_template.dart';
 
 class LocalDbService {
   static final LocalDbService _instance = LocalDbService._internal();
@@ -29,6 +30,7 @@ class LocalDbService {
           PendingSyncSchema,
           LocalRecurrentExpenseSchema,
           LocalShoppingItemSchema,
+          LocalShoppingTemplateSchema,
         ],
         directory: dir.path,
       );
@@ -180,6 +182,28 @@ class LocalDbService {
     });
   }
 
+  // --- PLANTILLAS DE COMPRA ---
+
+  Future<void> saveShoppingTemplates(List<LocalShoppingTemplate> items) async {
+    await _isar.writeTxn(() async {
+      await _isar.localShoppingTemplates.putAll(items);
+    });
+  }
+
+  Future<List<LocalShoppingTemplate>> getShoppingTemplates(String userId) async {
+    return await _isar.localShoppingTemplates
+        .filter()
+        .userIdEqualTo(userId)
+        .sortByCreatedAtDesc()
+        .findAll();
+  }
+
+  Future<void> deleteShoppingTemplateByAppwriteId(String appwriteId) async {
+    await _isar.writeTxn(() async {
+      await _isar.localShoppingTemplates.filter().appwriteIdEqualTo(appwriteId).deleteAll();
+    });
+  }
+
   // --- RESUMEN FINANCIERO ---
 
   Future<void> saveSavingGoal(String userId, double goal) async {
@@ -242,6 +266,7 @@ class LocalDbService {
       await _isar.pendingSyncs.clear();
       await _isar.localRecurrentExpenses.clear();
       await _isar.localShoppingItems.clear();
+      await _isar.localShoppingTemplates.clear();
     });
   }
 
@@ -251,6 +276,7 @@ class LocalDbService {
       await _isar.localSavings.filter().appwriteIdEqualTo(appwriteId).deleteAll();
       await _isar.localRecurrentExpenses.filter().appwriteIdEqualTo(appwriteId).deleteAll();
       await _isar.localShoppingItems.filter().appwriteIdEqualTo(appwriteId).deleteAll();
+      await _isar.localShoppingTemplates.filter().appwriteIdEqualTo(appwriteId).deleteAll();
     });
   }
 }

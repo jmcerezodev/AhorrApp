@@ -1,21 +1,28 @@
 import 'package:ahorrapp/core/network/connectivity_service.dart';
 import 'package:ahorrapp/data/repositories/appwrite_recurrent_expense_repository.dart';
 import 'package:ahorrapp/data/repositories/appwrite_shopping_list_repository.dart';
+import 'package:ahorrapp/data/repositories/appwrite_shopping_template_repository.dart';
 import 'package:ahorrapp/data/repositories/isar_recurrent_expense_repository.dart';
 import 'package:ahorrapp/data/repositories/isar_shopping_list_repository.dart';
+import 'package:ahorrapp/data/repositories/isar_shopping_template_repository.dart';
 import 'package:ahorrapp/domain/repositories/i_recurrent_expense_repository.dart';
 import 'package:ahorrapp/domain/repositories/i_shopping_list_repository.dart';
+import 'package:ahorrapp/domain/repositories/i_shopping_template_repository.dart';
 import 'package:ahorrapp/domain/usecases/delete_movement_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/delete_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/get_recurrent_expenses_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/process_recurrent_expenses_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/save_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/delete_shopping_list_item_usecase.dart';
+import 'package:ahorrapp/domain/usecases/shopping_list/delete_shopping_template_usecase.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/get_shopping_list_usecase.dart';
+import 'package:ahorrapp/domain/usecases/shopping_list/get_shopping_templates_usecase.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/save_shopping_list_item_usecase.dart';
+import 'package:ahorrapp/domain/usecases/shopping_list/save_shopping_template_usecase.dart';
 import 'package:ahorrapp/domain/usecases/update_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_templates_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:get_it/get_it.dart';
 import '../../data/appwrite/appwrite_repository.dart';
@@ -75,7 +82,17 @@ Future<void> setupServiceLocator() async {
     instanceName: 'shopping_remote',
   );
 
-  // 3. CASOS DE USO (Cimientos de los Cubits)
+  getIt.registerLazySingleton<IShoppingTemplateRepository>(
+    () => IsarShoppingTemplateRepository(),
+    instanceName: 'template_local',
+  );
+
+  getIt.registerLazySingleton<IShoppingTemplateRepository>(
+    () => AppwriteShoppingTemplateRepository(),
+    instanceName: 'template_remote',
+  );
+
+  // 3. CASOS DE USO
   getIt.registerLazySingleton<GetMovementsUseCase>(() => GetMovementsUseCase(
         localRepository: getIt<IMovementRepository>(instanceName: 'local'),
         remoteRepository: getIt<IMovementRepository>(instanceName: 'remote'),
@@ -142,6 +159,22 @@ Future<void> setupServiceLocator() async {
         localDbService: getIt<LocalDbService>(),
       ));
 
+  // CASOS DE USO PLANTILLAS
+  getIt.registerLazySingleton<GetShoppingTemplatesUseCase>(() => GetShoppingTemplatesUseCase(
+        repository: getIt<IShoppingTemplateRepository>(instanceName: 'template_local'),
+      ));
+
+  getIt.registerLazySingleton<SaveShoppingTemplateUseCase>(() => SaveShoppingTemplateUseCase(
+        localRepository: getIt<IShoppingTemplateRepository>(instanceName: 'template_local'),
+        remoteRepository: getIt<IShoppingTemplateRepository>(instanceName: 'template_remote'),
+        localDbService: getIt<LocalDbService>(),
+      ));
+
+  getIt.registerLazySingleton<DeleteShoppingTemplateUseCase>(() => DeleteShoppingTemplateUseCase(
+        localRepository: getIt<IShoppingTemplateRepository>(instanceName: 'template_local'),
+        remoteRepository: getIt<IShoppingTemplateRepository>(instanceName: 'template_remote'),
+      ));
+
   // 4. CUBITS CORE (Permanentes)
   final totalMoneyCubit = TotalMoneyCubit();
   getIt.registerSingleton<TotalMoneyCubit>(totalMoneyCubit);
@@ -154,6 +187,11 @@ Future<void> setupServiceLocator() async {
   getIt.registerSingleton<UpdateNameCubit>(UpdateNameCubit());
   getIt.registerSingleton<RecurrentExpensesCubit>(RecurrentExpensesCubit());
   getIt.registerSingleton<ShoppingListCubit>(ShoppingListCubit());
+  getIt.registerSingleton<ShoppingTemplatesCubit>(ShoppingTemplatesCubit(
+    getTemplatesUseCase: getIt<GetShoppingTemplatesUseCase>(),
+    saveTemplateUseCase: getIt<SaveShoppingTemplateUseCase>(),
+    deleteTemplateUseCase: getIt<DeleteShoppingTemplateUseCase>(),
+  ));
   
   // 5. CUBITS DE FÁBRICA (Se crean bajo demanda)
   getIt.registerFactory<NewUserCubit>(() => NewUserCubit());

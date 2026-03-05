@@ -11,7 +11,8 @@ class AppwriteRepository {
   final String _historyId = Env.appwriteHistoryCollectionId;
   final String _savingsId = Env.appwriteSavingsCollectionId;
   final String _recurrentId = Env.appwriteRecurrentExpensesCollectionId;
-  final String _shoppingId = "shoppingList"; // NUEVA COLECCIÓN (Añadir a Env si prefieres)
+  final String _shoppingId = Env.appwriteShoppingListCollectionId;
+  final String _templatesId = Env.appwriteShoppingTemplatesCollectionId;
 
   // --- PREFERENCIAS DE USUARIO ---
 
@@ -50,6 +51,7 @@ class AppwriteRepository {
     List<Document> allSavings = [];
     List<Document> allRecurrent = [];
     List<Document> allShopping = [];
+    List<Document> allTemplates = [];
     
     try {
       final historyInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _historyId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
@@ -59,7 +61,15 @@ class AppwriteRepository {
       final int totalDocsCount = historyInfo.total + savingsInfo.total + recurrentInfo.total;
       if (totalDocsCount == 0) {
         await updateTotalBalance(0.0);
-        return {'balance': 0.0, 'history': [], 'savings': [], 'recurrent': [], 'shopping': [], 'savingGoal': 0.0};
+        return {
+          'balance': 0.0, 
+          'history': [], 
+          'savings': [], 
+          'recurrent': [], 
+          'shopping': [], 
+          'templates': [],
+          'savingGoal': 0.0
+        };
       }
 
       int processed = 0;
@@ -79,7 +89,7 @@ class AppwriteRepository {
           allHistory.add(doc);
         }
         processed += response.documents.length;
-        onProgress((processed / totalDocsCount) * 0.5);
+        onProgress((processed / totalDocsCount) * 0.4);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
 
@@ -94,7 +104,7 @@ class AppwriteRepository {
         );
         allSavings.addAll(response.documents);
         processed += response.documents.length;
-        onProgress((processed / totalDocsCount) * 0.7);
+        onProgress((processed / totalDocsCount) * 0.6);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
 
@@ -109,23 +119,17 @@ class AppwriteRepository {
         );
         allRecurrent.addAll(response.documents);
         processed += response.documents.length;
-        onProgress((processed / totalDocsCount) * 0.85);
+        onProgress((processed / totalDocsCount) * 0.8);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
 
-      // 4. Procesar Compra
-      hasMore = true;
-      lastId = null;
+      // 4. Procesar Compra y Plantillas
       try {
-        while (hasMore) {
-          final response = await _databases.listDocuments(
-            databaseId: _databaseId,
-            collectionId: _shoppingId,
-            queries: [Query.equal('userId', [userId]), Query.limit(100), Query.orderAsc('\$id'), if (lastId != null) Query.cursorAfter(lastId)],
-          );
-          allShopping.addAll(response.documents);
-          if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
-        }
+        final shopResp = await _databases.listDocuments(databaseId: _databaseId, collectionId: _shoppingId, queries: [Query.equal('userId', [userId]), Query.limit(100)]);
+        allShopping.addAll(shopResp.documents);
+        
+        final tempResp = await _databases.listDocuments(databaseId: _databaseId, collectionId: _templatesId, queries: [Query.equal('userId', [userId]), Query.limit(100)]);
+        allTemplates.addAll(tempResp.documents);
       } catch (_) {}
 
       final double finalBalance = totalIncomes - totalExpenses;
@@ -142,11 +146,35 @@ class AppwriteRepository {
         'savings': allSavings,
         'recurrent': allRecurrent,
         'shopping': allShopping,
+        'templates': allTemplates,
         'savingGoal': savingGoal,
       };
     } catch (e) {
       rethrow;
     }
+  }
+
+  // --- PLANTILLAS DE COMPRA ---
+
+  Future<List<Document>> getShoppingTemplates(String userId) async {
+    return (await _databases.listDocuments(
+      databaseId: _databaseId,
+      collectionId: _templatesId,
+      queries: [Query.equal('userId', [userId]), Query.orderDesc('\$createdAt')],
+    )).documents;
+  }
+
+  Future<Document> addShoppingTemplate({required String documentId, required String userId, required String name, required String itemsJson}) async {
+    return await _databases.createDocument(
+      databaseId: _databaseId, 
+      collectionId: _templatesId, 
+      documentId: documentId, 
+      data: {'userId': userId, 'name': name, 'itemsJson': itemsJson}
+    );
+  }
+
+  Future<void> deleteShoppingTemplate(String documentId) async {
+    await _databases.deleteDocument(databaseId: _databaseId, collectionId: _templatesId, documentId: documentId);
   }
 
   // --- LISTA DE LA COMPRA ---
