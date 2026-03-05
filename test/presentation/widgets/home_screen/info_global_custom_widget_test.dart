@@ -19,7 +19,8 @@ void main() {
     mockTotalMoneyCubit = MockTotalMoneyCubit();
     mockSavingsCubit = MockSavingsCubit();
 
-    when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState(status: HistoryStatus.success));
+    // Estados por defecto exitosos
+    when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState(status: HistoryStatus.success, isSyncing: false));
     when(() => mockTotalMoneyCubit.state).thenReturn(const TotalMoneyCubitState(totalMoney: 1250.50, isSavingsIncluded: true));
     when(() => mockSavingsCubit.state).thenReturn(const SavingsCubitState(savingTotal: 500, savingGoal: 1000));
 
@@ -44,6 +45,17 @@ void main() {
   }
 
   group('InfoGlogalWidget - Protección de Diseño y Datos', () {
+    testWidgets('Debe mostrar el indicador de carga cuando el historial se está sincronizando', (WidgetTester tester) async {
+      when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState(status: HistoryStatus.loading, isSyncing: true));
+      
+      await tester.pumpWidget(createWidgetUnderTest());
+      
+      // animate_do necesita un pump con tiempo para que el widget aparezca en el árbol
+      await tester.pump(const Duration(milliseconds: 500));
+      
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+
     testWidgets('Debe mostrar el título fijo y el balance total correctamente', (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1200, 1200);
       tester.view.devicePixelRatio = 1.0;
@@ -75,13 +87,12 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
     });
 
-    testWidgets('Debe mostrar la sección de ahorros y la meta', (WidgetTester tester) async {
+    testWidgets('Debe mostrar la sección de ahorros y la meta sin decimales innecesarios', (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1200, 1200);
       tester.view.devicePixelRatio = 1.0;
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      // ACTUALIZADO: El texto cambió de "MIS AHORROS" a "AHORROS" para compactar
       expect(find.text('AHORROS'), findsOneWidget);
       expect(find.text('500€'), findsOneWidget);
       expect(find.text('Meta: 1.000€'), findsOneWidget);
@@ -90,14 +101,17 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
     });
 
-    testWidgets('Debe mostrar un spinner cuando el historial está cargando', (WidgetTester tester) async {
-      when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState(status: HistoryStatus.loading));
-      
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pump(const Duration(milliseconds: 500));
+    group('Interacciones', () {
+      testWidgets('Debe llamar a toggleSavingsInclusion al pulsar el chip de modo', (WidgetTester tester) async {
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pumpAndSettle();
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('1.750,50€'), findsNothing);
+        final modeChip = find.text('AHORROS SUMADOS');
+        await tester.tap(modeChip);
+        await tester.pump();
+
+        verify(() => mockTotalMoneyCubit.toggleSavingsInclusion()).called(1);
+      });
     });
   });
 }

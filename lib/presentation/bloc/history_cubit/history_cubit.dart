@@ -34,13 +34,12 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     emit(const HistoryCubitState());
   }
 
-  // MÉTODO PARA FORZAR LIMPIEZA DESDE EL LOGIN
   Future<void> prepareForNewLogin() async {
     await _localDb.clearAll();
     emit(const HistoryCubitState());
   }
 
-  Future<void> forceBalanceResync(TotalMoneyCubit totalMoneyCubit) async {
+  Future<void> forceBalanceResync(TotalMoneyCubit totalMoneyCubit, {SavingsCubit? savingsCubit}) async {
     if (state.isSyncing || Preferences.uId.isEmpty) return;
 
     emit(state.copyWith(status: HistoryStatus.loading, isSyncing: true, syncProgress: 0.0));
@@ -59,9 +58,13 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       await _localDb.saveRecurrentExpenses(recurrentItems);
 
       await _localDb.saveSavingGoal(uid, fullData['savingGoal']);
-      final double correctBalance = fullData['balance'];
+      final double correctBalance = (fullData['balance'] as num).toDouble();
       await _localDb.saveTotalBalance(uid, correctBalance);
       totalMoneyCubit.totalMoney(correctBalance);
+      
+      if (savingsCubit != null) {
+        await savingsCubit.loadSavings();
+      }
       
       emit(state.copyWith(isSyncing: false, syncProgress: 1.0, status: HistoryStatus.success));
       final date = Date();
@@ -83,13 +86,13 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
   }
 
-  Future<void> loadHistoryByDate(String month, int year) async {
+  Future<void> loadHistoryByDate(String month, int year, {SavingsCubit? savingsCubit}) async {
     if (year == 0 || Preferences.uId.isEmpty) return;
     if (state.isSyncing) return;
 
     final localTotalCount = await _localDb.getTotalCount();
     if (localTotalCount == 0 && state.syncProgress == 0.0) {
-      await forceBalanceResync(totalMoneyCubit);
+      await forceBalanceResync(totalMoneyCubit, savingsCubit: savingsCubit);
       return;
     }
 
@@ -121,8 +124,6 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     emit(state.copyWith(selectedCategories: currentSelected));
   }
 
-  // --- MÉTODOS RESTAURADOS PARA DIÁLOGOS ---
-
   Future<void> updateMovementLocally(dynamic item, double oldAmount) async {
     final isar = _localDb.isar;
     if (item is LocalSaving) {
@@ -133,8 +134,17 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       final existing = await isar.localHistorys.filter().appwriteIdEqualTo(item.appwriteId).findFirst();
       if (existing != null) item.id = existing.id;
       await _localDb.saveHistoryItems([item]);
-      final double diff = item.type == 'income' ? (item.money - oldAmount) : (oldAmount - item.money);
-      if (diff != 0) await _updateBalance(diff.abs(), diff > 0);
+      
+      double diff;
+      if (item.type == 'income') {
+        diff = item.money - oldAmount;
+      } else {
+        diff = oldAmount - item.money;
+      }
+
+      if (diff != 0) {
+        await _updateBalance(diff.abs(), diff > 0);
+      }
     }
     await loadHistoryByDate(item.month, item.year);
   }
@@ -142,14 +152,22 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
   Future<void> deleteMovementLocally(String appwriteId, String month, int year, double amount, String type) async {
     await _localDb.deleteItemByAppwriteId(appwriteId);
     if (type != 'saving') {
-      await _updateBalance(amount, type == 'expense');
+      final bool shouldAdd = (type == 'expense');
+      await _updateBalance(amount, shouldAdd);
     }
     await loadHistoryByDate(month, year);
   }
 
   Future<void> _updateBalance(double amount, bool isAddition) async {
     double current = await _localDb.getTotalBalance(Preferences.uId);
-    final double newBalance = isAddition ? current + amount : current - amount;
+    
+    double newBalance;
+    if (isAddition) {
+      newBalance = ((current + amount) * 100).roundToDouble() / 100;
+    } else {
+      newBalance = ((current - amount) * 100).roundToDouble() / 100;
+    }
+
     await _localDb.saveTotalBalance(Preferences.uId, newBalance);
     await _repository.updateTotalBalance(newBalance);
     totalMoneyCubit.totalMoney(newBalance);

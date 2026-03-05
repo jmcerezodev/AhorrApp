@@ -26,9 +26,11 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
   }
 
   Future<void> loadSavings() async {
-    emit(state.copyWith(status: SavingsStatus.loading));
+    // No emitimos loading aquí si ya tenemos datos para evitar parpadeos innecesarios en el login
     try {
       final String uid = Preferences.uId;
+      if (uid.isEmpty) return;
+
       final double goal = await _localDb.getSavingGoal(uid);
       final double total = await _localDb.calculateTotalSavings(uid);
       
@@ -43,6 +45,11 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
         errorMessage: 'Error al cargar ahorros: $e'
       ));
     }
+  }
+
+  // Nuevo método explícito para reiniciar y cargar
+  Future<void> refresh() async {
+    await loadSavings();
   }
 
   Future<void> addSaving(HistoryCubit historyCubit, {double? customAmount, String? customName}) async {
@@ -88,10 +95,8 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
     emit(state.copyWith(status: SavingsStatus.loading));
     
     try {
-      // 1. Marcar localmente en Isar
       final List<String> appwriteIds = await _localDb.markSavingsAsSpent();
       
-      // 2. Intentar actualizar en Appwrite o añadir a cola offline
       for (final id in appwriteIds) {
         try {
           await _repository.updateSaving(documentId: id, data: {'isSpent': true});
@@ -122,7 +127,6 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
   Future<void> removeContribution(String id) async {
     emit(state.copyWith(status: SavingsStatus.loading));
     try {
-      // Intentar borrar en remoto o añadir a cola offline
       try {
         await _repository.deleteSaving(id);
       } catch (_) {
@@ -144,10 +148,8 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
     emit(state.copyWith(status: SavingsStatus.loading));
     try {
       final String uid = Preferences.uId;
-      // Persistir localmente siempre
       await _localDb.saveSavingGoal(uid, value);
       
-      // Intentar sincronizar o encolar
       try {
         await _repository.updatePrefs({'savingGoal': value});
       } catch (_) {
@@ -168,10 +170,7 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
   }
 
   void resetCubit() {
-    emit(state.copyWith(
-      saving: const SavingInput.pure(),
-      status: SavingsStatus.initial
-    ));
+    emit(const SavingsCubitState());
   }
 
   void savingChanged(String value) {

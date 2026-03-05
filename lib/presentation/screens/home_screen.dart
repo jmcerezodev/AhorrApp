@@ -26,8 +26,17 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<UpdateNameCubit>().resetCubit();
         
         final dateState = context.read<DateCubit>().state;
-        context.read<HistoryCubit>().loadHistoryByDate(dateState.month, dateState.year);
-        context.read<SavingsCubit>().loadSavings();
+        final savingsCubit = context.read<SavingsCubit>();
+        
+        // Pasamos el savingsCubit al historial para que sepa refrescarlo tras sincronizar
+        context.read<HistoryCubit>().loadHistoryByDate(
+          dateState.month, 
+          dateState.year, 
+          savingsCubit: savingsCubit
+        );
+        
+        // Carga inicial normal
+        savingsCubit.loadSavings();
       }
     });
   }
@@ -64,7 +73,11 @@ class _HomeScreenState extends State<HomeScreen> {
           BlocListener<DateCubit, DateCubitState>(
             listenWhen: (previous, current) => previous.month != current.month || previous.year != current.year,
             listener: (context, state) {
-              context.read<HistoryCubit>().loadHistoryByDate(state.month, state.year);
+              context.read<HistoryCubit>().loadHistoryByDate(
+                state.month, 
+                state.year, 
+                savingsCubit: context.read<SavingsCubit>()
+              );
             },
           ),
           BlocListener<HistoryCubit, HistoryCubitState>(
@@ -83,8 +96,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ).then((_) => _isSyncDialogOpen = false);
               } else if (!state.isSyncing && _isSyncDialogOpen) {
+                // Si la sincronización termina, cerramos el diálogo y refrescamos ahorros
                 Navigator.of(context, rootNavigator: true).pop();
                 _isSyncDialogOpen = false;
+                context.read<SavingsCubit>().loadSavings();
               }
             },
           ),
@@ -95,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 5), // Reducido de 15 a 10
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -122,10 +137,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
       
-                const InfoGlogalWidget(), // Tarjeta de balance
+                const InfoGlogalWidget(),
       
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 2), // Reducido de 5 a 2
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 2),
                   child: Row(
                     children: [
                       Expanded(flex: 3, child: DateCustomWidget()),
@@ -135,21 +150,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
       
-                const SizedBox(height: 5), // Reducido de 10 a 5
+                const SizedBox(height: 5),
                 const ExpensesIncomesCustomWidget(),
-                const SizedBox(height: 10), // Reducido de 20 a 10
+                const SizedBox(height: 10),
                 
                 const Expanded(
                   child: HistoryCustomWidget(),
                 ),
                 
-                const SizedBox(height: 5), // Reducido de 10 a 5
+                const SizedBox(height: 5),
               ],
             ),
       
             if (isCalendarOpen)
               Positioned(
-                top: 200, // Ajustado de 220 a 200 por la compactación
+                top: 200,
                 left: 0,
                 right: 0,
                 child: const CalendarPanelWidget(),
