@@ -1,4 +1,3 @@
-import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/add_edit_shopping_item_dialog.dart';
 import 'package:flutter/material.dart';
 
 class ShoppingAppBar extends StatelessWidget {
@@ -35,23 +34,15 @@ class ShoppingAppBar extends StatelessWidget {
               ),
             ],
           ),
-          GestureDetector(
-            onTap: () {
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const AddEditShoppingItemDialog(),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.orange.withValues(alpha: 0.2), width: 1.5)
-              ),
-              child: const Icon(Icons.add_shopping_cart_rounded, color: Colors.orange, size: 24),
+          // ICONO DE IDENTIFICACIÓN (Antes era el botón de añadir)
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.2), width: 1.5)
             ),
+            child: const Icon(Icons.shopping_basket_rounded, color: Colors.orange, size: 24),
           ),
         ],
       ),
