@@ -14,6 +14,12 @@ class ShoppingState extends Equatable {
   });
 
   double get totalPrice => items.fold(0, (sum, item) => sum + item.amount);
+  
+  // Nuevo: Suma solo los productos que están marcados como comprados
+  double get totalBoughtPrice => items
+      .where((item) => item.isBought)
+      .fold(0, (sum, item) => sum + item.amount);
+
   int get totalBought => items.where((item) => item.isBought).length;
 
   ShoppingState copyWith({

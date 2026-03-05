@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class ShoppingAppBar extends StatelessWidget {
-  const ShoppingAppBar({super.key});
+class ShoppingListAppBar extends StatelessWidget {
+  const ShoppingListAppBar({super.key});
 
   @override
   Widget build(BuildContext context) {

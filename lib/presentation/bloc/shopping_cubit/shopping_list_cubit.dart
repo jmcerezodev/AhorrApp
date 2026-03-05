@@ -1,9 +1,13 @@
+import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
+import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
+import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/delete_shopping_list_item_usecase.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/get_shopping_list_usecase.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/save_shopping_list_item_usecase.dart';
+import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
@@ -14,6 +18,7 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
   final GetShoppingListUseCase _getShoppingListUseCase = getIt<GetShoppingListUseCase>();
   final SaveShoppingListItemUseCase _saveShoppingItemUseCase = getIt<SaveShoppingListItemUseCase>();
   final DeleteShoppingListItemUseCase _deleteShoppingItemUseCase = getIt<DeleteShoppingListItemUseCase>();
+  final SaveMovementUseCase _saveMovementUseCase = getIt<SaveMovementUseCase>();
 
   ShoppingListCubit() : super(const ShoppingState());
 
@@ -82,6 +87,79 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
       await loadItems();
     } catch (e) {
       emit(state.copyWith(status: ShoppingStatus.failure, errorMessage: e.toString()));
+    }
+  }
+
+  // MÉTODO PARA VOLCAR A GASTOS
+  Future<void> transferToExpenses({
+    required bool asPack, 
+    required HistoryCubit historyCubit
+  }) async {
+    final boughtItems = state.items.where((item) => item.isBought).toList();
+    
+    // 1. Verificación de precios
+    final itemsWithoutPrice = boughtItems.where((item) => item.amount <= 0).toList();
+    if (itemsWithoutPrice.isNotEmpty) {
+      emit(state.copyWith(
+        status: ShoppingStatus.failure, 
+        errorMessage: 'Hay productos en la cesta sin precio. Por favor, añádeles un precio para poder guardarlos como gasto.'
+      ));
+      return;
+    }
+
+    emit(state.copyWith(status: ShoppingStatus.loading));
+
+    try {
+      final date = Date();
+      final String month = date.monthNames();
+      final int year = int.parse(date.year());
+
+      if (asPack) {
+        // Opción A: Guardar como un solo gasto total
+        final totalAmount = boughtItems.fold(0.0, (sum, item) => sum + item.amount);
+        final movement = Movement(
+          id: const Uuid().v4(),
+          name: 'Compra Supermercado',
+          amount: totalAmount,
+          type: MovementType.expense,
+          isIncome: false,
+          date: date.currentDate(),
+          hour: date.currentHour(),
+          month: month,
+          year: year,
+          createdAt: DateTime.now(),
+          category: 'general', // O una categoría específica de compra
+        );
+        await _saveMovementUseCase(movement);
+      } else {
+        // Opción B: Guardar producto a producto
+        for (var item in boughtItems) {
+          final movement = Movement(
+            id: const Uuid().v4(),
+            name: item.name,
+            amount: item.amount,
+            type: MovementType.expense,
+            isIncome: false,
+            date: date.currentDate(),
+            hour: date.currentHour(),
+            month: month,
+            year: year,
+            createdAt: DateTime.now(),
+            category: item.category,
+          );
+          await _saveMovementUseCase(movement);
+        }
+      }
+
+      // 2. Limpiar items comprados tras el volcado exitoso
+      await clearBoughtItems();
+      
+      // 3. Refrescar historial
+      await historyCubit.loadHistoryByDate(month, year);
+      
+      emit(state.copyWith(status: ShoppingStatus.success));
+    } catch (e) {
+      emit(state.copyWith(status: ShoppingStatus.failure, errorMessage: 'Error al transferir gastos: $e'));
     }
   }
 

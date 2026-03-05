@@ -16,7 +16,6 @@ class ShoppingSummaryWidget extends StatelessWidget {
 
     return BlocBuilder<ShoppingListCubit, ShoppingState>(
       builder: (context, state) {
-        // TARJETA SIEMPRE VISIBLE
         return FadeInDown(
           duration: const Duration(milliseconds: 400),
           child: Padding(
@@ -56,7 +55,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'TOTAL ESTIMADO',
+                            'TOTAL EN LA CESTA',
                             style: TextStyle(
                               color: Colors.orange.shade400,
                               fontSize: 10,
@@ -69,7 +68,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              '${humanizeNumbers.number(state.totalPrice)}€',
+                              '${humanizeNumbers.number(state.totalBoughtPrice)}€',
                               style: TextStyle(
                                 color: isDark ? Colors.white : colorScheme.onSurface,
                                 fontSize: 30,
@@ -79,11 +78,10 @@ class ShoppingSummaryWidget extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          // "EN LA CESTA" DEBAJO DEL TOTAL
                           Row(
                             children: [
                               Text(
-                                'En la cesta:',
+                                'Progreso:',
                                 style: TextStyle(
                                   color: colorScheme.onSurface.withValues(alpha: 0.4),
                                   fontSize: 9,

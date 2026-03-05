@@ -68,8 +68,20 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ShoppingSummaryWidget), findsOneWidget);
-      expect(find.text('TOTAL ESTIMADO'), findsOneWidget);
+      expect(find.text('TOTAL EN LA CESTA'), findsOneWidget);
       expect(find.text('LISTA VACÍA'), findsOneWidget);
+    });
+
+    testWidgets('Debe mostrar el botón de transferencia si hay items en la cesta', (WidgetTester tester) async {
+      // Configuramos estado con un item comprado (userId es obligatorio)
+      when(() => mockShoppingCubit.state).thenReturn(const ShoppingState(
+        items: [ShoppingListItem(id: '1', userId: 'u1', name: 'Leche', amount: 1.5, isBought: true, position: 0)]
+      ));
+
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      expect(find.text('AÑADIR COMPRA A LA LISTA DE GASTOS'), findsOneWidget);
     });
   });
 }

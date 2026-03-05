@@ -49,7 +49,7 @@ class ShoppingSummaryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'TOTAL ESTIMADO',
+                    'TOTAL EN LA CESTA',
                     style: TextStyle(
                       color: Colors.orange.shade400,
                       fontSize: 10,
@@ -59,7 +59,7 @@ class ShoppingSummaryCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${humanizeNumbers.number(state.totalPrice)}€',
+                    '${humanizeNumbers.number(state.totalBoughtPrice)}€',
                     style: TextStyle(
                       color: isDark ? Colors.white : Colors.black87,
                       fontSize: 30,
