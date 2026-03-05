@@ -73,33 +73,35 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     required double amount,
     int? day,
     String category = 'general',
-    bool isActive = true,
+    bool? isActive, // Cambiado a nullable
     RecurrentFrequency frequency = RecurrentFrequency.monthly,
     DateTime? startDate,
     int? position,
-    bool includeInSummary = true,
+    bool? includeInSummary, // Cambiado a nullable
   }) async {
     emit(state.copyWith(status: RecurrentExpensesStatus.loading));
     
     String? lastApplied;
     DateTime finalStartDate = startDate ?? DateTime.now();
     int finalPosition = position ?? 0;
-    bool finalIncludeInSummary = includeInSummary;
+    bool finalIsActive = isActive ?? true;
+    bool finalIncludeInSummary = includeInSummary ?? true;
 
     if (id != null) {
       final currentExpense = state.expenses.cast<RecurrentExpense?>().firstWhere(
         (e) => e?.id == id, 
         orElse: () => null
       );
-      lastApplied = currentExpense?.lastApplied;
-      if (startDate == null && currentExpense != null) {
-        finalStartDate = currentExpense.startDate;
-      }
-      if (position == null && currentExpense != null) {
-        finalPosition = currentExpense.position;
+      
+      if (currentExpense != null) {
+        lastApplied = currentExpense.lastApplied;
+        if (startDate == null) finalStartDate = currentExpense.startDate;
+        if (position == null) finalPosition = currentExpense.position;
+        if (isActive == null) finalIsActive = currentExpense.isActive;
+        if (includeInSummary == null) finalIncludeInSummary = currentExpense.includeInSummary;
       }
     } else {
-      finalPosition = state.expenses.length;
+      finalPosition = position ?? state.expenses.length;
     }
 
     final expense = RecurrentExpense(
@@ -109,7 +111,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       amount: amount,
       day: day,
       category: category,
-      isActive: isActive,
+      isActive: finalIsActive,
       lastApplied: lastApplied,
       frequency: frequency,
       startDate: finalStartDate,
@@ -167,7 +169,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       month: dateService.monthNames(),
       year: int.parse(dateService.year()),
       createdAt: DateTime.now(),
-      isRecurrent: true, // NUEVO
+      isRecurrent: true,
     );
 
     try {

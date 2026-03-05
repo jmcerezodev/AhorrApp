@@ -21,7 +21,7 @@ class SaveRecurrentExpenseUseCase {
     try {
       await remoteRepository.saveRecurrentExpense(expense);
     } catch (e) {
-      // Cola de sincronización si falla internet
+      // Cola de sincronización si falla internet (Offline mode)
       await localDbService.addPendingSync(
         'create', 
         'recurrent_expenses',
@@ -35,7 +35,8 @@ class SaveRecurrentExpenseUseCase {
           'lastApplied': expense.lastApplied,
           'frequency': _mapFrequencyToString(expense.frequency),
           'startDate': expense.startDate.toIso8601String(),
-          'position': expense.position, // AÑADIDO: Para que funcione sin conexión
+          'position': expense.position,
+          'includeInSummary': expense.includeInSummary, // AÑADIDO para soporte offline total
         },
         appwriteId: expense.id,
       );

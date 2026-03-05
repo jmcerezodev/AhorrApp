@@ -67,6 +67,55 @@ void main() {
     cubit = RecurrentExpensesCubit();
   });
 
+  group('RecurrentExpensesCubit - Lógica de Posicionamiento y Resumen', () {
+    test('reorderExpenses debe actualizar posiciones y persistir cambios', () async {
+      final e1 = RecurrentExpense(id: '1', userId: 'u1', name: 'A', amount: 10, startDate: DateTime.now(), position: 0);
+      final e2 = RecurrentExpense(id: '2', userId: 'u1', name: 'B', amount: 20, startDate: DateTime.now(), position: 1);
+      final e3 = RecurrentExpense(id: '3', userId: 'u1', name: 'C', amount: 30, startDate: DateTime.now(), position: 2);
+      
+      when(() => mockGet(any())).thenAnswer((_) async => [e1, e2, e3]);
+      when(() => mockSave(any())).thenAnswer((_) async => {});
+      
+      await cubit.loadExpenses();
+      // Movemos el primero al final
+      await cubit.reorderExpenses(0, 3);
+
+      // Verificamos que las posiciones en el estado se han actualizado
+      expect(cubit.state.expenses[0].id, '2');
+      expect(cubit.state.expenses[0].position, 0);
+      expect(cubit.state.expenses[1].id, '3');
+      expect(cubit.state.expenses[1].position, 1);
+      expect(cubit.state.expenses[2].id, '1');
+      expect(cubit.state.expenses[2].position, 2);
+
+      // Verificamos que se ha llamado a guardar para cada uno con su nueva posición
+      final captured = verify(() => mockSave(captureAny())).captured;
+      expect(captured.length, 3);
+      expect((captured[0] as RecurrentExpense).position, 0);
+      expect((captured[1] as RecurrentExpense).position, 1);
+      expect((captured[2] as RecurrentExpense).position, 2);
+    });
+
+    test('addOrUpdateExpense debe mantener position e includeInSummary', () async {
+      final existing = RecurrentExpense(
+        id: '1', userId: 'u1', name: 'Netflix', amount: 15, startDate: DateTime.now(), position: 5, includeInSummary: false
+      );
+      
+      when(() => mockGet(any())).thenAnswer((_) async => [existing]);
+      when(() => mockSave(any())).thenAnswer((_) async => {});
+      
+      await cubit.loadExpenses();
+      
+      // Actualizamos solo el nombre
+      await cubit.addOrUpdateExpense(id: '1', name: 'Netflix 4K', amount: 15);
+
+      final captured = verify(() => mockSave(captureAny())).captured.first as RecurrentExpense;
+      expect(captured.name, 'Netflix 4K');
+      expect(captured.position, 5); // Debe mantener la posición original
+      expect(captured.includeInSummary, false); // Debe mantener el flag de resumen
+    });
+  });
+
   group('RecurrentExpensesCubit - Lógica de Filtrado', () {
     test('toggleFilterPanel debe alternar la visibilidad del panel', () {
       expect(cubit.state.isFilterOpen, false);
@@ -150,34 +199,6 @@ void main() {
 
       expect(cubit.state.status, RecurrentExpensesStatus.success);
       expect(cubit.state.expenses, expenses);
-    });
-
-    test('addOrUpdateExpense debe guardar y recargar la lista', () async {
-      when(() => mockSave(any())).thenAnswer((_) async => {});
-      when(() => mockGet(any())).thenAnswer((_) async => []);
-
-      await cubit.addOrUpdateExpense(name: 'Netflix', amount: 15.99, day: 10, startDate: DateTime.now());
-
-      verify(() => mockSave(any())).called(1);
-      verify(() => mockGet('user123')).called(1);
-    });
-
-    test('reorderExpenses debe actualizar posiciones y persistir cambios', () async {
-      final e1 = RecurrentExpense(id: '1', userId: 'u1', name: 'A', amount: 10, startDate: DateTime.now(), position: 0);
-      final e2 = RecurrentExpense(id: '2', userId: 'u1', name: 'B', amount: 20, startDate: DateTime.now(), position: 1);
-      final e3 = RecurrentExpense(id: '3', userId: 'u1', name: 'C', amount: 30, startDate: DateTime.now(), position: 2);
-      
-      when(() => mockGet(any())).thenAnswer((_) async => [e1, e2, e3]);
-      when(() => mockSave(any())).thenAnswer((_) async => {});
-      
-      await cubit.loadExpenses();
-      await cubit.reorderExpenses(0, 3);
-
-      expect(cubit.state.expenses[0].id, '2');
-      expect(cubit.state.expenses[1].id, '3');
-      expect(cubit.state.expenses[2].id, '1');
-
-      verify(() => mockSave(any())).called(3);
     });
 
     test('deleteExpense debe eliminar y recargar', () async {
