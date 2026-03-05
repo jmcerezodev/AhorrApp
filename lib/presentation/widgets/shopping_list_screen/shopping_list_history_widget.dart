@@ -1,17 +1,17 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
-import 'package:ahorrapp/domain/entities/shopping_item.dart';
-import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_cubit.dart';
+import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
+import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/add_edit_shopping_item_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/delete_shopping_item_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
-import 'package:ahorrapp/presentation/widgets/shopping_screen/shopping_empty_state.dart';
-import 'package:ahorrapp/presentation/widgets/shopping_screen/shopping_item_card.dart';
+import 'package:ahorrapp/presentation/widgets/shopping_list_screen/shopping_list_empty_state.dart';
+import 'package:ahorrapp/presentation/widgets/shopping_list_screen/shopping_list_item_card.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class ShoppingHistoryWidget extends StatelessWidget {
-  const ShoppingHistoryWidget({super.key});
+class ShoppingListHistoryWidget extends StatelessWidget {
+  const ShoppingListHistoryWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class ShoppingHistoryWidget extends StatelessWidget {
               ),
             ),
         Expanded(
-          child: BlocBuilder<ShoppingCubit, ShoppingState>(
+          child: BlocBuilder<ShoppingListCubit, ShoppingState>(
             builder: (context, state) {
               if (state.status == ShoppingStatus.loading && state.items.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
@@ -50,7 +50,7 @@ class ShoppingHistoryWidget extends StatelessWidget {
                 physics: const BouncingScrollPhysics(),
                 itemCount: state.items.length,
                 onReorder: (oldIndex, newIndex) {
-                  context.read<ShoppingCubit>().reorderItems(oldIndex, newIndex);
+                  context.read<ShoppingListCubit>().reorderItems(oldIndex, newIndex);
                 },
                 itemBuilder: (context, index) {
                   final item = state.items[index];
@@ -73,7 +73,7 @@ class ShoppingHistoryWidget extends StatelessWidget {
 }
 
 class _ShoppingItemDismissible extends StatelessWidget {
-  final ShoppingItem item;
+  final ShoppingListItem item;
   final int index;
   final HumanizeNumbers humanizeNumbers;
   final ColorScheme colorScheme;
@@ -128,7 +128,7 @@ class _ShoppingItemDismissible extends StatelessWidget {
           },
           onDismissed: (direction) {
             if (direction == DismissDirection.endToStart) {
-              context.read<ShoppingCubit>().deleteItem(item.id);
+              context.read<ShoppingListCubit>().deleteItem(item.id);
             }
           },
           child: ShoppingItemCard(

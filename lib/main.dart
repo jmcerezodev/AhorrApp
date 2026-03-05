@@ -6,7 +6,7 @@ import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/core/sync/sync_service.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
-import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -116,7 +116,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
   late final TotalMoneyCubit _totalMoneyCubit;
   late final HistoryCubit _historyCubit;
   late final LoginCubit _loginCubit;
-  late final ShoppingCubit _shoppingCubit; // NUEVO
+  late final ShoppingListCubit _shoppingCubit; // NUEVO
 
   @override
   void initState() {
@@ -127,7 +127,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
     _totalMoneyCubit = getIt<TotalMoneyCubit>();
     _historyCubit = HistoryCubit(totalMoneyCubit: _totalMoneyCubit);
     _loginCubit = LoginCubit(historyCubit: _historyCubit);
-    _shoppingCubit = getIt<ShoppingCubit>(); // NUEVO
+    _shoppingCubit = getIt<ShoppingListCubit>(); // NUEVO
 
     _updateAppSecurity();
   }
@@ -186,7 +186,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
         BlocProvider<HistoryCubit>.value(value: _historyCubit),
         BlocProvider<TotalMoneyCubit>.value(value: _totalMoneyCubit),
         BlocProvider<LoginCubit>.value(value: _loginCubit),
-        BlocProvider<ShoppingCubit>.value(value: _shoppingCubit), // NUEVO
+        BlocProvider<ShoppingListCubit>.value(value: _shoppingCubit), // NUEVO
 
         BlocProvider(create: (_) => NewUserCubit()),
         BlocProvider(create: (_) => ResetPasswordCubit()),

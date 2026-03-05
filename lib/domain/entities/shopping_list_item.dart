@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-class ShoppingItem extends Equatable {
+class ShoppingListItem extends Equatable {
   final String id;
   final String userId;
   final String name;
@@ -9,7 +9,7 @@ class ShoppingItem extends Equatable {
   final bool isBought;
   final int position;
 
-  const ShoppingItem({
+  const ShoppingListItem({
     required this.id,
     required this.userId,
     required this.name,
@@ -19,7 +19,7 @@ class ShoppingItem extends Equatable {
     this.position = 0,
   });
 
-   ShoppingItem copyWith({
+   ShoppingListItem copyWith({
     String? id,
     String? userId,
     String? name,
@@ -28,7 +28,7 @@ class ShoppingItem extends Equatable {
     bool? isBought,
     int? position,
   }) {
-    return ShoppingItem(
+    return ShoppingListItem(
       id: id ?? this.id,
       userId: userId ?? this.userId,
       name: name ?? this.name,

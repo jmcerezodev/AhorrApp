@@ -1,5 +1,5 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
-import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,7 +13,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return BlocBuilder<ShoppingCubit, ShoppingState>(
+    return BlocBuilder<ShoppingListCubit, ShoppingState>(
       builder: (context, state) {
         if (state.items.isEmpty) return const SizedBox.shrink();
 

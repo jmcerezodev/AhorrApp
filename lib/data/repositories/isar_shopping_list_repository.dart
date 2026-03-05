@@ -1,22 +1,22 @@
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
-import 'package:ahorrapp/data/local/models/local_shopping_item.dart';
-import 'package:ahorrapp/domain/entities/shopping_item.dart';
-import 'package:ahorrapp/domain/repositories/i_shopping_repository.dart';
+import 'package:ahorrapp/data/local/models/local_shopping_list_item.dart';
+import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
+import 'package:ahorrapp/domain/repositories/i_shopping_list_repository.dart';
 import 'package:isar/isar.dart';
 
-class IsarShoppingRepository implements IShoppingRepository {
+class IsarShoppingListRepository implements IShoppingRepository {
   final LocalDbService _localDb = getIt<LocalDbService>();
 
   @override
-  Future<List<ShoppingItem>> getShoppingList(String userId) async {
+  Future<List<ShoppingListItem>> getShoppingList(String userId) async {
     final localItems = await _localDb.getShoppingList(userId);
     final sortedItems = [...localItems]..sort((a, b) => a.position.compareTo(b.position));
     return sortedItems.map((e) => _mapToEntity(e)).toList();
   }
 
   @override
-  Future<void> saveShoppingItem(ShoppingItem item) async {
+  Future<void> saveShoppingItem(ShoppingListItem item) async {
     final isar = _localDb.isar;
     final existingItem = await isar.localShoppingItems
         .filter()
@@ -34,11 +34,11 @@ class IsarShoppingRepository implements IShoppingRepository {
       ..position = item.position
       ..createdAt = existingItem?.createdAt ?? DateTime.now();
 
-    await _localDb.saveShoppingItems([localItem]);
+    await _localDb.saveShoppingListItems([localItem]);
   }
 
   @override
-  Future<void> deleteShoppingItem(String id) async {
+  Future<void> deleteShoppingListItem(String id) async {
     await _localDb.deleteShoppingItemByAppwriteId(id);
   }
 
@@ -48,7 +48,7 @@ class IsarShoppingRepository implements IShoppingRepository {
     final item = await isar.localShoppingItems.filter().appwriteIdEqualTo(id).findFirst();
     if (item != null) {
       item.isBought = isBought;
-      await _localDb.saveShoppingItems([item]);
+      await _localDb.saveShoppingListItems([item]);
     }
   }
 
@@ -64,8 +64,8 @@ class IsarShoppingRepository implements IShoppingRepository {
     });
   }
 
-  ShoppingItem _mapToEntity(LocalShoppingItem local) {
-    return ShoppingItem(
+  ShoppingListItem _mapToEntity(LocalShoppingItem local) {
+    return ShoppingListItem(
       id: local.appwriteId,
       userId: local.userId,
       name: local.name,

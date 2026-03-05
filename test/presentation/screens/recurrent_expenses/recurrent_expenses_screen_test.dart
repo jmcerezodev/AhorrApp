@@ -1,6 +1,6 @@
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
-import 'package:ahorrapp/presentation/screens/recurrent_expenses/recurrent_expenses_screen.dart';
+import 'package:ahorrapp/presentation/screens/recurrent_expenses_screen.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/add_edit_recurrent_expense_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/confirm_manual_payment_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';

@@ -1,21 +1,21 @@
 import 'package:ahorrapp/core/network/connectivity_service.dart';
 import 'package:ahorrapp/data/repositories/appwrite_recurrent_expense_repository.dart';
-import 'package:ahorrapp/data/repositories/appwrite_shopping_repository.dart';
+import 'package:ahorrapp/data/repositories/appwrite_shopping_list_repository.dart';
 import 'package:ahorrapp/data/repositories/isar_recurrent_expense_repository.dart';
-import 'package:ahorrapp/data/repositories/isar_shopping_repository.dart';
+import 'package:ahorrapp/data/repositories/isar_shopping_list_repository.dart';
 import 'package:ahorrapp/domain/repositories/i_recurrent_expense_repository.dart';
-import 'package:ahorrapp/domain/repositories/i_shopping_repository.dart';
+import 'package:ahorrapp/domain/repositories/i_shopping_list_repository.dart';
 import 'package:ahorrapp/domain/usecases/delete_movement_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/delete_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/get_recurrent_expenses_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/process_recurrent_expenses_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/save_recurrent_expense_usecase.dart';
-import 'package:ahorrapp/domain/usecases/shopping_list/delete_shopping_item_usecase.dart';
+import 'package:ahorrapp/domain/usecases/shopping_list/delete_shopping_list_item_usecase.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/get_shopping_list_usecase.dart';
-import 'package:ahorrapp/domain/usecases/shopping_list/save_shopping_item_usecase.dart';
+import 'package:ahorrapp/domain/usecases/shopping_list/save_shopping_list_item_usecase.dart';
 import 'package:ahorrapp/domain/usecases/update_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
-import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:get_it/get_it.dart';
 import '../../data/appwrite/appwrite_repository.dart';
@@ -66,12 +66,12 @@ Future<void> setupServiceLocator() async {
   );
 
   getIt.registerLazySingleton<IShoppingRepository>(
-    () => IsarShoppingRepository(),
+    () => IsarShoppingListRepository(),
     instanceName: 'shopping_local',
   );
 
   getIt.registerLazySingleton<IShoppingRepository>(
-    () => AppwriteShoppingRepository(),
+    () => AppwriteShoppingListRepository(),
     instanceName: 'shopping_remote',
   );
 
@@ -130,13 +130,13 @@ Future<void> setupServiceLocator() async {
         localRepository: getIt<IShoppingRepository>(instanceName: 'shopping_local'),
       ));
 
-  getIt.registerLazySingleton<SaveShoppingItemUseCase>(() => SaveShoppingItemUseCase(
+  getIt.registerLazySingleton<SaveShoppingListItemUseCase>(() => SaveShoppingListItemUseCase(
         localRepository: getIt<IShoppingRepository>(instanceName: 'shopping_local'),
         remoteRepository: getIt<IShoppingRepository>(instanceName: 'shopping_remote'),
         localDbService: getIt<LocalDbService>(),
       ));
 
-  getIt.registerLazySingleton<DeleteShoppingItemUseCase>(() => DeleteShoppingItemUseCase(
+  getIt.registerLazySingleton<DeleteShoppingListItemUseCase>(() => DeleteShoppingListItemUseCase(
         localRepository: getIt<IShoppingRepository>(instanceName: 'shopping_local'),
         remoteRepository: getIt<IShoppingRepository>(instanceName: 'shopping_remote'),
         localDbService: getIt<LocalDbService>(),
@@ -153,7 +153,7 @@ Future<void> setupServiceLocator() async {
   getIt.registerSingleton<LoginCubit>(LoginCubit(historyCubit: getIt<HistoryCubit>()));
   getIt.registerSingleton<UpdateNameCubit>(UpdateNameCubit());
   getIt.registerSingleton<RecurrentExpensesCubit>(RecurrentExpensesCubit());
-  getIt.registerSingleton<ShoppingCubit>(ShoppingCubit());
+  getIt.registerSingleton<ShoppingListCubit>(ShoppingListCubit());
   
   // 5. CUBITS DE FÁBRICA (Se crean bajo demanda)
   getIt.registerFactory<NewUserCubit>(() => NewUserCubit());

@@ -6,7 +6,7 @@ import 'models/local_saving.dart';
 import 'models/financial_summary.dart';
 import 'models/pending_sync.dart';
 import 'models/local_recurrent_expense.dart';
-import 'models/local_shopping_item.dart';
+import 'models/local_shopping_list_item.dart';
 
 class LocalDbService {
   static final LocalDbService _instance = LocalDbService._internal();
@@ -161,7 +161,7 @@ class LocalDbService {
 
   // --- LISTA DE LA COMPRA ---
 
-  Future<void> saveShoppingItems(List<LocalShoppingItem> items) async {
+  Future<void> saveShoppingListItems(List<LocalShoppingItem> items) async {
     await _isar.writeTxn(() async {
       await _isar.localShoppingItems.putAll(items);
     });

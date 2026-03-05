@@ -1,6 +1,6 @@
 import 'package:isar/isar.dart';
 
-part 'local_shopping_item.g.dart';
+part 'local_shopping_list_item.g.dart';
 
 @collection
 class LocalShoppingItem {

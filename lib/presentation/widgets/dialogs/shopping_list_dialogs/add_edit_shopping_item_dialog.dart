@@ -1,12 +1,12 @@
-import 'package:ahorrapp/domain/entities/shopping_item.dart';
-import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_cubit.dart';
+import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
+import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class AddEditShoppingItemDialog extends StatefulWidget {
-  final ShoppingItem? item;
+  final ShoppingListItem? item;
   const AddEditShoppingItemDialog({super.key, this.item});
 
   @override
@@ -168,7 +168,7 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
     
     if (widget.item == null) {
       // CREAR NUEVO
-      await context.read<ShoppingCubit>().addItem(name, amount: amount, category: _selectedCategory);
+      await context.read<ShoppingListCubit>().addItem(name, amount: amount, category: _selectedCategory);
     } else {
       // ACTUALIZAR EXISTENTE
       final updatedItem = widget.item!.copyWith(
@@ -176,7 +176,7 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
         amount: amount,
         category: _selectedCategory,
       );
-      await context.read<ShoppingCubit>().updateItem(updatedItem);
+      await context.read<ShoppingListCubit>().updateItem(updatedItem);
     }
     
     if (mounted) context.pop();

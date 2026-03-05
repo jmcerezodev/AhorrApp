@@ -1,19 +1,19 @@
 import 'package:ahorrapp/data/local/local_db_service.dart';
-import '../../entities/shopping_item.dart';
-import '../../repositories/i_shopping_repository.dart';
+import '../../entities/shopping_list_item.dart';
+import '../../repositories/i_shopping_list_repository.dart';
 
-class SaveShoppingItemUseCase {
+class SaveShoppingListItemUseCase {
   final IShoppingRepository localRepository;
   final IShoppingRepository remoteRepository;
   final LocalDbService localDbService;
 
-  SaveShoppingItemUseCase({
+  SaveShoppingListItemUseCase({
     required this.localRepository,
     required this.remoteRepository,
     required this.localDbService,
   });
 
-  Future<void> call(ShoppingItem item) async {
+  Future<void> call(ShoppingListItem item) async {
     // 1. Guardado local
     await localRepository.saveShoppingItem(item);
 

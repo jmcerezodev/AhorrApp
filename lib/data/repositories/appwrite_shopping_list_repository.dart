@@ -1,14 +1,14 @@
-import 'package:ahorrapp/domain/entities/shopping_item.dart';
-import 'package:ahorrapp/domain/repositories/i_shopping_repository.dart';
+import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
+import 'package:ahorrapp/domain/repositories/i_shopping_list_repository.dart';
 import '../appwrite/appwrite_repository.dart';
 
-class AppwriteShoppingRepository implements IShoppingRepository {
+class AppwriteShoppingListRepository implements IShoppingRepository {
   final AppwriteRepository _dataSource = AppwriteRepository();
 
   @override
-  Future<List<ShoppingItem>> getShoppingList(String userId) async {
+  Future<List<ShoppingListItem>> getShoppingList(String userId) async {
     final docs = await _dataSource.getShoppingList(userId);
-    return docs.map((doc) => ShoppingItem(
+    return docs.map((doc) => ShoppingListItem(
       id: doc.$id,
       userId: doc.data['userId'] ?? '',
       name: doc.data['name'] ?? '',
@@ -20,7 +20,7 @@ class AppwriteShoppingRepository implements IShoppingRepository {
   }
 
   @override
-  Future<void> saveShoppingItem(ShoppingItem item) async {
+  Future<void> saveShoppingItem(ShoppingListItem item) async {
     try {
       // Intentamos actualizar primero
       await _dataSource.updateShoppingItem(
@@ -48,7 +48,7 @@ class AppwriteShoppingRepository implements IShoppingRepository {
   }
 
   @override
-  Future<void> deleteShoppingItem(String id) async {
+  Future<void> deleteShoppingListItem(String id) async {
     await _dataSource.deleteShoppingItem(id);
   }
 

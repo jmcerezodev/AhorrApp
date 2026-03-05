@@ -1,4 +1,4 @@
-import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -87,7 +87,7 @@ class DeleteShoppingItemDialog extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      context.read<ShoppingCubit>().deleteItem(itemId);
+                      context.read<ShoppingListCubit>().deleteItem(itemId);
                       context.pop(true);
                     },
                     style: ElevatedButton.styleFrom(

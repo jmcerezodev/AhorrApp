@@ -1,12 +1,12 @@
-import 'package:ahorrapp/domain/entities/shopping_item.dart';
-import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_cubit.dart';
+import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
+import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/screens/shopping_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockShoppingCubit extends Mock implements ShoppingCubit {}
+class MockShoppingCubit extends Mock implements ShoppingListCubit {}
 
 void main() {
   late MockShoppingCubit mockShoppingCubit;
@@ -17,8 +17,8 @@ void main() {
     when(() => mockShoppingCubit.state).thenReturn(const ShoppingState(
       status: ShoppingStatus.success,
       items: [
-        ShoppingItem(id: '1', userId: 'u1', name: 'Leche', amount: 1.5, category: 'alimentación'),
-        ShoppingItem(id: '2', userId: 'u1', name: 'Pan', amount: 0.0, category: 'alimentación'),
+        ShoppingListItem(id: '1', userId: 'u1', name: 'Leche', amount: 1.5, category: 'alimentación'),
+        ShoppingListItem(id: '2', userId: 'u1', name: 'Pan', amount: 0.0, category: 'alimentación'),
       ],
     ));
     when(() => mockShoppingCubit.stream).thenAnswer((_) => const Stream.empty());
@@ -27,9 +27,9 @@ void main() {
 
   Widget createWidgetUnderTest() {
     return MaterialApp(
-      home: BlocProvider<ShoppingCubit>.value(
+      home: BlocProvider<ShoppingListCubit>.value(
         value: mockShoppingCubit,
-        child: const ShoppingScreen(),
+        child: const ShoppingListScreen(),
       ),
     );
   }

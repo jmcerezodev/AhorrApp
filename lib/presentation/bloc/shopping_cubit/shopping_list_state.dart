@@ -1,9 +1,9 @@
-part of 'shopping_cubit.dart';
+part of 'shopping_list_cubit.dart';
 
 enum ShoppingStatus { initial, loading, success, failure }
 
 class ShoppingState extends Equatable {
-  final List<ShoppingItem> items;
+  final List<ShoppingListItem> items;
   final ShoppingStatus status;
   final String? errorMessage;
 
@@ -17,7 +17,7 @@ class ShoppingState extends Equatable {
   int get totalBought => items.where((item) => item.isBought).length;
 
   ShoppingState copyWith({
-    List<ShoppingItem>? items,
+    List<ShoppingListItem>? items,
     ShoppingStatus? status,
     String? errorMessage,
   }) {
