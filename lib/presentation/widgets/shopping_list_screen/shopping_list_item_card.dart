@@ -53,8 +53,9 @@ class ShoppingItemCard extends StatelessWidget {
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center, // Centra verticalmente los extremos
                 children: [
                   // 1. ICONO DE ESTADO (CHECK)
                   AnimatedContainer(
@@ -72,23 +73,31 @@ class ShoppingItemCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 15),
 
-                  // 2. INFORMACIÓN DEL PRODUCTO
+                  // 2. INFORMACIÓN DEL PRODUCTO (Multilínea)
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Text(
+                          item.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            color: item.isBought ? colorScheme.onSurface.withValues(alpha: 0.4) : colorScheme.onSurface,
+                            decoration: item.isBought ? TextDecoration.lineThrough : null,
+                          ),
+                        ),
+                        const SizedBox(height: 4), // Espacio unificado
                         Row(
                           children: [
-                            Flexible(
-                              child: Text(
-                                item.name,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14,
-                                  color: item.isBought ? colorScheme.onSurface.withValues(alpha: 0.4) : colorScheme.onSurface,
-                                  decoration: item.isBought ? TextDecoration.lineThrough : null,
-                                ),
+                            Text(
+                              item.category.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.orange.withValues(alpha: 0.5),
+                                letterSpacing: 0.5,
                               ),
                             ),
                             if (item.isBought) ...[
@@ -114,19 +123,11 @@ class ShoppingItemCard extends StatelessWidget {
                             ],
                           ],
                         ),
-                        const SizedBox(height: 4), // ESPACIO AUMENTADO
-                        Text(
-                          item.category.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 8,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.orange.withValues(alpha: 0.5),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
                       ],
                     ),
                   ),
+
+                  const SizedBox(width: 10),
 
                   // 3. SECCIÓN DE PRECIO
                   if (item.amount > 0)
@@ -158,10 +159,10 @@ class ShoppingItemCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
                         ),
-                        child: Text(
+                        child: const Text(
                           'PRECIO',
                           style: TextStyle(
-                            color: Colors.orange.shade700,
+                            color: Colors.orange,
                             fontSize: 8,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0.5,
