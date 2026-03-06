@@ -2,6 +2,8 @@ import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/usecases/delete_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -29,87 +31,76 @@ class DeleteSavingItemDialog extends StatelessWidget {
     final double amount = (item['money'] as num).toDouble();
     final bool isWithdrawal = amount < 0;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 30),
-      child: Container(
-        padding: const EdgeInsets.all(25),
-        decoration: BoxDecoration(
-          color: colorScheme.surface, 
-          borderRadius: BorderRadius.circular(30), 
-          border: Border.all(color: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4), width: 1.5)
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12), 
-              decoration: BoxDecoration(color: Colors.red.shade400.withValues(alpha: 0.1), shape: BoxShape.circle), 
-              child: Icon(isWithdrawal ? Icons.undo_rounded : Icons.delete_sweep_rounded, color: Colors.red.shade400, size: 32)
-            ),
-            const SizedBox(height: 20),
-            Text(
-              isWithdrawal ? '¿ELIMINAR RETIRADA?' : '¿ELIMINAR APORTACIÓN?', 
-              textAlign: TextAlign.center, 
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1.5)
-            ),
-            const SizedBox(height: 15),
-            Text(
-              isWithdrawal 
-                ? 'Al eliminar esta retirada, el dinero se sumará de nuevo a tus ahorros totales.' 
-                : 'Esta aportación se restará de tus ahorros totales y se borrará del historial.', 
-              textAlign: TextAlign.center, 
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5)
-            ),
-            const SizedBox(height: 30),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => context.pop(), 
-                    child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1))
+    return CustomDialogWrapper(
+      borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
+      horizontalInsetPadding: 30,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppDialogs.dialogHeader(
+            icon: isWithdrawal ? Icons.undo_rounded : Icons.delete_sweep_rounded, 
+            color: Colors.red.shade400, 
+            title: isWithdrawal ? '¿ELIMINAR RETIRADA?' : '¿ELIMINAR APORTACIÓN?',
+            circularBackground: true,
+            iconSize: 32,
+            colorScheme: colorScheme,
+          ),
+          const SizedBox(height: 15),
+          AppDialogs.dialogMessage(
+            isWithdrawal 
+              ? 'Al eliminar esta retirada, el dinero se sumará de nuevo a tus ahorros totales.' 
+              : 'Esta aportación se restará de tus ahorros totales y se borrará del historial.', 
+            colorScheme
+          ),
+          const SizedBox(height: 30),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => context.pop(), 
+                  child: Text(
+                    'CANCELAR', 
+                    style: TextStyle(
+                      color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                      fontWeight: FontWeight.bold, 
+                      letterSpacing: 1
+                    )
                   )
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final movement = Movement(
-                        id: savingId,
-                        name: item!['name'] ?? (isWithdrawal ? 'Retirada de ahorros' : 'Aportación de ahorro'),
-                        amount: amount,
-                        type: MovementType.saving,
-                        isIncome: false,
-                        date: item['currentDate'] ?? '',
-                        hour: item['currentHour'] ?? '',
-                        month: item['month'] ?? '',
-                        year: item['year'] ?? 0,
-                        createdAt: DateTime.parse(item['createdAt']),
-                        isSpent: item['isSpent'] ?? false,
-                      );
+                )
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: AppDialogs.dialogPrimaryButton(
+                  text: 'ELIMINAR', 
+                  color: Colors.red.shade400,
+                  onPressed: () async {
+                    final movement = Movement(
+                      id: savingId,
+                      name: item!['name'] ?? (isWithdrawal ? 'Retirada de ahorros' : 'Aportación de ahorro'),
+                      amount: amount,
+                      type: MovementType.saving,
+                      isIncome: false,
+                      date: item['currentDate'] ?? '',
+                      hour: item['currentHour'] ?? '',
+                      month: item['month'] ?? '',
+                      year: item['year'] ?? 0,
+                      createdAt: DateTime.parse(item['createdAt']),
+                      isSpent: item['isSpent'] ?? false,
+                    );
 
-                      await getIt<DeleteMovementUseCase>().call(movement);
-                      
-                      if (context.mounted) {
-                        context.read<HistoryCubit>().loadHistoryByDate(item['month'], item['year']);
-                        context.read<SavingsCubit>().loadSavings();
-                        context.pop();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade400, 
-                      foregroundColor: Colors.white, 
-                      padding: const EdgeInsets.symmetric(vertical: 15), 
-                      elevation: 0, 
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
-                    ),
-                    child: const Text('ELIMINAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-                  ),
+                    await getIt<DeleteMovementUseCase>().call(movement);
+                    
+                    if (context.mounted) {
+                      context.read<HistoryCubit>().loadHistoryByDate(item['month'], item['year']);
+                      context.read<SavingsCubit>().loadSavings();
+                      context.pop();
+                    }
+                  }, 
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

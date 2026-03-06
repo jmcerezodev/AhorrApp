@@ -16,14 +16,12 @@ void main() {
     mockSavingsCubit = MockSavingsCubit();
     mockHistoryCubit = MockHistoryCubit();
 
-    // Estado inicial seguro para Savings
     when(() => mockSavingsCubit.state).thenReturn(const SavingsCubitState());
     when(() => mockSavingsCubit.stream).thenAnswer((_) => const Stream.empty());
     when(() => mockSavingsCubit.close()).thenAnswer((_) async => {});
     when(() => mockSavingsCubit.resetCubit()).thenReturn(null);
     when(() => mockSavingsCubit.savingChanged(any())).thenReturn(null);
 
-    // Estado inicial para History
     when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState());
     when(() => mockHistoryCubit.stream).thenAnswer((_) => const Stream.empty());
     when(() => mockHistoryCubit.close()).thenAnswer((_) async => {});
@@ -46,17 +44,19 @@ void main() {
   group('SavingsDialog - Pruebas de Gestión de Ahorros', () {
     testWidgets('Debe mostrar el título y los botones de acción', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle(); // Importante para las animaciones del Wrapper
 
       expect(find.text('GESTIÓN AHORROS'), findsOneWidget);
       expect(find.text('AHORRAR'), findsOneWidget);
       expect(find.text('RETIRAR DINERO'), findsOneWidget);
-      expect(find.byIcon(Icons.delete_sweep_rounded), findsOneWidget); // Botón de vaciar
+      expect(find.byIcon(Icons.delete_sweep_rounded), findsOneWidget);
     });
 
     testWidgets('Al escribir la cantidad, debe notificar al Cubit', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
-      final amountField = find.widgetWithText(TextField, 'Cantidad a añadir');
+      final amountField = find.byType(TextField);
       await tester.enterText(amountField, '50.25');
       
       verify(() => mockSavingsCubit.savingChanged('50.25')).called(1);
@@ -68,8 +68,10 @@ void main() {
       );
 
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pump(const Duration(milliseconds: 500)); // Animación de entrada
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      // El texto AHORRAR no desaparece ahora, se reemplaza por el cargador dentro del botón estandarizado
       expect(find.text('AHORRAR'), findsNothing);
     });
   });

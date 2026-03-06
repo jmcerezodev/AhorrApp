@@ -20,7 +20,6 @@ void main() {
     mockHistoryCubit = MockHistoryCubit();
     mockTotalMoneyCubit = MockTotalMoneyCubit();
 
-    // Estado inicial seguro para Expenses
     when(() => mockExpensesCubit.state).thenReturn(const ExpensesCubitState());
     when(() => mockExpensesCubit.stream).thenAnswer((_) => const Stream.empty());
     when(() => mockExpensesCubit.close()).thenAnswer((_) async => {});
@@ -28,12 +27,10 @@ void main() {
     when(() => mockExpensesCubit.expenseNameChanged(any())).thenReturn(null);
     when(() => mockExpensesCubit.expenseMoneyChanged(any())).thenReturn(null);
 
-    // Estado inicial para History
     when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState());
     when(() => mockHistoryCubit.stream).thenAnswer((_) => const Stream.empty());
     when(() => mockHistoryCubit.close()).thenAnswer((_) async => {});
 
-    // Estado inicial para TotalMoney (Simulamos que tiene 100€)
     when(() => mockTotalMoneyCubit.state).thenReturn(const TotalMoneyCubitState(totalMoney: 100.0));
     when(() => mockTotalMoneyCubit.stream).thenAnswer((_) => const Stream.empty());
     when(() => mockTotalMoneyCubit.close()).thenAnswer((_) async => {});
@@ -57,29 +54,28 @@ void main() {
   group('ExpensesDialog - Pruebas de Formulario de Gastos', () {
     testWidgets('Debe mostrar el título y el saldo disponible', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       expect(find.text('NUEVO GASTO'), findsOneWidget);
-      // Verificamos que aparezca el saldo de 100€ que configuramos en el mock
       expect(find.textContaining('100.00€'), findsOneWidget);
     });
 
     testWidgets('Debe mostrar error si el gasto supera el saldo disponible', (WidgetTester tester) async {
-      // CORREGIDO: Eliminado const y ajustado el valor sucio correctamente
       when(() => mockExpensesCubit.state).thenReturn(
         const ExpensesCubitState(expenseMoney: ExpenseMoneyInput.dirty(value: '150'))
       );
 
       await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      // Debería aparecer el aviso de falta de saldo
       expect(find.text('Excede el saldo disponible'), findsOneWidget);
     });
 
     testWidgets('Al escribir el concepto, debe notificar al Cubit', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
-      final nameField = find.widgetWithText(TextField, 'Concepto del gasto');
+      final nameField = find.byType(TextField).first;
       await tester.enterText(nameField, 'Cena amigos');
       
       verify(() => mockExpensesCubit.expenseNameChanged('Cena amigos')).called(1);

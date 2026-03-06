@@ -47,6 +47,7 @@ void main() {
   group('IncomesDialog - Pruebas de Formulario de Ingresos', () {
     testWidgets('Debe mostrar el título y los campos de entrada', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       expect(find.text('NUEVO INGRESO'), findsOneWidget);
       expect(find.text('Origen del ingreso'), findsOneWidget);
@@ -56,8 +57,9 @@ void main() {
 
     testWidgets('Al escribir el origen, debe notificar al Cubit', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
-      final nameField = find.widgetWithText(TextField, 'Origen del ingreso');
+      final nameField = find.byType(TextField).first;
       await tester.enterText(nameField, 'Venta Wallapop');
       
       verify(() => mockIncomesCubit.incomeNameChanged('Venta Wallapop')).called(1);
@@ -69,6 +71,8 @@ void main() {
       );
 
       await tester.pumpWidget(createWidgetUnderTest());
+      // No usamos pumpAndSettle porque el CircularProgressIndicator anima infinitamente
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.text('GUARDAR'), findsNothing);

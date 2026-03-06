@@ -1,3 +1,5 @@
+import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,68 +8,42 @@ class NoMoneyDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 30),
-      child: Container(
-        padding: const EdgeInsets.all(25),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.red.shade100, width: 1.5),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.money_off_rounded, color: Colors.red.shade400, size: 32),
-            ),
-            const SizedBox(height: 20),
-            
-            const Text(
-              'SALDO INSUFICIENTE',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: Colors.blueGrey,
-                letterSpacing: 1.5,
-              ),
-            ),
-            const SizedBox(height: 15),
-            
-            Text(
-              'No tienes suficiente saldo disponible para realizar este gasto. Por favor, revisa tus ahorros o ingresos.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade600,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 30),
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => context.pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange.shade600, // Unificado a Naranja
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                ),
-                child: const Text('ENTENDIDO', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-              ),
+    return CustomDialogWrapper(
+      // Mantenemos fidelidad visual con el color de borde original para advertencias
+      borderColor: Colors.red.shade100,
+      horizontalInsetPadding: 30,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppDialogs.dialogHeader(
+            icon: Icons.money_off_rounded,
+            color: Colors.red.shade400,
+            title: 'SALDO INSUFICIENTE',
+            circularBackground: true,
+            iconSize: 32,
+            colorScheme: colorScheme,
+            titleColor: Colors.blueGrey, // Fidelidad visual 1:1 con el color original
+          ),
+          const SizedBox(height: 15),
+          
+          AppDialogs.dialogMessage(
+            'No tienes suficiente saldo disponible para realizar este gasto. Por favor, revisa tus ahorros o ingresos.',
+            colorScheme,
+          ),
+          const SizedBox(height: 30),
+
+          SizedBox(
+            width: double.infinity,
+            child: AppDialogs.dialogPrimaryButton(
+              text: 'ENTENDIDO',
+              onPressed: () => context.pop(),
+              color: Colors.orange.shade600,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

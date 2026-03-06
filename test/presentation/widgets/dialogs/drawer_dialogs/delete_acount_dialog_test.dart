@@ -43,8 +43,9 @@ void main() {
   }
 
   group('DeleteAcountDialog - Pruebas de Interfaz Crítica', () {
-    testWidgets('Debe mostrar el título en rojo y el icono de advertencia', (WidgetTester tester) async {
+    testWidgets('Debe mostrar el título y el icono de advertencia', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       expect(find.text('ELIMINAR CUENTA'), findsOneWidget);
       expect(find.byIcon(Icons.no_accounts_rounded), findsOneWidget);
@@ -52,6 +53,7 @@ void main() {
 
     testWidgets('Debe permitir escribir en el campo de confirmación', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       final textField = find.byType(TextField);
       await tester.enterText(textField, 'mi-password');
@@ -61,20 +63,21 @@ void main() {
 
     testWidgets('Debe mostrar los botones de cancelar y eliminar', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       expect(find.text('CANCELAR'), findsOneWidget);
       expect(find.text('ELIMINAR'), findsOneWidget);
     });
-   group('Visualización de Alertas', () {
-      testWidgets('El botón ELIMINAR debe tener fondo rojo', (WidgetTester tester) async {
-        await tester.pumpWidget(createWidgetUnderTest());
-        
-        final elevatedButton = tester.widget<ElevatedButton>(
-          find.ancestor(of: find.text('ELIMINAR'), matching: find.byType(ElevatedButton))
-        );
-        
-        expect(elevatedButton.style?.backgroundColor?.resolve({}), Colors.red.shade400);
-      });
+
+    testWidgets('El botón ELIMINAR debe tener fondo rojo', (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+      
+      final elevatedButton = tester.widget<ElevatedButton>(
+        find.ancestor(of: find.text('ELIMINAR'), matching: find.byType(ElevatedButton))
+      );
+      
+      expect(elevatedButton.style?.backgroundColor?.resolve({}), Colors.red.shade400);
     });
   });
 }

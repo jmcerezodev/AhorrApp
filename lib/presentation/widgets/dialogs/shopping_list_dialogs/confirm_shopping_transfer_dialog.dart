@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 
@@ -36,72 +37,33 @@ class _ConfirmShoppingTransferDialogState extends State<ConfirmShoppingTransferD
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 30),
-      child: Container(
-        padding: const EdgeInsets.all(25),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: Colors.green.withValues(alpha: isDark ? 0.3 : 0.5), 
-            width: 1.5
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ZoomIn(
+          child: AppDialogs.dialogHeader(
+            icon: Icons.check_rounded, 
+            color: Colors.green, 
+            title: '¡AÑADIDO CON ÉXITO!',
+            circularBackground: true,
+            iconSize: 32,
+            colorScheme: colorScheme,
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ZoomIn(
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
-                child: const Icon(Icons.check_rounded, color: Colors.white, size: 32),
-              ),
-            ),
-            
-            const SizedBox(height: 20),
-            
-            const Text(
-              '¡AÑADIDO CON ÉXITO!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: Colors.green,
-                letterSpacing: 1.5,
-              ),
-            ),
-            
-            const SizedBox(height: 15),
-            
-            Text(
-              widget.message,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
-            ),
-            
-            const SizedBox(height: 30),
+        
+        const SizedBox(height: 15),
+        
+        AppDialogs.dialogMessage(widget.message, colorScheme),
+        
+        const SizedBox(height: 30),
 
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                ),
-                child: const Text('ENTENDIDO', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-              ),
-            ),
-          ],
+        AppDialogs.dialogPrimaryButton(
+          text: 'ENTENDIDO', 
+          onPressed: () => Navigator.of(context).pop(), 
+          color: Colors.green
         ),
-      ),
+      ],
     );
   }
 }

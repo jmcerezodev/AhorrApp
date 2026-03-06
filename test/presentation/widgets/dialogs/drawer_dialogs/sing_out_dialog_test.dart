@@ -14,6 +14,7 @@ void main() {
   group('SingOutDialog - Pruebas de Interfaz', () {
     testWidgets('Debe mostrar el título y el icono de cerrar sesión', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       expect(find.text('¿CERRAR SESIÓN?'), findsOneWidget);
       expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
@@ -21,17 +22,18 @@ void main() {
 
     testWidgets('Debe mostrar el mensaje de confirmación', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       expect(find.textContaining('¿Estás seguro de que quieres salir?'), findsOneWidget);
     });
 
     testWidgets('Debe mostrar los botones de cancelar y salir con colores correctos', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       expect(find.text('CANCELAR'), findsOneWidget);
       expect(find.text('SALIR'), findsOneWidget);
 
-      // Verificamos el color rojo del botón de salida
       final elevatedButton = tester.widget<ElevatedButton>(
         find.ancestor(of: find.text('SALIR'), matching: find.byType(ElevatedButton))
       );

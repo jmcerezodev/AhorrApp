@@ -55,6 +55,7 @@ void main() {
   group('ConfirmManualPaymentDialog - Pruebas de Flujo', () {
     testWidgets('Debe mostrar el mensaje de confirmación inicialmente', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle(); // Animación de entrada del Wrapper
 
       expect(find.text('¿ANOTAR GASTO AHORA?'), findsOneWidget);
       expect(find.textContaining('Netflix'), findsOneWidget);
@@ -63,20 +64,21 @@ void main() {
 
     testWidgets('Debe cambiar al estado de éxito y mostrar el mensaje final', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('ACEPTAR'));
-      await tester.pump(); // Llama al cubit y cambia _isSuccess = true
+      await tester.pump(); // Dispara lógica
 
       verify(() => mockCubit.applyExpenseManually(tExpense)).called(1);
 
-      // Esperamos a que las animaciones terminen
+      // El diálogo tiene AnimatedSwitcher y ZoomIn
       await tester.pumpAndSettle();
 
       expect(find.text('¡ANOTADO CON ÉXITO!'), findsOneWidget);
       expect(find.text('CERRAR'), findsOneWidget);
       
-      // Limpiamos el Timer de autocierre para que el test no falle
-      await tester.pump(const Duration(seconds: 2));
+      // Limpiamos el Timer de autocierre
+      await tester.pump(const Duration(seconds: 3));
     });
   });
 }

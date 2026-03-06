@@ -2,6 +2,8 @@ import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/usecases/update_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -74,42 +76,69 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
     final int year = itemResult['year'] ?? 0;
     final String typeStr = itemResult['type'] ?? 'expense';
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(25),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4), width: 1.5),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: colorScheme.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
-                  child: Icon(Icons.edit_note_rounded, color: colorScheme.primary, size: 24),
-                ),
-                const SizedBox(width: 15),
-                Text(isIncomeResult ? 'EDITAR INGRESO' : 'EDITAR GASTO', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: colorScheme.onSurface.withValues(alpha: 0.7), letterSpacing: 1.5)),
-              ],
-            ),
-            const SizedBox(height: 30),
-            CustomInputTextWidget(controller: _nameController, label: 'Nuevo concepto', onChanged: historyCubit.newNameChanged, errorText: historyState.newName.isPure ? null : historyState.newName.errorMessage, textInputType: TextInputType.name),
-            const SizedBox(height: 15),
-            CustomInputTextWidget(controller: _moneyController, label: 'Nuevo importe', onChanged: historyCubit.newMoneyChanged, errorText: historyState.newMoney.isPure ? null : historyState.newMoney.errorMessage, textInputType: const TextInputType.numberWithOptions(decimal: true)),
-            const SizedBox(height: 30),
-            Row(
-              children: [
-                Expanded(child: TextButton(onPressed: _isLoading ? null : () => context.pop(), child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1)))),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: (historyState.isValid && !_isLoading) 
+    return CustomDialogWrapper(
+      borderColor: colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4),
+      horizontalInsetPadding: 20,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: colorScheme.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: Icon(Icons.edit_note_rounded, color: colorScheme.primary, size: 24),
+              ),
+              const SizedBox(width: 15),
+              Text(
+                isIncomeResult ? 'EDITAR INGRESO' : 'EDITAR GASTO', 
+                style: TextStyle(
+                  fontSize: 14, 
+                  fontWeight: FontWeight.w800, 
+                  color: colorScheme.onSurface.withValues(alpha: 0.7), 
+                  letterSpacing: 1.5
+                )
+              ),
+            ],
+          ),
+          const SizedBox(height: 30),
+          CustomInputTextWidget(
+            controller: _nameController, 
+            label: 'Nuevo concepto', 
+            onChanged: historyCubit.newNameChanged, 
+            errorText: historyState.newName.isPure ? null : historyState.newName.errorMessage, 
+            textInputType: TextInputType.name
+          ),
+          const SizedBox(height: 15),
+          CustomInputTextWidget(
+            controller: _moneyController, 
+            label: 'Nuevo importe', 
+            onChanged: historyCubit.newMoneyChanged, 
+            errorText: historyState.newMoney.isPure ? null : historyState.newMoney.errorMessage, 
+            textInputType: const TextInputType.numberWithOptions(decimal: true)
+          ),
+          const SizedBox(height: 30),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: _isLoading ? null : () => context.pop(), 
+                  child: Text(
+                    'CANCELAR', 
+                    style: TextStyle(
+                      color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                      fontWeight: FontWeight.bold, 
+                      letterSpacing: 1
+                    )
+                  )
+                )
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: AppDialogs.dialogPrimaryButton(
+                  text: 'ACTUALIZAR',
+                  color: colorScheme.primary,
+                  onPressed: (historyState.isValid && !_isLoading) 
                     ? () async {
                         setState(() => _isLoading = true);
                         try {
@@ -139,17 +168,12 @@ class _EditItemHistoryDialogState extends State<EditItemHistoryDialog> {
                         } catch (e) {
                           if (mounted) setState(() => _isLoading = false);
                         }
-                    } : null,
-                    style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 15), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-                    child: _isLoading 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('ACTUALIZAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-                  ),
+                    } : () {},
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

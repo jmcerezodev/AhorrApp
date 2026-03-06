@@ -37,15 +37,15 @@ void main() {
   group('UpdatePasswordDialog - Pruebas de Interfaz de Seguridad', () {
     testWidgets('Debe mostrar el título y los iconos de candado', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       expect(find.text('CAMBIAR CONTRASEÑA'), findsOneWidget);
-      
-      // CORREGIDO: Buscamos 2 iconos (el de la cabecera y el del input)
       expect(find.byIcon(Icons.lock_reset_rounded), findsNWidgets(2));
     });
 
     testWidgets('Debe contener el widget de inputs de contraseña', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
       expect(find.byType(UpdatePasswordInputWidget), findsOneWidget);
     });
   });

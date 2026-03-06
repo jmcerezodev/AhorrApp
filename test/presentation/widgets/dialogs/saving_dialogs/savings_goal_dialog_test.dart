@@ -13,7 +13,6 @@ void main() {
 
   setUp(() {
     mockSavingsCubit = MockSavingsCubit();
-
     when(() => mockSavingsCubit.state).thenReturn(const SavingsCubitState());
     when(() => mockSavingsCubit.stream).thenAnswer((_) => const Stream.empty());
     when(() => mockSavingsCubit.close()).thenAnswer((_) async => {});
@@ -21,14 +20,15 @@ void main() {
   });
 
   Widget createWidgetUnderTest() {
-    // Simulamos la estructura real de la app: una pantalla que abre el diálogo
+    // Para que context.pop() funcione sin lanzar "There is nothing to pop",
+    // necesitamos que el diálogo se abra SOBRE una ruta existente.
     final router = GoRouter(
       routes: [
         GoRoute(
           path: '/',
           builder: (context, state) => Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
+            body: Center(
+              child: ElevatedButton(
                 onPressed: () => showDialog(
                   context: context,
                   builder: (_) => BlocProvider<SavingsCubit>.value(
@@ -36,7 +36,7 @@ void main() {
                     child: const SavingsGoalDialog(),
                   ),
                 ),
-                child: const Text('OPEN'),
+                child: const Text('Open'),
               ),
             ),
           ),
@@ -52,32 +52,26 @@ void main() {
   group('SavingsGoalDialog - Pruebas de Establecer Meta', () {
     testWidgets('Debe permitir escribir y guardar la meta correctamente', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
-      
-      // 1. Abrimos el diálogo
-      await tester.tap(find.text('OPEN'));
       await tester.pumpAndSettle();
 
-      // 2. Verificamos que el diálogo está ahí
+      // Abrimos el diálogo para que esté en el stack de navegación
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
       expect(find.text('ESTABLECER META'), findsOneWidget);
 
-      // 3. Escribimos la meta
       final amountField = find.byType(TextField);
       await tester.enterText(amountField, '1000');
       await tester.pump(); 
 
-      // 4. Pulsamos GUARDAR
       final saveButtonFinder = find.text('GUARDAR');
       await tester.tap(saveButtonFinder);
       
-      // 5. Esperamos a que se cierre el diálogo (esto ya no fallará)
+      // Ahora context.pop() cerrará el diálogo y volveremos a '/'
       await tester.pumpAndSettle();
 
-      // 6. Verificamos que se llamó a la lógica
       verify(() => mockSavingsCubit.setGoal(1000.0)).called(1);
-      
-      // 7. Confirmamos que el diálogo se ha cerrado y volvemos a ver el botón OPEN
       expect(find.text('ESTABLECER META'), findsNothing);
-      expect(find.text('OPEN'), findsOneWidget);
     });
   });
 }

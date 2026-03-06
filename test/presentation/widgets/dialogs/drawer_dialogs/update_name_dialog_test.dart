@@ -39,6 +39,7 @@ void main() {
   group('UpdateNameDialog - Pruebas de Configuración', () {
     testWidgets('Debe mostrar el título y el nombre actual en el campo', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       expect(find.text('CAMBIAR NOMBRE'), findsOneWidget);
       // El CustomInputTextWidget usa el state.name como hintText
@@ -47,6 +48,7 @@ void main() {
 
     testWidgets('Al escribir un nuevo nombre, debe notificar al Cubit', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
       final nameField = find.byType(TextField);
       await tester.enterText(nameField, 'Pedro');
@@ -61,6 +63,7 @@ void main() {
       );
 
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
       
       await tester.tap(find.text('ACTUALIZAR'));
       await tester.pump();
