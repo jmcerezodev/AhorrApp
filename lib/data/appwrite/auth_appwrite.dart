@@ -1,8 +1,7 @@
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/error_dialog.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';

@@ -12,7 +12,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "dev.jmcerezo.ahorrapp"
-    compileSdk = 36
+    compileSdk = 35 // Cambiado de 36 a 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -26,8 +26,8 @@ android {
 
     defaultConfig {
         applicationId = "dev.jmcerezo.ahorrapp"
-        minSdkVersion = flutter.minSdkVersion
-        targetSdk = 36
+        minSdkVersion = flutter.minSdkVersion // Asegúrate de tener al menos 21
+        targetSdk = 35 // Cambiado de 36 a 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

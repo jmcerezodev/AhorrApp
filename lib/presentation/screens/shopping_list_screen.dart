@@ -1,8 +1,6 @@
-import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_templates_cubit.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/shopping_templates_dialog.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/transfer_to_expenses_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/shopping_list_screen/shopping_list_app_bar.dart';
 import 'package:ahorrapp/presentation/widgets/shopping_list_screen/shopping_list_history_widget.dart';
 import 'package:ahorrapp/presentation/widgets/shopping_list_screen/shopping_list_summary_widget.dart';

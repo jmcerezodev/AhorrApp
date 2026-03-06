@@ -2,7 +2,6 @@ import 'package:ahorrapp/core/auth/biometric_service.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/authenticacion_dialogs/biometric_info_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';

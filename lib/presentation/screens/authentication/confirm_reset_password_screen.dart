@@ -1,10 +1,8 @@
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/error_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class ConfirmResetPasswordScreen extends StatefulWidget {
   final String userId;

@@ -1,4 +1,4 @@
-import 'package:ahorrapp/core/di/service_locator.dart';
+
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/domain/entities/shopping_template.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/delete_shopping_template_usecase.dart';

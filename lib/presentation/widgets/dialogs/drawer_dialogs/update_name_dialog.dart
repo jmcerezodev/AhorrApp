@@ -1,7 +1,6 @@
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/update_name/update_name_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog_no_go.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/error_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';

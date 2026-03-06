@@ -8,7 +8,6 @@ class SavingsProgressWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final savingsState = context.watch<SavingsCubit>().state;
-    final colorScheme = Theme.of(context).colorScheme;
 
     if (savingsState.savingGoal <= 0) return const SizedBox.shrink();
 

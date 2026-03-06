@@ -68,8 +68,6 @@ class ProcessRecurrentExpensesUseCase {
     final lastMonth = int.parse(parts[0]);
     final lastYear = int.parse(parts[1]);
 
-    final lastDate = DateTime(lastYear, lastMonth);
-    
     // Calculamos la diferencia de meses
     final monthsDiff = (now.year - lastYear) * 12 + (now.month - lastMonth);
 
