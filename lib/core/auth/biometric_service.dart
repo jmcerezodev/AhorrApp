@@ -2,7 +2,9 @@ import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
 
 class BiometricService {
-  final LocalAuthentication _auth = LocalAuthentication();
+  final LocalAuthentication _auth;
+
+  BiometricService({LocalAuthentication? auth}) : _auth = auth ?? LocalAuthentication();
 
   Future<bool> canCheckBiometrics() async {
     try {
