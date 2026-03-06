@@ -2,7 +2,9 @@ import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/shopping_template.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_templates_cubit.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/add_edit_favorite_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/delete_favorite_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -30,7 +32,7 @@ class _ShoppingTemplatesDialogState extends State<ShoppingTemplatesDialog> {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
       child: Container(
-        padding: const EdgeInsets.all(25),
+        padding: const EdgeInsets.fromLTRB(25, 25, 25, 15),
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(30),
@@ -60,6 +62,19 @@ class _ShoppingTemplatesDialogState extends State<ShoppingTemplatesDialog> {
                     const Text(
                       'MIS FAVORITOS',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => BlocProvider.value(
+                            value: context.read<ShoppingTemplatesCubit>(),
+                            child: const AddEditFavoriteDialog(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.orange, size: 28),
                     ),
                   ],
                 ),
@@ -98,7 +113,7 @@ class _ShoppingTemplatesDialogState extends State<ShoppingTemplatesDialog> {
                     ),
                   ),
 
-                const SizedBox(height: 25),
+                const SizedBox(height: 10),
                 
                 SizedBox(
                   width: double.infinity,
@@ -135,74 +150,174 @@ class _TemplateItem extends StatelessWidget {
     final humanizeNumbers = HumanizeNumbers();
 
     final product = template.items.first;
+    final bool hasPrice = product.amount > 0;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.name,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Dismissible(
+        key: Key('fav_${template.id}'),
+        background: const SwipeBackgroundWidget(
+          color: Colors.green,
+          icon: Icons.edit_note_rounded,
+          label: 'EDITAR',
+          alignment: Alignment.centerLeft,
+        ),
+        secondaryBackground: const SwipeBackgroundWidget(
+          color: Colors.red,
+          icon: Icons.delete_sweep_rounded,
+          label: 'ELIMINAR',
+          alignment: Alignment.centerRight,
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.startToEnd) {
+            showDialog(
+              context: context,
+              builder: (_) => BlocProvider.value(
+                value: context.read<ShoppingTemplatesCubit>(),
+                child: AddEditFavoriteDialog(favorite: template),
+              ),
+            );
+            return false;
+          } else {
+            return await showDialog<bool>(
+              context: context,
+              builder: (_) => BlocProvider.value(
+                value: context.read<ShoppingTemplatesCubit>(),
+                child: DeleteFavoriteDialog(
+                  templateId: template.id,
+                  productName: product.name,
                 ),
-                Row(
-                  children: [
-                    Text(
-                      product.category.toUpperCase(),
-                      style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.orange.withValues(alpha: 0.6)),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
+              ),
+            );
+          }
+        },
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 75),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.orange.withValues(alpha: 0.15),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              )
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        product.name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        product.category.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.orange.withValues(alpha: 0.5),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                if (hasPrice)
+                  SizedBox(
+                    width: 60,
+                    child: Text(
                       '${humanizeNumbers.number(product.amount)}€',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5)),
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
-                  ],
+                  )
+                else
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => BlocProvider.value(
+                          value: context.read<ShoppingTemplatesCubit>(),
+                          child: AddEditFavoriteDialog(
+                            favorite: template,
+                            focusPrice: true, // AHORA SÍ PASAMOS EL FLAG
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                      ),
+                      child: const Text(
+                        'SIN PRECIO',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 7,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                
+                const SizedBox(width: 12),
+
+                GestureDetector(
+                  onTap: () {
+                    context.read<ShoppingListCubit>().addItemsFromTemplate(template.items);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('"${product.name}" añadido'),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(milliseconds: 800),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      )
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
+                    ),
+                    child: const Icon(
+                      Icons.add_circle_outline_rounded, 
+                      size: 18, 
+                      color: Colors.orange
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: () {
-              context.read<ShoppingListCubit>().addItemsFromTemplate(template.items);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('"${product.name}" añadido'),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(milliseconds: 800),
-                )
-              );
-            },
-            icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.orange),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-          const SizedBox(width: 10),
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (_) => BlocProvider.value(
-                  value: context.read<ShoppingTemplatesCubit>(),
-                  child: DeleteFavoriteDialog(
-                    templateId: template.id,
-                    productName: product.name,
-                  ),
-                ),
-              );
-            },
-            icon: Icon(Icons.delete_outline_rounded, color: Colors.red.shade300, size: 20),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -114,6 +114,7 @@ class ShoppingItemCard extends StatelessWidget {
                             ],
                           ],
                         ),
+                        const SizedBox(height: 4), // ESPACIO AUMENTADO
                         Text(
                           item.category.toUpperCase(),
                           style: TextStyle(
@@ -175,7 +176,6 @@ class ShoppingItemCard extends StatelessWidget {
                   GestureDetector(
                     onTap: () {
                       if (isAlreadyFavorite && favoriteId != null) {
-                        // SI YA ES FAVORITO, MOSTRAR DIÁLOGO DE ELIMINACIÓN
                         showDialog(
                           context: context,
                           builder: (_) => BlocProvider.value(
@@ -187,7 +187,6 @@ class ShoppingItemCard extends StatelessWidget {
                           ),
                         );
                       } else {
-                        // SI NO ES FAVORITO, AÑADIR
                         context.read<ShoppingTemplatesCubit>().saveTemplate(
                           item.name, 
                           [ShoppingTemplateItem(name: item.name, amount: item.amount, category: item.category)]

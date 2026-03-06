@@ -43,8 +43,8 @@ void main() {
       expect(cubit.state, const ShoppingTemplatesState());
     });
 
-    test('loadTemplates debe emitir success con lista de plantillas', () async {
-      final templates = [const ShoppingTemplate(id: '1', userId: 'u1', name: 'Pack 1', items: [])];
+    test('loadTemplates debe emitir success con lista de favoritos', () async {
+      final templates = [const ShoppingTemplate(id: '1', userId: 'test-user', name: 'Leche', items: [])];
       when(() => mockGet(any())).thenAnswer((_) async => templates);
       
       await cubit.loadTemplates();
@@ -53,19 +53,28 @@ void main() {
       expect(cubit.state.templates.length, 1);
     });
 
-    test('saveTemplate debe guardar y recargar la lista', () async {
+    test('saveTemplate no debe guardar si el producto ya es favorito', () async {
+      final existing = [const ShoppingTemplate(id: '1', userId: 'u1', name: 'Leche', items: [])];
+      when(() => mockGet(any())).thenAnswer((_) async => existing);
+      await cubit.loadTemplates();
+
+      await cubit.saveTemplate('LECHE', []); // Intento con mayúsculas
+      
+      verifyNever(() => mockSave(any()));
+    });
+
+    test('updateOrSaveFavorite debe guardar correctamente un nuevo favorito', () async {
       when(() => mockSave(any())).thenAnswer((_) async {});
       when(() => mockGet(any())).thenAnswer((_) async => []);
       
-      await cubit.saveTemplate('Pack Semanal', [
-        const ShoppingTemplateItem(name: 'Leche', amount: 1.5)
-      ]);
+      await cubit.updateOrSaveFavorite(name: 'Pan', amount: 1.0, category: 'general');
       
-      verify(() => mockSave(any())).called(1);
-      verify(() => mockGet(any())).called(1);
+      final captured = verify(() => mockSave(captureAny())).captured.first as ShoppingTemplate;
+      expect(captured.name, 'Pan');
+      expect(captured.items.first.amount, 1.0);
     });
 
-    test('deleteTemplate debe eliminar y recargar la lista', () async {
+    test('deleteTemplate debe eliminar y recargar', () async {
       when(() => mockDelete(any())).thenAnswer((_) async {});
       when(() => mockGet(any())).thenAnswer((_) async => []);
       
@@ -73,6 +82,27 @@ void main() {
       
       verify(() => mockDelete('123')).called(1);
       verify(() => mockGet(any())).called(1);
+    });
+  });
+
+  group('ShoppingTemplatesState Helpers', () {
+    test('isFavorite debe detectar nombres duplicados ignoreCase', () {
+      const state = ShoppingTemplatesState(templates: [
+        ShoppingTemplate(id: '1', userId: 'u1', name: 'Leche', items: [])
+      ]);
+
+      expect(state.isFavorite('leche'), isTrue);
+      expect(state.isFavorite('LECHE'), isTrue);
+      expect(state.isFavorite('Pan'), isFalse);
+    });
+
+    test('getFavoriteId debe retornar el ID correcto si existe', () {
+      const state = ShoppingTemplatesState(templates: [
+        ShoppingTemplate(id: 'fav_id_123', userId: 'u1', name: 'Leche', items: [])
+      ]);
+
+      expect(state.getFavoriteId('Leche'), 'fav_id_123');
+      expect(state.getFavoriteId('Pan'), isNull);
     });
   });
 }

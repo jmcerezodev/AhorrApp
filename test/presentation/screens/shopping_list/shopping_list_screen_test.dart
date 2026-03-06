@@ -99,7 +99,8 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      final buttonText = find.text('AÑADIR COMPRA A LA LISTA DE GASTOS');
+      // Buscamos el texto resumido
+      final buttonText = find.text('AÑADIR A GASTOS');
       expect(buttonText, findsOneWidget);
       
       final button = find.ancestor(of: buttonText, matching: find.byType(ElevatedButton));
@@ -115,7 +116,7 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      final buttonText = find.text('AÑADIR COMPRA A LA LISTA DE GASTOS');
+      final buttonText = find.text('AÑADIR A GASTOS');
       expect(buttonText, findsOneWidget);
       
       final button = find.ancestor(of: buttonText, matching: find.byType(ElevatedButton));

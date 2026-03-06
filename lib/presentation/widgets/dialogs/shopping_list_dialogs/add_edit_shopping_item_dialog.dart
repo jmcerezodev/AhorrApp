@@ -32,7 +32,7 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.item?.name ?? '');
-    _amountController = TextEditingController(text: widget.item?.amount == 0 ? '' : widget.item?.amount.toString());
+    _amountController = TextEditingController(text: widget.item == null || widget.item?.amount == 0 ? '' : widget.item?.amount.toString());
     _selectedCategory = widget.item?.category ?? 'general';
   }
 
@@ -76,56 +76,70 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
               ],
             ),
             const SizedBox(height: 25),
-            CustomInputTextWidget(
-              controller: _nameController,
-              label: 'Nombre del producto',
-              hintText: 'Ej. Leche, Pan...',
-              enabled: !_isLoading,
-            ),
-            const SizedBox(height: 15),
-            CustomInputTextWidget(
-              controller: _amountController,
-              label: 'Importe estimado (opcional)',
-              hintText: '0.00',
-              textInputType: const TextInputType.numberWithOptions(decimal: true),
-              enabled: !_isLoading,
-            ),
-            const SizedBox(height: 20),
             
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Categoría', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedCategory,
-                  isExpanded: true,
-                  borderRadius: BorderRadius.circular(15),
-                  items: _categories.map((cat) {
-                    return DropdownMenuItem<String>(
-                      value: cat['id'],
-                      child: Row(
-                        children: [
-                          Icon(cat['icon'], size: 16, color: Colors.orange),
-                          const SizedBox(width: 8),
-                          Text(cat['name'], style: const TextStyle(fontSize: 13)),
-                        ],
+            // ENVOLVEMOS EL CONTENIDO EN FLEXIBLE + SINGLECHILDSCROLLVIEW PARA EVITAR OVERFLOW
+            Flexible(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CustomInputTextWidget(
+                      controller: _nameController,
+                      label: 'Nombre del producto',
+                      hintText: 'Ej. Leche, Pan...',
+                      enabled: !_isLoading,
+                    ),
+                    const SizedBox(height: 15),
+                    CustomInputTextWidget(
+                      controller: _amountController,
+                      label: 'Importe estimado (opcional)',
+                      hintText: '0.00',
+                      textInputType: const TextInputType.numberWithOptions(decimal: true),
+                      enabled: !_isLoading,
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Categoría', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.grey.shade300),
                       ),
-                    );
-                  }).toList(),
-                  onChanged: _isLoading ? null : (val) => setState(() => _selectedCategory = val ?? 'general'),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedCategory,
+                          isExpanded: true,
+                          borderRadius: BorderRadius.circular(15),
+                          items: _categories.map((cat) {
+                            return DropdownMenuItem<String>(
+                              value: cat['id'],
+                              child: Row(
+                                children: [
+                                  Icon(cat['icon'], size: 16, color: Colors.orange),
+                                  const SizedBox(width: 8),
+                                  Text(cat['name'], style: const TextStyle(fontSize: 13)),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: _isLoading ? null : (val) => setState(() => _selectedCategory = val ?? 'general'),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
 
             const SizedBox(height: 30),
+            
+            // BOTONES EN HORIZONTAL PARA AHORRAR ESPACIO
             Row(
               children: [
                 Expanded(
@@ -142,6 +156,7 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
                       backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 15),
+                      elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
                     child: _isLoading 
@@ -167,10 +182,8 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
     setState(() => _isLoading = true);
     
     if (widget.item == null) {
-      // CREAR NUEVO
       await context.read<ShoppingListCubit>().addItem(name, amount: amount, category: _selectedCategory);
     } else {
-      // ACTUALIZAR EXISTENTE
       final updatedItem = widget.item!.copyWith(
         name: name,
         amount: amount,

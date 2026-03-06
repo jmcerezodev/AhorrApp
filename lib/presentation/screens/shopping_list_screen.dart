@@ -83,7 +83,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                               }
                             : null, // Desactivado
                           icon: Icons.receipt_long_rounded,
-                          label: 'AÑADIR COMPRA A LA LISTA DE GASTOS',
+                          label: 'AÑADIR A GASTOS', // TEXTO AÚN MÁS RESUMIDO
                           color: Colors.orange,
                         ),
                       ),

@@ -49,7 +49,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // COLUMNA 1: INFO (Total + Chip en la cesta)
+                    // COLUMNA 1: INFO (Identica a Home y Gastos Fijos)
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,9 +78,8 @@ class ShoppingSummaryWidget extends StatelessWidget {
                             ),
                           ),
                           
-                          const SizedBox(height: 12), // AJUSTADO: Igual que en Gastos Fijos
+                          const SizedBox(height: 12), // ESPACIO UNIFICADO
                           
-                          // CHIP "EN LA CESTA" DEBAJO DEL TOTAL
                           _BasketChip(
                             totalBought: state.totalBought,
                             totalItems: state.items.length,
@@ -92,7 +91,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
 
                     const SizedBox(width: 15),
 
-                    // COLUMNA 2: BURBUJA DE ACCIÓN (Botón de añadir)
+                    // COLUMNA 2: BURBUJA DE ACCIÓN (Ajustada para misma altura)
                     const _AddProductBubble(),
                   ],
                 ),
@@ -134,7 +133,7 @@ class _AddProductBubble extends StatelessWidget {
             Icon(
               Icons.add_shopping_cart_rounded,
               color: Colors.orange,
-              size: 32,
+              size: 32, // Tamaño unificado con las otras pantallas
             ),
             SizedBox(height: 4),
             Text(

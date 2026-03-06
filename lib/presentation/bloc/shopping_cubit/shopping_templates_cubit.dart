@@ -34,13 +34,40 @@ class ShoppingTemplatesCubit extends Cubit<ShoppingTemplatesState> {
     } catch (e) {
       emit(state.copyWith(
         status: ShoppingTemplatesStatus.failure,
-        errorMessage: 'Error al cargar plantillas: $e',
+        errorMessage: 'Error al cargar favoritos: $e',
+      ));
+    }
+  }
+
+  Future<void> updateOrSaveFavorite({
+    String? id,
+    required String name,
+    required double amount,
+    required String category,
+  }) async {
+    emit(state.copyWith(status: ShoppingTemplatesStatus.loading));
+    
+    final template = ShoppingTemplate(
+      id: id ?? const Uuid().v4(),
+      userId: Preferences.uId,
+      name: name,
+      items: [
+        ShoppingTemplateItem(name: name, amount: amount, category: category)
+      ],
+    );
+
+    try {
+      await _saveTemplateUseCase(template);
+      await loadTemplates();
+    } catch (e) {
+      emit(state.copyWith(
+        status: ShoppingTemplatesStatus.failure,
+        errorMessage: 'Error al procesar favorito: $e',
       ));
     }
   }
 
   Future<void> saveTemplate(String name, List<ShoppingTemplateItem> items) async {
-    // Evitar duplicados por nombre
     if (state.isFavorite(name)) return;
 
     emit(state.copyWith(status: ShoppingTemplatesStatus.loading));
@@ -57,7 +84,7 @@ class ShoppingTemplatesCubit extends Cubit<ShoppingTemplatesState> {
     } catch (e) {
       emit(state.copyWith(
         status: ShoppingTemplatesStatus.failure,
-        errorMessage: 'Error al guardar plantilla: $e',
+        errorMessage: 'Error al guardar favorito: $e',
       ));
     }
   }
@@ -69,7 +96,7 @@ class ShoppingTemplatesCubit extends Cubit<ShoppingTemplatesState> {
     } catch (e) {
       emit(state.copyWith(
         status: ShoppingTemplatesStatus.failure,
-        errorMessage: 'Error al eliminar plantilla: $e',
+        errorMessage: 'Error al eliminar favorito: $e',
       ));
     }
   }
