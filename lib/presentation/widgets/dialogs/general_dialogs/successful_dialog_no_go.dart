@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 
 class SuccessfulDialogNoGo extends StatelessWidget {
   final String sucessfulName;
+  final String? title;
   
   const SuccessfulDialogNoGo({
     super.key, 
     required this.sucessfulName,
+    this.title,
   });
 
   @override
@@ -25,7 +27,7 @@ class SuccessfulDialogNoGo extends StatelessWidget {
           AppDialogs.dialogHeader(
             icon: Icons.check_circle_outline_rounded, 
             color: Colors.green.shade400, 
-            title: '¡CONSEGUIDO!',
+            title: title ?? '¡CONSEGUIDO!',
             titleColor: Colors.green, // ADN: En éxitos el título es verde
             circularBackground: true,
             iconSize: 40,

@@ -2,6 +2,7 @@ import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/shopping_template.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_templates_cubit.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:flutter/material.dart';
@@ -289,14 +290,12 @@ class _TemplateItem extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     context.read<ShoppingListCubit>().addItemsFromTemplate(template.items);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('"${product.name}" añadido'),
-                        backgroundColor: Colors.green,
-                        duration: const Duration(milliseconds: 800),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      )
+                    AppDialogs.showCustomDialog(
+                      context: context,
+                      builder: SuccessfulDialogNoGo(
+                        title: '¡A LA CESTA!',
+                        sucessfulName: '¡${product.name} añadido correctamente!',
+                      ),
                     );
                   },
                   child: Container(
