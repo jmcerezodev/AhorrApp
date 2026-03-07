@@ -85,7 +85,7 @@ class ShoppingItemCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 8,
                             fontWeight: FontWeight.w900,
-                            color: Colors.orange.withValues(alpha: 0.4),
+                            color: Colors.orange.withValues(alpha: 0.7),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -99,21 +99,30 @@ class ShoppingItemCard extends StatelessWidget {
                     behavior: HitTestBehavior.opaque,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // PRECIO CON CANTIDAD DEBAJO
-                        _buildPriceSectionWithQuantity(context),
-                        
-                        const SizedBox(width: 10),
-
-                        _buildFavoriteIcon(context, isAlreadyFavorite, favoriteId),
-                        
-                        const SizedBox(width: 10),
-
-                        if (!item.isBought)
-                          _buildVerticalStepperMinimal(context)
-                        else
-                          const SizedBox(width: 24),
-                      ],
+                      children: item.amount > 0 
+                        ? [
+                            // DISPOSICIÓN CON PRECIO: Precio -> Cantidad/Favorito -> Stepper
+                            _buildPriceSectionWithQuantity(context),
+                            const SizedBox(width: 12),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildQuantityBadge(),
+                                _buildFavoriteIcon(context, isAlreadyFavorite, favoriteId),
+                              ],
+                            ),
+                            const SizedBox(width: 10),
+                            if (!item.isBought)
+                              _buildVerticalStepperMinimal(context)
+                            else
+                              const SizedBox(width: 24),
+                          ]
+                        : [
+                            // DISPOSICIÓN SIN PRECIO: Favorito -> Botón Precio (Derecha del todo)
+                            _buildFavoriteIcon(context, isAlreadyFavorite, favoriteId),
+                            const SizedBox(width: 10),
+                            _buildPriceSectionWithQuantity(context),
+                          ],
                     ),
                   ),
                 ],
@@ -183,6 +192,24 @@ class ShoppingItemCard extends StatelessWidget {
     );
   }
 
+  Widget _buildQuantityBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: item.isBought ? 0.4 : 1.0),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        'x${item.quantity}',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+
   Widget _buildPriceSectionWithQuantity(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -202,40 +229,39 @@ class ShoppingItemCard extends StatelessWidget {
               '${humanizeNumbers.number(item.amount)}€/ud',
               style: TextStyle(
                 fontSize: 8,
-                fontWeight: FontWeight.bold,
-                color: Colors.orange.withValues(alpha: item.isBought ? 0.2 : 0.5),
+                fontWeight: FontWeight.w900,
+                color: Colors.orange.withValues(alpha: item.isBought ? 0.4 : 0.8),
               ),
             ),
         ] else
           GestureDetector(
             onTap: () => _showQuickPrice(context),
             behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-              child: Text(
-                'PRECIO',
-                style: TextStyle(color: Colors.orange.withValues(alpha: 0.5), fontSize: 8, fontWeight: FontWeight.w900),
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.add_rounded, size: 14, color: Colors.orange),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'PRECIO',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        
-        // Badge de cantidad DEBAJO del precio
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: item.isBought ? 0.4 : 1.0),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Text(
-            'x${item.quantity}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 8,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
       ],
     );
   }
