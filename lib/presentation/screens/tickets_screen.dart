@@ -33,11 +33,47 @@ class _TicketsScreenState extends State<TicketsScreen> {
           // 2. RESUMEN
           const TicketsSummaryWidget(),
 
-          // 3. BOTONES DE ACCIÓN (Mismo estilo que Shopping List)
+          // 3. BARRA DE PROGRESO (Solo en carga)
+          BlocBuilder<TicketsCubit, TicketsState>(
+            builder: (context, state) {
+              if (state.status != TicketsStatus.loading) return const SizedBox.shrink();
+              
+              return FadeIn(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Column(
+                    children: [
+                      LinearProgressIndicator(
+                        backgroundColor: Colors.orange.withValues(alpha: 0.1),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+                        minHeight: 6,
+                        borderRadius: const BorderRadius.all(Radius.circular(10)),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Procesando productos del ticket...',
+                        style: TextStyle(
+                          color: Colors.orange.shade700,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // 4. BOTONES DE ACCIÓN
           BlocBuilder<TicketsCubit, TicketsState>(
             builder: (context, state) {
               final bool hasItems = state.items.isNotEmpty;
+              final bool isLoading = state.status == TicketsStatus.loading;
               
+              if (isLoading) return const SizedBox.shrink();
+
               return FadeInUp(
                 delay: const Duration(milliseconds: 200),
                 child: Padding(
@@ -71,7 +107,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                               }
                             : null,
                           icon: Icons.receipt_long_rounded,
-                          label: 'AÑADIR A GASTOS', // CAMBIADO: Coherencia con Shopping List
+                          label: 'AÑADIR A GASTOS',
                           color: Colors.orange,
                         ),
                       ),
@@ -82,7 +118,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
             },
           ),
 
-          // 4. LISTADO
+          // 5. LISTADO
           const Expanded(
             child: TicketsHistoryWidget(),
           ),

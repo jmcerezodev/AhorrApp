@@ -5,7 +5,7 @@ import '../../domain/services/document_scanner_service.dart';
 class GoogleMlKitDocumentScannerService implements DocumentScannerService {
   final _documentScanner = DocumentScanner(
     options: DocumentScannerOptions(
-      mode: ScannerMode.full,
+      mode: ScannerMode.base,
       pageLimit: 1,
     ),
   );

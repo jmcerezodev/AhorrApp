@@ -65,29 +65,20 @@ class TicketsSummaryWidget extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          if (isLoading)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
-                              child: SizedBox(
-                                height: 20, 
-                                width: 20, 
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.orange)
-                              ),
-                            )
-                          else
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                '${humanizeNumbers.number(state.totalAmount)}€',
-                                style: TextStyle(
-                                  color: isDark ? Colors.white : colorScheme.onSurface,
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -1,
-                                ),
+                          // ELIMINADO: Progress circular del precio
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${humanizeNumbers.number(state.totalAmount)}€',
+                              style: TextStyle(
+                                color: isDark ? Colors.white : colorScheme.onSurface,
+                                fontSize: 30,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1,
                               ),
                             ),
+                          ),
                           
                           const SizedBox(height: 12),
                           
