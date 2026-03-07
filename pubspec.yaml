@@ -31,6 +31,10 @@ dependencies:
   uuid: ^4.5.1
   url_launcher: ^6.3.1
   convex_bottom_bar: ^3.2.0
+  camera: ^0.11.0+2
+  google_mlkit_text_recognition: ^0.14.0
+  image_picker: ^1.1.2
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_lints: ^5.0.0

@@ -54,3 +54,10 @@ export 'shopping_list_dialogs/quick_price_dialog.dart';
 export 'shopping_list_dialogs/save_as_template_dialog.dart';
 export 'shopping_list_dialogs/shopping_templates_dialog.dart';
 export 'shopping_list_dialogs/transfer_to_expenses_dialog.dart';
+
+// Tickets
+export 'tickets_dialogs/add_edit_ticket_item_dialog.dart';
+export 'tickets_dialogs/clear_tickets_dialog.dart';
+export 'tickets_dialogs/delete_ticket_item_dialog.dart';
+export 'tickets_dialogs/pack_config_ticket_dialog.dart';
+export 'tickets_dialogs/transfer_ticket_to_expenses_dialog.dart';

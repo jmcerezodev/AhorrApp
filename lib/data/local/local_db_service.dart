@@ -8,6 +8,7 @@ import 'models/pending_sync.dart';
 import 'models/local_recurrent_expense.dart';
 import 'models/local_shopping_list_item.dart';
 import 'models/local_shopping_template.dart';
+import 'models/local_ticket_item.dart';
 
 class LocalDbService {
   static final LocalDbService _instance = LocalDbService._internal();
@@ -31,6 +32,7 @@ class LocalDbService {
           LocalRecurrentExpenseSchema,
           LocalShoppingItemSchema,
           LocalShoppingTemplateSchema,
+          LocalTicketItemSchema,
         ],
         directory: dir.path,
       );
@@ -267,6 +269,7 @@ class LocalDbService {
       await _isar.localRecurrentExpenses.clear();
       await _isar.localShoppingItems.clear();
       await _isar.localShoppingTemplates.clear();
+      await _isar.localTicketItems.clear();
     });
   }
 

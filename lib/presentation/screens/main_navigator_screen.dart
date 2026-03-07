@@ -6,6 +6,7 @@ import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/screens/home_screen.dart';
 import 'package:ahorrapp/presentation/screens/recurrent_expenses_screen.dart';
 import 'package:ahorrapp/presentation/screens/shopping_list_screen.dart';
+import 'package:ahorrapp/presentation/screens/tickets_screen.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +26,7 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
     const RecurrentExpensesScreen(key: ValueKey('recurrent')),
     const ShoppingListScreen(key: ValueKey('shopping')),
     const HomeScreen(key: ValueKey('home')),
-    const Center(key: ValueKey('tickets'), child: Text('Escaneo de Tickets\n(Próximamente)', textAlign: TextAlign.center)),
+    const TicketsScreen(key: ValueKey('tickets')),
     const Center(key: ValueKey('more'), child: Text('Más Ajustes\n(Próximamente)', textAlign: TextAlign.center)),
   ];
 

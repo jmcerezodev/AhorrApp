@@ -8,6 +8,7 @@ import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_templates_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -119,6 +120,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
   late final LoginCubit _loginCubit;
   late final ShoppingListCubit _shoppingCubit;
   late final ShoppingTemplatesCubit _templatesCubit;
+  late final TicketsCubit _ticketsCubit;
 
   @override
   void initState() {
@@ -131,6 +133,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
     _loginCubit = LoginCubit(historyCubit: _historyCubit);
     _shoppingCubit = getIt<ShoppingListCubit>();
     _templatesCubit = getIt<ShoppingTemplatesCubit>();
+    _ticketsCubit = getIt<TicketsCubit>();
 
     _updateAppSecurity();
   }
@@ -191,6 +194,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
         BlocProvider<LoginCubit>.value(value: _loginCubit),
         BlocProvider<ShoppingListCubit>.value(value: _shoppingCubit),
         BlocProvider<ShoppingTemplatesCubit>.value(value: _templatesCubit),
+        BlocProvider<TicketsCubit>.value(value: _ticketsCubit),
 
         BlocProvider(create: (_) => NewUserCubit()),
         BlocProvider(create: (_) => ResetPasswordCubit()),
