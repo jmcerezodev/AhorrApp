@@ -1,10 +1,8 @@
-import 'dart:io';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 
 class TicketsSummaryWidget extends StatelessWidget {
   const TicketsSummaryWidget({super.key});
@@ -124,7 +122,7 @@ class _AddProductBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isLoading ? null : () => _showPickerOptions(context),
+      onTap: isLoading ? null : () => context.read<TicketsCubit>().scanAndProcessTicket(),
       child: Container(
         width: 110,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -139,7 +137,7 @@ class _AddProductBubble extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              isLoading ? Icons.sync : Icons.camera_alt_rounded,
+              isLoading ? Icons.sync : Icons.qr_code_scanner_rounded,
               color: Colors.orange,
               size: 32,
             ),
@@ -156,106 +154,6 @@ class _AddProductBubble extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showPickerOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      builder: (builderContext) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Selecciona origen del ticket',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _OptionItem(
-                          icon: Icons.camera_alt_rounded,
-                          label: 'Cámara',
-                          onTap: () {
-                            Navigator.pop(builderContext);
-                            _pickImage(context, ImageSource.camera);
-                          },
-                        ),
-                        _OptionItem(
-                          icon: Icons.photo_library_rounded,
-                          label: 'Galería',
-                          onTap: () {
-                            Navigator.pop(builderContext);
-                            _pickImage(context, ImageSource.gallery);
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _pickImage(BuildContext context, ImageSource source) async {
-    final picker = ImagePicker();
-    try {
-      final XFile? pickedFile = await picker.pickImage(
-        source: source,
-        imageQuality: 80,
-      );
-
-      if (pickedFile != null && context.mounted) {
-        context.read<TicketsCubit>().processTicketImage(File(pickedFile.path));
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al capturar imagen: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-}
-
-class _OptionItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _OptionItem({required this.icon, required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: Colors.orange, size: 30),
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-        ],
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:ahorrapp/domain/services/document_scanner_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../core/shared_preferences/preferences.dart';
@@ -19,6 +20,7 @@ class TicketsCubit extends Cubit<TicketsState> {
   final ClearTicketsUseCase clearTicketsUseCase;
   final ReorderTicketItemsUseCase reorderTicketItemsUseCase;
   final ProcessTicketImageUseCase processTicketImageUseCase;
+  final DocumentScannerService documentScannerService;
 
   TicketsCubit({
     required this.getTicketItemsUseCase,
@@ -27,6 +29,7 @@ class TicketsCubit extends Cubit<TicketsState> {
     required this.clearTicketsUseCase,
     required this.reorderTicketItemsUseCase,
     required this.processTicketImageUseCase,
+    required this.documentScannerService,
   }) : super(const TicketsState());
 
   Future<void> loadItems() async {
@@ -36,6 +39,17 @@ class TicketsCubit extends Cubit<TicketsState> {
       emit(state.copyWith(status: TicketsStatus.success, items: items));
     } catch (e) {
       emit(state.copyWith(status: TicketsStatus.failure, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> scanAndProcessTicket() async {
+    try {
+      final scannedFiles = await documentScannerService.scanDocument();
+      if (scannedFiles != null && scannedFiles.isNotEmpty) {
+        await processTicketImage(scannedFiles.first);
+      }
+    } catch (e) {
+      emit(state.copyWith(status: TicketsStatus.failure, errorMessage: "Error al escanear: $e"));
     }
   }
 

@@ -58,7 +58,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('ESCANEAR'), findsOneWidget);
-      expect(find.byIcon(Icons.camera_alt_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.qr_code_scanner_rounded), findsOneWidget);
     });
 
     testWidgets('Debe mostrar "TOTAL TICKET" en el resumen', (WidgetTester tester) async {

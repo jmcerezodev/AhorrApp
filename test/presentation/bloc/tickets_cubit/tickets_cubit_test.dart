@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/domain/entities/ticket_item.dart';
+import 'package:ahorrapp/domain/services/document_scanner_service.dart';
 import 'package:ahorrapp/domain/usecases/tickets/clear_tickets_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/delete_ticket_item_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/get_ticket_items_usecase.dart';
@@ -17,6 +19,7 @@ class MockDeleteTicketItemUseCase extends Mock implements DeleteTicketItemUseCas
 class MockClearTicketsUseCase extends Mock implements ClearTicketsUseCase {}
 class MockReorderTicketItemsUseCase extends Mock implements ReorderTicketItemsUseCase {}
 class MockProcessTicketImageUseCase extends Mock implements ProcessTicketImageUseCase {}
+class MockDocumentScannerService extends Mock implements DocumentScannerService {}
 
 void main() {
   late TicketsCubit ticketsCubit;
@@ -26,6 +29,7 @@ void main() {
   late MockClearTicketsUseCase mockClearItems;
   late MockReorderTicketItemsUseCase mockReorderItems;
   late MockProcessTicketImageUseCase mockProcessImage;
+  late MockDocumentScannerService mockScannerService;
 
   final tItems = [
     const TicketItem(id: '1', userId: 'u1', name: 'Product 1', amount: 10.0, quantity: 1, category: 'general'),
@@ -35,6 +39,7 @@ void main() {
     SharedPreferences.setMockInitialValues({'uId': 'u1'});
     await Preferences.init();
     registerFallbackValue(const TicketItem(id: '0', userId: '', name: '', amount: 0, quantity: 0, category: ''));
+    registerFallbackValue(File(''));
   });
 
   setUp(() {
@@ -44,6 +49,7 @@ void main() {
     mockClearItems = MockClearTicketsUseCase();
     mockReorderItems = MockReorderTicketItemsUseCase();
     mockProcessImage = MockProcessTicketImageUseCase();
+    mockScannerService = MockDocumentScannerService();
 
     ticketsCubit = TicketsCubit(
       getTicketItemsUseCase: mockGetItems,
@@ -52,6 +58,7 @@ void main() {
       clearTicketsUseCase: mockClearItems,
       reorderTicketItemsUseCase: mockReorderItems,
       processTicketImageUseCase: mockProcessImage,
+      documentScannerService: mockScannerService,
     );
   });
 
@@ -102,5 +109,18 @@ void main() {
 
     verify(() => mockClearItems.call(any())).called(1);
     verify(() => mockGetItems.call(any())).called(1);
+  });
+
+  test('scanAndProcessTicket calls scanner and process image when successful', () async {
+    final file = File('test_path');
+    when(() => mockScannerService.scanDocument()).thenAnswer((_) async => [file]);
+    when(() => mockProcessImage.call(any(), any())).thenAnswer((_) async => tItems);
+    when(() => mockSaveItem.call(any())).thenAnswer((_) async => {});
+    when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
+
+    await ticketsCubit.scanAndProcessTicket();
+
+    verify(() => mockScannerService.scanDocument()).called(1);
+    verify(() => mockProcessImage.call(file, any())).called(1);
   });
 }

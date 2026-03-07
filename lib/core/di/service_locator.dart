@@ -8,11 +8,13 @@ import 'package:ahorrapp/data/repositories/isar_shopping_list_repository.dart';
 import 'package:ahorrapp/data/repositories/isar_shopping_template_repository.dart';
 import 'package:ahorrapp/data/repositories/ticket_repository_impl.dart';
 import 'package:ahorrapp/data/services/google_mlkit_ocr_service.dart';
+import 'package:ahorrapp/data/services/google_mlkit_document_scanner_service.dart';
 import 'package:ahorrapp/domain/repositories/i_recurrent_expense_repository.dart';
 import 'package:ahorrapp/domain/repositories/i_shopping_list_repository.dart';
 import 'package:ahorrapp/domain/repositories/i_shopping_template_repository.dart';
 import 'package:ahorrapp/domain/repositories/tickets_repository.dart';
 import 'package:ahorrapp/domain/services/ocr_service.dart';
+import 'package:ahorrapp/domain/services/document_scanner_service.dart';
 import 'package:ahorrapp/domain/usecases/delete_movement_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/delete_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/get_recurrent_expenses_usecase.dart';
@@ -66,6 +68,7 @@ Future<void> setupServiceLocator() async {
 
   // OCR Service
   getIt.registerLazySingleton<OCRService>(() => GoogleMlKitOCRService());
+  getIt.registerLazySingleton<DocumentScannerService>(() => GoogleMlKitDocumentScannerService());
 
   // 2. REPOSITORIOS
   getIt.registerLazySingleton<IMovementRepository>(
@@ -232,6 +235,7 @@ Future<void> setupServiceLocator() async {
     clearTicketsUseCase: getIt<ClearTicketsUseCase>(),
     reorderTicketItemsUseCase: getIt<ReorderTicketItemsUseCase>(),
     processTicketImageUseCase: getIt<ProcessTicketImageUseCase>(),
+    documentScannerService: getIt<DocumentScannerService>(),
   ));
   
   // 5. CUBITS DE FÁBRICA (Se crean bajo demanda)
