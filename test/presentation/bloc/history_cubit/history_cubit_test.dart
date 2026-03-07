@@ -5,6 +5,7 @@ import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/data/local/models/local_saving.dart';
 import 'package:ahorrapp/data/local/models/local_recurrent_expense.dart';
 import 'package:ahorrapp/data/local/models/local_shopping_list_item.dart';
+import 'package:ahorrapp/data/local/models/local_shopping_template.dart';
 import 'package:ahorrapp/domain/usecases/get_movements_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
@@ -39,6 +40,7 @@ void main() {
     registerFallbackValue(<LocalSaving>[]);
     registerFallbackValue(<LocalRecurrentExpense>[]);
     registerFallbackValue(<LocalShoppingItem>[]);
+    registerFallbackValue(<LocalShoppingTemplate>[]);
   });
 
   setUp(() async {
@@ -79,8 +81,8 @@ void main() {
       expect(historyCubit.state.status, HistoryStatus.failure);
     });
 
-    test('forceBalanceResync debe guardar los gastos recurrentes correctamente', () async {
-      // GIVEN: Simulación de datos de Appwrite incluyendo recurrentes y lista de compra
+    test('forceBalanceResync debe guardar los recurrentes, la compra y favoritos correctamente', () async {
+      // GIVEN: Simulación de datos de Appwrite incluyendo recurrentes, lista de compra y plantillas
       final now = DateTime.now().toIso8601String();
       final mockRecurrentDoc = FakeDocument(
         $id: 'rec_123',
@@ -105,6 +107,17 @@ void main() {
           'category': 'alimentos',
           'isBought': false,
           'position': 0,
+          'quantity': 1,
+        },
+      );
+
+      final mockTemplateDoc = FakeDocument(
+        $id: 'temp_123',
+        $createdAt: now,
+        data: {
+          'userId': 'test-user',
+          'name': 'Lista Semanal',
+          'itemsJson': '[]',
         },
       );
 
@@ -114,13 +127,15 @@ void main() {
         'history': [],
         'savings': [],
         'recurrent': [mockRecurrentDoc],
-        'shopping': [mockShoppingDoc], // AÑADIDO: Datos de compra para que no falle
+        'shopping': [mockShoppingDoc],
+        'templates': [mockTemplateDoc],
         'savingGoal': 500.0,
       });
       when(() => mockLocalDb.saveHistoryItems(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveSavingItems(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveRecurrentExpenses(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveShoppingListItems(any())).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveShoppingTemplates(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveSavingGoal(any(), any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveTotalBalance(any(), any())).thenAnswer((_) async {});
       when(() => mockGetMovementsUseCase(any(), any(), any())).thenAnswer((_) async => []);
@@ -128,11 +143,13 @@ void main() {
       // WHEN: Ejecutamos la resincronización forzada
       await historyCubit.forceBalanceResync(mockTotalMoneyCubit);
 
-      // THEN: Verificamos que se llamó a guardar los recurrentes y la compra
+      // THEN: Verificamos que se llamó a guardar todos los tipos de datos
       verify(() => mockLocalDb.saveRecurrentExpenses(any())).called(1);
       verify(() => mockLocalDb.saveShoppingListItems(any())).called(1);
+      verify(() => mockLocalDb.saveShoppingTemplates(any())).called(1);
       expect(historyCubit.state.status, HistoryStatus.success);
     });
+
    group('Interacciones y UI', () {
       test('listOrder debe actualizar el orden de la lista', () {
         historyCubit.listOrder('ascending');

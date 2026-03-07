@@ -13,16 +13,17 @@ class DeleteShoppingListItemUseCase {
   });
 
   Future<void> call(String id) async {
-    // 1. Borrado local
+    // 1. Borrado local (Reactividad inmediata)
     await localRepository.deleteShoppingListItem(id);
 
     // 2. Sincronización remota
     try {
       await remoteRepository.deleteShoppingListItem(id);
     } catch (e) {
+      // Si falla, encolamos para borrado diferido
       await localDbService.addPendingSync(
         'delete',
-        'shopping',
+        'shopping_list',
         {},
         appwriteId: id,
       );

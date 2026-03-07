@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
@@ -21,7 +22,19 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
   final DeleteShoppingListItemUseCase _deleteShoppingItemUseCase = getIt<DeleteShoppingListItemUseCase>();
   final SaveMovementUseCase _saveMovementUseCase = getIt<SaveMovementUseCase>();
 
+  // Mapa para gestionar los timers de debounce por cada producto
+  final Map<String, Timer> _debounceTimers = {};
+
   ShoppingListCubit() : super(const ShoppingState());
+
+  @override
+  Future<void> close() {
+    for (var timer in _debounceTimers.values) {
+      timer.cancel();
+    }
+    _debounceTimers.clear();
+    return super.close();
+  }
 
   Future<void> loadItems() async {
     emit(state.copyWith(status: ShoppingStatus.loading));
@@ -33,7 +46,7 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
     }
   }
 
-  Future<void> addItem(String name, {double amount = 0.0, String category = 'general'}) async {
+  Future<void> addItem(String name, {double amount = 0.0, String category = 'general', int quantity = 1}) async {
     final newItem = ShoppingListItem(
       id: const Uuid().v4(),
       userId: Preferences.uId,
@@ -41,6 +54,7 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
       amount: amount,
       category: category,
       position: state.items.length,
+      quantity: quantity,
     );
 
     try {
@@ -51,7 +65,6 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
     }
   }
 
-  // NUEVO: Añadir productos desde una plantilla
   Future<void> addItemsFromTemplate(List<ShoppingTemplateItem> templateItems) async {
     emit(state.copyWith(status: ShoppingStatus.loading));
     try {
@@ -75,6 +88,7 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
 
   Future<void> toggleItem(ShoppingListItem item) async {
     final updatedItem = item.copyWith(isBought: !item.isBought);
+    // Para el toggle (check/uncheck) lo hacemos inmediato sin debounce
     try {
       await _saveShoppingItemUseCase(updatedItem);
       await loadItems();
@@ -83,12 +97,34 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
     }
   }
 
+  /// Actualiza un producto con lógica de Debounce para cambios de cantidad
   Future<void> updateItem(ShoppingListItem item) async {
-    try {
-      await _saveShoppingItemUseCase(item);
-      await loadItems();
-    } catch (e) {
-      emit(state.copyWith(status: ShoppingStatus.failure, errorMessage: e.toString()));
+    // 1. Buscamos si ya existe el item en el estado actual
+    final oldItem = state.items.firstWhere((i) => i.id == item.id, orElse: () => item);
+    
+    // 2. Actualizar estado local inmediatamente para reactividad visual
+    final updatedItems = state.items.map((i) => i.id == item.id ? item : i).toList();
+    emit(state.copyWith(items: updatedItems));
+
+    // 3. Si el cambio es solo de cantidad, aplicamos Debounce
+    if (oldItem.quantity != item.quantity && oldItem.isBought == item.isBought) {
+      _debounceTimers[item.id]?.cancel();
+      _debounceTimers[item.id] = Timer(const Duration(milliseconds: 500), () async {
+        try {
+          await _saveShoppingItemUseCase(item);
+          _debounceTimers.remove(item.id);
+        } catch (e) {
+          // No emitimos error aquí para no romper la UX, pero se sincronizará luego
+        }
+      });
+    } else {
+      // Para cambios de nombre, precio o categoría, guardamos de inmediato
+      try {
+        await _saveShoppingItemUseCase(item);
+        await loadItems();
+      } catch (e) {
+        emit(state.copyWith(status: ShoppingStatus.failure, errorMessage: e.toString()));
+      }
     }
   }
 
@@ -137,7 +173,7 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
       final int year = int.parse(date.year());
 
       if (asPack) {
-        final totalAmount = boughtItems.fold(0.0, (sum, item) => sum + item.amount);
+        final totalAmount = boughtItems.fold(0.0, (sum, item) => sum + (item.amount * item.quantity));
         final movement = Movement(
           id: const Uuid().v4(),
           name: packName ?? 'Compra Supermercado',
@@ -156,8 +192,8 @@ class ShoppingListCubit extends Cubit<ShoppingState> {
         for (var item in boughtItems) {
           final movement = Movement(
             id: const Uuid().v4(),
-            name: item.name,
-            amount: item.amount,
+            name: item.quantity > 1 ? '${item.quantity}x ${item.name}' : item.name,
+            amount: item.amount * item.quantity,
             type: MovementType.expense,
             isIncome: false,
             date: date.currentDate(),

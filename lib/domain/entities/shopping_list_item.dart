@@ -8,6 +8,7 @@ class ShoppingListItem extends Equatable {
   final String category;
   final bool isBought;
   final int position;
+  final int quantity;
 
   const ShoppingListItem({
     required this.id,
@@ -17,6 +18,7 @@ class ShoppingListItem extends Equatable {
     this.category = 'general',
     this.isBought = false,
     this.position = 0,
+    this.quantity = 1,
   });
 
    ShoppingListItem copyWith({
@@ -27,6 +29,7 @@ class ShoppingListItem extends Equatable {
     String? category,
     bool? isBought,
     int? position,
+    int? quantity,
   }) {
     return ShoppingListItem(
       id: id ?? this.id,
@@ -36,9 +39,10 @@ class ShoppingListItem extends Equatable {
       category: category ?? this.category,
       isBought: isBought ?? this.isBought,
       position: position ?? this.position,
+      quantity: quantity ?? this.quantity,
     );
   }
 
   @override
-  List<Object?> get props => [id, userId, name, amount, category, isBought, position];
+  List<Object?> get props => [id, userId, name, amount, category, isBought, position, quantity];
 }

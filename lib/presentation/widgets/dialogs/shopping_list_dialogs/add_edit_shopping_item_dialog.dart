@@ -16,8 +16,10 @@ class AddEditShoppingItemDialog extends StatefulWidget {
 class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
   late TextEditingController _nameController;
   late TextEditingController _amountController;
+  late int _quantity;
   String _selectedCategory = 'general';
   bool _isLoading = false;
+  String? _errorText;
 
   final List<Map<String, dynamic>> _categories = [
     {'id': 'general', 'icon': Icons.shopping_basket_rounded, 'name': 'General'},
@@ -34,6 +36,7 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
     _nameController = TextEditingController(text: widget.item?.name ?? '');
     _amountController = TextEditingController(text: widget.item == null || widget.item?.amount == 0 ? '' : widget.item?.amount.toString());
     _selectedCategory = widget.item?.category ?? 'general';
+    _quantity = widget.item?.quantity ?? 1;
   }
 
   @override
@@ -89,15 +92,66 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
                       label: 'Nombre del producto',
                       hintText: 'Ej. Leche, Pan...',
                       enabled: !_isLoading,
+                      errorText: _errorText,
+                      onChanged: (value) {
+                        if (_errorText != null && value.trim().isNotEmpty) {
+                          setState(() => _errorText = null);
+                        }
+                      },
                     ),
                     const SizedBox(height: 15),
-                    CustomInputTextWidget(
-                      controller: _amountController,
-                      label: 'Importe estimado (opcional)',
-                      hintText: '0.00',
-                      textInputType: const TextInputType.numberWithOptions(decimal: true),
-                      enabled: !_isLoading,
+                    
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center, // Alineado al centro verticalmente
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: CustomInputTextWidget(
+                            controller: _amountController,
+                            label: 'Precio ud. (opcional)',
+                            hintText: '0.00',
+                            textInputType: const TextInputType.numberWithOptions(decimal: true),
+                            enabled: !_isLoading,
+                            autoFocus: false, // Evitamos que robe el foco al cargar si editamos
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          flex: 1,
+                          child: Container(
+                            height: 60, // Altura ajustada para alinear con el CustomInputTextWidget
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                InkWell(
+                                  onTap: _quantity > 1 ? () => setState(() => _quantity--) : null,
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Icon(Icons.remove, size: 18, color: _quantity > 1 ? Colors.orange : Colors.grey.shade300),
+                                  ),
+                                ),
+                                Text('$_quantity', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                                InkWell(
+                                  onTap: () => setState(() => _quantity++),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(5.0),
+                                    child: Icon(Icons.add, size: 18, color: Colors.orange),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                    
                     const SizedBox(height: 20),
                     
                     Align(
@@ -174,20 +228,27 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
 
   void _save() async {
     final name = _nameController.text.trim();
-    if (name.isEmpty) return;
+    if (name.isEmpty) {
+      setState(() => _errorText = 'El nombre es obligatorio');
+      return;
+    }
 
     final amountText = _amountController.text.replaceAll(',', '.').trim();
     final amount = double.tryParse(amountText) ?? 0.0;
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
     
     if (widget.item == null) {
-      await context.read<ShoppingListCubit>().addItem(name, amount: amount, category: _selectedCategory);
+      await context.read<ShoppingListCubit>().addItem(name, amount: amount, category: _selectedCategory, quantity: _quantity);
     } else {
       final updatedItem = widget.item!.copyWith(
         name: name,
         amount: amount,
         category: _selectedCategory,
+        quantity: _quantity,
       );
       await context.read<ShoppingListCubit>().updateItem(updatedItem);
     }

@@ -16,6 +16,7 @@ class AppwriteShoppingListRepository implements IShoppingRepository {
       category: doc.data['category'] ?? 'general',
       isBought: doc.data['isBought'] ?? false,
       position: doc.data['position'] ?? 0,
+      quantity: doc.data['quantity'] ?? 1,
     )).toList();
   }
 
@@ -31,6 +32,7 @@ class AppwriteShoppingListRepository implements IShoppingRepository {
           'category': item.category,
           'isBought': item.isBought,
           'position': item.position,
+          'quantity': item.quantity,
         }
       );
     } catch (e) {
@@ -43,6 +45,7 @@ class AppwriteShoppingListRepository implements IShoppingRepository {
         category: item.category,
         isBought: item.isBought,
         position: item.position,
+        quantity: item.quantity,
       );
     }
   }

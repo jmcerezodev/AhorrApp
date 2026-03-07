@@ -32,6 +32,7 @@ class IsarShoppingListRepository implements IShoppingRepository {
       ..category = item.category
       ..isBought = item.isBought
       ..position = item.position
+      ..quantity = item.quantity
       ..createdAt = existingItem?.createdAt ?? DateTime.now();
 
     await _localDb.saveShoppingListItems([localItem]);
@@ -73,6 +74,7 @@ class IsarShoppingListRepository implements IShoppingRepository {
       category: local.category,
       isBought: local.isBought,
       position: local.position,
+      quantity: local.quantity,
     );
   }
 }

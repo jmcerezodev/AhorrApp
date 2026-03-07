@@ -55,6 +55,8 @@ class SyncService {
             success = await _syncSettings(pending, data);
           } else if (pending.collection == 'recurrent_expenses') {
             success = await _syncRecurrentExpenses(pending, data);
+          } else if (pending.collection == 'shopping_list') {
+            success = await _syncShoppingList(pending, data);
           }
 
           if (success) {
@@ -113,7 +115,7 @@ class SyncService {
         month: data['month'] ?? '',
         year: data['year'] ?? 0,
         isRecurrent: data['isRecurrent'] ?? false,
-        category: data['category'] ?? (data['isIncome'] == true ? 'otro' : 'general'), // AÑADIDO
+        category: data['category'] ?? (data['isIncome'] == true ? 'otro' : 'general'),
       );
       return true;
     } else if (pending.action == 'update') {
@@ -187,6 +189,42 @@ class SyncService {
       return true;
     } else if (pending.action == 'delete') {
       await _appwriteRepo.deleteRecurrentExpense(pending.appwriteId!);
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> _syncShoppingList(PendingSync pending, Map<String, dynamic> data) async {
+    if (pending.action == 'save') {
+      // Usamos el repositorio remoto directamente para intentar guardar/actualizar
+      try {
+        await _appwriteRepo.updateShoppingItem(
+          documentId: pending.appwriteId!, 
+          data: {
+            'name': data['name'],
+            'amount': (data['amount'] as num?)?.toDouble() ?? 0.0,
+            'category': data['category'],
+            'isBought': data['isBought'],
+            'position': data['position'],
+            'quantity': data['quantity'] ?? 1,
+          }
+        );
+      } catch (e) {
+        // Si no existe (404), lo creamos
+        await _appwriteRepo.addShoppingItem(
+          documentId: pending.appwriteId!,
+          userId: data['userId'] ?? '',
+          name: data['name'] ?? '',
+          amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
+          category: data['category'] ?? 'general',
+          isBought: data['isBought'] ?? false,
+          position: data['position'] ?? 0,
+          quantity: data['quantity'] ?? 1,
+        );
+      }
+      return true;
+    } else if (pending.action == 'delete') {
+      await _appwriteRepo.deleteShoppingItem(pending.appwriteId!);
       return true;
     }
     return false;

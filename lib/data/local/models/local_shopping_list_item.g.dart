@@ -52,8 +52,13 @@ const LocalShoppingItemSchema = CollectionSchema(
       name: r'position',
       type: IsarType.long,
     ),
-    r'userId': PropertySchema(
+    r'quantity': PropertySchema(
       id: 7,
+      name: r'quantity',
+      type: IsarType.long,
+    ),
+    r'userId': PropertySchema(
+      id: 8,
       name: r'userId',
       type: IsarType.string,
     )
@@ -112,7 +117,8 @@ void _localShoppingItemSerialize(
   writer.writeBool(offsets[4], object.isBought);
   writer.writeString(offsets[5], object.name);
   writer.writeLong(offsets[6], object.position);
-  writer.writeString(offsets[7], object.userId);
+  writer.writeLong(offsets[7], object.quantity);
+  writer.writeString(offsets[8], object.userId);
 }
 
 LocalShoppingItem _localShoppingItemDeserialize(
@@ -130,7 +136,8 @@ LocalShoppingItem _localShoppingItemDeserialize(
   object.isBought = reader.readBool(offsets[4]);
   object.name = reader.readString(offsets[5]);
   object.position = reader.readLong(offsets[6]);
-  object.userId = reader.readString(offsets[7]);
+  object.quantity = reader.readLong(offsets[7]);
+  object.userId = reader.readString(offsets[8]);
   return object;
 }
 
@@ -156,6 +163,8 @@ P _localShoppingItemDeserializeProp<P>(
     case 6:
       return (reader.readLong(offset)) as P;
     case 7:
+      return (reader.readLong(offset)) as P;
+    case 8:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1013,6 +1022,62 @@ extension LocalShoppingItemQueryFilter
   }
 
   QueryBuilder<LocalShoppingItem, LocalShoppingItem, QAfterFilterCondition>
+      quantityEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'quantity',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalShoppingItem, LocalShoppingItem, QAfterFilterCondition>
+      quantityGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'quantity',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalShoppingItem, LocalShoppingItem, QAfterFilterCondition>
+      quantityLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'quantity',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalShoppingItem, LocalShoppingItem, QAfterFilterCondition>
+      quantityBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'quantity',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalShoppingItem, LocalShoppingItem, QAfterFilterCondition>
       userIdEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1256,6 +1321,20 @@ extension LocalShoppingItemQuerySortBy
   }
 
   QueryBuilder<LocalShoppingItem, LocalShoppingItem, QAfterSortBy>
+      sortByQuantity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'quantity', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalShoppingItem, LocalShoppingItem, QAfterSortBy>
+      sortByQuantityDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'quantity', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalShoppingItem, LocalShoppingItem, QAfterSortBy>
       sortByUserId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'userId', Sort.asc);
@@ -1384,6 +1463,20 @@ extension LocalShoppingItemQuerySortThenBy
   }
 
   QueryBuilder<LocalShoppingItem, LocalShoppingItem, QAfterSortBy>
+      thenByQuantity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'quantity', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalShoppingItem, LocalShoppingItem, QAfterSortBy>
+      thenByQuantityDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'quantity', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalShoppingItem, LocalShoppingItem, QAfterSortBy>
       thenByUserId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'userId', Sort.asc);
@@ -1450,6 +1543,13 @@ extension LocalShoppingItemQueryWhereDistinct
   }
 
   QueryBuilder<LocalShoppingItem, LocalShoppingItem, QDistinct>
+      distinctByQuantity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'quantity');
+    });
+  }
+
+  QueryBuilder<LocalShoppingItem, LocalShoppingItem, QDistinct>
       distinctByUserId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'userId', caseSensitive: caseSensitive);
@@ -1506,6 +1606,12 @@ extension LocalShoppingItemQueryProperty
   QueryBuilder<LocalShoppingItem, int, QQueryOperations> positionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'position');
+    });
+  }
+
+  QueryBuilder<LocalShoppingItem, int, QQueryOperations> quantityProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'quantity');
     });
   }
 

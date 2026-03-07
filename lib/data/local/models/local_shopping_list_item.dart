@@ -15,5 +15,6 @@ class LocalShoppingItem {
   late String category;
   late bool isBought;
   late int position;
+  late int quantity;
   late DateTime createdAt;
 }

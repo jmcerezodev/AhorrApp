@@ -187,8 +187,8 @@ class AppwriteRepository {
     )).documents;
   }
 
-  Future<Document> addShoppingItem({required String documentId, required String userId, required String name, required double amount, String category = 'general', bool isBought = false, int position = 0}) async {
-    return await _databases.createDocument(databaseId: _databaseId, collectionId: _shoppingId, documentId: documentId, data: {'userId': userId, 'name': name, 'amount': amount, 'category': category, 'isBought': isBought, 'position': position});
+  Future<Document> addShoppingItem({required String documentId, required String userId, required String name, required double amount, String category = 'general', bool isBought = false, int position = 0, int quantity = 1}) async {
+    return await _databases.createDocument(databaseId: _databaseId, collectionId: _shoppingId, documentId: documentId, data: {'userId': userId, 'name': name, 'amount': amount, 'category': category, 'isBought': isBought, 'position': position, 'quantity': quantity});
   }
 
   Future<Document> updateShoppingItem({required String documentId, required Map<String, dynamic> data}) async {
