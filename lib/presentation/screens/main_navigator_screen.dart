@@ -22,11 +22,11 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
   int _selectedIndex = 2; // El botón central (Inicio) es el índice 2
 
   final List<Widget> _screens = [
-    const RecurrentExpensesScreen(), // Pestaña de Gastos Recurrentes
-    const ShoppingListScreen(), // NUEVO: Pantalla Lista de la Compra
-    const HomeScreen(), // Botón central: Inicio
-    const Center(child: Text('Escaneo de Tickets\n(Próximamente)', textAlign: TextAlign.center)),
-    const Center(child: Text('Más Ajustes\n(Próximamente)', textAlign: TextAlign.center)),
+    const RecurrentExpensesScreen(key: ValueKey('recurrent')),
+    const ShoppingListScreen(key: ValueKey('shopping')),
+    const HomeScreen(key: ValueKey('home')),
+    const Center(key: ValueKey('tickets'), child: Text('Escaneo de Tickets\n(Próximamente)', textAlign: TextAlign.center)),
+    const Center(key: ValueKey('more'), child: Text('Más Ajustes\n(Próximamente)', textAlign: TextAlign.center)),
   ];
 
   @override
@@ -39,10 +39,8 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
     final String userId = Preferences.uId;
     if (userId.isEmpty) return;
 
-    // Procesamos los gastos fijos
     await getIt<ProcessRecurrentExpensesUseCase>().call(userId);
     
-    // Una vez procesados, recargamos el historial por si se ha añadido alguno nuevo
     if (mounted) {
       final dateState = context.read<DateCubit>().state;
       context.read<HistoryCubit>().loadHistoryByDate(dateState.month, dateState.year);
@@ -57,7 +55,7 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
       drawer: const SideMenuWidget(),
       body: Column(
         children: [
-          // BANNER DE DESCONEXIÓN (Respetando el Notch)
+          // BANNER DE DESCONEXIÓN
           StreamBuilder<NetworkStatus>(
             stream: getIt<ConnectivityService>().status,
             initialData: getIt<ConnectivityService>().currentStatus,
@@ -90,9 +88,18 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
             },
           ),
           
-          // CONTENIDO DE LA PANTALLA
+          // CONTENIDO CON TRANSICIÓN SUAVE
           Expanded(
-            child: _screens[_selectedIndex],
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: CurveTween(curve: Curves.easeInOut).animate(animation),
+                  child: child,
+                );
+              },
+              child: _screens[_selectedIndex],
+            ),
           ),
         ],
       ),

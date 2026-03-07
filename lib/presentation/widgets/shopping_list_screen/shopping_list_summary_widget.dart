@@ -49,7 +49,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // COLUMNA 1: INFO (Identica a Home y Gastos Fijos)
+                    // COLUMNA 1: INFO (Idéntica a Home y Gastos Fijos)
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +133,7 @@ class _AddProductBubble extends StatelessWidget {
             Icon(
               Icons.add_shopping_cart_rounded,
               color: Colors.orange,
-              size: 32, // Tamaño unificado con las otras pantallas
+              size: 32,
             ),
             SizedBox(height: 4),
             Text(
@@ -170,15 +170,17 @@ class _BasketChip extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Icon(Icons.shopping_basket_rounded, color: color.withValues(alpha: 0.8), size: 12),
+          const SizedBox(width: 6),
           Text(
             'EN LA CESTA',
             style: TextStyle(

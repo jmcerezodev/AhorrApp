@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_app_bar.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_history_widget.dart';
@@ -21,21 +22,30 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const SafeArea(
+    return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. APPBAR COMPACTA
-          RecurrentAppBar(),
+          FadeInDown(
+            duration: const Duration(milliseconds: 500),
+            child: const RecurrentAppBar()
+          ),
 
           // 2. TARJETA DE RESUMEN
-          RecurrentSummaryWidget(),
+          FadeInDown(
+            delay: const Duration(milliseconds: 100),
+            child: const RecurrentSummaryWidget()
+          ),
 
           const SizedBox(height: 10),
 
           // 3. LISTADO Y FILTROS
           Expanded(
-            child: RecurrentHistoryWidget(),
+            child: FadeInUp(
+              delay: const Duration(milliseconds: 200),
+              child: const RecurrentHistoryWidget()
+            ),
           ),
         ],
       ),

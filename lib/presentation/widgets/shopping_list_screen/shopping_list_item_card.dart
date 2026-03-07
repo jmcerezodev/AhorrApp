@@ -35,7 +35,7 @@ class ShoppingItemCard extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             constraints: const BoxConstraints(minHeight: 75),
-            margin: const EdgeInsets.only(bottom: 4),
+            // ELIMINADO: margin: const EdgeInsets.only(bottom: 4), para consistencia con Home
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               borderRadius: BorderRadius.circular(18),

@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
@@ -111,51 +112,66 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Builder(
-                        builder: (context) => IconButton(
-                          onPressed: () => Scaffold.of(context).openDrawer(),
-                          icon: Icon(Icons.menu_rounded, color: colorScheme.onSurface, size: 30),
+                  child: FadeInDown(
+                    duration: const Duration(milliseconds: 500),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Builder(
+                          builder: (context) => IconButton(
+                            onPressed: () => Scaffold.of(context).openDrawer(),
+                            icon: Icon(Icons.menu_rounded, color: colorScheme.onSurface, size: 30),
+                          ),
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Hola, $userName',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: colorScheme.onSurface),
-                          ),
-                          Text(
-                            '$greeting de nuevo',
-                            style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ],
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Hola, $userName',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: colorScheme.onSurface),
+                            ),
+                            Text(
+                              '$greeting de nuevo',
+                              style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
       
-                const InfoGlogalWidget(),
+                FadeInDown(
+                  delay: const Duration(milliseconds: 100),
+                  child: const InfoGlogalWidget()
+                ),
       
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-                  child: Row(
-                    children: [
-                      Expanded(flex: 3, child: DateCustomWidget()),
-                      SizedBox(width: 12),
-                      Expanded(flex: 2, child: MonthlyBalanceWidget()),
-                    ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                  child: FadeInDown(
+                    delay: const Duration(milliseconds: 200),
+                    child: const Row(
+                      children: [
+                        Expanded(flex: 3, child: DateCustomWidget()),
+                        SizedBox(width: 12),
+                        Expanded(flex: 2, child: MonthlyBalanceWidget()),
+                      ],
+                    ),
                   ),
                 ),
       
                 const SizedBox(height: 5),
-                const ExpensesIncomesCustomWidget(),
+                FadeInUp(
+                  delay: const Duration(milliseconds: 300),
+                  child: const ExpensesIncomesCustomWidget()
+                ),
                 const SizedBox(height: 10),
                 
-                const Expanded(
-                  child: HistoryCustomWidget(),
+                Expanded(
+                  child: FadeInUp(
+                    delay: const Duration(milliseconds: 400),
+                    child: const HistoryCustomWidget()
+                  ),
                 ),
                 
                 const SizedBox(height: 5),

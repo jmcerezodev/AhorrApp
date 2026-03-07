@@ -21,7 +21,7 @@ class RecurrentHistoryWidget extends StatelessWidget {
       children: [
         // CABECERA DE LISTADO CON FILTRO
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25),
+          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10), // Añadido vertical: 10 para igualar Home
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -64,8 +64,6 @@ class RecurrentHistoryWidget extends StatelessWidget {
           },
         ),
 
-        const SizedBox(height: 2),
-
         Expanded(
           child: BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
             builder: (context, state) {
@@ -90,7 +88,7 @@ class RecurrentHistoryWidget extends StatelessWidget {
               }
 
               return ReorderableListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20), // Igualado a Home (SliverPadding)
                 physics: const BouncingScrollPhysics(),
                 itemCount: filteredExpenses.length,
                 onReorder: (oldIndex, newIndex) {

@@ -46,7 +46,7 @@ class ShoppingListHistoryWidget extends StatelessWidget {
               }
 
               return ReorderableListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 physics: const BouncingScrollPhysics(),
                 itemCount: state.items.length,
                 onReorder: (oldIndex, newIndex) {

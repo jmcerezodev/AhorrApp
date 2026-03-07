@@ -29,16 +29,22 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. APPBAR
-          const ShoppingListAppBar(),
+          FadeInDown(
+            duration: const Duration(milliseconds: 500),
+            child: const ShoppingListAppBar()
+          ),
 
           // 2. RESUMEN
-          const ShoppingSummaryWidget(),
+          FadeInDown(
+            delay: const Duration(milliseconds: 100),
+            child: const ShoppingSummaryWidget()
+          ),
 
           // 3. BOTONES DE ACCIÓN (2 COLUMNAS)
           BlocBuilder<ShoppingListCubit, ShoppingState>(
             builder: (context, state) {
               return FadeInUp(
-                duration: const Duration(milliseconds: 300),
+                delay: const Duration(milliseconds: 200),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Row(
@@ -93,8 +99,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           ),
 
           // 4. LISTADO
-          const Expanded(
-            child: ShoppingListHistoryWidget(),
+          Expanded(
+            child: FadeInUp(
+              delay: const Duration(milliseconds: 300),
+              child: const ShoppingListHistoryWidget()
+            ),
           ),
         ],
       ),
