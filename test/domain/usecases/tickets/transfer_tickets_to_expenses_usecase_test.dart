@@ -31,33 +31,28 @@ void main() {
     );
   });
 
+  final tDate = DateTime(2023, 1, 1);
   final tItems = [
-    const TicketItem(id: '1', userId: 'u1', name: 'Leche', amount: 1.5, quantity: 2, category: 'alimentación'),
-    const TicketItem(id: '2', userId: 'u1', name: 'Pan', amount: 1.0, quantity: 1, category: 'alimentación'),
+    TicketItem(id: '1', userId: 'u1', name: 'Mercadona', amount: 15.5, date: tDate, category: 'alimentación'),
+    TicketItem(id: '2', userId: 'u1', name: 'Zara', amount: 45.0, date: tDate, category: 'ocio'),
   ];
 
   test('should call saveMovementUseCase as a single pack and clear tickets', () async {
-    // Arrange
     when(() => mockSaveMovement.call(any())).thenAnswer((_) async => {});
     when(() => mockClearTickets.call(any())).thenAnswer((_) async => {});
 
-    // Act
-    await useCase.call(userId: 'u1', items: tItems, asPack: true, packName: 'Compra Semanal');
+    await useCase.call(userId: 'u1', items: tItems, asPack: true, packName: 'Gasto total tickets');
 
-    // Assert
     verify(() => mockSaveMovement.call(any(that: isA<Movement>()))).called(1);
     verify(() => mockClearTickets.call('u1')).called(1);
   });
 
-  test('should call saveMovementUseCase for each item and clear tickets', () async {
-    // Arrange
+  test('should call saveMovementUseCase for each ticket and clear tickets', () async {
     when(() => mockSaveMovement.call(any())).thenAnswer((_) async => {});
     when(() => mockClearTickets.call(any())).thenAnswer((_) async => {});
 
-    // Act
     await useCase.call(userId: 'u1', items: tItems, asPack: false);
 
-    // Assert
     verify(() => mockSaveMovement.call(any(that: isA<Movement>()))).called(2);
     verify(() => mockClearTickets.call('u1')).called(1);
   });

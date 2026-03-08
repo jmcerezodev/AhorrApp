@@ -63,12 +63,12 @@ void main() {
       expect(result, contains('PAN | 0.50'));
     });
 
-    test('extractOptimizedText debe filtrar líneas sin números', () {
+    test('extractOptimizedText debe PERMITIR líneas sin números para capturar el nombre del comercio', () {
       final mockText = MockRecognizedText();
       final mockBlock = MockTextBlock();
       final mockLine = MockTextLine();
 
-      when(() => mockLine.text).thenReturn('Solo Texto Sin Numeros');
+      when(() => mockLine.text).thenReturn('BAR EL RINCON DE MORALES');
       when(() => mockLine.boundingBox).thenReturn(const Rect.fromLTWH(0, 100, 100, 20));
 
       when(() => mockBlock.lines).thenReturn([mockLine]);
@@ -76,7 +76,8 @@ void main() {
 
       final result = ocrService.extractOptimizedText(mockText);
 
-      expect(result, isEmpty);
+      // Ahora esperamos que NO sea vacío, porque necesitamos el nombre del establecimiento
+      expect(result, equals('BAR EL RINCON DE MORALES'));
     });
   });
 }

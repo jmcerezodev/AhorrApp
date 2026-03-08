@@ -12,10 +12,6 @@ class OpenAIService implements AIService {
 
   OpenAIService({http.Client? client}) : _client = client ?? http.Client();
 
-  // Contadores persistentes durante la sesión (se resetean con Hot Restart)
-  static int _sessionPromptTokens = 0;
-  static int _sessionCompletionTokens = 0;
-
   @override
   Future<List<TicketItem>> parseTicketText(String rawText, String userId) async {
     if (rawText.isEmpty) return [];
@@ -33,12 +29,14 @@ class OpenAIService implements AIService {
             {
               'role': 'system',
               'content': '''Eres un extractor experto de tickets de compra.
-INSTRUCCIONES:
-1. Extrae cada producto individual del ticket.
-2. Si el precio está en una línea diferente al nombre, asócialos inteligentemente.
-3. Formato: SOLO un JSON minificado [{"n":"nombre","q":cantidad,"p":precio_unitario}].
-4. REGLA ORO: Agrupa mismo nombre Y mismo precio (suma q). Si el precio es distinto, mantenlos como items SEPARADOS.
-5. NO incluyas subtotales, IVAs ni Totales.'''
+Tu objetivo es identificar el NOMBRE DEL ESTABLECIMIENTO y el IMPORTE TOTAL.
+
+INSTRUCCIONES CRÍTICAS:
+1. El NOMBRE DEL ESTABLECIMIENTO suele estar al principio. Puede ocupar una o VARIAS LÍNEAS consecutivas (ej: "BAR EL RINCÓN" en una línea y "DE MORALES" en la siguiente). Debes CONCATENARLAS en una sola frase coherente.
+2. Ignora direcciones, CIFs, teléfonos o textos legales en la cabecera.
+3. El IMPORTE TOTAL es el valor final asociado a "TOTAL", "TOTAL EUR", "A PAGAR" o similar.
+4. Formato de salida: SOLO un JSON minificado {"n":"nombre_comercio_completo","p":importe_total}.
+5. Si no hay un nombre claro al inicio, usa "Ticket".'''
             },
             {
               'role': 'user',
@@ -51,46 +49,22 @@ INSTRUCCIONES:
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final usage = data['usage'];
-        
-        if (usage != null) {
-          final int pTokens = (usage['prompt_tokens'] ?? 0) as int;
-          final int cTokens = (usage['completion_tokens'] ?? 0) as int;
-          
-          _sessionPromptTokens += pTokens;
-          _sessionCompletionTokens += cTokens;
-          
-          debugPrint('--- [OPENAI TOKEN REPORT] ---');
-          debugPrint('LLAMADA ACTUAL:');
-          debugPrint('  -> Prompt (Entrada): $pTokens');
-          debugPrint('  -> Completion (Salida): $cTokens');
-          debugPrint('  -> TOTAL LLAMADA: ${pTokens + cTokens}');
-          debugPrint('ACUMULADO SESIÓN:');
-          debugPrint('  -> Total Prompt: $_sessionPromptTokens');
-          debugPrint('  -> Total Completion: $_sessionCompletionTokens');
-          debugPrint('  -> GLOBAL TOTAL: ${_sessionPromptTokens + _sessionCompletionTokens}');
-          debugPrint('------------------------------');
-        }
-
         final String content = _cleanJsonResponse(data['choices'][0]['message']['content']);
-        final List<dynamic> jsonList = jsonDecode(content);
+        final Map<String, dynamic> jsonMap = jsonDecode(content);
 
-        return jsonList.map((item) {
-          if (item is! Map) return null;
+        final String name = jsonMap['n']?.toString() ?? 'Ticket';
+        final double p = _parseToDouble(jsonMap['p']);
 
-          final String name = item['n']?.toString() ?? 'Producto';
-          final int q = _parseToInt(item['q']);
-          final double p = _parseToDouble(item['p']);
-
-          return TicketItem(
+        return [
+          TicketItem(
             id: const Uuid().v4(),
             userId: userId,
             name: _capitalize(name),
             amount: p,
-            quantity: q,
+            date: DateTime.now(),
             category: 'general',
-          );
-        }).whereType<TicketItem>().toList();
+          )
+        ];
       } else {
         debugPrint('Error API OpenAI: ${response.statusCode} - ${response.body}');
         return [];
@@ -104,17 +78,10 @@ INSTRUCCIONES:
   double _parseToDouble(dynamic value) {
     if (value is num) return value.toDouble();
     if (value is String) {
-      return double.tryParse(value.replaceAll(RegExp(r'[^0-9\.\,]'), '').replaceAll(',', '.')) ?? 0.0;
+      String clean = value.replaceAll(RegExp(r'[^0-9\.\,]'), '').replaceAll(',', '.');
+      return double.tryParse(clean) ?? 0.0;
     }
     return 0.0;
-  }
-
-  int _parseToInt(dynamic value) {
-    if (value is num) return value.toInt();
-    if (value is String) {
-      return int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-    }
-    return 1;
   }
 
   String _cleanJsonResponse(String content) => content.replaceAll('```json', '').replaceAll('```', '').trim();
@@ -122,6 +89,12 @@ INSTRUCCIONES:
   String _capitalize(String text) {
     if (text.isEmpty) return text;
     final String clean = text.trim();
-    return clean[0].toUpperCase() + clean.substring(1).toLowerCase();
+    if (clean.toLowerCase() == 'ticket') return 'Ticket';
+    
+    // Capitaliza cada palabra si el nombre es largo (opcional, pero queda mejor)
+    return clean.split(' ').map((word) {
+      if (word.isEmpty) return '';
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
   }
 }

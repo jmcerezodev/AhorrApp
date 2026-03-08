@@ -21,19 +21,20 @@ void main() {
   });
 
   const tUserId = 'u1';
+  final tDate = DateTime(2023, 1, 1);
   final tLocalItems = [
     LocalTicketItem()
       ..ticketItemId = '1'
       ..userId = tUserId
-      ..name = 'Product 1'
+      ..name = 'Establecimiento 1'
       ..amount = 10.0
-      ..quantity = 1
+      ..date = tDate
       ..category = 'general'
       ..position = 0,
   ];
 
   final tEntities = [
-    const TicketItem(id: '1', userId: tUserId, name: 'Product 1', amount: 10.0, quantity: 1, category: 'general', position: 0),
+    TicketItem(id: '1', userId: tUserId, name: 'Establecimiento 1', amount: 10.0, date: tDate, category: 'general', position: 0),
   ];
 
   group('TicketsRepositoryImpl', () {

@@ -72,6 +72,7 @@ class GoogleMlKitOCRService implements OCRService {
 
     if (allLines.isEmpty) return "";
 
+    // Ordenar de arriba hacia abajo para mantener la estructura del ticket
     allLines.sort((a, b) => a.boundingBox.top.compareTo(b.boundingBox.top));
 
     final List<List<TextLine>> rows = [];
@@ -105,11 +106,10 @@ class GoogleMlKitOCRService implements OCRService {
       
       final lowerText = rowText.toLowerCase();
 
+      // Saltamos ruido conocido pero NO saltamos si no hay números, 
+      // para capturar el nombre del establecimiento al principio.
       if (noiseKeywords.any((kw) => lowerText.contains(kw))) continue;
       
-      // CRITICAL FIX: Filtrar líneas sin números
-      if (!RegExp(r'\d').hasMatch(rowText)) continue;
-
       if (RegExp(r'^[ \.\-\*_:=|]+$').hasMatch(rowText)) continue;
       if (rowText.length < 2) continue;
       

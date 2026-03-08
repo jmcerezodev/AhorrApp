@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:ahorrapp/domain/services/document_scanner_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import '../../../core/shared_preferences/preferences.dart';
 import '../../../domain/entities/ticket_item.dart';
 import '../../../domain/usecases/tickets/get_ticket_items_usecase.dart';
@@ -56,10 +58,18 @@ class TicketsCubit extends Cubit<TicketsState> {
   Future<void> processTicketImage(File imageFile) async {
     emit(state.copyWith(status: TicketsStatus.loading));
     try {
+      // 1. Guardar la imagen permanentemente
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = 'ticket_${DateTime.now().millisecondsSinceEpoch}${p.extension(imageFile.path)}';
+      final savedImage = await imageFile.copy('${appDir.path}/$fileName');
+
+      // 2. Procesar con OCR/AI
       final detectedItems = await processTicketImageUseCase(imageFile, Preferences.uId);
       
-      for (var item in detectedItems) {
-        await saveTicketItemUseCase(item);
+      if (detectedItems.isNotEmpty) {
+        // En el nuevo flujo, detectamos UN ticket (aunque el caso de uso devuelva lista por compatibilidad)
+        final ticket = detectedItems.first.copyWith(imagePath: savedImage.path);
+        await saveTicketItemUseCase(ticket);
       }
       
       await loadItems();
@@ -112,7 +122,7 @@ class TicketsCubit extends Cubit<TicketsState> {
     final item = items.removeAt(oldIndex);
     items.insert(newIndex, item);
 
-    emit(state.copyWith(items: items)); // Optimistic UI
+    emit(state.copyWith(items: items));
     
     try {
       await reorderTicketItemsUseCase(items);

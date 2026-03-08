@@ -27,28 +27,33 @@ const LocalTicketItemSchema = CollectionSchema(
       name: r'category',
       type: IsarType.string,
     ),
-    r'name': PropertySchema(
+    r'date': PropertySchema(
       id: 2,
+      name: r'date',
+      type: IsarType.dateTime,
+    ),
+    r'imagePath': PropertySchema(
+      id: 3,
+      name: r'imagePath',
+      type: IsarType.string,
+    ),
+    r'name': PropertySchema(
+      id: 4,
       name: r'name',
       type: IsarType.string,
     ),
     r'position': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'position',
       type: IsarType.long,
     ),
-    r'quantity': PropertySchema(
-      id: 4,
-      name: r'quantity',
-      type: IsarType.long,
-    ),
     r'ticketItemId': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'ticketItemId',
       type: IsarType.string,
     ),
     r'userId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'userId',
       type: IsarType.string,
     )
@@ -88,6 +93,12 @@ int _localTicketItemEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.category.length * 3;
+  {
+    final value = object.imagePath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.name.length * 3;
   bytesCount += 3 + object.ticketItemId.length * 3;
   bytesCount += 3 + object.userId.length * 3;
@@ -102,11 +113,12 @@ void _localTicketItemSerialize(
 ) {
   writer.writeDouble(offsets[0], object.amount);
   writer.writeString(offsets[1], object.category);
-  writer.writeString(offsets[2], object.name);
-  writer.writeLong(offsets[3], object.position);
-  writer.writeLong(offsets[4], object.quantity);
-  writer.writeString(offsets[5], object.ticketItemId);
-  writer.writeString(offsets[6], object.userId);
+  writer.writeDateTime(offsets[2], object.date);
+  writer.writeString(offsets[3], object.imagePath);
+  writer.writeString(offsets[4], object.name);
+  writer.writeLong(offsets[5], object.position);
+  writer.writeString(offsets[6], object.ticketItemId);
+  writer.writeString(offsets[7], object.userId);
 }
 
 LocalTicketItem _localTicketItemDeserialize(
@@ -118,12 +130,13 @@ LocalTicketItem _localTicketItemDeserialize(
   final object = LocalTicketItem();
   object.amount = reader.readDouble(offsets[0]);
   object.category = reader.readString(offsets[1]);
+  object.date = reader.readDateTime(offsets[2]);
   object.id = id;
-  object.name = reader.readString(offsets[2]);
-  object.position = reader.readLong(offsets[3]);
-  object.quantity = reader.readLong(offsets[4]);
-  object.ticketItemId = reader.readString(offsets[5]);
-  object.userId = reader.readString(offsets[6]);
+  object.imagePath = reader.readStringOrNull(offsets[3]);
+  object.name = reader.readString(offsets[4]);
+  object.position = reader.readLong(offsets[5]);
+  object.ticketItemId = reader.readString(offsets[6]);
+  object.userId = reader.readString(offsets[7]);
   return object;
 }
 
@@ -139,14 +152,16 @@ P _localTicketItemDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 3:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
-    case 5:
       return (reader.readString(offset)) as P;
+    case 5:
+      return (reader.readLong(offset)) as P;
     case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -553,6 +568,62 @@ extension LocalTicketItemQueryFilter
   }
 
   QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      dateEqualTo(DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'date',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      dateGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'date',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      dateLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'date',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      dateBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'date',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
       idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -604,6 +675,160 @@ extension LocalTicketItemQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'imagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'imagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'imagePath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'imagePath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      imagePathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'imagePath',
+        value: '',
       ));
     });
   }
@@ -776,7 +1001,7 @@ extension LocalTicketItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'position',
+        property: r'id',
         value: value,
       ));
     });
@@ -792,62 +1017,6 @@ extension LocalTicketItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'position',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
-      quantityEqualTo(int value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'quantity',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
-      quantityGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'quantity',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
-      quantityLessThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'quantity',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
-      quantityBetween(
-    int lower,
-    int upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'quantity',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1164,6 +1333,32 @@ extension LocalTicketItemQuerySortBy
     });
   }
 
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy> sortByDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy> sortByDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
+      sortByImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
+      sortByImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1188,20 +1383,6 @@ extension LocalTicketItemQuerySortBy
       sortByPositionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'position', Sort.desc);
-    });
-  }
-
-  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
-      sortByQuantity() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'quantity', Sort.asc);
-    });
-  }
-
-  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
-      sortByQuantityDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'quantity', Sort.desc);
     });
   }
 
@@ -1262,6 +1443,18 @@ extension LocalTicketItemQuerySortThenBy
     });
   }
 
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy> thenByDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy> thenByDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1271,6 +1464,20 @@ extension LocalTicketItemQuerySortThenBy
   QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
+      thenByImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
+      thenByImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.desc);
     });
   }
 
@@ -1298,20 +1505,6 @@ extension LocalTicketItemQuerySortThenBy
       thenByPositionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'position', Sort.desc);
-    });
-  }
-
-  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
-      thenByQuantity() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'quantity', Sort.asc);
-    });
-  }
-
-  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
-      thenByQuantityDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'quantity', Sort.desc);
     });
   }
 
@@ -1358,6 +1551,19 @@ extension LocalTicketItemQueryWhereDistinct
     });
   }
 
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QDistinct> distinctByDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'date');
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QDistinct> distinctByImagePath(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'imagePath', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<LocalTicketItem, LocalTicketItem, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1369,13 +1575,6 @@ extension LocalTicketItemQueryWhereDistinct
       distinctByPosition() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'position');
-    });
-  }
-
-  QueryBuilder<LocalTicketItem, LocalTicketItem, QDistinct>
-      distinctByQuantity() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'quantity');
     });
   }
 
@@ -1414,6 +1613,18 @@ extension LocalTicketItemQueryProperty
     });
   }
 
+  QueryBuilder<LocalTicketItem, DateTime, QQueryOperations> dateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'date');
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, String?, QQueryOperations> imagePathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'imagePath');
+    });
+  }
+
   QueryBuilder<LocalTicketItem, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
@@ -1423,12 +1634,6 @@ extension LocalTicketItemQueryProperty
   QueryBuilder<LocalTicketItem, int, QQueryOperations> positionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'position');
-    });
-  }
-
-  QueryBuilder<LocalTicketItem, int, QQueryOperations> quantityProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'quantity');
     });
   }
 

@@ -34,7 +34,7 @@ class TransferTicketToExpensesDialog extends StatelessWidget {
         ],
       ),
       content: const Text(
-        '¿Cómo quieres guardar los productos del ticket en tu historial de gastos?',
+        '¿Cómo quieres guardar los tickets escaneados en tu historial de gastos?',
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 14, color: Colors.grey),
       ),
@@ -42,7 +42,7 @@ class TransferTicketToExpensesDialog extends StatelessWidget {
       actionsOverflowButtonSpacing: 10,
       actions: [
         _DialogButton(
-          label: 'TODO EN UN PACK',
+          label: 'TODOS EN UN SOLO GASTO',
           icon: Icons.inventory_2_rounded,
           onPressed: () {
             context.pop(); // Cerramos el de selección
@@ -60,7 +60,7 @@ class TransferTicketToExpensesDialog extends StatelessWidget {
           },
         ),
         _DialogButton(
-          label: 'PRODUCTO A PRODUCTO',
+          label: 'TICKET A TICKET',
           icon: Icons.list_alt_rounded,
           onPressed: () async {
             final navigator = Navigator.of(context);
@@ -82,7 +82,7 @@ class TransferTicketToExpensesDialog extends StatelessWidget {
                   context: navigator.context, 
                   builder: (_) => const SuccessfulDialogNoGo(
                     title: '¡AÑADIDO!',
-                    sucessfulName: 'Los productos se han añadido individualmente a tu historial correctamente.'
+                    sucessfulName: 'Los tickets se han añadido individualmente a tu historial correctamente.'
                   )
                 );
               }

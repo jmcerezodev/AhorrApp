@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/ticket_item.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/add_edit_ticket_item_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/view_ticket_image_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class TicketItemCard extends StatelessWidget {
   final TicketItem item;
@@ -20,10 +23,11 @@ class TicketItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => _showEditDialog(context),
+      onTap: () => _handleTap(context),
+      onLongPress: () => _showEditDialog(context),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        constraints: const BoxConstraints(minHeight: 75),
+        constraints: const BoxConstraints(minHeight: 80),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -40,26 +44,15 @@ class TicketItemCard extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              // 1. ICONO CATEGORÍA
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.08),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  _getIconForCategory(item.category),
-                  color: Colors.orange,
-                  size: 20,
-                ),
-              ),
+              // 1. IMAGEN O ICONO
+              _TicketThumbnail(item: item),
               
-              const SizedBox(width: 12),
+              const SizedBox(width: 15),
 
-              // 2. INFO DEL PRODUCTO
+              // 2. INFO DEL TICKET
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,55 +60,68 @@ class TicketItemCard extends StatelessWidget {
                   children: [
                     Text(
                       item.name,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 14,
+                        fontSize: 15,
                         color: colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item.category.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.orange.withValues(alpha: 0.7),
-                        letterSpacing: 0.5,
-                      ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded, 
+                          size: 10, 
+                          color: colorScheme.onSurface.withValues(alpha: 0.4)
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormat('dd/MM/yyyy').format(item.date),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          item.category.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.orange.withValues(alpha: 0.7),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
 
-              // 3. PRECIO Y CANTIDAD
+              // 3. TOTAL
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '${humanizeNumbers.number(item.amount * item.quantity)}€',
+                    '${humanizeNumbers.number(item.amount)}€',
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
-                      fontSize: 14,
+                      fontSize: 16,
                       color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'x${item.quantity}',
-                      style: const TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.orange,
-                      ),
+                  Text(
+                    'TOTAL',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface.withValues(alpha: 0.3),
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ],
@@ -127,6 +133,20 @@ class TicketItemCard extends StatelessWidget {
     );
   }
 
+  void _handleTap(BuildContext context) {
+    if (item.imagePath != null && File(item.imagePath!).existsSync()) {
+      showDialog(
+        context: context,
+        builder: (_) => ViewTicketImageDialog(
+          imagePath: item.imagePath!,
+          title: item.name,
+        ),
+      );
+    } else {
+      _showEditDialog(context);
+    }
+  }
+
   void _showEditDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -134,16 +154,40 @@ class TicketItemCard extends StatelessWidget {
       builder: (context) => AddEditTicketItemDialog(item: item),
     );
   }
+}
 
-  IconData _getIconForCategory(String category) {
-    switch (category.toLowerCase()) {
-      case 'hogar': return Icons.home_work_rounded;
-      case 'suscripción': return Icons.subscriptions_rounded;
-      case 'salud': return Icons.favorite_rounded;
-      case 'transporte': return Icons.directions_car_rounded;
-      case 'ocio': return Icons.sports_esports_rounded;
-      case 'alimentación': return Icons.restaurant_rounded;
-      default: return Icons.receipt_long_rounded;
+class _TicketThumbnail extends StatelessWidget {
+  final TicketItem item;
+  const _TicketThumbnail({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    if (item.imagePath != null && File(item.imagePath!).existsSync()) {
+      return Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          image: DecorationImage(
+            image: FileImage(File(item.imagePath!)),
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
     }
+
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(
+        Icons.receipt_long_rounded,
+        color: Colors.orange,
+        size: 24,
+      ),
+    );
   }
 }

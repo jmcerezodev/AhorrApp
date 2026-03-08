@@ -57,7 +57,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Procesando productos del ticket...',
+                        'Procesando ticket...',
                         style: TextStyle(
                           color: Colors.orange.shade700,
                           fontSize: 11,

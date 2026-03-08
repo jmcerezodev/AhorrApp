@@ -21,18 +21,17 @@ void main() {
 
   group('OpenAIService - Robust Parsing & Token Tracking', () {
     const userId = 'user123';
-    const rawText = 'LECHE | 1.50';
+    const rawText = 'MERCADONA | 15.50';
 
-    test('debe manejar precios con comas y strings numéricos correctamente', () async {
+    test('debe extraer establecimiento y total correctamente', () async {
       final mockResponse = {
         'choices': [
           {
             'message': {
-              'content': '[{"n":"Producto Coma","q":"2","p":"1,25"}]'
+              'content': '{"n":"Mercadona","p":"15,50"}'
             }
           }
-        ],
-        'usage': {'prompt_tokens': 10, 'completion_tokens': 10}
+        ]
       };
 
       when(() => mockClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
@@ -41,31 +40,31 @@ void main() {
       final result = await openAiService.parseTicketText(rawText, userId);
 
       expect(result.length, 1);
-      expect(result[0].name, 'Producto coma');
-      expect(result[0].quantity, 2);
-      expect(result[0].amount, 1.25);
+      expect(result[0].name, 'Mercadona');
+      expect(result[0].amount, 15.50);
     });
 
-    test('debe acumular tokens de sesión correctamente', () async {
+    test('debe concatenar nombres de establecimiento en varias líneas correctamente', () async {
       final mockResponse = {
-        'choices': [{'message': {'content': '[]'}}],
-        'usage': {'prompt_tokens': 50, 'completion_tokens': 50}
+        'choices': [
+          {
+            'message': {
+              'content': '{"n":"Bar El Rincon De Morales","p":12.50}'
+            }
+          }
+        ]
       };
 
       when(() => mockClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
           .thenAnswer((_) async => http.Response(jsonEncode(mockResponse), 200));
 
-      // Primera llamada
-      await openAiService.parseTicketText(rawText, userId);
-      // Segunda llamada
-      await openAiService.parseTicketText(rawText, userId);
+      final result = await openAiService.parseTicketText('BAR EL RINCON\nDE MORALES\nTOTAL 12.50', userId);
 
-      // No podemos acceder a variables estáticas privadas directamente de forma fácil para asertos,
-      // pero verificamos que el flujo no rompa y los logs (manualmente) mostrarían el incremento.
-      // Validamos que retornó listas vacías como se esperaba del mock.
+      expect(result[0].name, 'Bar El Rincon De Morales');
+      expect(result[0].amount, 12.50);
     });
 
-    test('debe ser resiliente a JSON malformados o tipos inesperados', () async {
+    test('debe ser resiliente a JSON malformados', () async {
       final mockResponse = {
         'choices': [
           {

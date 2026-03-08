@@ -16,10 +16,10 @@ void main() {
   setUp(() {
     mockTicketsCubit = MockTicketsCubit();
     
-    when(() => mockTicketsCubit.state).thenReturn(const TicketsState(
+    when(() => mockTicketsCubit.state).thenReturn(TicketsState(
       status: TicketsStatus.success,
       items: [
-        TicketItem(id: '1', userId: 'u1', name: 'Leche', amount: 1.5, category: 'alimentación', quantity: 1),
+        TicketItem(id: '1', userId: 'u1', name: 'Leche', amount: 1.5, category: 'alimentación', date: DateTime.now()),
       ],
     ));
     when(() => mockTicketsCubit.stream).thenAnswer((_) => const Stream.empty());
@@ -61,11 +61,11 @@ void main() {
       expect(find.byIcon(Icons.qr_code_scanner_rounded), findsOneWidget);
     });
 
-    testWidgets('Debe mostrar "TOTAL TICKET" en el resumen', (WidgetTester tester) async {
+    testWidgets('Debe mostrar "TOTAL ESCANEADO" en el resumen', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('TOTAL TICKET'), findsOneWidget);
+      expect(find.text('TOTAL ESCANEADO'), findsOneWidget);
     });
 
     testWidgets('Debe mostrar el botón LIMPIAR TODO y AÑADIR A GASTOS', (WidgetTester tester) async {
@@ -83,7 +83,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(TicketsSummaryWidget), findsOneWidget);
-      expect(find.text('ESCANEADO VACÍO'), findsOneWidget);
+      expect(find.text('SIN TICKETS'), findsOneWidget);
     });
 
     testWidgets('Los items de la lista deben tener un padding inferior de 8 para consistencia', (WidgetTester tester) async {

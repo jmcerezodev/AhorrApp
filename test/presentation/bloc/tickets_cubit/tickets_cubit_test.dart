@@ -31,14 +31,15 @@ void main() {
   late MockProcessTicketImageUseCase mockProcessImage;
   late MockDocumentScannerService mockScannerService;
 
+  final tDate = DateTime(2023, 1, 1);
   final tItems = [
-    const TicketItem(id: '1', userId: 'u1', name: 'Product 1', amount: 10.0, quantity: 1, category: 'general'),
+    TicketItem(id: '1', userId: 'u1', name: 'Establecimiento 1', amount: 10.0, date: tDate, category: 'general'),
   ];
 
   setUpAll(() async {
     SharedPreferences.setMockInitialValues({'uId': 'u1'});
     await Preferences.init();
-    registerFallbackValue(const TicketItem(id: '0', userId: '', name: '', amount: 0, quantity: 0, category: ''));
+    registerFallbackValue(TicketItem(id: '0', userId: '', name: '', amount: 0, date: DateTime.now(), category: ''));
     registerFallbackValue(File(''));
   });
 
@@ -81,28 +82,32 @@ void main() {
 
     test('totalAmount debe calcular la suma dinámica correctamente', () {
       final multiItems = [
-        const TicketItem(id: '1', userId: 'u1', name: 'A', amount: 2.5, quantity: 2, category: 'g'), // 5.0
-        const TicketItem(id: '2', userId: 'u1', name: 'B', amount: 1.0, quantity: 3, category: 'g'), // 3.0
+        TicketItem(id: '1', userId: 'u1', name: 'A', amount: 2.5, date: tDate, category: 'g'),
+        TicketItem(id: '2', userId: 'u1', name: 'B', amount: 1.0, date: tDate, category: 'g'),
       ];
       final state = TicketsState(items: multiItems);
-      expect(state.totalAmount, 8.0);
+      expect(state.totalAmount, 3.5);
     });
 
-    test('scanAndProcessTicket emite estados de carga para activar barra de progreso', () async {
-      final file = File('test_path');
-      when(() => mockScannerService.scanDocument()).thenAnswer((_) async => [file]);
-      when(() => mockProcessImage.call(any(), any())).thenAnswer((_) async => tItems);
-      when(() => mockSaveItem.call(any())).thenAnswer((_) async => {});
-      when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
+    test('reorderItems debe reorganizar la lista localmente', () async {
+      final itemA = TicketItem(id: '1', userId: 'u1', name: 'A', amount: 1.0, date: tDate, category: 'g', position: 0);
+      final itemB = TicketItem(id: '2', userId: 'u1', name: 'B', amount: 2.0, date: tDate, category: 'g', position: 1);
+      final initialItems = [itemA, itemB];
+      final reorderedItems = [itemB, itemA];
+      
+      // Primera carga: devuelve orden original
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => initialItems);
+      when(() => mockReorderItems.call(any())).thenAnswer((_) async => {});
+      
+      await ticketsCubit.loadItems();
 
-      final expectedStates = [
-        const TicketsState(status: TicketsStatus.loading),
-        TicketsState(status: TicketsStatus.success, items: tItems),
-      ];
+      // Mock para la recarga tras reordenar: devuelve el nuevo orden
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => reorderedItems);
 
-      expectLater(ticketsCubit.stream, emitsInOrder(expectedStates));
+      await ticketsCubit.reorderItems(0, 2); // Mueve A (index 0) al final
 
-      await ticketsCubit.scanAndProcessTicket();
+      expect(ticketsCubit.state.items.first.id, '2');
+      expect(ticketsCubit.state.items.last.id, '1');
     });
 
     test('addItem llama usecase y recarga items', () async {

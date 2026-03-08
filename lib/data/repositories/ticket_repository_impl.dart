@@ -46,7 +46,8 @@ class TicketsRepositoryImpl implements TicketsRepository {
       userId: model.userId,
       name: model.name,
       amount: model.amount,
-      quantity: model.quantity,
+      date: model.date,
+      imagePath: model.imagePath,
       category: model.category,
       position: model.position,
     );
@@ -58,7 +59,8 @@ class TicketsRepositoryImpl implements TicketsRepository {
       ..userId = entity.userId
       ..name = entity.name
       ..amount = entity.amount
-      ..quantity = entity.quantity
+      ..date = entity.date
+      ..imagePath = entity.imagePath
       ..category = entity.category
       ..position = entity.position;
   }

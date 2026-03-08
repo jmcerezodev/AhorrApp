@@ -27,11 +27,14 @@ class TransferTicketsToExpensesUseCase {
     final String hourStr = _getFormattedHour(now);
 
     if (asPack) {
-      final double totalAmount = items.fold(0, (sum, item) => sum + (item.amount * item.quantity));
+      final double totalAmount = items.fold(0, (sum, item) => sum + item.amount);
+      
+      // Prioridad de nombre: packName -> primer nombre establecimiento -> fallback
+      final String finalName = packName ?? (items.isNotEmpty ? items.first.name : 'Compra Ticket');
       
       final packMovement = Movement(
         id: const Uuid().v4(),
-        name: packName ?? 'Compra Ticket',
+        name: finalName,
         amount: totalAmount,
         type: MovementType.expense,
         isIncome: false,
@@ -40,7 +43,7 @@ class TransferTicketsToExpensesUseCase {
         month: month,
         year: now.year,
         createdAt: now,
-        category: 'general',
+        category: items.isNotEmpty ? items.first.category : 'general',
       );
 
       await saveMovementUseCase(packMovement);
@@ -49,7 +52,7 @@ class TransferTicketsToExpensesUseCase {
         final itemMovement = Movement(
           id: const Uuid().v4(),
           name: item.name,
-          amount: item.amount * item.quantity,
+          amount: item.amount,
           type: MovementType.expense,
           isIncome: false,
           date: dateStr,

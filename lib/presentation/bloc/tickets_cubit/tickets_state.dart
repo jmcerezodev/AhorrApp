@@ -13,7 +13,7 @@ class TicketsState extends Equatable {
     this.errorMessage,
   });
 
-  double get totalAmount => items.fold(0, (sum, item) => sum + (item.amount * item.quantity));
+  double get totalAmount => items.fold(0, (sum, item) => sum + item.amount);
 
   TicketsState copyWith({
     TicketsStatus? status,

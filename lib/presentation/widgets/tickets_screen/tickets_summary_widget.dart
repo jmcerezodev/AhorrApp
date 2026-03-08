@@ -56,7 +56,7 @@ class TicketsSummaryWidget extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'TOTAL TICKET',
+                            'TOTAL ESCANEADO',
                             style: TextStyle(
                               color: Colors.orange.shade400,
                               fontSize: 10,
@@ -65,7 +65,6 @@ class TicketsSummaryWidget extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          // ELIMINADO: Progress circular del precio
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
@@ -183,7 +182,7 @@ class _DetectedChip extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            isLoading ? 'ANALIZANDO...' : 'PRODUCTOS: $totalItems',
+            isLoading ? 'ANALIZANDO...' : 'TICKETS: $totalItems',
             style: TextStyle(
               color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
               fontSize: 8,

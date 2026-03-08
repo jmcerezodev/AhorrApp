@@ -3,9 +3,10 @@ import 'package:equatable/equatable.dart';
 class TicketItem extends Equatable {
   final String id;
   final String userId;
-  final String name;
-  final double amount;
-  final int quantity;
+  final String name; // Nombre del establecimiento
+  final double amount; // Total del ticket
+  final String? imagePath;
+  final DateTime date;
   final String category;
   final int position;
 
@@ -14,15 +15,17 @@ class TicketItem extends Equatable {
     required this.userId,
     required this.name,
     required this.amount,
-    required this.quantity,
-    required this.category,
+    required this.date,
+    this.imagePath,
+    this.category = 'general',
     this.position = 0,
   });
 
   TicketItem copyWith({
     String? name,
     double? amount,
-    int? quantity,
+    DateTime? date,
+    String? imagePath,
     String? category,
     int? position,
   }) {
@@ -31,12 +34,13 @@ class TicketItem extends Equatable {
       userId: userId,
       name: name ?? this.name,
       amount: amount ?? this.amount,
-      quantity: quantity ?? this.quantity,
+      date: date ?? this.date,
+      imagePath: imagePath ?? this.imagePath,
       category: category ?? this.category,
       position: position ?? this.position,
     );
   }
 
   @override
-  List<Object?> get props => [id, userId, name, amount, quantity, category, position];
+  List<Object?> get props => [id, userId, name, amount, date, imagePath, category, position];
 }

@@ -17,7 +17,6 @@ class AddEditTicketItemDialog extends StatefulWidget {
 class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
   late TextEditingController _nameController;
   late TextEditingController _amountController;
-  late int _quantity;
   String _selectedCategory = 'general';
   bool _isLoading = false;
   String? _errorText;
@@ -37,7 +36,6 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
     _nameController = TextEditingController(text: widget.item?.name ?? '');
     _amountController = TextEditingController(text: widget.item == null || widget.item?.amount == 0 ? '' : widget.item?.amount.toString());
     _selectedCategory = widget.item?.category ?? 'general';
-    _quantity = widget.item?.quantity ?? 1;
   }
 
   @override
@@ -70,11 +68,11 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), shape: BoxShape.circle),
-                  child: Icon(widget.item == null ? Icons.add_shopping_cart_rounded : Icons.edit_note_rounded, color: Colors.orange, size: 24),
+                  child: Icon(widget.item == null ? Icons.receipt_long_rounded : Icons.edit_note_rounded, color: Colors.orange, size: 24),
                 ),
                 const SizedBox(width: 15),
                 Text(
-                  widget.item == null ? 'AÑADIR PRODUCTO' : 'EDITAR PRODUCTO',
+                  widget.item == null ? 'AÑADIR TICKET' : 'EDITAR TICKET',
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1.5),
                 ),
               ],
@@ -89,8 +87,8 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
                   children: [
                     CustomInputTextWidget(
                       controller: _nameController,
-                      label: 'Nombre del producto',
-                      hintText: 'Ej. Leche, Pan...',
+                      label: 'Establecimiento',
+                      hintText: 'Ej. Mercadona, Zara...',
                       enabled: !_isLoading,
                       errorText: _errorText,
                       onChanged: (value) {
@@ -101,55 +99,13 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
                     ),
                     const SizedBox(height: 15),
                     
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: CustomInputTextWidget(
-                            controller: _amountController,
-                            label: 'Precio ud.',
-                            hintText: '0.00',
-                            textInputType: const TextInputType.numberWithOptions(decimal: true),
-                            enabled: !_isLoading,
-                            autoFocus: false,
-                          ),
-                        ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          flex: 1,
-                          child: Container(
-                            height: 60,
-                            padding: const EdgeInsets.symmetric(horizontal: 5),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                InkWell(
-                                  onTap: _quantity > 1 ? () => setState(() => _quantity--) : null,
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(5.0),
-                                    child: Icon(Icons.remove, size: 18, color: _quantity > 1 ? Colors.orange : Colors.grey.shade300),
-                                  ),
-                                ),
-                                Text('$_quantity', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                                InkWell(
-                                  onTap: () => setState(() => _quantity++),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(5.0),
-                                    child: Icon(Icons.add, size: 18, color: Colors.orange),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                    CustomInputTextWidget(
+                      controller: _amountController,
+                      label: 'Total ticket',
+                      hintText: '0.00',
+                      textInputType: const TextInputType.numberWithOptions(decimal: true),
+                      enabled: !_isLoading,
+                      autoFocus: false,
                     ),
                     
                     const SizedBox(height: 20),
@@ -228,7 +184,7 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
   void _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      setState(() => _errorText = 'El nombre es obligatorio');
+      setState(() => _errorText = 'El establecimiento es obligatorio');
       return;
     }
 
@@ -245,7 +201,8 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
       userId: Preferences.uId,
       name: name,
       amount: amount,
-      quantity: _quantity,
+      date: widget.item?.date ?? DateTime.now(),
+      imagePath: widget.item?.imagePath,
       category: _selectedCategory,
       position: widget.item?.position ?? 0,
     );

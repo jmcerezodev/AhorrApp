@@ -10,9 +10,10 @@ class LocalTicketItem {
   late String ticketItemId;
 
   late String userId;
-  late String name;
-  late double amount;
-  late int quantity;
+  late String name; // Establecimiento
+  late double amount; // Total
+  late DateTime date;
+  String? imagePath;
   late String category;
   late int position;
 }

@@ -23,7 +23,7 @@ class TicketsHistoryWidget extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
           child: Text(
-            'PRODUCTOS DETECTADOS',
+            'TICKETS ESCANEADOS',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w800,
@@ -155,7 +155,7 @@ class _EmptyTicketsState extends StatelessWidget {
           ),
           const SizedBox(height: 15),
           Text(
-            'ESCANEADO VACÍO',
+            'SIN TICKETS',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w900,
@@ -165,7 +165,7 @@ class _EmptyTicketsState extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            'Haz una foto a un ticket para empezar.',
+            'Escanea un ticket para guardarlo.',
             style: TextStyle(
               fontSize: 12,
               color: colorScheme.onSurface.withValues(alpha: 0.3),

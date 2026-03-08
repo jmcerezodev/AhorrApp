@@ -26,7 +26,13 @@ class _PackConfigTicketDialogState extends State<PackConfigTicketDialog> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: 'Compra Ticket');
+    // Sugerimos el nombre del establecimiento del primer ticket si existe
+    final ticketsCubit = context.read<TicketsCubit>();
+    final firstName = ticketsCubit.state.items.isNotEmpty 
+      ? ticketsCubit.state.items.first.name 
+      : 'Compra Ticket';
+      
+    _nameController = TextEditingController(text: firstName);
   }
 
   @override
@@ -51,20 +57,20 @@ class _PackConfigTicketDialogState extends State<PackConfigTicketDialog> {
           AppDialogs.dialogHeader(
             icon: Icons.inventory_2_rounded, 
             color: Colors.orange, 
-            title: 'CONFIGURAR PACK',
+            title: 'CONFIGURAR GASTO',
             circularBackground: false,
             iconSize: 40,
             colorScheme: colorScheme,
           ),
           const SizedBox(height: 20),
           
-          AppDialogs.dialogMessage('Indica un nombre para el pack de gastos del ticket.', colorScheme),
+          AppDialogs.dialogMessage('Indica un nombre para identificar este gasto en tu historial.', colorScheme),
           const SizedBox(height: 20),
           
           CustomInputTextWidget(
             controller: _nameController,
-            label: 'Nombre del Pack',
-            hintText: 'Ej: Compra Mercadona',
+            label: 'Nombre del Gasto',
+            hintText: 'Ej: Mercadona, Gasolinera...',
             enabled: !_isLoading,
           ),
           
@@ -80,7 +86,7 @@ class _PackConfigTicketDialogState extends State<PackConfigTicketDialog> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('TOTAL DEL TICKET', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 10, color: Colors.orange)),
+                const Text('TOTAL A GUARDAR', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 10, color: Colors.orange)),
                 Text(
                   '${humanizeNumbers.number(ticketsCubit.state.totalAmount)}€',
                   style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
@@ -110,7 +116,7 @@ class _PackConfigTicketDialogState extends State<PackConfigTicketDialog> {
               const SizedBox(width: 15),
               Expanded(
                 child: AppDialogs.dialogPrimaryButton(
-                  text: 'GUARDAR',
+                  text: 'GUARDAR GASTO',
                   color: Colors.orange,
                   onPressed: _isLoading ? null : () => _handleTransfer(ticketsCubit, historyCubit),
                 ),
@@ -124,7 +130,7 @@ class _PackConfigTicketDialogState extends State<PackConfigTicketDialog> {
 
   Future<void> _handleTransfer(TicketsCubit ticketsCubit, HistoryCubit historyCubit) async {
     setState(() => _isLoading = true);
-    final packName = _nameController.text.trim().isEmpty ? 'Compra Ticket' : _nameController.text.trim();
+    final packName = _nameController.text.trim();
     final navigator = Navigator.of(context);
 
     try {
@@ -134,7 +140,7 @@ class _PackConfigTicketDialogState extends State<PackConfigTicketDialog> {
         userId: Preferences.uId,
         items: ticketsCubit.state.items,
         asPack: true,
-        packName: packName,
+        packName: packName.isEmpty ? null : packName,
       );
 
       historyCubit.loadHistoryByDate(dateState.month, dateState.year);
@@ -147,7 +153,7 @@ class _PackConfigTicketDialogState extends State<PackConfigTicketDialog> {
           context: navigator.context, 
           builder: (_) => SuccessfulDialogNoGo(
             title: '¡AÑADIDO!',
-            sucessfulName: 'La compra \'$packName\' se ha añadido a tu historial correctamente.'
+            sucessfulName: 'El ticket de \'$packName\' se ha añadido a tu historial correctamente.'
           )
         );
       }
