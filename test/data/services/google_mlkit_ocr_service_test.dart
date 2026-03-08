@@ -1,12 +1,14 @@
-import 'dart:io';
+import 'dart:ui';
 import 'package:ahorrapp/data/services/google_mlkit_ocr_service.dart';
-import 'package:ahorrapp/domain/entities/ticket_item.dart';
 import 'package:ahorrapp/domain/services/ai_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAIService extends Mock implements AIService {}
-class MockFile extends Mock implements File {}
+class MockRecognizedText extends Mock implements RecognizedText {}
+class MockTextBlock extends Mock implements TextBlock {}
+class MockTextLine extends Mock implements TextLine {}
 
 void main() {
   late GoogleMlKitOCRService ocrService;
@@ -17,21 +19,64 @@ void main() {
     ocrService = GoogleMlKitOCRService(mockAiService);
   });
 
-  group('GoogleMlKitOCRService Tests', () {
-    test('processTicket debe retornar lista vacía si el archivo no existe o falla el OCR', () async {
-      final file = File('invalid_path');
-      // Nota: ML Kit requiere un entorno real para procesar imágenes, 
-      // pero podemos testear la delegación al AIService mockeando el comportamiento.
-      
-      // Como no podemos mockear fácilmente la respuesta de ML Kit sin un wrapper,
-      // validamos que el servicio esté correctamente inyectado.
-      expect(ocrService.aiService, mockAiService);
+  group('GoogleMlKitOCRService - Text Optimization', () {
+    test('extractOptimizedText debe colapsar espacios y filtrar ruido', () {
+      final mockText = MockRecognizedText();
+      final mockBlock = MockTextBlock();
+      final mockLine1 = MockTextLine();
+      final mockLine2 = MockTextLine();
+
+      // Añadimos un número (1.50) para evitar que se filtre por la lógica de ahorro de tokens
+      when(() => mockLine1.text).thenReturn('PRODUCTO    EXTRA 1.50');
+      when(() => mockLine1.boundingBox).thenReturn(const Rect.fromLTWH(0, 100, 100, 20));
+
+      // CIF es una noiseKeyword, debe filtrarse
+      when(() => mockLine2.text).thenReturn('CIF: 12345678A');
+      when(() => mockLine2.boundingBox).thenReturn(const Rect.fromLTWH(0, 200, 100, 20));
+
+      when(() => mockBlock.lines).thenReturn([mockLine1, mockLine2]);
+      when(() => mockText.blocks).thenReturn([mockBlock]);
+
+      final result = ocrService.extractOptimizedText(mockText);
+
+      expect(result, contains('PRODUCTO EXTRA 1.50'));
+      expect(result, isNot(contains('CIF')));
     });
 
-    test('Lógica de filtrado de ruido debe estar presente', () {
-      // Test interno de lógica si los métodos fueran públicos o mediante reflexión,
-      // pero al ser una clase de datos, verificamos la integridad del contrato.
-      expect(ocrService, isA<GoogleMlKitOCRService>());
+    test('extractOptimizedText debe unir líneas en la misma fila (umbral 25px)', () {
+      final mockText = MockRecognizedText();
+      final mockBlock = MockTextBlock();
+      final mockLine1 = MockTextLine();
+      final mockLine2 = MockTextLine();
+
+      when(() => mockLine1.text).thenReturn('PAN');
+      when(() => mockLine1.boundingBox).thenReturn(const Rect.fromLTWH(0, 100, 50, 20));
+      
+      when(() => mockLine2.text).thenReturn('0.50');
+      when(() => mockLine2.boundingBox).thenReturn(const Rect.fromLTWH(100, 110, 50, 20));
+
+      when(() => mockBlock.lines).thenReturn([mockLine1, mockLine2]);
+      when(() => mockText.blocks).thenReturn([mockBlock]);
+
+      final result = ocrService.extractOptimizedText(mockText);
+
+      expect(result, contains('PAN | 0.50'));
+    });
+
+    test('extractOptimizedText debe filtrar líneas sin números', () {
+      final mockText = MockRecognizedText();
+      final mockBlock = MockTextBlock();
+      final mockLine = MockTextLine();
+
+      when(() => mockLine.text).thenReturn('Solo Texto Sin Numeros');
+      when(() => mockLine.boundingBox).thenReturn(const Rect.fromLTWH(0, 100, 100, 20));
+
+      when(() => mockBlock.lines).thenReturn([mockLine]);
+      when(() => mockText.blocks).thenReturn([mockBlock]);
+
+      final result = ocrService.extractOptimizedText(mockText);
+
+      expect(result, isEmpty);
     });
   });
 }

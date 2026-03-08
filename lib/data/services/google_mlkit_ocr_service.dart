@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 import '../../domain/entities/ticket_item.dart';
 import '../../domain/services/ocr_service.dart';
 import '../../domain/services/ai_service.dart';
@@ -13,10 +16,22 @@ class GoogleMlKitOCRService implements OCRService {
   @override
   Future<List<TicketItem>> processTicket(File imageFile, String userId) async {
     try {
-      final inputImage = InputImage.fromFile(imageFile);
-      final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
+      File optimizedImage = await _optimizeImage(imageFile);
+      
+      InputImage inputImage = InputImage.fromFile(optimizedImage);
+      RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
 
-      final String optimizedText = _extractOptimizedText(recognizedText);
+      String optimizedText = extractOptimizedText(recognizedText);
+      
+      if (optimizedText.isEmpty && optimizedImage.path != imageFile.path) {
+        inputImage = InputImage.fromFile(imageFile);
+        recognizedText = await _textRecognizer.processImage(inputImage);
+        optimizedText = extractOptimizedText(recognizedText);
+      }
+
+      if (optimizedImage.path != imageFile.path) {
+        await optimizedImage.delete().catchError((_) => optimizedImage);
+      }
 
       if (optimizedText.isEmpty) return [];
 
@@ -26,7 +41,30 @@ class GoogleMlKitOCRService implements OCRService {
     }
   }
 
-  String _extractOptimizedText(RecognizedText recognizedText) {
+  Future<File> _optimizeImage(File imageFile) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      img.Image? image = img.decodeImage(bytes);
+      if (image == null) return imageFile;
+
+      image = img.bakeOrientation(image);
+      image = img.grayscale(image);
+      image = img.contrast(image, contrast: 1.2);
+      image = img.adjustColor(image, brightness: 1.02);
+
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = '${tempDir.path}/opt_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final File optimizedFile = File(tempPath);
+      await optimizedFile.writeAsBytes(img.encodeJpg(image, quality: 95));
+      
+      return optimizedFile;
+    } catch (e) {
+      return imageFile;
+    }
+  }
+
+  @visibleForTesting
+  String extractOptimizedText(RecognizedText recognizedText) {
     final List<TextLine> allLines = [];
     for (TextBlock block in recognizedText.blocks) {
       allLines.addAll(block.lines);
@@ -42,8 +80,7 @@ class GoogleMlKitOCRService implements OCRService {
       for (int i = 1; i < allLines.length; i++) {
         final line = allLines[i];
         final prevLine = allLines[i - 1];
-        
-        if ((line.boundingBox.top - prevLine.boundingBox.top).abs() < 12) {
+        if ((line.boundingBox.top - prevLine.boundingBox.top).abs() < 25) {
           currentRow.add(line);
         } else {
           rows.add(currentRow);
@@ -54,21 +91,25 @@ class GoogleMlKitOCRService implements OCRService {
     }
 
     final List<String> optimizedLines = [];
-    final List<String> noiseKeywords = [
-      'cif', 'iva', 'subtotal', 'efectivo', 'tarjeta', 'cambio',
-      'atendido', 'fecha', 'hora', 'tel', 'dirección', 'cliente',
-      'puntos', 'ahorro', 'promoción', 'factura', 'gracias',
-    ];
-
+    final noiseKeywords = {
+      'cif', 'subtotal', 'efectivo', 'tarjeta', 'pago', 
+      'tel', 'direccion', 'cliente', 'articulos', 'puntos', 
+      'promocion', 'factura', 'gracias', 'atendido', 'vendedor'
+    };
+    
     for (var row in rows) {
       row.sort((a, b) => a.boundingBox.left.compareTo(b.boundingBox.left));
       
-      // Usamos '|' como delimitador para dar estructura de columnas a la IA
-      String rowText = row.map((l) => l.text).join(" | ").trim();
-      String lowerRowText = rowText.toLowerCase();
+      String rowText = row.map((l) => l.text.trim()).join(" | ");
+      rowText = rowText.replaceAll(RegExp(r'\s+'), ' ').trim();
+      
+      final lowerText = rowText.toLowerCase();
 
-      if (noiseKeywords.any((kw) => lowerRowText.contains(kw))) continue;
-      if (RegExp(r'\d{7,}').hasMatch(rowText)) continue;
+      if (noiseKeywords.any((kw) => lowerText.contains(kw))) continue;
+      
+      // CRITICAL FIX: Filtrar líneas sin números
+      if (!RegExp(r'\d').hasMatch(rowText)) continue;
+
       if (RegExp(r'^[ \.\-\*_:=|]+$').hasMatch(rowText)) continue;
       if (rowText.length < 2) continue;
       

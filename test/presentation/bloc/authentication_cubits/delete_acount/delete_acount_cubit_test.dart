@@ -13,8 +13,12 @@ void main() {
 
   setUpAll(() {
     const MethodChannel pathChannel = MethodChannel('plugins.flutter.io/path_provider');
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async => '.');
+    const MethodChannel packageInfoChannel = MethodChannel('dev.fluttercommunity.plus/package_info');
+    const MethodChannel deviceInfoChannel = MethodChannel('dev.fluttercommunity.plus/device_info');
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async => '.');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(packageInfoChannel, (MethodCall methodCall) async => {'appName': 'AhorrApp', 'packageName': 'dev.jmcerezo.ahorrapp', 'version': '1.0.0', 'buildNumber': '1'});
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(deviceInfoChannel, (MethodCall methodCall) async => {'brand': 'Google', 'device': 'emulator', 'model': 'Pixel 4', 'sdkInt': 30});
   });
 
   group('DeleteAcountCubit Tests', () {

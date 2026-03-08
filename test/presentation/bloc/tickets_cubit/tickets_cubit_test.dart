@@ -64,63 +64,75 @@ void main() {
 
   tearDown(() => ticketsCubit.close());
 
-  test('initial state should be correct', () {
-    expect(ticketsCubit.state, const TicketsState());
-  });
+  group('TicketsCubit - Enhanced Flow & Calculation', () {
+    test('initial state should be correct', () {
+      expect(ticketsCubit.state, const TicketsState());
+    });
 
-  test('loadItems emits [loading, success] when successful', () async {
-    when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
+    test('loadItems emite [loading, success] cuando es exitoso', () async {
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
+      final expectedStates = [
+        const TicketsState(status: TicketsStatus.loading),
+        TicketsState(status: TicketsStatus.success, items: tItems),
+      ];
+      expectLater(ticketsCubit.stream, emitsInOrder(expectedStates));
+      await ticketsCubit.loadItems();
+    });
 
-    final expectedStates = [
-      const TicketsState(status: TicketsStatus.loading),
-      TicketsState(status: TicketsStatus.success, items: tItems),
-    ];
+    test('totalAmount debe calcular la suma dinámica correctamente', () {
+      final multiItems = [
+        const TicketItem(id: '1', userId: 'u1', name: 'A', amount: 2.5, quantity: 2, category: 'g'), // 5.0
+        const TicketItem(id: '2', userId: 'u1', name: 'B', amount: 1.0, quantity: 3, category: 'g'), // 3.0
+      ];
+      final state = TicketsState(items: multiItems);
+      expect(state.totalAmount, 8.0);
+    });
 
-    expectLater(ticketsCubit.stream, emitsInOrder(expectedStates));
+    test('scanAndProcessTicket emite estados de carga para activar barra de progreso', () async {
+      final file = File('test_path');
+      when(() => mockScannerService.scanDocument()).thenAnswer((_) async => [file]);
+      when(() => mockProcessImage.call(any(), any())).thenAnswer((_) async => tItems);
+      when(() => mockSaveItem.call(any())).thenAnswer((_) async => {});
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
 
-    await ticketsCubit.loadItems();
-  });
+      final expectedStates = [
+        const TicketsState(status: TicketsStatus.loading),
+        TicketsState(status: TicketsStatus.success, items: tItems),
+      ];
 
-  test('addItem calls usecase and reloads items', () async {
-    when(() => mockSaveItem.call(any())).thenAnswer((_) async => {});
-    when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
+      expectLater(ticketsCubit.stream, emitsInOrder(expectedStates));
 
-    await ticketsCubit.addItem(tItems[0]);
+      await ticketsCubit.scanAndProcessTicket();
+    });
 
-    verify(() => mockSaveItem.call(tItems[0])).called(1);
-    verify(() => mockGetItems.call(any())).called(1);
-  });
+    test('addItem llama usecase y recarga items', () async {
+      when(() => mockSaveItem.call(any())).thenAnswer((_) async => {});
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
 
-  test('deleteItem calls usecase and reloads items', () async {
-    when(() => mockDeleteItem.call(any())).thenAnswer((_) async => {});
-    when(() => mockGetItems.call(any())).thenAnswer((_) async => []);
+      await ticketsCubit.addItem(tItems[0]);
 
-    await ticketsCubit.deleteItem('1');
+      verify(() => mockSaveItem.call(tItems[0])).called(1);
+      verify(() => mockGetItems.call(any())).called(1);
+    });
 
-    verify(() => mockDeleteItem.call('1')).called(1);
-    verify(() => mockGetItems.call(any())).called(1);
-  });
+    test('deleteItem llama usecase y recarga items', () async {
+      when(() => mockDeleteItem.call(any())).thenAnswer((_) async => {});
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => []);
 
-  test('clearAll calls usecase and reloads items', () async {
-    when(() => mockClearItems.call(any())).thenAnswer((_) async => {});
-    when(() => mockGetItems.call(any())).thenAnswer((_) async => []);
+      await ticketsCubit.deleteItem('1');
 
-    await ticketsCubit.clearAll();
+      verify(() => mockDeleteItem.call('1')).called(1);
+      verify(() => mockGetItems.call(any())).called(1);
+    });
 
-    verify(() => mockClearItems.call(any())).called(1);
-    verify(() => mockGetItems.call(any())).called(1);
-  });
+    test('clearAll llama usecase y recarga items', () async {
+      when(() => mockClearItems.call(any())).thenAnswer((_) async => {});
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => []);
 
-  test('scanAndProcessTicket calls scanner and process image when successful', () async {
-    final file = File('test_path');
-    when(() => mockScannerService.scanDocument()).thenAnswer((_) async => [file]);
-    when(() => mockProcessImage.call(any(), any())).thenAnswer((_) async => tItems);
-    when(() => mockSaveItem.call(any())).thenAnswer((_) async => {});
-    when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
+      await ticketsCubit.clearAll();
 
-    await ticketsCubit.scanAndProcessTicket();
-
-    verify(() => mockScannerService.scanDocument()).called(1);
-    verify(() => mockProcessImage.call(file, any())).called(1);
+      verify(() => mockClearItems.call(any())).called(1);
+      verify(() => mockGetItems.call(any())).called(1);
+    });
   });
 }

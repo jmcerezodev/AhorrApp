@@ -9,7 +9,12 @@ void main() {
 
   setUpAll(() {
     const MethodChannel pathChannel = MethodChannel('plugins.flutter.io/path_provider');
+    const MethodChannel packageInfoChannel = MethodChannel('dev.fluttercommunity.plus/package_info');
+    const MethodChannel deviceInfoChannel = MethodChannel('dev.fluttercommunity.plus/device_info');
+
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async => '.');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(packageInfoChannel, (MethodCall methodCall) async => {'appName': 'AhorrApp', 'packageName': 'dev.jmcerezo.ahorrapp', 'version': '1.0.0', 'buildNumber': '1'});
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(deviceInfoChannel, (MethodCall methodCall) async => {'brand': 'Google', 'device': 'emulator', 'model': 'Pixel 4', 'sdkInt': 30});
   });
 
   group('NewUserCubit - Blindaje Profesional', () {
@@ -27,12 +32,9 @@ void main() {
     });
 
     test('validación correcta de nombre, email y password', () {
-      // Ajuste de validación: 
-      // Name: min 2, max 15
-      // Password: min 8
       newUserCubit.nameChanged('Juan');
       newUserCubit.emailChanged('juan@test.com');
-      newUserCubit.passwordChanged('12345678'); // Corregido: mínimo 8 caracteres
+      newUserCubit.passwordChanged('12345678');
 
       expect(newUserCubit.state.isValid, true);
     });
