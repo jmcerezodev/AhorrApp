@@ -67,13 +67,18 @@ const LocalHistorySchema = CollectionSchema(
       name: r'name',
       type: IsarType.string,
     ),
-    r'type': PropertySchema(
+    r'ticketId': PropertySchema(
       id: 10,
+      name: r'ticketId',
+      type: IsarType.string,
+    ),
+    r'type': PropertySchema(
+      id: 11,
       name: r'type',
       type: IsarType.string,
     ),
     r'year': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'year',
       type: IsarType.long,
     )
@@ -118,6 +123,12 @@ int _localHistoryEstimateSize(
   bytesCount += 3 + object.currentHour.length * 3;
   bytesCount += 3 + object.month.length * 3;
   bytesCount += 3 + object.name.length * 3;
+  {
+    final value = object.ticketId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.type.length * 3;
   return bytesCount;
 }
@@ -138,8 +149,9 @@ void _localHistorySerialize(
   writer.writeDouble(offsets[7], object.money);
   writer.writeString(offsets[8], object.month);
   writer.writeString(offsets[9], object.name);
-  writer.writeString(offsets[10], object.type);
-  writer.writeLong(offsets[11], object.year);
+  writer.writeString(offsets[10], object.ticketId);
+  writer.writeString(offsets[11], object.type);
+  writer.writeLong(offsets[12], object.year);
 }
 
 LocalHistory _localHistoryDeserialize(
@@ -160,8 +172,9 @@ LocalHistory _localHistoryDeserialize(
   object.money = reader.readDouble(offsets[7]);
   object.month = reader.readString(offsets[8]);
   object.name = reader.readString(offsets[9]);
-  object.type = reader.readString(offsets[10]);
-  object.year = reader.readLong(offsets[11]);
+  object.ticketId = reader.readStringOrNull(offsets[10]);
+  object.type = reader.readString(offsets[11]);
+  object.year = reader.readLong(offsets[12]);
   return object;
 }
 
@@ -193,8 +206,10 @@ P _localHistoryDeserializeProp<P>(
     case 9:
       return (reader.readString(offset)) as P;
     case 10:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 11:
+      return (reader.readString(offset)) as P;
+    case 12:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1400,6 +1415,160 @@ extension LocalHistoryQueryFilter
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'ticketId',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'ticketId',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ticketId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'ticketId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'ticketId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'ticketId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'ticketId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'ticketId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'ticketId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'ticketId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ticketId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      ticketIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'ticketId',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition> typeEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1721,6 +1890,18 @@ extension LocalHistoryQuerySortBy
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByTicketId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ticketId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByTicketIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ticketId', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.asc);
@@ -1884,6 +2065,18 @@ extension LocalHistoryQuerySortThenBy
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByTicketId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ticketId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByTicketIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ticketId', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.asc);
@@ -1977,6 +2170,13 @@ extension LocalHistoryQueryWhereDistinct
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QDistinct> distinctByTicketId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'ticketId', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QDistinct> distinctByType(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2056,6 +2256,12 @@ extension LocalHistoryQueryProperty
   QueryBuilder<LocalHistory, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<LocalHistory, String?, QQueryOperations> ticketIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'ticketId');
     });
   }
 

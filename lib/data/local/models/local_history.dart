@@ -20,5 +20,6 @@ class LocalHistory {
   late DateTime createdAt;
   
   late bool isRecurrent; 
-  late String category; // NUEVO: Categoría del movimiento
+  late String category;
+  String? ticketId; // ID del ticket asociado para permitir vinculación y reversión
 }

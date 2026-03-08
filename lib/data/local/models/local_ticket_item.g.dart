@@ -37,23 +37,28 @@ const LocalTicketItemSchema = CollectionSchema(
       name: r'imagePath',
       type: IsarType.string,
     ),
-    r'name': PropertySchema(
+    r'isTransferred': PropertySchema(
       id: 4,
+      name: r'isTransferred',
+      type: IsarType.bool,
+    ),
+    r'name': PropertySchema(
+      id: 5,
       name: r'name',
       type: IsarType.string,
     ),
     r'position': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'position',
       type: IsarType.long,
     ),
     r'ticketItemId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'ticketItemId',
       type: IsarType.string,
     ),
     r'userId': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'userId',
       type: IsarType.string,
     )
@@ -115,10 +120,11 @@ void _localTicketItemSerialize(
   writer.writeString(offsets[1], object.category);
   writer.writeDateTime(offsets[2], object.date);
   writer.writeString(offsets[3], object.imagePath);
-  writer.writeString(offsets[4], object.name);
-  writer.writeLong(offsets[5], object.position);
-  writer.writeString(offsets[6], object.ticketItemId);
-  writer.writeString(offsets[7], object.userId);
+  writer.writeBool(offsets[4], object.isTransferred);
+  writer.writeString(offsets[5], object.name);
+  writer.writeLong(offsets[6], object.position);
+  writer.writeString(offsets[7], object.ticketItemId);
+  writer.writeString(offsets[8], object.userId);
 }
 
 LocalTicketItem _localTicketItemDeserialize(
@@ -133,10 +139,11 @@ LocalTicketItem _localTicketItemDeserialize(
   object.date = reader.readDateTime(offsets[2]);
   object.id = id;
   object.imagePath = reader.readStringOrNull(offsets[3]);
-  object.name = reader.readString(offsets[4]);
-  object.position = reader.readLong(offsets[5]);
-  object.ticketItemId = reader.readString(offsets[6]);
-  object.userId = reader.readString(offsets[7]);
+  object.isTransferred = reader.readBool(offsets[4]);
+  object.name = reader.readString(offsets[5]);
+  object.position = reader.readLong(offsets[6]);
+  object.ticketItemId = reader.readString(offsets[7]);
+  object.userId = reader.readString(offsets[8]);
   return object;
 }
 
@@ -156,12 +163,14 @@ P _localTicketItemDeserializeProp<P>(
     case 3:
       return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readLong(offset)) as P;
-    case 6:
       return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readLong(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -834,6 +843,16 @@ extension LocalTicketItemQueryFilter
   }
 
   QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
+      isTransferredEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isTransferred',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterFilterCondition>
       nameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1001,7 +1020,7 @@ extension LocalTicketItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'id',
+        property: r'position',
         value: value,
       ));
     });
@@ -1339,7 +1358,8 @@ extension LocalTicketItemQuerySortBy
     });
   }
 
-  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy> sortByDateDesc() {
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
+      sortByDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'date', Sort.desc);
     });
@@ -1356,6 +1376,20 @@ extension LocalTicketItemQuerySortBy
       sortByImagePathDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'imagePath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
+      sortByIsTransferred() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTransferred', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
+      sortByIsTransferredDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTransferred', Sort.desc);
     });
   }
 
@@ -1449,7 +1483,8 @@ extension LocalTicketItemQuerySortThenBy
     });
   }
 
-  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy> thenByDateDesc() {
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
+      thenByDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'date', Sort.desc);
     });
@@ -1478,6 +1513,20 @@ extension LocalTicketItemQuerySortThenBy
       thenByImagePathDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'imagePath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
+      thenByIsTransferred() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTransferred', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QAfterSortBy>
+      thenByIsTransferredDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTransferred', Sort.desc);
     });
   }
 
@@ -1564,6 +1613,13 @@ extension LocalTicketItemQueryWhereDistinct
     });
   }
 
+  QueryBuilder<LocalTicketItem, LocalTicketItem, QDistinct>
+      distinctByIsTransferred() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isTransferred');
+    });
+  }
+
   QueryBuilder<LocalTicketItem, LocalTicketItem, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1622,6 +1678,13 @@ extension LocalTicketItemQueryProperty
   QueryBuilder<LocalTicketItem, String?, QQueryOperations> imagePathProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'imagePath');
+    });
+  }
+
+  QueryBuilder<LocalTicketItem, bool, QQueryOperations>
+      isTransferredProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isTransferred');
     });
   }
 

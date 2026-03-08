@@ -136,6 +136,7 @@ Future<void> setupServiceLocator() async {
         remoteRepository: getIt<IMovementRepository>(instanceName: 'remote'),
         localDbService: getIt<LocalDbService>(),
         totalMoneyCubit: getIt<TotalMoneyCubit>(),
+        ticketsRepository: getIt<TicketsRepository>(),
       ));
 
   getIt.registerLazySingleton<UpdateMovementUseCase>(() => UpdateMovementUseCase(
@@ -209,7 +210,6 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<ReorderTicketItemsUseCase>(() => ReorderTicketItemsUseCase(getIt<TicketsRepository>()));
   getIt.registerLazySingleton<TransferTicketsToExpensesUseCase>(() => TransferTicketsToExpensesUseCase(
     saveMovementUseCase: getIt<SaveMovementUseCase>(),
-    clearTicketsUseCase: getIt<ClearTicketsUseCase>(),
   ));
   getIt.registerLazySingleton<ProcessTicketImageUseCase>(() => ProcessTicketImageUseCase(getIt<OCRService>()));
 

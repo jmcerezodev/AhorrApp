@@ -15,6 +15,12 @@ class TicketsRepositoryImpl implements TicketsRepository {
   }
 
   @override
+  Future<TicketItem?> getTicketItemById(String id) async {
+    final model = await localDataSource.getTicketItemById(id);
+    return model != null ? _toEntity(model) : null;
+  }
+
+  @override
   Future<void> saveTicketItem(TicketItem item) async {
     await localDataSource.saveTicketItem(_fromEntity(item));
   }
@@ -40,6 +46,11 @@ class TicketsRepositoryImpl implements TicketsRepository {
     await localDataSource.saveAll(models);
   }
 
+  @override
+  Future<void> unmarkAsTransferred(String ticketId) async {
+    await localDataSource.updateTransferredStatus(ticketId, false);
+  }
+
   TicketItem _toEntity(LocalTicketItem model) {
     return TicketItem(
       id: model.ticketItemId,
@@ -50,6 +61,7 @@ class TicketsRepositoryImpl implements TicketsRepository {
       imagePath: model.imagePath,
       category: model.category,
       position: model.position,
+      isTransferred: model.isTransferred,
     );
   }
 
@@ -62,6 +74,7 @@ class TicketsRepositoryImpl implements TicketsRepository {
       ..date = entity.date
       ..imagePath = entity.imagePath
       ..category = entity.category
-      ..position = entity.position;
+      ..position = entity.position
+      ..isTransferred = entity.isTransferred;
   }
 }

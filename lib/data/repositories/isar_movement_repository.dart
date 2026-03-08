@@ -61,7 +61,8 @@ class IsarMovementRepository implements IMovementRepository {
         ..year = movement.year
         ..createdAt = movement.createdAt
         ..isRecurrent = movement.isRecurrent
-        ..category = movement.category; // NUEVO
+        ..category = movement.category
+        ..ticketId = movement.ticketId;
 
       await _localDb.saveHistoryItems([localItem]);
     }
@@ -100,7 +101,8 @@ class IsarMovementRepository implements IMovementRepository {
       year: local.year,
       createdAt: local.createdAt,
       isRecurrent: local.isRecurrent,
-      category: local.category, // NUEVO
+      category: local.category,
+      ticketId: local.ticketId,
     );
   }
 
@@ -118,7 +120,7 @@ class IsarMovementRepository implements IMovementRepository {
       createdAt: local.createdAt,
       isSpent: local.isSpent,
       isRecurrent: false,
-      category: 'ahorro', // Los ahorros tienen su propia categoría lógica
+      category: 'ahorro',
     );
   }
 

@@ -9,6 +9,7 @@ class TicketItem extends Equatable {
   final DateTime date;
   final String category;
   final int position;
+  final bool isTransferred;
 
   const TicketItem({
     required this.id,
@@ -19,6 +20,7 @@ class TicketItem extends Equatable {
     this.imagePath,
     this.category = 'general',
     this.position = 0,
+    this.isTransferred = false,
   });
 
   TicketItem copyWith({
@@ -28,6 +30,7 @@ class TicketItem extends Equatable {
     String? imagePath,
     String? category,
     int? position,
+    bool? isTransferred,
   }) {
     return TicketItem(
       id: id,
@@ -38,9 +41,10 @@ class TicketItem extends Equatable {
       imagePath: imagePath ?? this.imagePath,
       category: category ?? this.category,
       position: position ?? this.position,
+      isTransferred: isTransferred ?? this.isTransferred,
     );
   }
 
   @override
-  List<Object?> get props => [id, userId, name, amount, date, imagePath, category, position];
+  List<Object?> get props => [id, userId, name, amount, date, imagePath, category, position, isTransferred];
 }

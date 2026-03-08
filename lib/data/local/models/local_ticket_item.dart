@@ -16,4 +16,5 @@ class LocalTicketItem {
   String? imagePath;
   late String category;
   late int position;
+  late bool isTransferred;
 }

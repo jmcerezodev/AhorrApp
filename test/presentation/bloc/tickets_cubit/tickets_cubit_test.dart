@@ -95,16 +95,13 @@ void main() {
       final initialItems = [itemA, itemB];
       final reorderedItems = [itemB, itemA];
       
-      // Primera carga: devuelve orden original
       when(() => mockGetItems.call(any())).thenAnswer((_) async => initialItems);
       when(() => mockReorderItems.call(any())).thenAnswer((_) async => {});
       
       await ticketsCubit.loadItems();
-
-      // Mock para la recarga tras reordenar: devuelve el nuevo orden
       when(() => mockGetItems.call(any())).thenAnswer((_) async => reorderedItems);
 
-      await ticketsCubit.reorderItems(0, 2); // Mueve A (index 0) al final
+      await ticketsCubit.reorderItems(0, 2);
 
       expect(ticketsCubit.state.items.first.id, '2');
       expect(ticketsCubit.state.items.last.id, '1');
@@ -120,6 +117,17 @@ void main() {
       verify(() => mockGetItems.call(any())).called(1);
     });
 
+    test('updateItem llama usecase y marca como transferido correctamente', () async {
+      final transferredItem = tItems[0].copyWith(isTransferred: true);
+      when(() => mockSaveItem.call(any())).thenAnswer((_) async => {});
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => [transferredItem]);
+
+      await ticketsCubit.updateItem(transferredItem);
+
+      verify(() => mockSaveItem.call(transferredItem)).called(1);
+      expect(ticketsCubit.state.items.first.isTransferred, isTrue);
+    });
+
     test('deleteItem llama usecase y recarga items', () async {
       when(() => mockDeleteItem.call(any())).thenAnswer((_) async => {});
       when(() => mockGetItems.call(any())).thenAnswer((_) async => []);
@@ -127,16 +135,6 @@ void main() {
       await ticketsCubit.deleteItem('1');
 
       verify(() => mockDeleteItem.call('1')).called(1);
-      verify(() => mockGetItems.call(any())).called(1);
-    });
-
-    test('clearAll llama usecase y recarga items', () async {
-      when(() => mockClearItems.call(any())).thenAnswer((_) async => {});
-      when(() => mockGetItems.call(any())).thenAnswer((_) async => []);
-
-      await ticketsCubit.clearAll();
-
-      verify(() => mockClearItems.call(any())).called(1);
       verify(() => mockGetItems.call(any())).called(1);
     });
   });

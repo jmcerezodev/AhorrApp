@@ -9,13 +9,15 @@ class TicketsLocalDataSource {
     return await isar.localTicketItems.filter().userIdEqualTo(userId).sortByPosition().findAll();
   }
 
+  Future<LocalTicketItem?> getTicketItemById(String ticketItemId) async {
+    return await isar.localTicketItems.filter().ticketItemIdEqualTo(ticketItemId).findFirst();
+  }
+
   Future<void> saveTicketItem(LocalTicketItem item) async {
     await isar.writeTxn(() async {
-      // Buscamos si ya existe por su ticketItemId único
       final existing = await isar.localTicketItems.filter().ticketItemIdEqualTo(item.ticketItemId).findFirst();
       
       if (existing != null) {
-        // Si existe, usamos su ID interno de Isar para realizar un put (actualización)
         item.id = existing.id;
       }
       
@@ -44,6 +46,16 @@ class TicketsLocalDataSource {
         }
       }
       await isar.localTicketItems.putAll(items);
+    });
+  }
+
+  Future<void> updateTransferredStatus(String ticketItemId, bool isTransferred) async {
+    await isar.writeTxn(() async {
+      final existing = await isar.localTicketItems.filter().ticketItemIdEqualTo(ticketItemId).findFirst();
+      if (existing != null) {
+        existing.isTransferred = isTransferred;
+        await isar.localTicketItems.put(existing);
+      }
     });
   }
 }

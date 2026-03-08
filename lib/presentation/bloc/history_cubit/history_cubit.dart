@@ -91,6 +91,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       'createdAt': e.createdAt.toIso8601String(),
       'isRecurrent': e.isRecurrent,
       'category': e.category,
+      'ticketId': e.ticketId,
     }).toList();
     emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
   }
@@ -116,6 +117,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         'createdAt': e.createdAt.toIso8601String(),
         'isRecurrent': e.isRecurrent,
         'category': e.category,
+        'ticketId': e.ticketId,
       }).toList();
       emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
     } catch (e) {
@@ -196,6 +198,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       ..createdAt = DateTime.parse(doc.$createdAt)
       ..isRecurrent = doc.data['isRecurrent'] ?? false
       ..category = doc.data['category'] ?? (doc.data['isIncome'] == true ? 'otro' : 'general')
+      ..ticketId = doc.data['ticketId']
     ).toList();
   }
 

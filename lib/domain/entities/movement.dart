@@ -13,7 +13,8 @@ class Movement {
   final DateTime createdAt;
   final bool isSpent;
   final bool isRecurrent;
-  final String category; // NUEVO: Categoría del movimiento
+  final String category; 
+  final String? ticketId; // ID del ticket asociado (opcional)
 
   Movement({
     required this.id,
@@ -28,7 +29,8 @@ class Movement {
     required this.createdAt,
     this.isSpent = false,
     this.isRecurrent = false,
-    this.category = 'general', // Por defecto general
+    this.category = 'general',
+    this.ticketId,
   });
 
   // Helper para saber si es un ahorro activo

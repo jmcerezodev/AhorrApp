@@ -1,9 +1,17 @@
 import 'dart:io';
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
+import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/domain/entities/ticket_item.dart';
+import 'package:ahorrapp/domain/usecases/tickets/transfer_tickets_to_expenses_usecase.dart';
+import 'package:ahorrapp/presentation/bloc/date_cubit/date_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog_no_go.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/add_edit_ticket_item_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/view_ticket_image_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 class TicketItemCard extends StatelessWidget {
@@ -32,7 +40,9 @@ class TicketItemCard extends StatelessWidget {
           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: Colors.orange.withValues(alpha: 0.1),
+            color: item.isTransferred 
+              ? Colors.green.withValues(alpha: 0.2) 
+              : Colors.orange.withValues(alpha: 0.1),
             width: 1.5,
           ),
           boxShadow: [
@@ -47,10 +57,10 @@ class TicketItemCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              // 1. IMAGEN O ICONO
-              _TicketThumbnail(item: item),
+              // 1. BOTÓN AÑADIR A GASTOS (En lugar de miniatura)
+              _AddExpenseButton(item: item),
               
-              const SizedBox(width: 15),
+              const SizedBox(width: 12),
 
               // 2. INFO DEL TICKET
               Expanded(
@@ -66,6 +76,8 @@ class TicketItemCard extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
                         color: colorScheme.onSurface,
+                        decoration: item.isTransferred ? TextDecoration.lineThrough : null,
+                        decorationColor: colorScheme.onSurface.withValues(alpha: 0.3),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -91,7 +103,9 @@ class TicketItemCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
-                            color: Colors.orange.withValues(alpha: 0.7),
+                            color: item.isTransferred 
+                              ? Colors.green.withValues(alpha: 0.7) 
+                              : Colors.orange.withValues(alpha: 0.7),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -100,6 +114,8 @@ class TicketItemCard extends StatelessWidget {
                   ],
                 ),
               ),
+
+              const SizedBox(width: 10),
 
               // 3. TOTAL
               Column(
@@ -111,7 +127,9 @@ class TicketItemCard extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 16,
-                      color: colorScheme.onSurface,
+                      color: item.isTransferred 
+                        ? Colors.green.shade700 
+                        : colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -156,38 +174,71 @@ class TicketItemCard extends StatelessWidget {
   }
 }
 
-class _TicketThumbnail extends StatelessWidget {
+class _AddExpenseButton extends StatelessWidget {
   final TicketItem item;
-  const _TicketThumbnail({required this.item});
+  const _AddExpenseButton({required this.item});
 
   @override
   Widget build(BuildContext context) {
-    if (item.imagePath != null && File(item.imagePath!).existsSync()) {
-      return Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          image: DecorationImage(
-            image: FileImage(File(item.imagePath!)),
-            fit: BoxFit.cover,
-          ),
-        ),
-      );
-    }
+    final bool isTransferred = item.isTransferred;
 
     return Container(
-      width: 50,
-      height: 50,
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        color: isTransferred 
+          ? Colors.green.withValues(alpha: 0.1) 
+          : Colors.orange.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
       ),
-      child: const Icon(
-        Icons.receipt_long_rounded,
-        color: Colors.orange,
-        size: 24,
+      child: IconButton(
+        onPressed: isTransferred ? null : () => _addTicketToExpenses(context),
+        icon: Icon(
+          isTransferred ? Icons.check_circle_rounded : Icons.add_task_rounded,
+          color: isTransferred ? Colors.green : Colors.orange,
+          size: 22,
+        ),
+        tooltip: isTransferred ? 'Ticket ya añadido' : 'Añadir a gastos',
       ),
     );
+  }
+
+  Future<void> _addTicketToExpenses(BuildContext context) async {
+    final ticketsCubit = context.read<TicketsCubit>();
+    final historyCubit = context.read<HistoryCubit>();
+    final dateCubit = context.read<DateCubit>();
+    final navigator = Navigator.of(context);
+
+    try {
+      await getIt<TransferTicketsToExpensesUseCase>().call(
+        userId: Preferences.uId,
+        items: [item],
+        asPack: false,
+      );
+
+      // Marcamos como transferido en lugar de eliminar
+      await ticketsCubit.updateItem(item.copyWith(isTransferred: true));
+
+      // Recargamos historial de gastos
+      final dateState = dateCubit.state;
+      historyCubit.loadHistoryByDate(dateState.month, dateState.year);
+
+      if (navigator.mounted) {
+        showDialog(
+          context: navigator.context,
+          builder: (_) => SuccessfulDialogNoGo(
+            title: '¡AÑADIDO!',
+            sucessfulName: 'El ticket de "${item.name}" se ha añadido a tus gastos.',
+          ),
+        );
+      }
+    } catch (e) {
+      if (navigator.mounted) {
+        ScaffoldMessenger.of(navigator.context).showSnackBar(
+          SnackBar(
+            content: Text('Error al añadir gasto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

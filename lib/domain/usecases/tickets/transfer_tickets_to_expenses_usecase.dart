@@ -1,16 +1,13 @@
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/entities/ticket_item.dart';
 import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
-import 'package:ahorrapp/domain/usecases/tickets/clear_tickets_usecase.dart';
 import 'package:uuid/uuid.dart';
 
 class TransferTicketsToExpensesUseCase {
   final SaveMovementUseCase saveMovementUseCase;
-  final ClearTicketsUseCase clearTicketsUseCase;
 
   TransferTicketsToExpensesUseCase({
     required this.saveMovementUseCase,
-    required this.clearTicketsUseCase,
   });
 
   Future<void> call({
@@ -28,10 +25,12 @@ class TransferTicketsToExpensesUseCase {
 
     if (asPack) {
       final double totalAmount = items.fold(0, (sum, item) => sum + item.amount);
-      
-      // Prioridad de nombre: packName -> primer nombre establecimiento -> fallback
       final String finalName = packName ?? (items.isNotEmpty ? items.first.name : 'Compra Ticket');
       
+      // Para packs, vinculamos al primer ticket si existe, 
+      // o a una lista de IDs si fuera necesario en el futuro.
+      final String? mainTicketId = items.length == 1 ? items.first.id : null;
+
       final packMovement = Movement(
         id: const Uuid().v4(),
         name: finalName,
@@ -44,6 +43,7 @@ class TransferTicketsToExpensesUseCase {
         year: now.year,
         createdAt: now,
         category: items.isNotEmpty ? items.first.category : 'general',
+        ticketId: mainTicketId,
       );
 
       await saveMovementUseCase(packMovement);
@@ -61,14 +61,12 @@ class TransferTicketsToExpensesUseCase {
           year: now.year,
           createdAt: now,
           category: item.category,
+          ticketId: item.id,
         );
         
         await saveMovementUseCase(itemMovement);
       }
     }
-
-    // Al terminar la transferencia, limpiamos la lista de tickets
-    await clearTicketsUseCase(userId);
   }
 
   String _getMonthName(int month) {

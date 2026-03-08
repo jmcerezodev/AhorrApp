@@ -2,6 +2,7 @@ import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/usecases/delete_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
+import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +39,7 @@ class DeleteItemHistoryDialog extends StatelessWidget {
     final String month = itemResult['month'] ?? '';
     final int year = itemResult['year'] ?? 0;
     final String typeStr = itemResult['type'] ?? 'expense';
+    final String? ticketId = itemResult['ticketId']; // Capturamos el ticketId si existe
 
     return CustomDialogWrapper(
       borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
@@ -94,14 +96,21 @@ class DeleteItemHistoryDialog extends StatelessWidget {
                       month: month,
                       year: year,
                       createdAt: DateTime.parse(itemResult['createdAt']),
+                      ticketId: ticketId, // Pasamos el ticketId para que se pueda desmarcar
                     );
 
-                    // Ejecutamos el caso de uso que maneja local + offline queue + remoto
+                    // Ejecutamos el caso de uso
                     await getIt<DeleteMovementUseCase>().call(movement);
                     
                     if (context.mounted) {
-                      // Refrescamos la UI
+                      // 1. Refrescamos historial
                       context.read<HistoryCubit>().loadHistoryByDate(month, year);
+                      
+                      // 2. Refrescamos tickets si había uno asociado
+                      if (ticketId != null) {
+                        getIt<TicketsCubit>().loadItems();
+                      }
+
                       context.pop();
                     }
                   }, 

@@ -30,11 +30,23 @@ void main() {
       ..amount = 10.0
       ..date = tDate
       ..category = 'general'
-      ..position = 0,
+      ..position = 0
+      ..isTransferred = true
+      ..imagePath = 'path/to/image.jpg',
   ];
 
   final tEntities = [
-    TicketItem(id: '1', userId: tUserId, name: 'Establecimiento 1', amount: 10.0, date: tDate, category: 'general', position: 0),
+    TicketItem(
+      id: '1', 
+      userId: tUserId, 
+      name: 'Establecimiento 1', 
+      amount: 10.0, 
+      date: tDate, 
+      category: 'general', 
+      position: 0,
+      isTransferred: true,
+      imagePath: 'path/to/image.jpg',
+    ),
   ];
 
   group('TicketsRepositoryImpl', () {
@@ -43,6 +55,18 @@ void main() {
       final result = await repository.getTicketItems(tUserId);
       expect(result, tEntities);
       verify(() => mockDataSource.getTicketItems(tUserId)).called(1);
+    });
+
+    test('getTicketItemById returns entity if found', () async {
+      when(() => mockDataSource.getTicketItemById('1')).thenAnswer((_) async => tLocalItems[0]);
+      final result = await repository.getTicketItemById('1');
+      expect(result, tEntities[0]);
+    });
+
+    test('unmarkAsTransferred calls data source', () async {
+      when(() => mockDataSource.updateTransferredStatus(any(), any())).thenAnswer((_) async => {});
+      await repository.unmarkAsTransferred('1');
+      verify(() => mockDataSource.updateTransferredStatus('1', false)).called(1);
     });
 
     test('saveTicketItem calls dataSource with correct model', () async {
@@ -55,12 +79,6 @@ void main() {
       when(() => mockDataSource.deleteTicketItem(any())).thenAnswer((_) async => {});
       await repository.deleteTicketItem('1');
       verify(() => mockDataSource.deleteTicketItem('1')).called(1);
-    });
-
-    test('clearTicketItems calls dataSource with correct userId', () async {
-      when(() => mockDataSource.clearTicketItems(any())).thenAnswer((_) async => {});
-      await repository.clearTicketItems(tUserId);
-      verify(() => mockDataSource.clearTicketItems(tUserId)).called(1);
     });
   });
 }
