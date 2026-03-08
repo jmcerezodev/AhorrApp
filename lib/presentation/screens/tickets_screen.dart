@@ -28,10 +28,16 @@ class _TicketsScreenState extends State<TicketsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. APPBAR
-          const TicketsAppBar(),
+          FadeInDown(
+            duration: const Duration(milliseconds: 500),
+            child: const TicketsAppBar()
+          ),
 
           // 2. RESUMEN
-          const TicketsSummaryWidget(),
+          FadeInDown(
+            delay: const Duration(milliseconds: 100),
+            child: const TicketsSummaryWidget()
+          ),
 
           // 3. BARRA DE PROGRESO (Solo en carga)
           BlocBuilder<TicketsCubit, TicketsState>(
@@ -119,8 +125,11 @@ class _TicketsScreenState extends State<TicketsScreen> {
           ),
 
           // 5. LISTADO
-          const Expanded(
-            child: TicketsHistoryWidget(),
+          Expanded(
+            child: FadeInUp(
+              delay: const Duration(milliseconds: 300),
+              child: const TicketsHistoryWidget()
+            ),
           ),
         ],
       ),

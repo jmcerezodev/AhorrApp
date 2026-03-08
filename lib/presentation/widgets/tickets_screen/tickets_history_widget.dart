@@ -5,7 +5,6 @@ import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/add_edit_t
 import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/delete_ticket_item_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:ahorrapp/presentation/widgets/tickets_screen/ticket_item_card.dart';
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -91,51 +90,48 @@ class _TicketItemDismissible extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: FadeInUp(
-        delay: Duration(milliseconds: 50 * index),
-        child: Dismissible(
-          key: Key('ticket_dismiss_${item.id}'),
-          background: const SwipeBackgroundWidget(
-            color: Colors.green,
-            icon: Icons.edit_note_rounded,
-            label: 'EDITAR',
-            alignment: Alignment.centerLeft,
-          ),
-          secondaryBackground: const SwipeBackgroundWidget(
-            color: Colors.red,
-            icon: Icons.delete_sweep_rounded,
-            label: 'ELIMINAR',
-            alignment: Alignment.centerRight,
-          ),
-          confirmDismiss: (direction) async {
-            if (direction == DismissDirection.startToEnd) {
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => AddEditTicketItemDialog(item: item),
-              );
-              return false;
-            } else {
-              return await showDialog<bool>(
-                context: context,
-                builder: (context) => DeleteTicketItemDialog(
-                  itemId: item.id,
-                  itemName: item.name,
-                ),
-              );
-            }
-          },
-          onDismissed: (direction) {
-            if (direction == DismissDirection.endToStart) {
-              context.read<TicketsCubit>().deleteItem(item.id);
-            }
-          },
-          child: TicketItemCard(
-            item: item,
-            humanizeNumbers: humanizeNumbers,
-            colorScheme: colorScheme,
-            isDark: isDark,
-          ),
+      child: Dismissible(
+        key: Key('ticket_dismiss_${item.id}'),
+        background: const SwipeBackgroundWidget(
+          color: Colors.green,
+          icon: Icons.edit_note_rounded,
+          label: 'EDITAR',
+          alignment: Alignment.centerLeft,
+        ),
+        secondaryBackground: const SwipeBackgroundWidget(
+          color: Colors.red,
+          icon: Icons.delete_sweep_rounded,
+          label: 'ELIMINAR',
+          alignment: Alignment.centerRight,
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.startToEnd) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AddEditTicketItemDialog(item: item),
+            );
+            return false;
+          } else {
+            return await showDialog<bool>(
+              context: context,
+              builder: (context) => DeleteTicketItemDialog(
+                itemId: item.id,
+                itemName: item.name,
+              ),
+            );
+          }
+        },
+        onDismissed: (direction) {
+          if (direction == DismissDirection.endToStart) {
+            context.read<TicketsCubit>().deleteItem(item.id);
+          }
+        },
+        child: TicketItemCard(
+          item: item,
+          humanizeNumbers: humanizeNumbers,
+          colorScheme: colorScheme,
+          isDark: isDark,
         ),
       ),
     );

@@ -6,7 +6,6 @@ import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/dele
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:ahorrapp/presentation/widgets/shopping_list_screen/shopping_list_empty_state.dart';
 import 'package:ahorrapp/presentation/widgets/shopping_list_screen/shopping_list_item_card.dart';
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -92,51 +91,48 @@ class _ShoppingItemDismissible extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: FadeInUp(
-        delay: Duration(milliseconds: 50 * index),
-        child: Dismissible(
-          key: Key('dismiss_${item.id}'),
-          background: const SwipeBackgroundWidget(
-            color: Colors.green,
-            icon: Icons.edit_note_rounded,
-            label: 'EDITAR',
-            alignment: Alignment.centerLeft,
-          ),
-          secondaryBackground: const SwipeBackgroundWidget(
-            color: Colors.red,
-            icon: Icons.delete_sweep_rounded,
-            label: 'ELIMINAR',
-            alignment: Alignment.centerRight,
-          ),
-          confirmDismiss: (direction) async {
-            if (direction == DismissDirection.startToEnd) {
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => AddEditShoppingItemDialog(item: item),
-              );
-              return false;
-            } else {
-              return await showDialog<bool>(
-                context: context,
-                builder: (context) => DeleteShoppingItemDialog(
-                  itemId: item.id,
-                  itemName: item.name,
-                ),
-              );
-            }
-          },
-          onDismissed: (direction) {
-            if (direction == DismissDirection.endToStart) {
-              context.read<ShoppingListCubit>().deleteItem(item.id);
-            }
-          },
-          child: ShoppingItemCard(
-            item: item,
-            humanizeNumbers: humanizeNumbers,
-            colorScheme: colorScheme,
-            isDark: isDark,
-          ),
+      child: Dismissible(
+        key: Key('dismiss_${item.id}'),
+        background: const SwipeBackgroundWidget(
+          color: Colors.green,
+          icon: Icons.edit_note_rounded,
+          label: 'EDITAR',
+          alignment: Alignment.centerLeft,
+        ),
+        secondaryBackground: const SwipeBackgroundWidget(
+          color: Colors.red,
+          icon: Icons.delete_sweep_rounded,
+          label: 'ELIMINAR',
+          alignment: Alignment.centerRight,
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.startToEnd) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AddEditShoppingItemDialog(item: item),
+            );
+            return false;
+          } else {
+            return await showDialog<bool>(
+              context: context,
+              builder: (context) => DeleteShoppingItemDialog(
+                itemId: item.id,
+                itemName: item.name,
+              ),
+            );
+          }
+        },
+        onDismissed: (direction) {
+          if (direction == DismissDirection.endToStart) {
+            context.read<ShoppingListCubit>().deleteItem(item.id);
+          }
+        },
+        child: ShoppingItemCard(
+          item: item,
+          humanizeNumbers: humanizeNumbers,
+          colorScheme: colorScheme,
+          isDark: isDark,
         ),
       ),
     );
