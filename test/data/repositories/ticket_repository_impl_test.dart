@@ -93,6 +93,8 @@ void main() {
 
     test('saveTicketItem calls dataSource and adds to sync queue', () async {
       when(() => mockDataSource.saveTicketItem(any())).thenAnswer((_) async => {});
+      // Añadido mock para getTicketItemById que ahora se llama internamente en saveTicketItem
+      when(() => mockDataSource.getTicketItemById(any())).thenAnswer((_) async => tLocalItems[0]);
       when(() => mockLocalDb.addPendingSync(any(), any(), any(), appwriteId: any(named: 'appwriteId')))
           .thenAnswer((_) async => {});
       when(() => mockSyncService.processQueue()).thenAnswer((_) async => {});
@@ -100,6 +102,7 @@ void main() {
       await repository.saveTicketItem(tEntities[0]);
       
       verify(() => mockDataSource.saveTicketItem(any(that: isA<LocalTicketItem>()))).called(1);
+      verify(() => mockDataSource.getTicketItemById('1')).called(1);
       verify(() => mockLocalDb.addPendingSync('save', 'tickets', any(), appwriteId: '1')).called(1);
       verify(() => mockSyncService.processQueue()).called(1);
     });
