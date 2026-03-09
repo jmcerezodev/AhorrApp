@@ -16,8 +16,6 @@ class RecurrentSummaryWidget extends StatelessWidget {
 
     return BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
       builder: (context, state) {
-        if (state.expenses.isEmpty) return const SizedBox.shrink();
-        
         final double totalToShow = state.showProrated 
             ? state.totalMonthlyNormalized 
             : state.totalStrictlyMonthly;
