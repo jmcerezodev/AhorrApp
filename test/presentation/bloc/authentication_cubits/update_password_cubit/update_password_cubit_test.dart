@@ -52,7 +52,7 @@ void main() {
       cubit.currentPasswordChanged('12345678');
       cubit.newPasswordChanged('87654321');
       cubit.confirmedPasswordChanged('87654321');
-      
+
       expect(cubit.state.isValid, true);
     });
 
@@ -60,7 +60,7 @@ void main() {
       cubit.currentPasswordChanged('12345678');
       cubit.newPasswordChanged('87654321');
       cubit.confirmedPasswordChanged('diferente');
-      
+
       cubit.onSubmit(FakeBuildContext());
       expect(cubit.state.status, UpdatePasswordStatus.failure);
     });

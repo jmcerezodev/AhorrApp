@@ -8,7 +8,7 @@ import 'package:ahorrapp/presentation/bloc/date_cubit/date_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog_no_go.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/add_edit_ticket_item_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/ticket_export_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/view_ticket_image_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,7 +32,7 @@ class TicketItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => _handleTap(context),
-      onLongPress: () => _showEditDialog(context),
+      onLongPress: () => _showExportDialog(context),
       behavior: HitTestBehavior.opaque,
       child: Container(
         constraints: const BoxConstraints(minHeight: 80),
@@ -160,16 +160,13 @@ class TicketItemCard extends StatelessWidget {
           title: item.name,
         ),
       );
-    } else {
-      _showEditDialog(context);
     }
   }
 
-  void _showEditDialog(BuildContext context) {
+  void _showExportDialog(BuildContext context) {
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => AddEditTicketItemDialog(item: item),
+      builder: (context) => TicketExportDialog(item: item),
     );
   }
 }

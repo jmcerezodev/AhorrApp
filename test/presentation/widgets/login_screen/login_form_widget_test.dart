@@ -22,7 +22,7 @@ void main() {
     when(() => mockLoginCubit.state).thenReturn(const LoginCubitState());
     when(() => mockLoginCubit.stream).thenAnswer((_) => const Stream.empty());
     when(() => mockLoginCubit.close()).thenAnswer((_) async => {});
-    
+
     // Stubs para las funciones que vamos a probar
     when(() => mockLoginCubit.emailChanged(any())).thenReturn(null);
     when(() => mockLoginCubit.passwordChanged(any())).thenReturn(null);
@@ -53,7 +53,7 @@ void main() {
 
       // Buscamos el campo de texto por su etiqueta
       final emailField = find.byType(TextField).first;
-      
+
       // Simulamos que el usuario escribe
       await tester.enterText(emailField, 'test@correo.com');
       
@@ -66,7 +66,7 @@ void main() {
 
       // Buscamos el botón por el texto
       final loginButton = find.text('ENTRAR');
-      
+
       // Simulamos el toque
       await tester.tap(loginButton);
       await tester.pump(); // Esperamos a que la UI reaccione

@@ -10,6 +10,7 @@ import 'package:ahorrapp/data/repositories/ticket_repository_impl.dart';
 import 'package:ahorrapp/data/services/google_mlkit_ocr_service.dart';
 import 'package:ahorrapp/data/services/google_mlkit_document_scanner_service.dart';
 import 'package:ahorrapp/data/services/openai_service.dart';
+import 'package:ahorrapp/data/services/ticket_export_service_impl.dart';
 import 'package:ahorrapp/domain/repositories/i_recurrent_expense_repository.dart';
 import 'package:ahorrapp/domain/repositories/i_shopping_list_repository.dart';
 import 'package:ahorrapp/domain/repositories/i_shopping_template_repository.dart';
@@ -17,6 +18,7 @@ import 'package:ahorrapp/domain/repositories/tickets_repository.dart';
 import 'package:ahorrapp/domain/services/ocr_service.dart';
 import 'package:ahorrapp/domain/services/document_scanner_service.dart';
 import 'package:ahorrapp/domain/services/ai_service.dart';
+import 'package:ahorrapp/domain/services/ticket_export_service.dart';
 import 'package:ahorrapp/domain/usecases/delete_movement_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/delete_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/get_recurrent_expenses_usecase.dart';
@@ -28,7 +30,6 @@ import 'package:ahorrapp/domain/usecases/shopping_list/get_shopping_list_usecase
 import 'package:ahorrapp/domain/usecases/shopping_list/get_shopping_templates_usecase.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/save_shopping_list_item_usecase.dart';
 import 'package:ahorrapp/domain/usecases/shopping_list/save_shopping_template_usecase.dart';
-import 'package:ahorrapp/domain/usecases/tickets/clear_tickets_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/delete_ticket_item_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/get_ticket_items_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/process_ticket_image_usecase.dart';
@@ -72,6 +73,7 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<AIService>(() => OpenAIService());
   getIt.registerLazySingleton<OCRService>(() => GoogleMlKitOCRService(getIt<AIService>()));
   getIt.registerLazySingleton<DocumentScannerService>(() => GoogleMlKitDocumentScannerService());
+  getIt.registerLazySingleton<TicketExportService>(() => TicketExportServiceImpl());
 
   // 2. REPOSITORIOS
   getIt.registerLazySingleton<IMovementRepository>(
@@ -206,7 +208,6 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<GetTicketItemsUseCase>(() => GetTicketItemsUseCase(getIt<TicketsRepository>()));
   getIt.registerLazySingleton<SaveTicketItemUseCase>(() => SaveTicketItemUseCase(getIt<TicketsRepository>()));
   getIt.registerLazySingleton<DeleteTicketItemUseCase>(() => DeleteTicketItemUseCase(getIt<TicketsRepository>()));
-  getIt.registerLazySingleton<ClearTicketsUseCase>(() => ClearTicketsUseCase(getIt<TicketsRepository>()));
   getIt.registerLazySingleton<ReorderTicketItemsUseCase>(() => ReorderTicketItemsUseCase(getIt<TicketsRepository>()));
   getIt.registerLazySingleton<TransferTicketsToExpensesUseCase>(() => TransferTicketsToExpensesUseCase(
     saveMovementUseCase: getIt<SaveMovementUseCase>(),
