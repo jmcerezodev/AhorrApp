@@ -30,7 +30,8 @@ void main() {
 
   final tDate = DateTime(2023, 1, 1);
   final tItems = [
-    TicketItem(id: '1', userId: 'u1', name: 'Establecimiento 1', amount: 10.0, date: tDate, category: 'general'),
+    TicketItem(id: '1', userId: 'u1', name: 'Leche', amount: 1.5, date: tDate, category: 'alimentación'),
+    TicketItem(id: '2', userId: 'u1', name: 'Carne', amount: 10.0, date: tDate, category: 'comida'),
   ];
 
   setUpAll(() async {
@@ -59,6 +60,46 @@ void main() {
   });
 
   tearDown(() => ticketsCubit.close());
+
+  group('TicketsCubit - Lógica de Búsqueda y Filtrado', () {
+    test('filteredItems debe retornar todos los items si la búsqueda está vacía', () async {
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
+      await ticketsCubit.loadItems();
+      
+      expect(ticketsCubit.state.filteredItems, tItems);
+      expect(ticketsCubit.state.filteredItems.length, 2);
+    });
+
+    test('filteredItems debe filtrar correctamente por nombre (case insensitive)', () async {
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
+      await ticketsCubit.loadItems();
+      
+      ticketsCubit.updateSearchQuery('leche');
+      expect(ticketsCubit.state.filteredItems.length, 1);
+      expect(ticketsCubit.state.filteredItems.first.name, 'Leche');
+
+      ticketsCubit.updateSearchQuery('CARNE');
+      expect(ticketsCubit.state.filteredItems.length, 1);
+      expect(ticketsCubit.state.filteredItems.first.name, 'Carne');
+    });
+
+    test('filteredItems debe filtrar correctamente por categoría', () async {
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
+      await ticketsCubit.loadItems();
+      
+      ticketsCubit.updateSearchQuery('comida');
+      expect(ticketsCubit.state.filteredItems.length, 1);
+      expect(ticketsCubit.state.filteredItems.first.category, 'comida');
+    });
+
+    test('filteredItems debe retornar lista vacía si no hay coincidencias', () async {
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
+      await ticketsCubit.loadItems();
+      
+      ticketsCubit.updateSearchQuery('inexistente');
+      expect(ticketsCubit.state.filteredItems, isEmpty);
+    });
+  });
 
   group('TicketsCubit - Enhanced Flow & Calculation', () {
     test('initial state should be correct', () {

@@ -42,6 +42,10 @@ class TicketsCubit extends Cubit<TicketsState> {
     }
   }
 
+  void updateSearchQuery(String query) {
+    emit(state.copyWith(searchQuery: query));
+  }
+
   Future<void> scanAndProcessTicket() async {
     try {
       final scannedFiles = await documentScannerService.scanDocument();

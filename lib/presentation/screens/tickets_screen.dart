@@ -14,6 +14,8 @@ class TicketsScreen extends StatefulWidget {
 }
 
 class _TicketsScreenState extends State<TicketsScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -21,7 +23,15 @@ class _TicketsScreenState extends State<TicketsScreen> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,7 +81,49 @@ class _TicketsScreenState extends State<TicketsScreen> {
             },
           ),
 
-          // 4. LISTADO
+          // 4. BARRA DE BÚSQUEDA
+          FadeInDown(
+            delay: const Duration(milliseconds: 200),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => context.read<TicketsCubit>().updateSearchQuery(value),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
+                  hintText: 'Buscar por comercio o categoría...',
+                  hintStyle: TextStyle(
+                    fontSize: 13, 
+                    color: isDark ? Colors.white24 : Colors.black26,
+                    fontWeight: FontWeight.w600
+                  ),
+                  prefixIcon: const Icon(Icons.search_rounded, color: Colors.orange, size: 20),
+                  suffixIcon: _searchController.text.isNotEmpty 
+                    ? IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        onPressed: () {
+                          _searchController.clear();
+                          context.read<TicketsCubit>().updateSearchQuery('');
+                        },
+                      )
+                    : null,
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.grey.withValues(alpha: 0.05),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide(color: Colors.orange.withValues(alpha: 0.1), width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(color: Colors.orange, width: 1.5),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // 5. LISTADO
           Expanded(
             child: FadeInUp(
               delay: const Duration(milliseconds: 300),
