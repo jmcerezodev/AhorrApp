@@ -3,6 +3,7 @@ export 'incomes_cubit/incomes_cubit.dart';
 export 'expenses_cubit/expenses_cubit.dart';
 export 'history_cubit/history_cubit.dart';
 export 'savings_cubit/savings_cubit.dart';
+export 'tickets_cubit/tickets_cubit.dart';
 export 'total_money_cubit/total_money_cubit.dart';
 export 'date_cubit/date_cubit.dart';
 export 'theme_cubit/theme_cubit.dart';

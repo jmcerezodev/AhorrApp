@@ -19,6 +19,10 @@ class TicketsLocalDataSource {
       
       if (existing != null) {
         item.id = existing.id;
+        // Si el item que llega no tiene remoteImageId pero el existente sí, lo preservamos
+        if (item.remoteImageId == null && existing.remoteImageId != null) {
+          item.remoteImageId = existing.remoteImageId;
+        }
       }
       
       await isar.localTicketItems.put(item);
@@ -43,6 +47,9 @@ class TicketsLocalDataSource {
         final existing = await isar.localTicketItems.filter().ticketItemIdEqualTo(item.ticketItemId).findFirst();
         if (existing != null) {
           item.id = existing.id;
+          if (item.remoteImageId == null && existing.remoteImageId != null) {
+            item.remoteImageId = existing.remoteImageId;
+          }
         }
       }
       await isar.localTicketItems.putAll(items);

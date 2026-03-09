@@ -1,10 +1,15 @@
+import '../../core/di/service_locator.dart';
+import '../../core/sync/sync_service.dart';
 import '../../domain/entities/ticket_item.dart';
 import '../../domain/repositories/tickets_repository.dart';
 import '../datasources/local/tickets_local_datasource.dart';
+import '../local/local_db_service.dart';
 import '../local/models/local_ticket_item.dart';
 
 class TicketsRepositoryImpl implements TicketsRepository {
   final TicketsLocalDataSource localDataSource;
+  final LocalDbService _localDb = getIt<LocalDbService>();
+  final SyncService _syncService = getIt<SyncService>();
 
   TicketsRepositoryImpl(this.localDataSource);
 
@@ -23,16 +28,57 @@ class TicketsRepositoryImpl implements TicketsRepository {
   @override
   Future<void> saveTicketItem(TicketItem item) async {
     await localDataSource.saveTicketItem(_fromEntity(item));
+    
+    // Sincronización con Appwrite
+    await _localDb.addPendingSync(
+      'save', 
+      'tickets', 
+      {
+        'ticketItemId': item.id,
+        'userId': item.userId,
+        'name': item.name,
+        'amount': item.amount,
+        'date': item.date.toIso8601String(),
+        'category': item.category,
+        'position': item.position,
+        'isTransferred': item.isTransferred,
+        'remoteImageId': item.remoteImageId,
+        'imagePath': item.imagePath, // Enviamos el path local para que SyncService pueda subirla
+      },
+      appwriteId: item.id,
+    );
+    _syncService.processQueue();
   }
 
   @override
   Future<void> deleteTicketItem(String id) async {
+    final localItem = await localDataSource.getTicketItemById(id);
+    final String? remoteImageId = localItem?.remoteImageId;
+
     await localDataSource.deleteTicketItem(id);
+    
+    await _localDb.addPendingSync(
+      'delete', 
+      'tickets', 
+      {'remoteImageId': remoteImageId}, 
+      appwriteId: id
+    );
+    _syncService.processQueue();
   }
 
   @override
   Future<void> clearTicketItems(String userId) async {
+    final items = await localDataSource.getTicketItems(userId);
+    for (var item in items) {
+      await _localDb.addPendingSync(
+        'delete', 
+        'tickets', 
+        {'remoteImageId': item.remoteImageId}, 
+        appwriteId: item.ticketItemId
+      );
+    }
     await localDataSource.clearTicketItems(userId);
+    _syncService.processQueue();
   }
 
   @override
@@ -44,11 +90,53 @@ class TicketsRepositoryImpl implements TicketsRepository {
       return model;
     }).toList();
     await localDataSource.saveAll(models);
+    
+    for (var item in items) {
+      await _localDb.addPendingSync(
+        'save', 
+        'tickets', 
+        {
+          'ticketItemId': item.id,
+          'userId': item.userId,
+          'name': item.name,
+          'amount': item.amount,
+          'date': item.date.toIso8601String(),
+          'category': item.category,
+          'position': items.indexOf(item),
+          'isTransferred': item.isTransferred,
+          'remoteImageId': item.remoteImageId,
+          'imagePath': item.imagePath,
+        },
+        appwriteId: item.id,
+      );
+    }
+    _syncService.processQueue();
   }
 
   @override
   Future<void> unmarkAsTransferred(String ticketId) async {
     await localDataSource.updateTransferredStatus(ticketId, false);
+    final item = await localDataSource.getTicketItemById(ticketId);
+    if (item != null) {
+      await _localDb.addPendingSync(
+        'save', 
+        'tickets', 
+        {
+          'ticketItemId': item.ticketItemId,
+          'userId': item.userId,
+          'name': item.name,
+          'amount': item.amount,
+          'date': item.date.toIso8601String(),
+          'category': item.category,
+          'position': item.position,
+          'isTransferred': false,
+          'remoteImageId': item.remoteImageId,
+          'imagePath': item.imagePath,
+        },
+        appwriteId: ticketId,
+      );
+      _syncService.processQueue();
+    }
   }
 
   TicketItem _toEntity(LocalTicketItem model) {
@@ -59,6 +147,7 @@ class TicketsRepositoryImpl implements TicketsRepository {
       amount: model.amount,
       date: model.date,
       imagePath: model.imagePath,
+      remoteImageId: model.remoteImageId,
       category: model.category,
       position: model.position,
       isTransferred: model.isTransferred,
@@ -73,6 +162,7 @@ class TicketsRepositoryImpl implements TicketsRepository {
       ..amount = entity.amount
       ..date = entity.date
       ..imagePath = entity.imagePath
+      ..remoteImageId = entity.remoteImageId
       ..category = entity.category
       ..position = entity.position
       ..isTransferred = entity.isTransferred;

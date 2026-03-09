@@ -9,6 +9,7 @@ import 'package:ahorrapp/data/local/models/local_recurrent_expense.dart';
 import 'package:ahorrapp/data/local/models/local_saving.dart';
 import 'package:ahorrapp/data/local/models/local_shopping_list_item.dart';
 import 'package:ahorrapp/data/local/models/local_shopping_template.dart';
+import 'package:ahorrapp/data/local/models/local_ticket_item.dart';
 import 'package:ahorrapp/domain/usecases/get_movements_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:equatable/equatable.dart';
@@ -41,7 +42,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     emit(const HistoryCubitState());
   }
 
-  Future<void> forceBalanceResync(TotalMoneyCubit totalMoneyCubit, {SavingsCubit? savingsCubit}) async {
+  Future<void> forceBalanceResync(TotalMoneyCubit totalMoneyCubit, {SavingsCubit? savingsCubit, TicketsCubit? ticketsCubit}) async {
     if (state.isSyncing || Preferences.uId.isEmpty) return;
 
     emit(state.copyWith(status: HistoryStatus.loading, isSyncing: true, syncProgress: 0.0));
@@ -59,12 +60,17 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       final List<LocalRecurrentExpense> recurrentItems = _convertToLocalRecurrent(fullData['recurrent']);
       await _localDb.saveRecurrentExpenses(recurrentItems);
 
-      // NUEVO: Guardar Lista de la Compra y Favoritos
       final List<LocalShoppingItem> shoppingItems = _convertToLocalShopping(fullData['shopping']);
       await _localDb.saveShoppingListItems(shoppingItems);
 
       final List<LocalShoppingTemplate> templateItems = _convertToLocalTemplates(fullData['templates']);
       await _localDb.saveShoppingTemplates(templateItems);
+
+      // NUEVO: Guardar Tickets
+      final List<LocalTicketItem> ticketItems = _convertToLocalTickets(fullData['tickets'] ?? []);
+      await _localDb.isar.writeTxn(() async {
+        await _localDb.isar.localTicketItems.putAll(ticketItems);
+      });
 
       await _localDb.saveSavingGoal(uid, fullData['savingGoal']);
       final double correctBalance = (fullData['balance'] as num).toDouble();
@@ -73,6 +79,10 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       
       if (savingsCubit != null) {
         await savingsCubit.loadSavings();
+      }
+
+      if (ticketsCubit != null) {
+        await ticketsCubit.loadItems();
       }
       
       emit(state.copyWith(isSyncing: false, syncProgress: 1.0, status: HistoryStatus.success));
@@ -259,6 +269,21 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         ..name = doc.data['name'] ?? 'Favorito'
         ..itemsJson = doc.data['itemsJson'] ?? '[]'
         ..createdAt = DateTime.parse(doc.$createdAt);
+    }).toList();
+  }
+
+  List<LocalTicketItem> _convertToLocalTickets(dynamic ticketDocs) {
+    return (ticketDocs as List).map((doc) {
+      return LocalTicketItem()
+        ..ticketItemId = doc.data['ticketItemId'] ?? doc.$id
+        ..userId = doc.data['userId'] ?? ''
+        ..name = doc.data['name'] ?? ''
+        ..amount = (doc.data['amount'] as num).toDouble()
+        ..date = DateTime.parse(doc.data['date'] ?? doc.$createdAt)
+        ..category = doc.data['category'] ?? 'general'
+        ..position = doc.data['position'] ?? 0
+        ..isTransferred = doc.data['isTransferred'] ?? false
+        ..remoteImageId = doc.data['remoteImageId'];
     }).toList();
   }
 

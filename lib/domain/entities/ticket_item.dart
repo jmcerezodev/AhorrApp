@@ -6,6 +6,7 @@ class TicketItem extends Equatable {
   final String name; // Nombre del establecimiento
   final double amount; // Total del ticket
   final String? imagePath;
+  final String? remoteImageId;
   final DateTime date;
   final String category;
   final int position;
@@ -18,6 +19,7 @@ class TicketItem extends Equatable {
     required this.amount,
     required this.date,
     this.imagePath,
+    this.remoteImageId,
     this.category = 'general',
     this.position = 0,
     this.isTransferred = false,
@@ -28,6 +30,7 @@ class TicketItem extends Equatable {
     double? amount,
     DateTime? date,
     String? imagePath,
+    String? remoteImageId,
     String? category,
     int? position,
     bool? isTransferred,
@@ -39,6 +42,7 @@ class TicketItem extends Equatable {
       amount: amount ?? this.amount,
       date: date ?? this.date,
       imagePath: imagePath ?? this.imagePath,
+      remoteImageId: remoteImageId ?? this.remoteImageId,
       category: category ?? this.category,
       position: position ?? this.position,
       isTransferred: isTransferred ?? this.isTransferred,
@@ -46,5 +50,5 @@ class TicketItem extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, userId, name, amount, date, imagePath, category, position, isTransferred];
+  List<Object?> get props => [id, userId, name, amount, date, imagePath, remoteImageId, category, position, isTransferred];
 }

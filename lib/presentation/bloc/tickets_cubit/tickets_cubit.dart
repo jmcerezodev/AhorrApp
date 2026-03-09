@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:ahorrapp/domain/services/document_scanner_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:image/image.dart' as img;
 import '../../../core/shared_preferences/preferences.dart';
 import '../../../domain/entities/ticket_item.dart';
 import '../../../domain/usecases/tickets/get_ticket_items_usecase.dart';
@@ -58,17 +60,23 @@ class TicketsCubit extends Cubit<TicketsState> {
   Future<void> processTicketImage(File imageFile) async {
     emit(state.copyWith(status: TicketsStatus.loading));
     try {
-      // 1. Guardar la imagen permanentemente
-      final appDir = await getApplicationDocumentsDirectory();
-      final fileName = 'ticket_${DateTime.now().millisecondsSinceEpoch}${p.extension(imageFile.path)}';
-      final savedImage = await imageFile.copy('${appDir.path}/$fileName');
+      // 1. Comprimir imagen en un hilo secundario para no bloquear la UI
+      final compressedFile = await _compressImage(imageFile);
 
-      // 2. Procesar con OCR/AI
+      // 2. Guardar la imagen permanentemente en almacenamiento local
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = 'ticket_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final savedImage = await compressedFile.copy('${appDir.path}/$fileName');
+
+      // 3. Procesar con OCR/AI (Sin esperar a la subida de Appwrite)
       final detectedItems = await processTicketImageUseCase(imageFile, Preferences.uId);
       
       if (detectedItems.isNotEmpty) {
-        // En el nuevo flujo, detectamos UN ticket (aunque el caso de uso devuelva lista por compatibilidad)
-        final ticket = detectedItems.first.copyWith(imagePath: savedImage.path);
+        // El ticket se guarda con la ruta local. La subida a Appwrite se hará en segundo plano (SyncService)
+        final ticket = detectedItems.first.copyWith(
+          imagePath: savedImage.path,
+          remoteImageId: null, // Se asignará durante la sincronización
+        );
         await saveTicketItemUseCase(ticket);
       }
       
@@ -76,6 +84,31 @@ class TicketsCubit extends Cubit<TicketsState> {
     } catch (e) {
       emit(state.copyWith(status: TicketsStatus.failure, errorMessage: "Error al procesar ticket: $e"));
     }
+  }
+
+  Future<File> _compressImage(File file) async {
+    final bytes = await file.readAsBytes();
+    
+    // Usamos compute para realizar la decodificación y compresión en un Isolate separado
+    final compressedBytes = await compute(_compressImageTask, bytes);
+    
+    final tempDir = await getTemporaryDirectory();
+    final tempFile = File('${tempDir.path}/temp_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    return await tempFile.writeAsBytes(compressedBytes);
+  }
+
+  // Función de nivel superior o estática para ser usada con compute
+  static Uint8List _compressImageTask(Uint8List bytes) {
+    final image = img.decodeImage(bytes);
+    if (image == null) return bytes;
+
+    img.Image resized = image;
+    if (image.width > 1200) {
+      resized = img.copyResize(image, width: 1200);
+    }
+
+    final compressed = img.encodeJpg(resized, quality: 80);
+    return Uint8List.fromList(compressed);
   }
 
   Future<void> addItem(TicketItem item) async {

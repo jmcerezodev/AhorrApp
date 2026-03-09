@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/network/connectivity_service.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
@@ -7,7 +8,9 @@ import 'package:ahorrapp/data/appwrite/appwrite_repository.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/pending_sync.dart';
+import 'package:ahorrapp/data/local/models/local_ticket_item.dart';
 import 'package:appwrite/appwrite.dart';
+import 'package:isar/isar.dart';
 
 class SyncService {
   final LocalDbService _localDb = getIt<LocalDbService>();
@@ -57,6 +60,8 @@ class SyncService {
             success = await _syncRecurrentExpenses(pending, data);
           } else if (pending.collection == 'shopping_list') {
             success = await _syncShoppingList(pending, data);
+          } else if (pending.collection == 'tickets') {
+            success = await _syncTickets(pending, data);
           }
 
           if (success) {
@@ -196,7 +201,6 @@ class SyncService {
 
   Future<bool> _syncShoppingList(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'save') {
-      // Usamos el repositorio remoto directamente para intentar guardar/actualizar
       try {
         await _appwriteRepo.updateShoppingItem(
           documentId: pending.appwriteId!, 
@@ -210,7 +214,6 @@ class SyncService {
           }
         );
       } catch (e) {
-        // Si no existe (404), lo creamos
         await _appwriteRepo.addShoppingItem(
           documentId: pending.appwriteId!,
           userId: data['userId'] ?? '',
@@ -225,6 +228,72 @@ class SyncService {
       return true;
     } else if (pending.action == 'delete') {
       await _appwriteRepo.deleteShoppingItem(pending.appwriteId!);
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> _syncTickets(PendingSync pending, Map<String, dynamic> data) async {
+    if (pending.action == 'save') {
+      String? remoteImageId = data['remoteImageId'];
+      final String? localPath = data['imagePath'];
+
+      // 1. Si no tiene ID remoto pero tenemos el path local, lo subimos ahora en segundo plano
+      if ((remoteImageId == null || remoteImageId.isEmpty) && localPath != null) {
+        try {
+          final file = File(localPath);
+          if (await file.exists()) {
+            print('☁️ SyncService: Subiendo imagen pendiente...');
+            remoteImageId = await _appwriteRepo.uploadTicketImage(file);
+            
+            // Actualizar registro local en Isar para que no intente subirla de nuevo
+            final isar = _localDb.isar;
+            final localTicket = await isar.localTicketItems.filter().ticketItemIdEqualTo(pending.appwriteId!).findFirst();
+            if (localTicket != null) {
+              await isar.writeTxn(() async {
+                localTicket.remoteImageId = remoteImageId;
+                await isar.localTicketItems.put(localTicket);
+              });
+            }
+            // Actualizamos los datos para la subida a la DB de Appwrite
+            data['remoteImageId'] = remoteImageId;
+          }
+        } catch (e) {
+          print('❌ Error subiendo imagen en segundo plano: $e');
+          // No marcamos como éxito para reintentar la subida después
+          return false;
+        }
+      }
+
+      // 2. Sincronizar documento en la DB de Appwrite
+      try {
+        await _appwriteRepo.updateTicket(
+          documentId: pending.appwriteId!, 
+          data: data,
+        );
+      } catch (e) {
+        await _appwriteRepo.addTicket(
+          documentId: pending.appwriteId!,
+          ticketItemId: data['ticketItemId'] ?? pending.appwriteId!,
+          userId: data['userId'] ?? '',
+          name: data['name'] ?? '',
+          amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
+          date: data['date'] ?? '',
+          category: data['category'] ?? 'general',
+          position: data['position'] ?? 0,
+          isTransferred: data['isTransferred'] ?? false,
+          remoteImageId: remoteImageId,
+        );
+      }
+      return true;
+    } else if (pending.action == 'delete') {
+      final String? remoteImageId = data['remoteImageId'];
+      if (remoteImageId != null && remoteImageId.isNotEmpty) {
+        await _appwriteRepo.deleteTicketImage(remoteImageId);
+      }
+      try {
+        await _appwriteRepo.deleteTicket(pending.appwriteId!);
+      } catch (_) {}
       return true;
     }
     return false;

@@ -7,6 +7,7 @@ class AppwriteService {
   late Client client;
   late Account account;
   late Databases databases;
+  late Storage storage;
 
   factory AppwriteService() {
     return _instance;
@@ -15,8 +16,6 @@ class AppwriteService {
   AppwriteService._internal() {
     client = Client();
     
-    // Solo configuramos si hay datos. Si no los hay, el crash ocurrirá 
-    // al intentar una petición, no al inicializar el Cubit.
     if (Env.appwriteEndpoint.isNotEmpty) {
       client
         ..setEndpoint(Env.appwriteEndpoint)
@@ -28,7 +27,9 @@ class AppwriteService {
       }
     }
 
+    // Inicializamos los servicios DESPUÉS de configurar el cliente
     account = Account(client);
     databases = Databases(client);
+    storage = Storage(client);
   }
 }

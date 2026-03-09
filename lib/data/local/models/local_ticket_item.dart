@@ -14,6 +14,7 @@ class LocalTicketItem {
   late double amount; // Total
   late DateTime date;
   String? imagePath;
+  String? remoteImageId;
   late String category;
   late int position;
   late bool isTransferred;
