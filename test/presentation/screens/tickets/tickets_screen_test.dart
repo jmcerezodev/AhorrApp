@@ -40,6 +40,7 @@ void main() {
     ));
     when(() => mockTicketsCubit.stream).thenAnswer((_) => const Stream.empty());
     when(() => mockTicketsCubit.loadItems()).thenAnswer((_) async => {});
+    when(() => mockTicketsCubit.updateSearchQuery(any())).thenReturn(null);
   });
 
   Widget createWidgetUnderTest() {
@@ -82,7 +83,19 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('TOTAL ESCANEADOS'), findsOneWidget);
-      expect(find.text('1'), findsOneWidget); // Verifica el contador de tickets
+      expect(find.text('1'), findsOneWidget);
+    });
+
+    testWidgets('Debe mostrar la barra de búsqueda y llamar a updateSearchQuery al escribir', (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      final searchField = find.byType(TextField);
+      expect(searchField, findsOneWidget);
+      expect(find.text('Buscar por comercio o categoría...'), findsOneWidget);
+
+      await tester.enterText(searchField, 'Mercadona');
+      verify(() => mockTicketsCubit.updateSearchQuery('Mercadona')).called(1);
     });
 
     testWidgets('Debe mostrar el estado vacío si no hay items', (WidgetTester tester) async {
@@ -95,21 +108,11 @@ void main() {
       expect(find.text('SIN TICKETS'), findsOneWidget);
     });
 
-    testWidgets('Los items de la lista deben tener un padding inferior de 8 para consistencia', (WidgetTester tester) async {
+    testWidgets('Los items de la lista deben ser Dismissible (deslizables)', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pump(const Duration(milliseconds: 1000));
       await tester.pumpAndSettle();
 
-      final paddingFinder = find.byType(Padding);
-      bool found8Padding = false;
-      
-      for (var widget in tester.widgetList<Padding>(paddingFinder)) {
-        if (widget.padding is EdgeInsets && (widget.padding as EdgeInsets).bottom == 8) {
-          found8Padding = true;
-          break;
-        }
-      }
-      expect(found8Padding, isTrue);
+      expect(find.byType(Dismissible), findsWidgets);
     });
   });
 }

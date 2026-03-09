@@ -16,8 +16,10 @@ class GoogleMlKitOCRService implements OCRService {
   @override
   Future<List<TicketItem>> processTicket(File imageFile, String userId) async {
     try {
+      // 1. Optimización de imagen en Isolate (segundo plano) pasando solo el path
       File optimizedImage = await _optimizeImageInBackground(imageFile.path);
       
+      // 2. OCR (Google ML Kit corre en su propio hilo nativo)
       InputImage inputImage = InputImage.fromFile(optimizedImage);
       RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
 
@@ -29,12 +31,14 @@ class GoogleMlKitOCRService implements OCRService {
         optimizedText = extractOptimizedText(recognizedText);
       }
 
+      // Limpieza de temporales
       if (optimizedImage.path != imageFile.path) {
         await optimizedImage.delete().catchError((_) => optimizedImage);
       }
 
       if (optimizedText.isEmpty) return [];
 
+      // 3. IA (Llamada HTTP asíncrona)
       return await aiService.parseTicketText(optimizedText, userId);
     } catch (e) {
       throw Exception("Error en procesamiento OCR + AI: $e");
@@ -43,6 +47,7 @@ class GoogleMlKitOCRService implements OCRService {
 
   Future<File> _optimizeImageInBackground(String imagePath) async {
     try {
+      // Usamos compute para ejecutar el procesamiento pesado en un Isolate secundario pasando el path
       final optimizedBytes = await compute(_imageProcessingTask, imagePath);
       
       if (optimizedBytes == null) return File(imagePath);
@@ -65,12 +70,18 @@ class GoogleMlKitOCRService implements OCRService {
       img.Image? image = img.decodeImage(bytes);
       if (image == null) return null;
 
+      // Aplicar filtros quirúrgicos para OCR
       image = img.bakeOrientation(image);
       image = img.grayscale(image);
       image = img.contrast(image, contrast: 1.25);
       image = img.adjustColor(image, brightness: 1.05);
 
-      return Uint8List.fromList(img.encodeJpg(image, quality: 90));
+      // ALTA CALIDAD PARA OCR: Redimensionamos a 1200px y calidad 85% para máxima precisión
+      if (image.width > 1200) {
+        image = img.copyResize(image, width: 1200, interpolation: img.Interpolation.linear);
+      }
+
+      return Uint8List.fromList(img.encodeJpg(image, quality: 85));
     } catch (e) {
       return null;
     }
@@ -85,30 +96,15 @@ class GoogleMlKitOCRService implements OCRService {
 
     if (allLines.isEmpty) return "";
 
-    // 1. Ordenar de arriba hacia abajo
+    // Ordenar de arriba hacia abajo
     allLines.sort((a, b) => a.boundingBox.top.compareTo(b.boundingBox.top));
 
-    // 2. Agrupar líneas que están en la misma fila horizontal (umbral de 25px)
-    final List<List<TextLine>> rows = [];
-    if (allLines.isNotEmpty) {
-      List<TextLine> currentRow = [allLines[0]];
-      for (int i = 1; i < allLines.length; i++) {
-        final line = allLines[i];
-        final prevLine = allLines[i - 1];
-        if ((line.boundingBox.top - prevLine.boundingBox.top).abs() < 25) {
-          currentRow.add(line);
-        } else {
-          rows.add(currentRow);
-          currentRow = [line];
-        }
-      }
-      rows.add(currentRow);
-    }
-
     final List<String> optimizedLines = [];
+    
+    // Filtro de ruido menos agresivo para no perder información vital
     final noiseRegex = RegExp(r'(tel|http|www|dir|fax|cod|iva|mesa|camarero|vuelva|visita|gracias)', caseSensitive: false);
 
-    for (var row in rows) {
+    for (var row in _groupLinesByRow(allLines)) {
       // Ordenar elementos de la fila de izquierda a derecha
       row.sort((a, b) => a.boundingBox.left.compareTo(b.boundingBox.left));
       
@@ -124,6 +120,25 @@ class GoogleMlKitOCRService implements OCRService {
     }
 
     return optimizedLines.join('\n');
+  }
+
+  List<List<TextLine>> _groupLinesByRow(List<TextLine> allLines) {
+    final List<List<TextLine>> rows = [];
+    if (allLines.isEmpty) return rows;
+
+    List<TextLine> currentRow = [allLines[0]];
+    for (int i = 1; i < allLines.length; i++) {
+      final line = allLines[i];
+      final prevLine = allLines[i - 1];
+      if ((line.boundingBox.top - prevLine.boundingBox.top).abs() < 25) {
+        currentRow.add(line);
+      } else {
+        rows.add(currentRow);
+        currentRow = [line];
+      }
+    }
+    rows.add(currentRow);
+    return rows;
   }
 
   void dispose() {

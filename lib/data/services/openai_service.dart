@@ -33,7 +33,7 @@ Tu objetivo es identificar el NOMBRE DEL ESTABLECIMIENTO y el IMPORTE TOTAL.
 
 INSTRUCCIONES CRÍTICAS:
 1. El NOMBRE DEL ESTABLECIMIENTO suele estar al principio. Puede ocupar una o VARIAS LÍNEAS consecutivas. Debes CONCATENARLAS en una sola frase coherente.
-2. EXTRAE ÚNICAMENTE EL NOMBRE COMERCIAL. No incluyas direcciones, calles, números, códigos postales, ciudades o provincias. (Ejemplo: usa "Mercadona" en lugar de "Mercadona Calle Mayor 1").
+2. EXTRAE ÚNICAMENTE LA MARCA COMERCIAL PRINCIPAL. Elimina ciudades, barrios, centros comerciales, sucursales o direcciones.
 3. El IMPORTE TOTAL es el valor final asociado a "TOTAL", "TOTAL EUR", "A PAGAR" o similar.
 4. Formato de salida: SOLO un JSON minificado {"n":"nombre_comercio_completo","p":importe_total}.
 5. Si no hay un nombre claro al inicio, usa "Ticket".'''

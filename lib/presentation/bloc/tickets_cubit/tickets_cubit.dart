@@ -60,16 +60,18 @@ class TicketsCubit extends Cubit<TicketsState> {
   Future<void> processTicketImage(File imageFile) async {
     emit(state.copyWith(status: TicketsStatus.loading));
     try {
-      // 1. Comprimir imagen en un hilo secundario pasando solo la ruta para no bloquear la UI
+      // 1. Procesar con OCR/AI usando la imagen original para máxima efectividad
+      // (El servicio de OCR optimizará una copia temporal internamente)
+      final detectedItems = await processTicketImageUseCase(imageFile, Preferences.uId);
+
+      // 2. Comprimir para guardar (esto es lo que se sube a Appwrite)
+      // Parámetros optimizados para ~100KB y nítidez en impresión a tamaño real
       final compressedFile = await _compressImage(imageFile.path);
 
-      // 2. Guardar la imagen permanentemente en almacenamiento local
+      // 3. Guardar localmente de forma permanente
       final appDir = await getApplicationDocumentsDirectory();
       final fileName = 'ticket_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final savedImage = await compressedFile.copy('${appDir.path}/$fileName');
-
-      // 3. Procesar con OCR/AI (Sin esperar a la subida de Appwrite)
-      final detectedItems = await processTicketImageUseCase(imageFile, Preferences.uId);
       
       if (detectedItems.isNotEmpty) {
         final ticket = detectedItems.first.copyWith(
@@ -79,6 +81,9 @@ class TicketsCubit extends Cubit<TicketsState> {
         await saveTicketItemUseCase(ticket);
       }
       
+      // Limpieza de temporales de compresión
+      if (compressedFile.existsSync()) await compressedFile.delete().catchError((_) => compressedFile);
+      
       await loadItems();
     } catch (e) {
       emit(state.copyWith(status: TicketsStatus.failure, errorMessage: "Error al procesar ticket: $e"));
@@ -86,26 +91,26 @@ class TicketsCubit extends Cubit<TicketsState> {
   }
 
   Future<File> _compressImage(String imagePath) async {
-    // Pasamos el path en lugar de los bytes para evitar copias pesadas en memoria
     final compressedBytes = await compute(_compressImageTask, imagePath);
     
     final tempDir = await getTemporaryDirectory();
-    final tempFile = File('${tempDir.path}/temp_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    final tempFile = File('${tempDir.path}/save_${DateTime.now().millisecondsSinceEpoch}.jpg');
     return await tempFile.writeAsBytes(compressedBytes);
   }
 
   static Uint8List _compressImageTask(String path) {
-    // La lectura del archivo ocurre dentro del Isolate
     final bytes = File(path).readAsBytesSync();
     final image = img.decodeImage(bytes);
     if (image == null) return bytes;
 
     img.Image resized = image;
-    if (image.width > 1200) {
-      resized = img.copyResize(image, width: 1200);
+    // Optimización fina: 900px de ancho mantiene equilibrio impresión/peso
+    if (image.width > 900) {
+      resized = img.copyResize(image, width: 900, interpolation: img.Interpolation.linear);
     }
 
-    final compressed = img.encodeJpg(resized, quality: 80);
+    // Calidad 55% para intentar bajar de los 150KB hacia los 100KB sin ruido excesivo
+    final compressed = img.encodeJpg(resized, quality: 55);
     return Uint8List.fromList(compressed);
   }
 
