@@ -25,7 +25,7 @@ class TicketsAppBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'ESCÁNER DE TICKETS',
+                'GUARDA TUS TICKETS',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,

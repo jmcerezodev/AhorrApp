@@ -59,7 +59,7 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('ESCÁNER DE TICKETS'), findsOneWidget);
+      expect(find.text('GUARDA TUS TICKETS'), findsOneWidget);
       expect(find.text('Digitaliza tus compras.'), findsOneWidget);
     });
 
