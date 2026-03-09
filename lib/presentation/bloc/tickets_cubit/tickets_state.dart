@@ -18,13 +18,19 @@ class TicketsState extends Equatable {
   double get totalAmount => items.fold(0, (sum, item) => sum + item.amount);
 
   List<TicketItem> get filteredItems {
-    if (searchQuery.isEmpty) return items;
-    return items.where((item) {
-      final nameLower = item.name.toLowerCase();
-      final categoryLower = item.category.toLowerCase();
-      final searchLower = searchQuery.toLowerCase();
-      return nameLower.contains(searchLower) || categoryLower.contains(searchLower);
-    }).toList();
+    final List<TicketItem> list = searchQuery.isEmpty 
+      ? List<TicketItem>.from(items)
+      : items.where((item) {
+          final nameLower = item.name.toLowerCase();
+          final categoryLower = item.category.toLowerCase();
+          final searchLower = searchQuery.toLowerCase();
+          return nameLower.contains(searchLower) || categoryLower.contains(searchLower);
+        }).toList();
+
+    // Ordenar por fecha descendente: los últimos escaneados aparecen primero
+    list.sort((a, b) => b.date.compareTo(a.date));
+    
+    return list;
   }
 
   TicketsState copyWith({

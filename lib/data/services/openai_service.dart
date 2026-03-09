@@ -32,8 +32,8 @@ class OpenAIService implements AIService {
 Tu objetivo es identificar el NOMBRE DEL ESTABLECIMIENTO y el IMPORTE TOTAL.
 
 INSTRUCCIONES CRÍTICAS:
-1. El NOMBRE DEL ESTABLECIMIENTO suele estar al principio. Puede ocupar una o VARIAS LÍNEAS consecutivas (ej: "BAR EL RINCÓN" en una línea y "DE MORALES" en la siguiente). Debes CONCATENARLAS en una sola frase coherente.
-2. Ignora direcciones, CIFs, teléfonos o textos legales en la cabecera.
+1. El NOMBRE DEL ESTABLECIMIENTO suele estar al principio. Puede ocupar una o VARIAS LÍNEAS consecutivas. Debes CONCATENARLAS en una sola frase coherente.
+2. EXTRAE ÚNICAMENTE EL NOMBRE COMERCIAL. No incluyas direcciones, calles, números, códigos postales, ciudades o provincias. (Ejemplo: usa "Mercadona" en lugar de "Mercadona Calle Mayor 1").
 3. El IMPORTE TOTAL es el valor final asociado a "TOTAL", "TOTAL EUR", "A PAGAR" o similar.
 4. Formato de salida: SOLO un JSON minificado {"n":"nombre_comercio_completo","p":importe_total}.
 5. Si no hay un nombre claro al inicio, usa "Ticket".'''
@@ -44,11 +44,26 @@ INSTRUCCIONES CRÍTICAS:
             }
           ],
           'temperature': 0,
+          'max_tokens': 150,
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
+        // --- REGISTRO DE TOKENS REALES ---
+        if (data.containsKey('usage')) {
+          final usage = data['usage'];
+          final int promptTokens = usage['prompt_tokens'] ?? 0;
+          final int completionTokens = usage['completion_tokens'] ?? 0;
+          final int totalTokens = usage['total_tokens'] ?? 0;
+
+          debugPrint('📊 [OpenAI Usage] Model: $_model');
+          debugPrint('   🔹 Prompt Tokens: $promptTokens');
+          debugPrint('   🔹 Completion Tokens: $completionTokens');
+          debugPrint('   🔹 Total Tokens: $totalTokens');
+        }
+
         final String content = _cleanJsonResponse(data['choices'][0]['message']['content']);
         final Map<String, dynamic> jsonMap = jsonDecode(content);
 
@@ -91,7 +106,6 @@ INSTRUCCIONES CRÍTICAS:
     final String clean = text.trim();
     if (clean.toLowerCase() == 'ticket') return 'Ticket';
     
-    // Capitaliza cada palabra si el nombre es largo (opcional, pero queda mejor)
     return clean.split(' ').map((word) {
       if (word.isEmpty) return '';
       return word[0].toUpperCase() + word.substring(1).toLowerCase();

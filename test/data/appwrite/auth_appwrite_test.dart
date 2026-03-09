@@ -27,12 +27,10 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(deviceInfoChannel, (MethodCall methodCall) async {
       if (methodCall.method == 'getDeviceInfo') {
-        // Retornamos un mapa que sea compatible tanto con Android como con Windows en el mock
         return {
           'computerName': 'Test-PC',
           'numberOfCores': 4,
           'systemMemoryInMegabytes': 8192,
-          // Campos de Android por si acaso
           'brand': 'Google',
           'model': 'Pixel 4',
           'sdkInt': 30,

@@ -45,7 +45,7 @@ class DeleteTicketItemDialog extends StatelessWidget {
             const SizedBox(height: 20),
             
             Text(
-              '¿ELIMINAR PRODUCTO?',
+              '¿ELIMINAR TICKET?',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -57,7 +57,7 @@ class DeleteTicketItemDialog extends StatelessWidget {
             const SizedBox(height: 15),
             
             Text(
-              'Estás a punto de borrar "$itemName" de la lista detectada. Esta acción no se puede deshacer.',
+              'Estás a punto de borrar el ticket de "$itemName". Esta acción no se puede deshacer.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,

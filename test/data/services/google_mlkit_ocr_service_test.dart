@@ -26,12 +26,11 @@ void main() {
       final mockLine1 = MockTextLine();
       final mockLine2 = MockTextLine();
 
-      // Añadimos un número (1.50) para evitar que se filtre por la lógica de ahorro de tokens
       when(() => mockLine1.text).thenReturn('PRODUCTO    EXTRA 1.50');
       when(() => mockLine1.boundingBox).thenReturn(const Rect.fromLTWH(0, 100, 100, 20));
 
-      // CIF es una noiseKeyword, debe filtrarse
-      when(() => mockLine2.text).thenReturn('CIF: 12345678A');
+      // 'mesa' es una noiseKeyword en la regex, debe filtrarse
+      when(() => mockLine2.text).thenReturn('Mesa: 5');
       when(() => mockLine2.boundingBox).thenReturn(const Rect.fromLTWH(0, 200, 100, 20));
 
       when(() => mockBlock.lines).thenReturn([mockLine1, mockLine2]);
@@ -40,7 +39,7 @@ void main() {
       final result = ocrService.extractOptimizedText(mockText);
 
       expect(result, contains('PRODUCTO EXTRA 1.50'));
-      expect(result, isNot(contains('CIF')));
+      expect(result, isNot(contains('Mesa')));
     });
 
     test('extractOptimizedText debe unir líneas en la misma fila (umbral 25px)', () {
@@ -76,7 +75,6 @@ void main() {
 
       final result = ocrService.extractOptimizedText(mockText);
 
-      // Ahora esperamos que NO sea vacío, porque necesitamos el nombre del establecimiento
       expect(result, equals('BAR EL RINCON DE MORALES'));
     });
   });

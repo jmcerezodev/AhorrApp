@@ -16,7 +16,7 @@ class GoogleMlKitOCRService implements OCRService {
   @override
   Future<List<TicketItem>> processTicket(File imageFile, String userId) async {
     try {
-      File optimizedImage = await _optimizeImage(imageFile);
+      File optimizedImage = await _optimizeImageInBackground(imageFile.path);
       
       InputImage inputImage = InputImage.fromFile(optimizedImage);
       RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
@@ -41,25 +41,38 @@ class GoogleMlKitOCRService implements OCRService {
     }
   }
 
-  Future<File> _optimizeImage(File imageFile) async {
+  Future<File> _optimizeImageInBackground(String imagePath) async {
     try {
-      final bytes = await imageFile.readAsBytes();
-      img.Image? image = img.decodeImage(bytes);
-      if (image == null) return imageFile;
-
-      image = img.bakeOrientation(image);
-      image = img.grayscale(image);
-      image = img.contrast(image, contrast: 1.2);
-      image = img.adjustColor(image, brightness: 1.02);
+      final optimizedBytes = await compute(_imageProcessingTask, imagePath);
+      
+      if (optimizedBytes == null) return File(imagePath);
 
       final tempDir = await getTemporaryDirectory();
       final tempPath = '${tempDir.path}/opt_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final File optimizedFile = File(tempPath);
-      await optimizedFile.writeAsBytes(img.encodeJpg(image, quality: 95));
+      await optimizedFile.writeAsBytes(optimizedBytes);
       
       return optimizedFile;
     } catch (e) {
-      return imageFile;
+      debugPrint('⚠️ Error en optimización en background: $e');
+      return File(imagePath);
+    }
+  }
+
+  static Uint8List? _imageProcessingTask(String path) {
+    try {
+      final bytes = File(path).readAsBytesSync();
+      img.Image? image = img.decodeImage(bytes);
+      if (image == null) return null;
+
+      image = img.bakeOrientation(image);
+      image = img.grayscale(image);
+      image = img.contrast(image, contrast: 1.25);
+      image = img.adjustColor(image, brightness: 1.05);
+
+      return Uint8List.fromList(img.encodeJpg(image, quality: 90));
+    } catch (e) {
+      return null;
     }
   }
 
@@ -72,9 +85,10 @@ class GoogleMlKitOCRService implements OCRService {
 
     if (allLines.isEmpty) return "";
 
-    // Ordenar de arriba hacia abajo para mantener la estructura del ticket
+    // 1. Ordenar de arriba hacia abajo
     allLines.sort((a, b) => a.boundingBox.top.compareTo(b.boundingBox.top));
 
+    // 2. Agrupar líneas que están en la misma fila horizontal (umbral de 25px)
     final List<List<TextLine>> rows = [];
     if (allLines.isNotEmpty) {
       List<TextLine> currentRow = [allLines[0]];
@@ -92,26 +106,19 @@ class GoogleMlKitOCRService implements OCRService {
     }
 
     final List<String> optimizedLines = [];
-    final noiseKeywords = {
-      'cif', 'subtotal', 'efectivo', 'tarjeta', 'pago', 
-      'tel', 'direccion', 'cliente', 'articulos', 'puntos', 
-      'promocion', 'factura', 'gracias', 'atendido', 'vendedor'
-    };
-    
+    final noiseRegex = RegExp(r'(tel|http|www|dir|fax|cod|iva|mesa|camarero|vuelva|visita|gracias)', caseSensitive: false);
+
     for (var row in rows) {
+      // Ordenar elementos de la fila de izquierda a derecha
       row.sort((a, b) => a.boundingBox.left.compareTo(b.boundingBox.left));
       
+      // Unir textos de la fila con el separador de columna |
       String rowText = row.map((l) => l.text.trim()).join(" | ");
       rowText = rowText.replaceAll(RegExp(r'\s+'), ' ').trim();
       
-      final lowerText = rowText.toLowerCase();
-
-      // Saltamos ruido conocido pero NO saltamos si no hay números, 
-      // para capturar el nombre del establecimiento al principio.
-      if (noiseKeywords.any((kw) => lowerText.contains(kw))) continue;
-      
-      if (RegExp(r'^[ \.\-\*_:=|]+$').hasMatch(rowText)) continue;
       if (rowText.length < 2) continue;
+      if (noiseRegex.hasMatch(rowText)) continue;
+      if (RegExp(r'^[ \.\-\*_:=|]+$').hasMatch(rowText)) continue;
       
       optimizedLines.add(rowText);
     }

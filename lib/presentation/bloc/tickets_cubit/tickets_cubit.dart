@@ -60,8 +60,8 @@ class TicketsCubit extends Cubit<TicketsState> {
   Future<void> processTicketImage(File imageFile) async {
     emit(state.copyWith(status: TicketsStatus.loading));
     try {
-      // 1. Comprimir imagen en un hilo secundario para no bloquear la UI
-      final compressedFile = await _compressImage(imageFile);
+      // 1. Comprimir imagen en un hilo secundario pasando solo la ruta para no bloquear la UI
+      final compressedFile = await _compressImage(imageFile.path);
 
       // 2. Guardar la imagen permanentemente en almacenamiento local
       final appDir = await getApplicationDocumentsDirectory();
@@ -72,10 +72,9 @@ class TicketsCubit extends Cubit<TicketsState> {
       final detectedItems = await processTicketImageUseCase(imageFile, Preferences.uId);
       
       if (detectedItems.isNotEmpty) {
-        // El ticket se guarda con la ruta local. La subida a Appwrite se hará en segundo plano (SyncService)
         final ticket = detectedItems.first.copyWith(
           imagePath: savedImage.path,
-          remoteImageId: null, // Se asignará durante la sincronización
+          remoteImageId: null,
         );
         await saveTicketItemUseCase(ticket);
       }
@@ -86,19 +85,18 @@ class TicketsCubit extends Cubit<TicketsState> {
     }
   }
 
-  Future<File> _compressImage(File file) async {
-    final bytes = await file.readAsBytes();
-    
-    // Usamos compute para realizar la decodificación y compresión en un Isolate separado
-    final compressedBytes = await compute(_compressImageTask, bytes);
+  Future<File> _compressImage(String imagePath) async {
+    // Pasamos el path en lugar de los bytes para evitar copias pesadas en memoria
+    final compressedBytes = await compute(_compressImageTask, imagePath);
     
     final tempDir = await getTemporaryDirectory();
     final tempFile = File('${tempDir.path}/temp_${DateTime.now().millisecondsSinceEpoch}.jpg');
     return await tempFile.writeAsBytes(compressedBytes);
   }
 
-  // Función de nivel superior o estática para ser usada con compute
-  static Uint8List _compressImageTask(Uint8List bytes) {
+  static Uint8List _compressImageTask(String path) {
+    // La lectura del archivo ocurre dentro del Isolate
+    final bytes = File(path).readAsBytesSync();
     final image = img.decodeImage(bytes);
     if (image == null) return bytes;
 

@@ -1,5 +1,8 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/add_edit_ticket_item_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/delete_ticket_item_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:ahorrapp/presentation/widgets/tickets_screen/ticket_item_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -51,11 +54,52 @@ class TicketsHistoryWidget extends StatelessWidget {
             return Padding(
               key: ValueKey(item.id),
               padding: const EdgeInsets.only(bottom: 8),
-              child: TicketItemCard(
-                item: item,
-                humanizeNumbers: humanizeNumbers,
-                colorScheme: colorScheme,
-                isDark: isDark,
+              child: Dismissible(
+                key: Key('dismiss_${item.id}'),
+                direction: DismissDirection.horizontal,
+                background: const SwipeBackgroundWidget(
+                  color: Colors.green,
+                  icon: Icons.edit_note_rounded,
+                  label: 'EDITAR',
+                  alignment: Alignment.centerLeft,
+                ),
+                secondaryBackground: const SwipeBackgroundWidget(
+                  color: Colors.red,
+                  icon: Icons.delete_sweep_rounded,
+                  label: 'ELIMINAR',
+                  alignment: Alignment.centerRight,
+                ),
+                confirmDismiss: (direction) async {
+                  if (direction == DismissDirection.startToEnd) {
+                    // EDITAR (Deslizar a la derecha)
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) => AddEditTicketItemDialog(item: item),
+                    );
+                    return false; // No eliminar de la lista
+                  } else {
+                    // ELIMINAR (Deslizar a la izquierda)
+                    return await showDialog<bool>(
+                      context: context,
+                      builder: (context) => DeleteTicketItemDialog(
+                        itemId: item.id,
+                        itemName: item.name,
+                      ),
+                    );
+                  }
+                },
+                onDismissed: (direction) {
+                  if (direction == DismissDirection.endToStart) {
+                    context.read<TicketsCubit>().deleteItem(item.id);
+                  }
+                },
+                child: TicketItemCard(
+                  item: item,
+                  humanizeNumbers: humanizeNumbers,
+                  colorScheme: colorScheme,
+                  isDark: isDark,
+                ),
               ),
             );
           },

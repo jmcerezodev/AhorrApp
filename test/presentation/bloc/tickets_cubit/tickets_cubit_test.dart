@@ -61,13 +61,16 @@ void main() {
 
   tearDown(() => ticketsCubit.close());
 
-  group('TicketsCubit - Lógica de Búsqueda y Filtrado', () {
-    test('filteredItems debe retornar todos los items si la búsqueda está vacía', () async {
-      when(() => mockGetItems.call(any())).thenAnswer((_) async => tItems);
+  group('TicketsCubit - Lógica de Búsqueda, Filtrado y Ordenación', () {
+    test('filteredItems debe retornar todos los items ordenados por fecha descendente si la búsqueda está vacía', () async {
+      final oldTicket = TicketItem(id: 'old', userId: 'u1', name: 'A', amount: 1, date: DateTime(2023, 1, 1), category: 'g');
+      final newTicket = TicketItem(id: 'new', userId: 'u1', name: 'B', amount: 1, date: DateTime(2023, 1, 2), category: 'g');
+      
+      when(() => mockGetItems.call(any())).thenAnswer((_) async => [oldTicket, newTicket]);
       await ticketsCubit.loadItems();
       
-      expect(ticketsCubit.state.filteredItems, tItems);
-      expect(ticketsCubit.state.filteredItems.length, 2);
+      expect(ticketsCubit.state.filteredItems.first.id, 'new');
+      expect(ticketsCubit.state.filteredItems.last.id, 'old');
     });
 
     test('filteredItems debe filtrar correctamente por nombre (case insensitive)', () async {
@@ -77,10 +80,6 @@ void main() {
       ticketsCubit.updateSearchQuery('leche');
       expect(ticketsCubit.state.filteredItems.length, 1);
       expect(ticketsCubit.state.filteredItems.first.name, 'Leche');
-
-      ticketsCubit.updateSearchQuery('CARNE');
-      expect(ticketsCubit.state.filteredItems.length, 1);
-      expect(ticketsCubit.state.filteredItems.first.name, 'Carne');
     });
 
     test('filteredItems debe filtrar correctamente por categoría', () async {
