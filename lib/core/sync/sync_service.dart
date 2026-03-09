@@ -9,6 +9,7 @@ import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/pending_sync.dart';
 import 'package:ahorrapp/data/local/models/local_ticket_item.dart';
+import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:isar/isar.dart';
 
@@ -109,6 +110,17 @@ class SyncService {
 
   Future<bool> _syncHistory(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'create') {
+      String? remoteImageId = data['remoteImageId'];
+      final String? ticketId = data['ticketId'];
+
+      // FALLBACK: Si no tiene remoteImageId pero sí ticketId, lo buscamos en el ticket local
+      if ((remoteImageId == null || remoteImageId.isEmpty) && ticketId != null) {
+        final ticket = await _localDb.isar.localTicketItems.filter().ticketItemIdEqualTo(ticketId).findFirst();
+        if (ticket != null && ticket.remoteImageId != null) {
+          remoteImageId = ticket.remoteImageId;
+        }
+      }
+
       await _appwriteRepo.addHistory(
         documentId: pending.appwriteId!,
         userId: data['userId'] ?? '',
@@ -123,6 +135,7 @@ class SyncService {
         category: data['category'] ?? (data['isIncome'] == true ? 'otro' : 'general'),
         ticketId: data['ticketId'],
         imagePath: data['imagePath'],
+        remoteImageId: remoteImageId,
         isTransferred: data['isTransferred'] ?? false,
       );
       return true;
@@ -241,15 +254,24 @@ class SyncService {
       String? remoteImageId = data['remoteImageId'];
       final String? localPath = data['imagePath'];
 
-      // 1. Si no tiene ID remoto pero tenemos el path local, lo subimos ahora en segundo plano
+      // SEGURIDAD: Antes de subir, verificamos si ya existe el ID remoto en la DB local
+      // Esto evita que tareas posteriores (como marcar como transferido) suban de nuevo si la UI mandó null
+      if (remoteImageId == null || remoteImageId.isEmpty) {
+        final localTicket = await _localDb.isar.localTicketItems.filter().ticketItemIdEqualTo(pending.appwriteId!).findFirst();
+        if (localTicket != null && localTicket.remoteImageId != null && localTicket.remoteImageId!.isNotEmpty) {
+          remoteImageId = localTicket.remoteImageId;
+        }
+      }
+
+      // 1. Si SIGUE sin tener ID remoto pero tenemos el path local, lo subimos
       if ((remoteImageId == null || remoteImageId.isEmpty) && localPath != null) {
         try {
           final file = File(localPath);
           if (await file.exists()) {
-            print('☁️ SyncService: Subiendo imagen pendiente...');
+            print('☁️ SyncService: Subiendo imagen ticket...');
             remoteImageId = await _appwriteRepo.uploadTicketImage(file);
             
-            // Actualizar registro local en Isar para que no intente subirla de nuevo
+            // Actualizar registro local en Isar
             final isar = _localDb.isar;
             final localTicket = await isar.localTicketItems.filter().ticketItemIdEqualTo(pending.appwriteId!).findFirst();
             if (localTicket != null) {
@@ -258,20 +280,18 @@ class SyncService {
                 await isar.localTicketItems.put(localTicket);
               });
             }
-            // Actualizamos los datos para la subida a la DB de Appwrite
-            data['remoteImageId'] = remoteImageId;
           }
         } catch (e) {
-          print('❌ Error subiendo imagen en segundo plano: $e');
+          print('❌ Error subiendo imagen: $e');
           return false;
         }
       }
 
-      // Limpiamos 'imagePath' antes de enviar a Appwrite para evitar errores de esquema
       final cleanData = Map<String, dynamic>.from(data);
       cleanData.remove('imagePath');
+      cleanData['remoteImageId'] = remoteImageId;
 
-      // 2. Sincronizar documento en la DB de Appwrite
+      // 2. Sincronizar documento
       try {
         await _appwriteRepo.updateTicket(
           documentId: pending.appwriteId!, 

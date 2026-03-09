@@ -2,6 +2,7 @@ import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/repositories/i_movement_repository.dart';
+import 'package:isar/isar.dart';
 import '../local/local_db_service.dart';
 import '../local/models/local_history.dart';
 import '../local/models/local_saving.dart';
@@ -64,7 +65,8 @@ class IsarMovementRepository implements IMovementRepository {
         ..category = movement.category
         ..ticketId = movement.ticketId
         ..imagePath = movement.imagePath
-        ..isTransferred = movement.isTransferred; // AÑADIDO
+        ..remoteImageId = movement.remoteImageId
+        ..isTransferred = movement.isTransferred;
 
       await _localDb.saveHistoryItems([localItem]);
     }
@@ -90,6 +92,24 @@ class IsarMovementRepository implements IMovementRepository {
     throw UnimplementedError('La sincronización se gestiona desde el repositorio de nube.');
   }
 
+  @override
+  Future<void> detachTicketFromMovements(String ticketId) async {
+    final isar = _localDb.isar;
+    final movements = await isar.localHistorys.filter().ticketIdEqualTo(ticketId).findAll();
+    
+    if (movements.isNotEmpty) {
+      await isar.writeTxn(() async {
+        for (var m in movements) {
+          m.ticketId = null;
+          m.imagePath = null;
+          m.remoteImageId = null;
+          m.isTransferred = false;
+          await isar.localHistorys.put(m);
+        }
+      });
+    }
+  }
+
   Movement _mapHistoryToMovement(LocalHistory local) {
     return Movement(
       id: local.appwriteId,
@@ -106,7 +126,8 @@ class IsarMovementRepository implements IMovementRepository {
       category: local.category,
       ticketId: local.ticketId,
       imagePath: local.imagePath,
-      isTransferred: local.isTransferred, // AÑADIDO
+      remoteImageId: local.remoteImageId,
+      isTransferred: local.isTransferred,
     );
   }
 

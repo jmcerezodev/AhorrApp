@@ -1,13 +1,16 @@
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/entities/ticket_item.dart';
+import 'package:ahorrapp/domain/repositories/tickets_repository.dart';
 import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
 import 'package:uuid/uuid.dart';
 
 class TransferTicketsToExpensesUseCase {
   final SaveMovementUseCase saveMovementUseCase;
+  final TicketsRepository ticketsRepository;
 
   TransferTicketsToExpensesUseCase({
     required this.saveMovementUseCase,
+    required this.ticketsRepository,
   });
 
   Future<void> call({
@@ -27,8 +30,15 @@ class TransferTicketsToExpensesUseCase {
       final double totalAmount = items.fold(0, (sum, item) => sum + item.amount);
       final String finalName = packName ?? (items.isNotEmpty ? items.first.name : 'Compra Ticket');
       
+      // Intentamos obtener la versión más reciente del primer ticket (para el ID remoto)
+      TicketItem? latestItem;
+      if (items.isNotEmpty) {
+        latestItem = await ticketsRepository.getTicketItemById(items.first.id);
+      }
+      
       final String? mainTicketId = items.length == 1 ? items.first.id : null;
-      final String? mainImagePath = items.length == 1 ? items.first.imagePath : null;
+      final String? mainImagePath = items.length == 1 ? (latestItem?.imagePath ?? items.first.imagePath) : null;
+      final String? mainRemoteImageId = items.length == 1 ? (latestItem?.remoteImageId ?? items.first.remoteImageId) : null;
 
       final packMovement = Movement(
         id: const Uuid().v4(),
@@ -44,16 +54,20 @@ class TransferTicketsToExpensesUseCase {
         category: items.isNotEmpty ? items.first.category : 'general',
         ticketId: mainTicketId,
         imagePath: mainImagePath,
-        isTransferred: true, // MARCADO COMO TRANSFERIDO
+        remoteImageId: mainRemoteImageId,
+        isTransferred: true,
       );
 
       await saveMovementUseCase(packMovement);
     } else {
       for (var item in items) {
+        // Obtenemos la versión más reciente del ticket desde el repositorio local
+        final latestItem = await ticketsRepository.getTicketItemById(item.id) ?? item;
+
         final itemMovement = Movement(
           id: const Uuid().v4(),
-          name: item.name,
-          amount: item.amount,
+          name: latestItem.name,
+          amount: latestItem.amount,
           type: MovementType.expense,
           isIncome: false,
           date: dateStr,
@@ -61,10 +75,11 @@ class TransferTicketsToExpensesUseCase {
           month: month,
           year: now.year,
           createdAt: now,
-          category: item.category,
-          ticketId: item.id,
-          imagePath: item.imagePath,
-          isTransferred: true, // MARCADO COMO TRANSFERIDO
+          category: latestItem.category,
+          ticketId: latestItem.id,
+          imagePath: latestItem.imagePath,
+          remoteImageId: latestItem.remoteImageId, // Usamos el ID remoto más reciente
+          isTransferred: true,
         );
         
         await saveMovementUseCase(itemMovement);

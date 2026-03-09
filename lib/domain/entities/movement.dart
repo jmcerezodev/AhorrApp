@@ -16,6 +16,7 @@ class Movement {
   final String category; 
   final String? ticketId; // ID del ticket asociado (opcional)
   final String? imagePath; // Ruta de la imagen del ticket (opcional)
+  final String? remoteImageId; // ID de la imagen en Appwrite (opcional)
   final bool isTransferred; // Indica si viene de un ticket
 
   Movement({
@@ -34,6 +35,7 @@ class Movement {
     this.category = 'general',
     this.ticketId,
     this.imagePath,
+    this.remoteImageId,
     this.isTransferred = false,
   });
 

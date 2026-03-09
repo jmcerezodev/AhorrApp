@@ -28,8 +28,14 @@ class TicketsRepositoryImpl implements TicketsRepository {
 
   @override
   Future<void> saveTicketItem(TicketItem item) async {
+    // 1. Guardar localmente
     await localDataSource.saveTicketItem(_fromEntity(item));
     
+    // 2. Recuperar la versión más reciente de Isar (por si SyncService actualizó el remoteImageId)
+    final latestModel = await localDataSource.getTicketItemById(item.id);
+    final String? remoteImageId = latestModel?.remoteImageId ?? item.remoteImageId;
+
+    // 3. Añadir a la cola de sincronización con el ID remoto más actual
     await _localDb.addPendingSync(
       'save', 
       'tickets', 
@@ -42,7 +48,7 @@ class TicketsRepositoryImpl implements TicketsRepository {
         'category': item.category,
         'position': item.position,
         'isTransferred': item.isTransferred,
-        'remoteImageId': item.remoteImageId,
+        'remoteImageId': remoteImageId, // USAR EL VALOR MÁS RECIENTE
         'imagePath': item.imagePath, 
       },
       appwriteId: item.id,

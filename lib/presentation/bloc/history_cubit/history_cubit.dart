@@ -101,6 +101,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       'category': e.category,
       'ticketId': e.ticketId,
       'imagePath': e.imagePath,
+      'remoteImageId': e.remoteImageId, // AÑADIDO
       'isTransferred': e.isTransferred,
     }).toList();
     emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
@@ -129,6 +130,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         'category': e.category,
         'ticketId': e.ticketId,
         'imagePath': e.imagePath,
+        'remoteImageId': e.remoteImageId, // AÑADIDO
         'isTransferred': e.isTransferred,
       }).toList();
       emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
@@ -212,6 +214,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       ..category = doc.data['category'] ?? (doc.data['isIncome'] == true ? 'otro' : 'general')
       ..ticketId = doc.data['ticketId']
       ..imagePath = doc.data['imagePath']
+      ..remoteImageId = doc.data['remoteImageId'] // AÑADIDO
       ..isTransferred = doc.data['isTransferred'] ?? false
     ).toList();
   }

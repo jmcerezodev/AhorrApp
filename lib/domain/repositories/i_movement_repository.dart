@@ -7,4 +7,5 @@ abstract class IMovementRepository {
   Future<double> getGlobalBalance(String userId);
   Future<void> updateGlobalBalance(String userId, double amount);
   Future<Map<String, dynamic>> syncAllData(String userId, Function(double) onProgress);
+  Future<void> detachTicketFromMovements(String ticketId);
 }

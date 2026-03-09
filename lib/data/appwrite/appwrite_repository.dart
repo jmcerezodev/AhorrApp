@@ -351,6 +351,7 @@ class AppwriteRepository {
     String category = 'general',
     String? ticketId,
     String? imagePath,
+    String? remoteImageId,
     bool isTransferred = false,
   }) async {
     return await _databases.createDocument(
@@ -370,6 +371,7 @@ class AppwriteRepository {
         'category': category,
         'ticketId': ticketId,
         'imagePath': imagePath,
+        'remoteImageId': remoteImageId,
         'isTransferred': isTransferred,
       }
     );

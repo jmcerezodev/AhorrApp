@@ -53,6 +53,7 @@ class AppwriteMovementRepository implements IMovementRepository {
         category: movement.category,
         ticketId: movement.ticketId,
         imagePath: movement.imagePath,
+        remoteImageId: movement.remoteImageId,
         isTransferred: movement.isTransferred,
       );
     }
@@ -82,6 +83,12 @@ class AppwriteMovementRepository implements IMovementRepository {
     return await _dataSource.syncFullData(userId, onProgress);
   }
 
+  @override
+  Future<void> detachTicketFromMovements(String ticketId) async {
+    // La sincronización de la desconexión se maneja mediante tareas pendientes de actualización de movimientos
+    // ya que Appwrite no soporta actualizaciones masivas por query fácilmente en el SDK de cliente.
+  }
+
   Movement _mapToMovement(dynamic doc, {required bool isSaving}) {
     final Map<String, dynamic> data = doc.data;
     MovementType type = MovementType.expense;
@@ -108,6 +115,7 @@ class AppwriteMovementRepository implements IMovementRepository {
       category: data['category'] ?? (isSaving ? 'ahorro' : 'general'),
       ticketId: data['ticketId'],
       imagePath: data['imagePath'],
+      remoteImageId: data['remoteImageId'],
       isTransferred: data['isTransferred'] ?? false,
     );
   }

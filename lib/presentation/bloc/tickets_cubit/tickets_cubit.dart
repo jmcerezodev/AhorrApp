@@ -22,8 +22,7 @@ class TicketsCubit extends Cubit<TicketsState> {
   final ReorderTicketItemsUseCase reorderTicketItemsUseCase;
   final ProcessTicketImageUseCase processTicketImageUseCase;
   final DocumentScannerService documentScannerService;
-
-  TicketsCubit({
+TicketsCubit({
     required this.getTicketItemsUseCase,
     required this.saveTicketItemUseCase,
     required this.deleteTicketItemUseCase,
@@ -108,6 +107,8 @@ class TicketsCubit extends Cubit<TicketsState> {
     if (image.width > 900) {
       resized = img.copyResize(image, width: 900, interpolation: img.Interpolation.linear);
     }
+
+    // Calidad 55% para intentar bajar de los 150KB hacia los 100KB sin ruido excesivo
 
     // Calidad 55% para intentar bajar de los 150KB hacia los 100KB sin ruido excesivo
     final compressed = img.encodeJpg(resized, quality: 55);

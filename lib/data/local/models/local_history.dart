@@ -23,5 +23,6 @@ class LocalHistory {
   late String category;
   String? ticketId; // ID del ticket asociado para permitir vinculación y reversión
   String? imagePath; // Ruta de la imagen del ticket
+  String? remoteImageId; // ID de la imagen en Appwrite
   late bool isTransferred; // Indica si viene de un ticket
 }

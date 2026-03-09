@@ -207,10 +207,14 @@ Future<void> setupServiceLocator() async {
   // CASOS DE USO TICKETS
   getIt.registerLazySingleton<GetTicketItemsUseCase>(() => GetTicketItemsUseCase(getIt<TicketsRepository>()));
   getIt.registerLazySingleton<SaveTicketItemUseCase>(() => SaveTicketItemUseCase(getIt<TicketsRepository>()));
-  getIt.registerLazySingleton<DeleteTicketItemUseCase>(() => DeleteTicketItemUseCase(getIt<TicketsRepository>()));
+  getIt.registerLazySingleton<DeleteTicketItemUseCase>(() => DeleteTicketItemUseCase(
+    ticketsRepository: getIt<TicketsRepository>(),
+    movementRepository: getIt<IMovementRepository>(instanceName: 'local'),
+  ));
   getIt.registerLazySingleton<ReorderTicketItemsUseCase>(() => ReorderTicketItemsUseCase(getIt<TicketsRepository>()));
   getIt.registerLazySingleton<TransferTicketsToExpensesUseCase>(() => TransferTicketsToExpensesUseCase(
     saveMovementUseCase: getIt<SaveMovementUseCase>(),
+    ticketsRepository: getIt<TicketsRepository>(),
   ));
   getIt.registerLazySingleton<ProcessTicketImageUseCase>(() => ProcessTicketImageUseCase(getIt<OCRService>()));
 

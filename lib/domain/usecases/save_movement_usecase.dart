@@ -61,8 +61,10 @@ class SaveMovementUseCase {
           'year': movement.year,
           'isRecurrent': movement.isRecurrent,
           'category': movement.category,
-          'ticketId': movement.ticketId, // AÑADIDO
-          'imagePath': movement.imagePath, // AÑADIDO
+          'ticketId': movement.ticketId,
+          'imagePath': movement.imagePath,
+          'remoteImageId': movement.remoteImageId, // AÑADIDO
+          'isTransferred': movement.isTransferred,
         },
         appwriteId: movement.id, 
       );
