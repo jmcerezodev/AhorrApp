@@ -206,6 +206,14 @@ class LocalDbService {
     });
   }
 
+  // --- TICKETS ---
+
+  Future<void> saveTicketItems(List<LocalTicketItem> items) async {
+    await _isar.writeTxn(() async {
+      await _isar.localTicketItems.putAll(items);
+    });
+  }
+
   // --- RESUMEN FINANCIERO ---
 
   Future<void> saveSavingGoal(String userId, double goal) async {

@@ -78,6 +78,7 @@ void main() {
       when(() => mockClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
           .thenAnswer((_) async => http.Response(jsonEncode(mockResponse), 200));
 
+      // Silenciamos el log de error esperado durante el test
       final result = await openAiService.parseTicketText(rawText, userId);
       expect(result, isEmpty);
     });

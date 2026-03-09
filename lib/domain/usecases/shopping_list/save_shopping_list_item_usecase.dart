@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import '../../entities/shopping_list_item.dart';
 import '../../repositories/i_shopping_list_repository.dart';

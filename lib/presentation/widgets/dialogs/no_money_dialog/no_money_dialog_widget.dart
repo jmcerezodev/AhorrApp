@@ -9,7 +9,6 @@ class NoMoneyDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return CustomDialogWrapper(
       // Mantenemos fidelidad visual con el color de borde original para advertencias

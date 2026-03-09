@@ -6,6 +6,7 @@ import 'package:ahorrapp/data/local/models/local_saving.dart';
 import 'package:ahorrapp/data/local/models/local_recurrent_expense.dart';
 import 'package:ahorrapp/data/local/models/local_shopping_list_item.dart';
 import 'package:ahorrapp/data/local/models/local_shopping_template.dart';
+import 'package:ahorrapp/data/local/models/local_ticket_item.dart';
 import 'package:ahorrapp/domain/usecases/get_movements_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
@@ -41,6 +42,7 @@ void main() {
     registerFallbackValue(<LocalRecurrentExpense>[]);
     registerFallbackValue(<LocalShoppingItem>[]);
     registerFallbackValue(<LocalShoppingTemplate>[]);
+    registerFallbackValue(<LocalTicketItem>[]);
   });
 
   setUp(() async {
@@ -129,6 +131,7 @@ void main() {
         'recurrent': [mockRecurrentDoc],
         'shopping': [mockShoppingDoc],
         'templates': [mockTemplateDoc],
+        'tickets': [],
         'savingGoal': 500.0,
       });
       when(() => mockLocalDb.saveHistoryItems(any())).thenAnswer((_) async {});
@@ -136,6 +139,7 @@ void main() {
       when(() => mockLocalDb.saveRecurrentExpenses(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveShoppingListItems(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveShoppingTemplates(any())).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveTicketItems(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveSavingGoal(any(), any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveTotalBalance(any(), any())).thenAnswer((_) async {});
       when(() => mockGetMovementsUseCase(any(), any(), any())).thenAnswer((_) async => []);
@@ -147,6 +151,7 @@ void main() {
       verify(() => mockLocalDb.saveRecurrentExpenses(any())).called(1);
       verify(() => mockLocalDb.saveShoppingListItems(any())).called(1);
       verify(() => mockLocalDb.saveShoppingTemplates(any())).called(1);
+      verify(() => mockLocalDb.saveTicketItems(any())).called(1);
       expect(historyCubit.state.status, HistoryStatus.success);
     });
 

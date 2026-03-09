@@ -4,7 +4,6 @@ import 'package:ahorrapp/domain/services/document_scanner_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
 import 'package:image/image.dart' as img;
 import '../../../core/shared_preferences/preferences.dart';
 import '../../../domain/entities/ticket_item.dart';

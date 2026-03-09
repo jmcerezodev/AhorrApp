@@ -66,11 +66,9 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       final List<LocalShoppingTemplate> templateItems = _convertToLocalTemplates(fullData['templates']);
       await _localDb.saveShoppingTemplates(templateItems);
 
-      // NUEVO: Guardar Tickets
+      // NUEVO: Guardar Tickets usando el método de LocalDbService
       final List<LocalTicketItem> ticketItems = _convertToLocalTickets(fullData['tickets'] ?? []);
-      await _localDb.isar.writeTxn(() async {
-        await _localDb.isar.localTicketItems.putAll(ticketItems);
-      });
+      await _localDb.saveTicketItems(ticketItems);
 
       await _localDb.saveSavingGoal(uid, fullData['savingGoal']);
       final double correctBalance = (fullData['balance'] as num).toDouble();

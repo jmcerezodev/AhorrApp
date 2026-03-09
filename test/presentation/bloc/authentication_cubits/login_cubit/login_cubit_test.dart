@@ -19,37 +19,18 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async => '.');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(packageInfoChannel, (MethodCall methodCall) async => {'appName': 'AhorrApp', 'packageName': 'dev.jmcerezo.ahorrapp', 'version': '1.0.0', 'buildNumber': '1'});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(deviceInfoChannel, (MethodCall methodCall) async {
-      return {
-        'brand': 'Google',
-        'device': 'emulator',
-        'model': 'Pixel 4',
-        'manufacturer': 'Google',
-        'product': 'sdk_gphone_x86',
-        'hardware': 'goldfish',
-        'isPhysicalDevice': false,
-        'sdkInt': 30,
-        'id': 'test-id',
-        'host': 'test-host',
-        'tags': 'test-tags',
-        'type': 'test-type',
-        'board': 'test-board',
-        'display': 'test-display',
-        'fingerprint': 'test-fingerprint',
-        'supportedAbis': ['arm64-v8a'],
-        'supported32BitAbis': [],
-        'supported64BitAbis': ['arm64-v8a'],
-        'version': {
+      if (methodCall.method == 'getDeviceInfo') {
+        return {
+          'computerName': 'Test-PC',
+          'numberOfCores': 4,
+          'systemMemoryInMegabytes': 8192,
+          'brand': 'Google',
+          'model': 'Pixel 4',
           'sdkInt': 30,
-          'baseOS': '',
-          'codename': 'REL',
-          'incremental': '',
-          'previewSdkInt': 0,
-          'release': '11',
-          'securityPatch': '2021-01-01',
-        },
-        'systemFeatures': ['feature-test'],
-        'serialNumber': 'unknown'
-      };
+          'id': 'test-id',
+        };
+      }
+      return null;
     });
   });
 
