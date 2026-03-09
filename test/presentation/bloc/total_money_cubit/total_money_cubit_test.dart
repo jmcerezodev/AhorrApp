@@ -19,31 +19,31 @@ void main() {
       totalMoneyCubit.close();
     });
 
-    test('El estado inicial debe ser 0 y los ahorros incluidos por defecto', () {
+    test('El estado inicial debe ser 0 y los ahorros NO incluidos por defecto', () {
       expect(totalMoneyCubit.state.totalMoney, 0.0);
-      expect(totalMoneyCubit.state.isSavingsIncluded, true);
+      expect(totalMoneyCubit.state.isSavingsIncluded, false);
     });
 
     test('debe cambiar la preferencia de inclusión de ahorros (toggle)', () {
-      // 1. Cambiamos a false
-      totalMoneyCubit.toggleSavingsInclusion();
-      expect(totalMoneyCubit.state.isSavingsIncluded, false);
-      expect(Preferences.isSavingsIncludedInBalance, false);
-
-      // 2. Volvemos a cambiar a true
+      // 1. Cambiamos a true
       totalMoneyCubit.toggleSavingsInclusion();
       expect(totalMoneyCubit.state.isSavingsIncluded, true);
       expect(Preferences.isSavingsIncludedInBalance, true);
+
+      // 2. Volvemos a cambiar a false
+      totalMoneyCubit.toggleSavingsInclusion();
+      expect(totalMoneyCubit.state.isSavingsIncluded, false);
+      expect(Preferences.isSavingsIncludedInBalance, false);
     });
 
     test('debe cargar la preferencia guardada al inicializarse', () async {
-      // Simular que el usuario tenía la opción desactivada
-      SharedPreferences.setMockInitialValues({'isSavingsIncludedInBalance': false});
+      // Simular que el usuario tenía la opción activada (contrario al nuevo default)
+      SharedPreferences.setMockInitialValues({'isSavingsIncludedInBalance': true});
       await Preferences.init();
       
       final newCubit = TotalMoneyCubit();
       
-      expect(newCubit.state.isSavingsIncluded, false);
+      expect(newCubit.state.isSavingsIncluded, true);
       newCubit.close();
     });
 

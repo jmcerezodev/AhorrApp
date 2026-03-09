@@ -33,7 +33,7 @@ class Preferences {
   static bool get isBiometricActive => _prefs.getBool('isBiometricActive') ?? false;
   static set isBiometricActive(bool value) => _prefs.setBool('isBiometricActive', value);
 
-  static bool get isSavingsIncludedInBalance => _prefs.getBool('isSavingsIncludedInBalance') ?? true;
+  static bool get isSavingsIncludedInBalance => _prefs.getBool('isSavingsIncludedInBalance') ?? false;
   static set isSavingsIncludedInBalance(bool value) => _prefs.setBool('isSavingsIncludedInBalance', value);
 
   static bool get isProratedView => _prefs.getBool('isProratedView') ?? false; // NUEVO: Valor por defecto mensual
@@ -54,7 +54,7 @@ class Preferences {
     name = '';
     isLoggedIn = false;
     isBiometricActive = false;
-    isSavingsIncludedInBalance = true;
+    isSavingsIncludedInBalance = false;
     isProratedView = false;
 
     // 3. Restauramos o limpiamos credenciales según la preferencia del usuario

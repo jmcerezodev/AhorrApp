@@ -6,7 +6,7 @@ class TotalMoneyCubitState extends Equatable {
 
   const TotalMoneyCubitState({
     this.totalMoney = 0.0,
-    this.isSavingsIncluded = true,
+    this.isSavingsIncluded = false,
   });
 
   TotalMoneyCubitState copyWith({
