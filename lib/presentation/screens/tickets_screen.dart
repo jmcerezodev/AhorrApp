@@ -1,5 +1,4 @@
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/tickets_screen/tickets_app_bar.dart';
 import 'package:ahorrapp/presentation/widgets/tickets_screen/tickets_history_widget.dart';
 import 'package:ahorrapp/presentation/widgets/tickets_screen/tickets_summary_widget.dart';
@@ -72,59 +71,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
             },
           ),
 
-          // 4. BOTONES DE ACCIÓN
-          BlocBuilder<TicketsCubit, TicketsState>(
-            builder: (context, state) {
-              final bool hasItems = state.items.isNotEmpty;
-              final bool isLoading = state.status == TicketsStatus.loading;
-              
-              if (isLoading) return const SizedBox.shrink();
-
-              return FadeInUp(
-                delay: const Duration(milliseconds: 200),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: Row(
-                    children: [
-                      // COLUMNA 1: LIMPIAR LISTA
-                      Expanded(
-                        child: _ActionButton(
-                          onPressed: hasItems ? () => _showClearConfirmation(context) : null,
-                          icon: Icons.delete_sweep_rounded,
-                          label: 'LIMPIAR TODO',
-                          color: Colors.red,
-                        ),
-                      ),
-                      
-                      const SizedBox(width: 10),
-
-                      // COLUMNA 2: AÑADIR A GASTOS
-                      Expanded(
-                        child: _ActionButton(
-                          onPressed: hasItems 
-                            ? () {
-                                showDialog(
-                                  context: context,
-                                  builder: (_) => BlocProvider.value(
-                                    value: context.read<TicketsCubit>(),
-                                    child: const TransferTicketToExpensesDialog(),
-                                  ),
-                                );
-                              }
-                            : null,
-                          icon: Icons.receipt_long_rounded,
-                          label: 'AÑADIR A GASTOS',
-                          color: Colors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-
-          // 5. LISTADO
+          // 4. LISTADO
           Expanded(
             child: FadeInUp(
               delay: const Duration(milliseconds: 300),
@@ -132,58 +79,6 @@ class _TicketsScreenState extends State<TicketsScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showClearConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (childContext) => const ClearTicketsDialog(),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _ActionButton({
-    required this.onPressed,
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isEnabled = onPressed != null;
-
-    return SizedBox(
-      height: 50,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18),
-        label: FittedBox(
-          child: Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5),
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isEnabled ? color.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.05),
-          foregroundColor: isEnabled ? color : Colors.grey.withValues(alpha: 0.3),
-          elevation: 0,
-          side: BorderSide(
-            color: isEnabled ? color : Colors.grey.withValues(alpha: 0.1), 
-            width: 1.5
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
       ),
     );
   }

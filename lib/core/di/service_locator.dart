@@ -235,7 +235,6 @@ Future<void> setupServiceLocator() async {
     getTicketItemsUseCase: getIt<GetTicketItemsUseCase>(),
     saveTicketItemUseCase: getIt<SaveTicketItemUseCase>(),
     deleteTicketItemUseCase: getIt<DeleteTicketItemUseCase>(),
-    clearTicketsUseCase: getIt<ClearTicketsUseCase>(),
     reorderTicketItemsUseCase: getIt<ReorderTicketItemsUseCase>(),
     processTicketImageUseCase: getIt<ProcessTicketImageUseCase>(),
     documentScannerService: getIt<DocumentScannerService>(),

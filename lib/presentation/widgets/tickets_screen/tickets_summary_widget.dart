@@ -1,4 +1,3 @@
-import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
@@ -9,13 +8,13 @@ class TicketsSummaryWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final humanizeNumbers = HumanizeNumbers();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
 
     return BlocBuilder<TicketsCubit, TicketsState>(
       builder: (context, state) {
         final bool isLoading = state.status == TicketsStatus.loading;
+        final int totalItems = state.items.length;
 
         return FadeInDown(
           duration: const Duration(milliseconds: 400),
@@ -54,9 +53,10 @@ class TicketsSummaryWidget extends StatelessWidget {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'TOTAL ESCANEADO',
+                            'TOTAL ESCANEADOS',
                             style: TextStyle(
                               color: Colors.orange.shade400,
                               fontSize: 10,
@@ -69,20 +69,19 @@ class TicketsSummaryWidget extends StatelessWidget {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              '${humanizeNumbers.number(state.totalAmount)}€',
+                              '$totalItems',
                               style: TextStyle(
                                 color: isDark ? Colors.white : colorScheme.onSurface,
-                                fontSize: 30,
+                                fontSize: 40,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -1,
                               ),
                             ),
                           ),
                           
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8),
                           
                           _DetectedChip(
-                            totalItems: state.items.length,
                             isDark: isDark,
                             isLoading: isLoading,
                           ),
@@ -150,12 +149,10 @@ class _AddProductBubble extends StatelessWidget {
 }
 
 class _DetectedChip extends StatelessWidget {
-  final int totalItems;
   final bool isDark;
   final bool isLoading;
 
   const _DetectedChip({
-    required this.totalItems,
     required this.isDark,
     required this.isLoading,
   });
@@ -182,7 +179,7 @@ class _DetectedChip extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            isLoading ? 'ANALIZANDO...' : 'TICKETS: $totalItems',
+            isLoading ? 'ANALIZANDO...' : 'TICKETS',
             style: TextStyle(
               color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
               fontSize: 8,

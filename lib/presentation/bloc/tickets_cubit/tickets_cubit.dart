@@ -10,7 +10,6 @@ import '../../../domain/entities/ticket_item.dart';
 import '../../../domain/usecases/tickets/get_ticket_items_usecase.dart';
 import '../../../domain/usecases/tickets/save_ticket_item_usecase.dart';
 import '../../../domain/usecases/tickets/delete_ticket_item_usecase.dart';
-import '../../../domain/usecases/tickets/clear_tickets_usecase.dart';
 import '../../../domain/usecases/tickets/reorder_ticket_items_usecase.dart';
 import '../../../domain/usecases/tickets/process_ticket_image_usecase.dart';
 
@@ -20,7 +19,6 @@ class TicketsCubit extends Cubit<TicketsState> {
   final GetTicketItemsUseCase getTicketItemsUseCase;
   final SaveTicketItemUseCase saveTicketItemUseCase;
   final DeleteTicketItemUseCase deleteTicketItemUseCase;
-  final ClearTicketsUseCase clearTicketsUseCase;
   final ReorderTicketItemsUseCase reorderTicketItemsUseCase;
   final ProcessTicketImageUseCase processTicketImageUseCase;
   final DocumentScannerService documentScannerService;
@@ -29,7 +27,6 @@ class TicketsCubit extends Cubit<TicketsState> {
     required this.getTicketItemsUseCase,
     required this.saveTicketItemUseCase,
     required this.deleteTicketItemUseCase,
-    required this.clearTicketsUseCase,
     required this.reorderTicketItemsUseCase,
     required this.processTicketImageUseCase,
     required this.documentScannerService,
@@ -131,15 +128,6 @@ class TicketsCubit extends Cubit<TicketsState> {
   Future<void> deleteItem(String id) async {
     try {
       await deleteTicketItemUseCase(id);
-      await loadItems();
-    } catch (e) {
-      emit(state.copyWith(status: TicketsStatus.failure, errorMessage: e.toString()));
-    }
-  }
-
-  Future<void> clearAll() async {
-    try {
-      await clearTicketsUseCase(Preferences.uId);
       await loadItems();
     } catch (e) {
       emit(state.copyWith(status: TicketsStatus.failure, errorMessage: e.toString()));

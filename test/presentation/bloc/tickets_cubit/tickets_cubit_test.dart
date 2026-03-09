@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/domain/entities/ticket_item.dart';
 import 'package:ahorrapp/domain/services/document_scanner_service.dart';
-import 'package:ahorrapp/domain/usecases/tickets/clear_tickets_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/delete_ticket_item_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/get_ticket_items_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/process_ticket_image_usecase.dart';
@@ -16,7 +15,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 class MockGetTicketItemsUseCase extends Mock implements GetTicketItemsUseCase {}
 class MockSaveTicketItemUseCase extends Mock implements SaveTicketItemUseCase {}
 class MockDeleteTicketItemUseCase extends Mock implements DeleteTicketItemUseCase {}
-class MockClearTicketsUseCase extends Mock implements ClearTicketsUseCase {}
 class MockReorderTicketItemsUseCase extends Mock implements ReorderTicketItemsUseCase {}
 class MockProcessTicketImageUseCase extends Mock implements ProcessTicketImageUseCase {}
 class MockDocumentScannerService extends Mock implements DocumentScannerService {}
@@ -26,7 +24,6 @@ void main() {
   late MockGetTicketItemsUseCase mockGetItems;
   late MockSaveTicketItemUseCase mockSaveItem;
   late MockDeleteTicketItemUseCase mockDeleteItem;
-  late MockClearTicketsUseCase mockClearItems;
   late MockReorderTicketItemsUseCase mockReorderItems;
   late MockProcessTicketImageUseCase mockProcessImage;
   late MockDocumentScannerService mockScannerService;
@@ -47,7 +44,6 @@ void main() {
     mockGetItems = MockGetTicketItemsUseCase();
     mockSaveItem = MockSaveTicketItemUseCase();
     mockDeleteItem = MockDeleteTicketItemUseCase();
-    mockClearItems = MockClearTicketsUseCase();
     mockReorderItems = MockReorderTicketItemsUseCase();
     mockProcessImage = MockProcessTicketImageUseCase();
     mockScannerService = MockDocumentScannerService();
@@ -56,7 +52,6 @@ void main() {
       getTicketItemsUseCase: mockGetItems,
       saveTicketItemUseCase: mockSaveItem,
       deleteTicketItemUseCase: mockDeleteItem,
-      clearTicketsUseCase: mockClearItems,
       reorderTicketItemsUseCase: mockReorderItems,
       processTicketImageUseCase: mockProcessImage,
       documentScannerService: mockScannerService,

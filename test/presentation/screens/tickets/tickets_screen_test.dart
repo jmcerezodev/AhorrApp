@@ -4,6 +4,7 @@ import 'package:ahorrapp/presentation/screens/tickets_screen.dart';
 import 'package:ahorrapp/presentation/widgets/tickets_screen/tickets_summary_widget.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -11,7 +12,22 @@ import 'package:mocktail/mocktail.dart';
 class MockTicketsCubit extends Mock implements TicketsCubit {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late MockTicketsCubit mockTicketsCubit;
+
+  setUpAll(() {
+    const MethodChannel deviceInfoChannel = MethodChannel('dev.fluttercommunity.plus/device_info');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(deviceInfoChannel, (MethodCall methodCall) async {
+      if (methodCall.method == 'getDeviceInfo') {
+        return {
+          'computerName': 'Test-PC',
+          'numberOfCores': 4,
+          'systemMemoryInMegabytes': 8192,
+        };
+      }
+      return null;
+    });
+  });
 
   setUp(() {
     mockTicketsCubit = MockTicketsCubit();
@@ -61,19 +77,12 @@ void main() {
       expect(find.byIcon(Icons.qr_code_scanner_rounded), findsOneWidget);
     });
 
-    testWidgets('Debe mostrar "TOTAL ESCANEADO" en el resumen', (WidgetTester tester) async {
+    testWidgets('Debe mostrar "TOTAL ESCANEADOS" en el resumen', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('TOTAL ESCANEADO'), findsOneWidget);
-    });
-
-    testWidgets('Debe mostrar el botón LIMPIAR TODO y AÑADIR A GASTOS', (WidgetTester tester) async {
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
-
-      expect(find.text('LIMPIAR TODO'), findsOneWidget);
-      expect(find.text('AÑADIR A GASTOS'), findsOneWidget);
+      expect(find.text('TOTAL ESCANEADOS'), findsOneWidget);
+      expect(find.text('1'), findsOneWidget); // Verifica el contador de tickets
     });
 
     testWidgets('Debe mostrar el estado vacío si no hay items', (WidgetTester tester) async {
