@@ -50,7 +50,10 @@ class AppwriteMovementRepository implements IMovementRepository {
         month: movement.month,
         year: movement.year,
         isRecurrent: movement.isRecurrent,
-        category: movement.category, // NUEVO
+        category: movement.category,
+        ticketId: movement.ticketId,
+        imagePath: movement.imagePath,
+        isTransferred: movement.isTransferred,
       );
     }
   }
@@ -102,7 +105,10 @@ class AppwriteMovementRepository implements IMovementRepository {
       createdAt: DateTime.parse(doc.$createdAt),
       isSpent: data['isSpent'] ?? false,
       isRecurrent: data['isRecurrent'] ?? false,
-      category: data['category'] ?? (isSaving ? 'ahorro' : 'general'), // NUEVO
+      category: data['category'] ?? (isSaving ? 'ahorro' : 'general'),
+      ticketId: data['ticketId'],
+      imagePath: data['imagePath'],
+      isTransferred: data['isTransferred'] ?? false,
     );
   }
 }

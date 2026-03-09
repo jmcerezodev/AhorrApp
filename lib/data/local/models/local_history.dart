@@ -22,4 +22,6 @@ class LocalHistory {
   late bool isRecurrent; 
   late String category;
   String? ticketId; // ID del ticket asociado para permitir vinculación y reversión
+  String? imagePath; // Ruta de la imagen del ticket
+  late bool isTransferred; // Indica si viene de un ticket
 }

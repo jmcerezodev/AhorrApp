@@ -15,6 +15,8 @@ class Movement {
   final bool isRecurrent;
   final String category; 
   final String? ticketId; // ID del ticket asociado (opcional)
+  final String? imagePath; // Ruta de la imagen del ticket (opcional)
+  final bool isTransferred; // Indica si viene de un ticket
 
   Movement({
     required this.id,
@@ -31,6 +33,8 @@ class Movement {
     this.isRecurrent = false,
     this.category = 'general',
     this.ticketId,
+    this.imagePath,
+    this.isTransferred = false,
   });
 
   // Helper para saber si es un ahorro activo

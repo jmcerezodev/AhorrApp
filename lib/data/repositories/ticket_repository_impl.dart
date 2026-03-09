@@ -1,3 +1,4 @@
+import 'dart:io';
 import '../../core/di/service_locator.dart';
 import '../../core/sync/sync_service.dart';
 import '../../domain/entities/ticket_item.dart';
@@ -29,7 +30,6 @@ class TicketsRepositoryImpl implements TicketsRepository {
   Future<void> saveTicketItem(TicketItem item) async {
     await localDataSource.saveTicketItem(_fromEntity(item));
     
-    // Sincronización con Appwrite
     await _localDb.addPendingSync(
       'save', 
       'tickets', 
@@ -43,7 +43,7 @@ class TicketsRepositoryImpl implements TicketsRepository {
         'position': item.position,
         'isTransferred': item.isTransferred,
         'remoteImageId': item.remoteImageId,
-        'imagePath': item.imagePath, // Enviamos el path local para que SyncService pueda subirla
+        'imagePath': item.imagePath, 
       },
       appwriteId: item.id,
     );
@@ -53,14 +53,22 @@ class TicketsRepositoryImpl implements TicketsRepository {
   @override
   Future<void> deleteTicketItem(String id) async {
     final localItem = await localDataSource.getTicketItemById(id);
-    final String? remoteImageId = localItem?.remoteImageId;
+    
+    if (localItem?.imagePath != null) {
+      try {
+        final file = File(localItem!.imagePath!);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } catch (_) {}
+    }
 
     await localDataSource.deleteTicketItem(id);
     
     await _localDb.addPendingSync(
       'delete', 
       'tickets', 
-      {'remoteImageId': remoteImageId}, 
+      {'remoteImageId': localItem?.remoteImageId}, 
       appwriteId: id
     );
     _syncService.processQueue();
@@ -70,6 +78,14 @@ class TicketsRepositoryImpl implements TicketsRepository {
   Future<void> clearTicketItems(String userId) async {
     final items = await localDataSource.getTicketItems(userId);
     for (var item in items) {
+      if (item.imagePath != null) {
+        try {
+          final file = File(item.imagePath!);
+          if (await file.exists()) {
+            await file.delete();
+          }
+        } catch (_) {}
+      }
       await _localDb.addPendingSync(
         'delete', 
         'tickets', 
@@ -116,12 +132,16 @@ class TicketsRepositoryImpl implements TicketsRepository {
   @override
   Future<void> unmarkAsTransferred(String ticketId) async {
     await localDataSource.updateTransferredStatus(ticketId, false);
+    
     final item = await localDataSource.getTicketItemById(ticketId);
     if (item != null) {
       await _localDb.addPendingSync(
         'save', 
         'tickets', 
         {
+          'isTransferred': false,
+          'imagePath': item.imagePath, 
+          'remoteImageId': item.remoteImageId,
           'ticketItemId': item.ticketItemId,
           'userId': item.userId,
           'name': item.name,
@@ -129,9 +149,6 @@ class TicketsRepositoryImpl implements TicketsRepository {
           'date': item.date.toIso8601String(),
           'category': item.category,
           'position': item.position,
-          'isTransferred': false,
-          'remoteImageId': item.remoteImageId,
-          'imagePath': item.imagePath,
         },
         appwriteId: ticketId,
       );

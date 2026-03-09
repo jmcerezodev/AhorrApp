@@ -121,6 +121,9 @@ class SyncService {
         year: data['year'] ?? 0,
         isRecurrent: data['isRecurrent'] ?? false,
         category: data['category'] ?? (data['isIncome'] == true ? 'otro' : 'general'),
+        ticketId: data['ticketId'],
+        imagePath: data['imagePath'],
+        isTransferred: data['isTransferred'] ?? false,
       );
       return true;
     } else if (pending.action == 'update') {
@@ -260,28 +263,31 @@ class SyncService {
           }
         } catch (e) {
           print('❌ Error subiendo imagen en segundo plano: $e');
-          // No marcamos como éxito para reintentar la subida después
           return false;
         }
       }
+
+      // Limpiamos 'imagePath' antes de enviar a Appwrite para evitar errores de esquema
+      final cleanData = Map<String, dynamic>.from(data);
+      cleanData.remove('imagePath');
 
       // 2. Sincronizar documento en la DB de Appwrite
       try {
         await _appwriteRepo.updateTicket(
           documentId: pending.appwriteId!, 
-          data: data,
+          data: cleanData,
         );
       } catch (e) {
         await _appwriteRepo.addTicket(
           documentId: pending.appwriteId!,
-          ticketItemId: data['ticketItemId'] ?? pending.appwriteId!,
-          userId: data['userId'] ?? '',
-          name: data['name'] ?? '',
-          amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
-          date: data['date'] ?? '',
-          category: data['category'] ?? 'general',
-          position: data['position'] ?? 0,
-          isTransferred: data['isTransferred'] ?? false,
+          ticketItemId: cleanData['ticketItemId'] ?? pending.appwriteId!,
+          userId: cleanData['userId'] ?? '',
+          name: cleanData['name'] ?? '',
+          amount: (cleanData['amount'] as num?)?.toDouble() ?? 0.0,
+          date: cleanData['date'] ?? '',
+          category: cleanData['category'] ?? 'general',
+          position: cleanData['position'] ?? 0,
+          isTransferred: cleanData['isTransferred'] ?? false,
           remoteImageId: remoteImageId,
         );
       }

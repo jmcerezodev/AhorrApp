@@ -1,3 +1,4 @@
+import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/view_ticket_image_dialog.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
@@ -431,6 +432,8 @@ class _HistoryItem extends StatelessWidget {
     final bool isSpent = item['isSpent'] ?? false;
     final bool isRecurrent = item['isRecurrent'] ?? false;
     final String category = item['category'] ?? (type == 'income' ? 'otro' : 'general');
+    final String? imagePath = item['imagePath'];
+    final bool isTransferred = item['isTransferred'] ?? false;
 
     Color accentColor = Colors.orange;
     IconData icon = Icons.help_outline_rounded;
@@ -506,115 +509,152 @@ class _HistoryItem extends StatelessWidget {
               );
             }
           },
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3),
-                width: 1.2,
+          child: GestureDetector(
+            onTap: (imagePath != null && imagePath.isNotEmpty) ? () {
+              showDialog(
+                context: context,
+                builder: (_) => ViewTicketImageDialog(
+                  imagePath: imagePath,
+                  title: item['name'],
+                ),
+              );
+            } : null,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.primary.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.primary.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: isDark ? 0.1 : 0.05),
-                    shape: BoxShape.circle,
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: isDark ? 0.1 : 0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: accentColor, size: 18),
                   ),
-                  child: Icon(icon, color: accentColor, size: 18),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              item['name'],
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurface,
-                                decoration: showSpentLabel ? TextDecoration.lineThrough : null,
-                              ),
-                            ),
-                          ),
-                          if (isRecurrent) ...[
-                            const SizedBox(width: 6),
-                            Icon(Icons.repeat_rounded, size: 14, color: Colors.orange.withValues(alpha: 0.8)),
-                          ],
-                          if (showSpentLabel) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: colorScheme.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
                               child: Text(
-                                'GASTADO', 
+                                item['name'],
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 7, 
-                                  fontWeight: FontWeight.w900, 
-                                  color: colorScheme.primary.withValues(alpha: 0.6)
-                                )
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                  decoration: showSpentLabel ? TextDecoration.lineThrough : null,
+                                ),
                               ),
                             ),
+                            if (isRecurrent) ...[
+                              const SizedBox(width: 6),
+                              Icon(Icons.repeat_rounded, size: 14, color: Colors.orange.withValues(alpha: 0.8)),
+                            ],
+                            if (showSpentLabel) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: Text(
+                                  'GASTADO', 
+                                  style: TextStyle(
+                                    fontSize: 7, 
+                                    fontWeight: FontWeight.w900, 
+                                    color: colorScheme.primary.withValues(alpha: 0.6)
+                                  )
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Text(
-                            '${item['currentDate']} • ${item['currentHour']}',
-                            style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.4)),
-                          ),
-                          if (type != 'saving') ...[
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Text(
+                              '${item['currentDate']} • ${item['currentHour']}',
+                              style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.4)),
+                            ),
                             const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: accentColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(5),
+                            if (type != 'saving') ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: accentColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: Text(
+                                  category.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 7, 
+                                    fontWeight: FontWeight.w900, 
+                                    color: accentColor.withValues(alpha: 0.6)
+                                  )
+                                ),
                               ),
-                              child: Text(
-                                category.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 7, 
-                                  fontWeight: FontWeight.w900, 
-                                  color: accentColor.withValues(alpha: 0.6)
-                                )
+                            ],
+                            if (isTransferred) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 0.5),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.receipt_rounded, size: 8, color: Colors.orange),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      'TICKET',
+                                      style: TextStyle(
+                                        fontSize: 7, 
+                                        fontWeight: FontWeight.w900, 
+                                        color: Colors.orange.withValues(alpha: 0.8)
+                                      )
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Text(
-                  '$prefix$moneyString€',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    color: accentColor,
+                  Text(
+                    '$prefix$moneyString€',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: accentColor,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

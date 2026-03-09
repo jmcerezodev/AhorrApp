@@ -62,7 +62,9 @@ class IsarMovementRepository implements IMovementRepository {
         ..createdAt = movement.createdAt
         ..isRecurrent = movement.isRecurrent
         ..category = movement.category
-        ..ticketId = movement.ticketId;
+        ..ticketId = movement.ticketId
+        ..imagePath = movement.imagePath
+        ..isTransferred = movement.isTransferred; // AÑADIDO
 
       await _localDb.saveHistoryItems([localItem]);
     }
@@ -103,6 +105,8 @@ class IsarMovementRepository implements IMovementRepository {
       isRecurrent: local.isRecurrent,
       category: local.category,
       ticketId: local.ticketId,
+      imagePath: local.imagePath,
+      isTransferred: local.isTransferred, // AÑADIDO
     );
   }
 

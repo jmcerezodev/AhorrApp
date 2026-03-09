@@ -42,43 +42,53 @@ const LocalHistorySchema = CollectionSchema(
       name: r'currentHour',
       type: IsarType.string,
     ),
-    r'isIncome': PropertySchema(
+    r'imagePath': PropertySchema(
       id: 5,
+      name: r'imagePath',
+      type: IsarType.string,
+    ),
+    r'isIncome': PropertySchema(
+      id: 6,
       name: r'isIncome',
       type: IsarType.bool,
     ),
     r'isRecurrent': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'isRecurrent',
       type: IsarType.bool,
     ),
+    r'isTransferred': PropertySchema(
+      id: 8,
+      name: r'isTransferred',
+      type: IsarType.bool,
+    ),
     r'money': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'money',
       type: IsarType.double,
     ),
     r'month': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'month',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'name',
       type: IsarType.string,
     ),
     r'ticketId': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'ticketId',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 11,
+      id: 13,
       name: r'type',
       type: IsarType.string,
     ),
     r'year': PropertySchema(
-      id: 12,
+      id: 14,
       name: r'year',
       type: IsarType.long,
     )
@@ -121,6 +131,12 @@ int _localHistoryEstimateSize(
   bytesCount += 3 + object.category.length * 3;
   bytesCount += 3 + object.currentDate.length * 3;
   bytesCount += 3 + object.currentHour.length * 3;
+  {
+    final value = object.imagePath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.month.length * 3;
   bytesCount += 3 + object.name.length * 3;
   {
@@ -144,14 +160,16 @@ void _localHistorySerialize(
   writer.writeDateTime(offsets[2], object.createdAt);
   writer.writeString(offsets[3], object.currentDate);
   writer.writeString(offsets[4], object.currentHour);
-  writer.writeBool(offsets[5], object.isIncome);
-  writer.writeBool(offsets[6], object.isRecurrent);
-  writer.writeDouble(offsets[7], object.money);
-  writer.writeString(offsets[8], object.month);
-  writer.writeString(offsets[9], object.name);
-  writer.writeString(offsets[10], object.ticketId);
-  writer.writeString(offsets[11], object.type);
-  writer.writeLong(offsets[12], object.year);
+  writer.writeString(offsets[5], object.imagePath);
+  writer.writeBool(offsets[6], object.isIncome);
+  writer.writeBool(offsets[7], object.isRecurrent);
+  writer.writeBool(offsets[8], object.isTransferred);
+  writer.writeDouble(offsets[9], object.money);
+  writer.writeString(offsets[10], object.month);
+  writer.writeString(offsets[11], object.name);
+  writer.writeString(offsets[12], object.ticketId);
+  writer.writeString(offsets[13], object.type);
+  writer.writeLong(offsets[14], object.year);
 }
 
 LocalHistory _localHistoryDeserialize(
@@ -167,14 +185,16 @@ LocalHistory _localHistoryDeserialize(
   object.currentDate = reader.readString(offsets[3]);
   object.currentHour = reader.readString(offsets[4]);
   object.id = id;
-  object.isIncome = reader.readBool(offsets[5]);
-  object.isRecurrent = reader.readBool(offsets[6]);
-  object.money = reader.readDouble(offsets[7]);
-  object.month = reader.readString(offsets[8]);
-  object.name = reader.readString(offsets[9]);
-  object.ticketId = reader.readStringOrNull(offsets[10]);
-  object.type = reader.readString(offsets[11]);
-  object.year = reader.readLong(offsets[12]);
+  object.imagePath = reader.readStringOrNull(offsets[5]);
+  object.isIncome = reader.readBool(offsets[6]);
+  object.isRecurrent = reader.readBool(offsets[7]);
+  object.isTransferred = reader.readBool(offsets[8]);
+  object.money = reader.readDouble(offsets[9]);
+  object.month = reader.readString(offsets[10]);
+  object.name = reader.readString(offsets[11]);
+  object.ticketId = reader.readStringOrNull(offsets[12]);
+  object.type = reader.readString(offsets[13]);
+  object.year = reader.readLong(offsets[14]);
   return object;
 }
 
@@ -196,20 +216,24 @@ P _localHistoryDeserializeProp<P>(
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
       return (reader.readBool(offset)) as P;
     case 7:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 8:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 10:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 11:
       return (reader.readString(offset)) as P;
     case 12:
+      return (reader.readStringOrNull(offset)) as P;
+    case 13:
+      return (reader.readString(offset)) as P;
+    case 14:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1065,6 +1089,160 @@ extension LocalHistoryQueryFilter
   }
 
   QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'imagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'imagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'imagePath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'imagePath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      imagePathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'imagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
       isIncomeEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1079,6 +1257,16 @@ extension LocalHistoryQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isRecurrent',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterFilterCondition>
+      isTransferredEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isTransferred',
         value: value,
       ));
     });
@@ -1829,6 +2017,18 @@ extension LocalHistoryQuerySortBy
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByIsIncome() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isIncome', Sort.asc);
@@ -1851,6 +2051,19 @@ extension LocalHistoryQuerySortBy
       sortByIsRecurrentDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isRecurrent', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> sortByIsTransferred() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTransferred', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy>
+      sortByIsTransferredDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTransferred', Sort.desc);
     });
   }
 
@@ -2004,6 +2217,18 @@ extension LocalHistoryQuerySortThenBy
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByIsIncome() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isIncome', Sort.asc);
@@ -2026,6 +2251,19 @@ extension LocalHistoryQuerySortThenBy
       thenByIsRecurrentDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isRecurrent', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy> thenByIsTransferred() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTransferred', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QAfterSortBy>
+      thenByIsTransferredDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTransferred', Sort.desc);
     });
   }
 
@@ -2138,6 +2376,13 @@ extension LocalHistoryQueryWhereDistinct
     });
   }
 
+  QueryBuilder<LocalHistory, LocalHistory, QDistinct> distinctByImagePath(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'imagePath', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<LocalHistory, LocalHistory, QDistinct> distinctByIsIncome() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isIncome');
@@ -2147,6 +2392,13 @@ extension LocalHistoryQueryWhereDistinct
   QueryBuilder<LocalHistory, LocalHistory, QDistinct> distinctByIsRecurrent() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isRecurrent');
+    });
+  }
+
+  QueryBuilder<LocalHistory, LocalHistory, QDistinct>
+      distinctByIsTransferred() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isTransferred');
     });
   }
 
@@ -2229,6 +2481,12 @@ extension LocalHistoryQueryProperty
     });
   }
 
+  QueryBuilder<LocalHistory, String?, QQueryOperations> imagePathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'imagePath');
+    });
+  }
+
   QueryBuilder<LocalHistory, bool, QQueryOperations> isIncomeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isIncome');
@@ -2238,6 +2496,12 @@ extension LocalHistoryQueryProperty
   QueryBuilder<LocalHistory, bool, QQueryOperations> isRecurrentProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isRecurrent');
+    });
+  }
+
+  QueryBuilder<LocalHistory, bool, QQueryOperations> isTransferredProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isTransferred');
     });
   }
 

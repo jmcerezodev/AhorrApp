@@ -22,40 +22,28 @@ class AppwriteRepository {
   // --- STORAGE ---
 
   Future<String> uploadTicketImage(File file) async {
-    // Generamos un ID manual para evitar depender de la respuesta del SDK si falla el mapeo
     final String fileId = const Uuid().v4().replaceAll('-', '');
     
     try {
       final fileName = 'ticket_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      print('🚀 Subiendo a Appwrite: $fileName al bucket $_ticketsBucketId con ID: $fileId');
-      
       await _storage.createFile(
         bucketId: _ticketsBucketId,
         fileId: fileId,
         file: InputFile.fromPath(path: file.path, filename: fileName),
       );
-      
-      print('✅ Subida confirmada para ID: $fileId');
       return fileId;
     } catch (e) {
-      // Si el error es el glitch de tipado del SDK pero la imagen se subió (según el usuario)
       if (e.toString().contains("'Null' is not a subtype of type 'bool'")) {
-        print('⚠️ Detectado glitch de tipado en SDK, pero el archivo debería estar en el bucket. Usando ID: $fileId');
         return fileId;
       }
-      print('❌ Error real en AppwriteRepository.uploadTicketImage: $e');
       rethrow;
     }
   }
 
   Future<void> deleteTicketImage(String fileId) async {
     try {
-      print('🗑️ Intentando borrar imagen de Appwrite Storage: $fileId del bucket $_ticketsBucketId');
       await _storage.deleteFile(bucketId: _ticketsBucketId, fileId: fileId);
-      print('✅ Imagen borrada correctamente de Appwrite Storage');
-    } catch (e) {
-      print('❌ Error al borrar imagen de Appwrite Storage ($fileId): $e');
-    }
+    } catch (_) {}
   }
 
   // --- PREFERENCIAS DE USUARIO ---
@@ -349,8 +337,42 @@ class AppwriteRepository {
     return await _databases.updateDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId, data: data);
   }
 
-  Future<models.Document> addHistory({required String documentId, required String userId, required String name, required double money, required bool isIncome, required String currentDate, required String currentHour, required String month, required int year, bool isRecurrent = false, String category = 'general'}) async {
-    return await _databases.createDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId, data: {'userId': userId, 'name': name, 'money': money, 'isIncome': isIncome, 'currentDate': currentDate, 'currentHour': currentHour, 'month': month, 'year': year, 'isRecurrent': isRecurrent, 'category': category});
+  Future<models.Document> addHistory({
+    required String documentId, 
+    required String userId, 
+    required String name, 
+    required double money, 
+    required bool isIncome, 
+    required String currentDate, 
+    required String currentHour, 
+    required String month, 
+    required int year, 
+    bool isRecurrent = false, 
+    String category = 'general',
+    String? ticketId,
+    String? imagePath,
+    bool isTransferred = false,
+  }) async {
+    return await _databases.createDocument(
+      databaseId: _databaseId, 
+      collectionId: _historyId, 
+      documentId: documentId, 
+      data: {
+        'userId': userId, 
+        'name': name, 
+        'money': money, 
+        'isIncome': isIncome, 
+        'currentDate': currentDate, 
+        'currentHour': currentHour, 
+        'month': month, 
+        'year': year, 
+        'isRecurrent': isRecurrent, 
+        'category': category,
+        'ticketId': ticketId,
+        'imagePath': imagePath,
+        'isTransferred': isTransferred,
+      }
+    );
   }
 
   Future<models.Document> addSaving({required String documentId, required String userId, required double money, required String month, required int year, String? description, bool isSpent = false}) async {

@@ -27,9 +27,8 @@ class TransferTicketsToExpensesUseCase {
       final double totalAmount = items.fold(0, (sum, item) => sum + item.amount);
       final String finalName = packName ?? (items.isNotEmpty ? items.first.name : 'Compra Ticket');
       
-      // Para packs, vinculamos al primer ticket si existe, 
-      // o a una lista de IDs si fuera necesario en el futuro.
       final String? mainTicketId = items.length == 1 ? items.first.id : null;
+      final String? mainImagePath = items.length == 1 ? items.first.imagePath : null;
 
       final packMovement = Movement(
         id: const Uuid().v4(),
@@ -44,6 +43,8 @@ class TransferTicketsToExpensesUseCase {
         createdAt: now,
         category: items.isNotEmpty ? items.first.category : 'general',
         ticketId: mainTicketId,
+        imagePath: mainImagePath,
+        isTransferred: true, // MARCADO COMO TRANSFERIDO
       );
 
       await saveMovementUseCase(packMovement);
@@ -62,6 +63,8 @@ class TransferTicketsToExpensesUseCase {
           createdAt: now,
           category: item.category,
           ticketId: item.id,
+          imagePath: item.imagePath,
+          isTransferred: true, // MARCADO COMO TRANSFERIDO
         );
         
         await saveMovementUseCase(itemMovement);

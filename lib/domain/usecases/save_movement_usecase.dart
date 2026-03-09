@@ -59,7 +59,10 @@ class SaveMovementUseCase {
           'hour': movement.hour,
           'month': movement.month,
           'year': movement.year,
-          'isRecurrent': movement.isRecurrent, // AÑADIDO: Soporte offline para el pin
+          'isRecurrent': movement.isRecurrent,
+          'category': movement.category,
+          'ticketId': movement.ticketId, // AÑADIDO
+          'imagePath': movement.imagePath, // AÑADIDO
         },
         appwriteId: movement.id, 
       );
