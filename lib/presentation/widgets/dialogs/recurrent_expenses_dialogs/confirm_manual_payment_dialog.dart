@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
@@ -7,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ConfirmManualPaymentDialog extends StatefulWidget {
-  final dynamic expense; 
+  final RecurrentExpense expense; 
   final String amount;
 
   const ConfirmManualPaymentDialog({
@@ -34,6 +35,7 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isIncome = widget.expense.isIncome;
 
     return CustomDialogWrapper(
       borderColor: _isSuccess 
@@ -57,9 +59,9 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
                 )
               : AppDialogs.dialogHeader(
                   key: const ValueKey('confirm_icon'),
-                  icon: Icons.add_task_rounded, 
+                  icon: isIncome ? Icons.account_balance_wallet_rounded : Icons.add_task_rounded, 
                   color: Colors.orange, 
-                  title: '¿ANOTAR GASTO AHORA?',
+                  title: isIncome ? '¿ANOTAR INGRESO AHORA?' : '¿ANOTAR GASTO AHORA?',
                   circularBackground: true,
                   iconSize: 32,
                   colorScheme: colorScheme,
@@ -71,7 +73,7 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
             Text(
               '¡ANOTADO CON ÉXITO!',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: Colors.green,
@@ -85,15 +87,21 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
           // MENSAJE
           _isSuccess 
             ? AppDialogs.dialogMessage(
-                'El gasto "${widget.expense.name}" se ha añadido a tu historial.',
+                '${isIncome ? "El ingreso" : "El gasto"} "${widget.expense.name}" se ha añadido a tu historial.',
                 colorScheme
               )
             : Text.rich(
                 TextSpan(
                   style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
                   children: [
-                    const TextSpan(text: 'Se va a registrar un gasto de '),
-                    TextSpan(text: '${widget.amount}€', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                    TextSpan(text: 'Se va a registrar un ${isIncome ? "ingreso" : "gasto"} de '),
+                    TextSpan(
+                      text: '${widget.amount}€', 
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold, 
+                        color: isIncome ? Colors.green.shade400 : Colors.red.shade400
+                      )
+                    ),
                     const TextSpan(text: ' bajo el nombre de '),
                     TextSpan(text: widget.expense.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
                     const TextSpan(text: ' en tu historial principal.'),
@@ -139,7 +147,8 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
   }
 
   void _handleAccept() {
-    context.read<RecurrentExpensesCubit>().applyExpenseManually(widget.expense);
+    final debtsCubit = context.read<DebtsLoansCubit>();
+    context.read<RecurrentExpensesCubit>().applyExpenseManually(widget.expense, debtsCubit: debtsCubit);
     setState(() => _isSuccess = true);
     
     _autoCloseTimer = Timer(const Duration(seconds: 2), () {

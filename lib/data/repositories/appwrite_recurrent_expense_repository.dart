@@ -28,6 +28,7 @@ class AppwriteRecurrentExpenseRepository implements IRecurrentExpenseRepository 
         startDate: expense.startDate,
         position: expense.position,
         includeInSummary: expense.includeInSummary,
+        isIncome: expense.isIncome, // NUEVO
       );
     } catch (e) {
       if (e is AppwriteException && e.code == 409) {
@@ -44,6 +45,7 @@ class AppwriteRecurrentExpenseRepository implements IRecurrentExpenseRepository 
             'startDate': expense.startDate.toIso8601String(),
             'position': expense.position,
             'includeInSummary': expense.includeInSummary,
+            'isIncome': expense.isIncome, // NUEVO
           },
         );
       } else {
@@ -80,6 +82,7 @@ class AppwriteRecurrentExpenseRepository implements IRecurrentExpenseRepository 
       startDate: DateTime.parse(data['startDate'] ?? DateTime.now().toIso8601String()),
       position: data['position'] ?? 0,
       includeInSummary: data['includeInSummary'] ?? true,
+      isIncome: data['isIncome'] ?? false, // NUEVO
     );
   }
 

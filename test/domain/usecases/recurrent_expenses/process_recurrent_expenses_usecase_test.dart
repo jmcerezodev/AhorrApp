@@ -47,20 +47,20 @@ void main() {
     );
   });
 
-  group('ProcessRecurrentExpensesUseCase - Sincronización de Deudas', () {
+  group('ProcessRecurrentExpensesUseCase - Sincronización de Registros Fijos', () {
     final now = DateTime.now();
-    final expense = RecurrentExpense(
-      id: 'exp1', userId: 'u1', name: 'Gasto', amount: 100, day: now.day, 
-      frequency: RecurrentFrequency.monthly, startDate: now, lastApplied: null
-    );
+    
+    test('debe aplicar un GASTO fijo y actualizar la deuda vinculada', () async {
+      final expense = RecurrentExpense(
+        id: 'exp1', userId: 'u1', name: 'Gasto', amount: 100, day: now.day, 
+        frequency: RecurrentFrequency.monthly, startDate: now, lastApplied: null, isIncome: false
+      );
+      final debt = DebtLoan(
+        id: 'debt1', userId: 'u1', name: 'Deuda', person: 'Juan', 
+        totalAmount: 1000, paidAmount: 0, type: DebtLoanType.debt, 
+        recurrentExpenseId: 'exp1'
+      );
 
-    final debt = DebtLoan(
-      id: 'debt1', userId: 'u1', name: 'Deuda', person: 'Juan', 
-      totalAmount: 1000, paidAmount: 0, type: DebtLoanType.debt, 
-      recurrentExpenseId: 'exp1'
-    );
-
-    test('debe aplicar el gasto y actualizar el progreso de la deuda vinculada', () async {
       when(() => mockLocalRepo.getRecurrentExpenses(any())).thenAnswer((_) async => [expense]);
       when(() => mockDebtLocalRepo.getDebtsLoans(any())).thenAnswer((_) async => [debt]);
       when(() => mockSaveMovement(any())).thenAnswer((_) async => {});
@@ -71,17 +71,45 @@ void main() {
 
       await useCase('u1');
 
-      // Verificamos que se guardó el movimiento
-      verify(() => mockSaveMovement(any())).called(1);
+      final capturedMovement = verify(() => mockSaveMovement(captureAny())).captured.first as Movement;
+      expect(capturedMovement.type, MovementType.expense);
+      expect(capturedMovement.isIncome, false);
       
-      // Verificamos que se actualizó la deuda con el nuevo importe pagado (0 + 100)
       final capturedDebt = verify(() => mockDebtLocalRepo.updateDebtLoan(captureAny())).captured.first as DebtLoan;
       expect(capturedDebt.paidAmount, 100);
-      expect(capturedDebt.isCompleted, false);
+    });
+
+    test('debe aplicar un INGRESO fijo automáticamente', () async {
+      final income = RecurrentExpense(
+        id: 'inc1', userId: 'u1', name: 'Nómina', amount: 2000, day: now.day, 
+        frequency: RecurrentFrequency.monthly, startDate: now, lastApplied: null, isIncome: true
+      );
+
+      when(() => mockLocalRepo.getRecurrentExpenses(any())).thenAnswer((_) async => [income]);
+      when(() => mockDebtLocalRepo.getDebtsLoans(any())).thenAnswer((_) async => []);
+      when(() => mockSaveMovement(any())).thenAnswer((_) async => {});
+      when(() => mockLocalRepo.updateLastApplied(any(), any())).thenAnswer((_) async => {});
+      when(() => mockRemoteRepo.updateLastApplied(any(), any())).thenAnswer((_) async => {});
+
+      await useCase('u1');
+
+      final capturedMovement = verify(() => mockSaveMovement(captureAny())).captured.first as Movement;
+      expect(capturedMovement.name, 'Nómina');
+      expect(capturedMovement.amount, 2000);
+      expect(capturedMovement.type, MovementType.income);
+      expect(capturedMovement.isIncome, true);
     });
 
     test('debe marcar la deuda como completada si el pago alcanza el total', () async {
-      final almostPaidDebt = debt.copyWith(paidAmount: 900);
+      final expense = RecurrentExpense(
+        id: 'exp1', userId: 'u1', name: 'Gasto', amount: 100, day: now.day, 
+        frequency: RecurrentFrequency.monthly, startDate: now, isIncome: false
+      );
+      final almostPaidDebt = DebtLoan(
+        id: 'debt1', userId: 'u1', name: 'Deuda', person: 'Juan', 
+        totalAmount: 1000, paidAmount: 900, type: DebtLoanType.debt, 
+        recurrentExpenseId: 'exp1'
+      );
       
       when(() => mockLocalRepo.getRecurrentExpenses(any())).thenAnswer((_) async => [expense]);
       when(() => mockDebtLocalRepo.getDebtsLoans(any())).thenAnswer((_) async => [almostPaidDebt]);

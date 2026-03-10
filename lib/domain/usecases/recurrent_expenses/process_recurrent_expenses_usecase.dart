@@ -33,13 +33,13 @@ class ProcessRecurrentExpensesUseCase {
       if (!expense.isActive || expense.day == null) continue;
 
       if (_shouldApply(expense, now)) {
-        // 1. Crear el movimiento en el historial
+        // 1. Crear el movimiento en el historial (Ingreso o Gasto)
         final movement = Movement(
           id: const Uuid().v4(),
           name: expense.name,
           amount: expense.amount,
-          type: MovementType.expense,
-          isIncome: false,
+          type: expense.isIncome ? MovementType.income : MovementType.expense,
+          isIncome: expense.isIncome,
           date: dateService.currentDate(),
           hour: dateService.currentHour(),
           month: dateService.monthNames(),
@@ -50,7 +50,7 @@ class ProcessRecurrentExpensesUseCase {
 
         await saveMovementUseCase(movement);
 
-        // 2. Actualizar la Deuda vinculada si existe
+        // 2. Actualizar la Deuda/Préstamo vinculado si existe
         try {
           final linkedDebt = debts.where((d) => d.recurrentExpenseId == expense.id).firstOrNull;
           if (linkedDebt != null) {

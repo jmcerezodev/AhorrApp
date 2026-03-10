@@ -402,12 +402,17 @@ class AppwriteRepository {
     return await _databases.createDocument(databaseId: _databaseId, collectionId: _savingsId, documentId: documentId, data: {'userId': userId, 'money': money, 'month': month, 'year': year, 'description': description ?? 'Aportación de ahorro', 'isSpent': isSpent});
   }
 
-  Future<models.Document> addRecurrentExpense({required String documentId, required String userId, required String name, required double money, int? day, String category = 'general', bool isActive = true, String? lastApplied, String frequency = 'monthly', required DateTime startDate, int position = 0, bool includeInSummary = true}) async {
-    return await _databases.createDocument(databaseId: _databaseId, collectionId: _recurrentId, documentId: documentId, data: {'userId': userId, 'name': name, 'money': money, 'day': day, 'category': category, 'isActive': isActive, 'lastApplied': lastApplied, 'frequency': frequency, 'startDate': startDate.toIso8601String(), 'position': position, 'includeInSummary': includeInSummary});
+  Future<models.Document> addRecurrentExpense({required String documentId, required String userId, required String name, required double money, int? day, String category = 'general', bool isActive = true, String? lastApplied, String frequency = 'monthly', required DateTime startDate, int position = 0, bool includeInSummary = true, bool isIncome = false}) async {
+    return await _databases.createDocument(databaseId: _databaseId, collectionId: _recurrentId, documentId: documentId, data: {'userId': userId, 'name': name, 'money': money, 'day': day, 'category': category, 'isActive': isActive, 'lastApplied': lastApplied, 'frequency': frequency, 'startDate': startDate.toIso8601String(), 'position': position, 'includeInSummary': includeInSummary, 'isIncome': isIncome});
   }
 
   Future<models.Document> updateRecurrentExpense({required String documentId, required Map<String, dynamic> data}) async {
-    return await _databases.updateDocument(databaseId: _databaseId, collectionId: _recurrentId, documentId: documentId, data: data);
+    return await _databases.updateDocument(
+      databaseId: _databaseId, 
+      collectionId: _recurrentId, 
+      documentId: documentId, 
+      data: data
+    );
   }
 
   Future<void> deleteHistory(String documentId) async => await _databases.deleteDocument(databaseId: _databaseId, collectionId: _historyId, documentId: documentId);

@@ -54,33 +54,38 @@ const LocalRecurrentExpenseSchema = CollectionSchema(
       name: r'isActive',
       type: IsarType.bool,
     ),
-    r'lastApplied': PropertySchema(
+    r'isIncome': PropertySchema(
       id: 7,
+      name: r'isIncome',
+      type: IsarType.bool,
+    ),
+    r'lastApplied': PropertySchema(
+      id: 8,
       name: r'lastApplied',
       type: IsarType.string,
     ),
     r'money': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'money',
       type: IsarType.double,
     ),
     r'name': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'name',
       type: IsarType.string,
     ),
     r'position': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'position',
       type: IsarType.long,
     ),
     r'startDate': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'startDate',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'userId',
       type: IsarType.string,
     )
@@ -145,12 +150,13 @@ void _localRecurrentExpenseSerialize(
   writer.writeByte(offsets[4], object.frequency.index);
   writer.writeBool(offsets[5], object.includeInSummary);
   writer.writeBool(offsets[6], object.isActive);
-  writer.writeString(offsets[7], object.lastApplied);
-  writer.writeDouble(offsets[8], object.money);
-  writer.writeString(offsets[9], object.name);
-  writer.writeLong(offsets[10], object.position);
-  writer.writeDateTime(offsets[11], object.startDate);
-  writer.writeString(offsets[12], object.userId);
+  writer.writeBool(offsets[7], object.isIncome);
+  writer.writeString(offsets[8], object.lastApplied);
+  writer.writeDouble(offsets[9], object.money);
+  writer.writeString(offsets[10], object.name);
+  writer.writeLong(offsets[11], object.position);
+  writer.writeDateTime(offsets[12], object.startDate);
+  writer.writeString(offsets[13], object.userId);
 }
 
 LocalRecurrentExpense _localRecurrentExpenseDeserialize(
@@ -170,12 +176,13 @@ LocalRecurrentExpense _localRecurrentExpenseDeserialize(
   object.id = id;
   object.includeInSummary = reader.readBool(offsets[5]);
   object.isActive = reader.readBool(offsets[6]);
-  object.lastApplied = reader.readStringOrNull(offsets[7]);
-  object.money = reader.readDouble(offsets[8]);
-  object.name = reader.readString(offsets[9]);
-  object.position = reader.readLong(offsets[10]);
-  object.startDate = reader.readDateTime(offsets[11]);
-  object.userId = reader.readString(offsets[12]);
+  object.isIncome = reader.readBool(offsets[7]);
+  object.lastApplied = reader.readStringOrNull(offsets[8]);
+  object.money = reader.readDouble(offsets[9]);
+  object.name = reader.readString(offsets[10]);
+  object.position = reader.readLong(offsets[11]);
+  object.startDate = reader.readDateTime(offsets[12]);
+  object.userId = reader.readString(offsets[13]);
   return object;
 }
 
@@ -203,16 +210,18 @@ P _localRecurrentExpenseDeserializeProp<P>(
     case 6:
       return (reader.readBool(offset)) as P;
     case 7:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 8:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 10:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 11:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 12:
+      return (reader.readDateTime(offset)) as P;
+    case 13:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -972,6 +981,16 @@ extension LocalRecurrentExpenseQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
+      QAfterFilterCondition> isIncomeEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isIncome',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense,
       QAfterFilterCondition> lastAppliedIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1689,6 +1708,20 @@ extension LocalRecurrentExpenseQuerySortBy
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      sortByIsIncome() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isIncome', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      sortByIsIncomeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isIncome', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
       sortByLastApplied() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastApplied', Sort.asc);
@@ -1888,6 +1921,20 @@ extension LocalRecurrentExpenseQuerySortThenBy
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      thenByIsIncome() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isIncome', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
+      thenByIsIncomeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isIncome', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QAfterSortBy>
       thenByLastApplied() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastApplied', Sort.asc);
@@ -2024,6 +2071,13 @@ extension LocalRecurrentExpenseQueryWhereDistinct
   }
 
   QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QDistinct>
+      distinctByIsIncome() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isIncome');
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, LocalRecurrentExpense, QDistinct>
       distinctByLastApplied({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastApplied', caseSensitive: caseSensitive);
@@ -2119,6 +2173,13 @@ extension LocalRecurrentExpenseQueryProperty on QueryBuilder<
       isActiveProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isActive');
+    });
+  }
+
+  QueryBuilder<LocalRecurrentExpense, bool, QQueryOperations>
+      isIncomeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isIncome');
     });
   }
 
