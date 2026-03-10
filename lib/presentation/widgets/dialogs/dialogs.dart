@@ -3,6 +3,11 @@ export 'authenticacion_dialogs/auth_error_dialog.dart';
 export 'authenticacion_dialogs/biometric_info_dialog.dart';
 export 'authenticacion_dialogs/reset_password_dialog.dart';
 
+// Debts & Loans
+export 'debts_loans_dialogs/add_debt_loan_payment_dialog.dart';
+export 'debts_loans_dialogs/add_edit_debt_loan_dialog.dart';
+export 'debts_loans_dialogs/delete_debt_loan_dialog.dart';
+
 // Drawer
 export 'drawer_dialogs/delete_acount_dialog.dart';
 export 'drawer_dialogs/sing_out_dialog.dart';

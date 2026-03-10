@@ -1,11 +1,10 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
-import 'package:ahorrapp/presentation/bloc/debts_loans_cubit/debts_loans_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/add_debt_loan_payment_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/add_edit_debt_loan_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/delete_debt_loan_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 class DebtLoanCard extends StatelessWidget {
@@ -265,24 +264,8 @@ class DebtLoanCard extends StatelessWidget {
   Future<bool> _showDeleteConfirmation(BuildContext context) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('¿Eliminar registro?', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('¿Estás seguro de que quieres eliminar "${item.name}"? Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('CANCELAR', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<DebtsLoansCubit>().deleteDebtLoan(item.id);
-              Navigator.pop(context, true);
-            },
-            child: const Text('ELIMINAR', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+      barrierDismissible: false,
+      builder: (context) => DeleteDebtLoanDialog(item: item),
     );
     return result ?? false;
   }
