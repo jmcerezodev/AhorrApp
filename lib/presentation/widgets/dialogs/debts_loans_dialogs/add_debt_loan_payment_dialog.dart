@@ -71,7 +71,7 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
           const SizedBox(height: 25),
           CustomInputTextWidget(
             controller: _amountController,
-            label: 'Importe a ingresar',
+            label: isDebt ? 'Importe a pagar' : 'Importe a cobrar',
             hintText: '0.00',
             enabled: !_isLoading,
             autoFocus: true,
@@ -97,7 +97,7 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
                   text: 'CONFIRMAR',
                   color: Colors.orange,
                   isLoading: _isLoading,
-                  onPressed: _isLoading ? null : _save,
+                  onPressed: _isLoading ? null : _onConfirm,
                 ),
               ),
             ],
@@ -107,7 +107,7 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
     );
   }
 
-  void _save() async {
+  void _onConfirm() async {
     final amountText = _amountController.text.replaceAll(',', '.').trim();
     final amount = double.tryParse(amountText);
 
@@ -118,11 +118,88 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
       return;
     }
 
+    // Si NO es a plazos, preguntamos si quiere añadirlo al historial
+    if (!widget.item.isInstallment) {
+      _showAddToHistoryConfirmation(amount);
+    } else {
+      // Si es a plazos, se procesa directamente sin añadir al historial (porque ya suele estar vinculado a recurrentes)
+      _processPayment(amount, false);
+    }
+  }
+
+  void _showAddToHistoryConfirmation(double amount) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDebt = widget.item.type == DebtLoanType.debt;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => CustomDialogWrapper(
+        borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
+        horizontalInsetPadding: 20,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppDialogs.dialogHeader(
+              icon: Icons.history_edu_rounded,
+              title: '¿AÑADIR AL HISTORIAL?',
+              color: Colors.orange,
+              colorScheme: colorScheme,
+            ),
+            const SizedBox(height: 15),
+            AppDialogs.dialogMessage(
+              '¿Deseas registrar este ${isDebt ? "pago como un gasto" : "cobro como un ingreso"} en la pantalla principal?',
+              colorScheme,
+            ),
+            const SizedBox(height: 30),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      _processPayment(amount, false);
+                    },
+                    child: Text('NO, SOLO DEUDA', 
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      )
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: AppDialogs.dialogPrimaryButton(
+                    text: 'SÍ, AÑADIR',
+                    color: Colors.orange,
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      _processPayment(amount, true);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _processPayment(double amount, bool addToHistory) async {
     setState(() => _isLoading = true);
     
     final bool isCompleting = (widget.item.paidAmount + amount) >= widget.item.totalAmount;
+    final debtsCubit = context.read<DebtsLoansCubit>();
     
-    await context.read<DebtsLoansCubit>().addPayment(widget.item.id, amount);
+    await debtsCubit.addPayment(
+      widget.item.id, 
+      amount, 
+      addToHistory: addToHistory
+    );
     
     if (mounted) {
       context.pop(); // Cierra el diálogo de pago
@@ -136,6 +213,7 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
   void _showCompletionDialog(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final debtsCubit = context.read<DebtsLoansCubit>();
 
     showDialog(
       context: context,
@@ -192,9 +270,9 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
                 Expanded(
                   child: AppDialogs.dialogPrimaryButton(
                     text: 'ELIMINAR',
-                    color: Colors.red.shade400,
+                    color: Colors.orange,
                     onPressed: () {
-                      context.read<DebtsLoansCubit>().deleteDebtLoan(widget.item.id);
+                      debtsCubit.deleteDebtLoan(widget.item.id);
                       Navigator.pop(dialogContext);
                     },
                   ),

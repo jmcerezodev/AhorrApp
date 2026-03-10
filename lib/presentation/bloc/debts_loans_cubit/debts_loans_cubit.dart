@@ -1,10 +1,14 @@
+import 'package:ahorrapp/core/date/date.dart';
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
+import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/domain/usecases/debts_loans/add_debt_loan_usecase.dart';
 import 'package:ahorrapp/domain/usecases/debts_loans/delete_debt_loan_usecase.dart';
 import 'package:ahorrapp/domain/usecases/debts_loans/get_debts_loans_usecase.dart';
 import 'package:ahorrapp/domain/usecases/debts_loans/update_debt_loan_usecase.dart';
+import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/recurrent_expenses_cubit/recurrent_expenses_cubit.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -100,7 +104,7 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
     }
   }
 
-  Future<void> addPayment(String id, double amount) async {
+  Future<void> addPayment(String id, double amount, {bool addToHistory = false}) async {
     try {
       final debtLoan = state.debtsLoans.firstWhere((e) => e.id == id);
       final newPaidAmount = debtLoan.paidAmount + amount;
@@ -112,6 +116,29 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
       );
       
       await updateDebtLoanUseCase(updatedDebtLoan);
+
+      // Si el usuario lo solicita Y la deuda NO es a plazos, registramos el movimiento en el historial
+      if (addToHistory && !debtLoan.isInstallment) {
+        final date = Date();
+        final isDebt = debtLoan.type == DebtLoanType.debt;
+        
+        final movement = Movement(
+          id: const Uuid().v4(),
+          name: debtLoan.name,
+          amount: amount,
+          type: isDebt ? MovementType.expense : MovementType.income,
+          isIncome: !isDebt,
+          date: date.currentDate(),
+          hour: date.currentHour(),
+          month: date.monthNames(),
+          year: int.parse(date.year()),
+          createdAt: DateTime.now(),
+          category: 'deudas',
+        );
+
+        await getIt<SaveMovementUseCase>().call(movement);
+      }
+
       await loadDebtsLoans();
     } catch (e) {
       emit(state.copyWith(errorMessage: e.toString()));
