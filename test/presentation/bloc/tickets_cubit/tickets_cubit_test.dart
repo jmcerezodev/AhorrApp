@@ -20,6 +20,8 @@ class MockProcessTicketImageUseCase extends Mock implements ProcessTicketImageUs
 class MockDocumentScannerService extends Mock implements DocumentScannerService {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  
   late TicketsCubit ticketsCubit;
   late MockGetTicketItemsUseCase mockGetItems;
   late MockSaveTicketItemUseCase mockSaveItem;
@@ -34,14 +36,15 @@ void main() {
     TicketItem(id: '2', userId: 'u1', name: 'Carne', amount: 10.0, date: tDate, category: 'comida'),
   ];
 
-  setUpAll(() async {
-    SharedPreferences.setMockInitialValues({'uId': 'u1'});
-    await Preferences.init();
+  setUpAll(() {
     registerFallbackValue(TicketItem(id: '0', userId: '', name: '', amount: 0, date: DateTime.now(), category: ''));
     registerFallbackValue(File(''));
   });
 
-  setUp(() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({'uId': 'u1'});
+    await Preferences.init();
+
     mockGetItems = MockGetTicketItemsUseCase();
     mockSaveItem = MockSaveTicketItemUseCase();
     mockDeleteItem = MockDeleteTicketItemUseCase();

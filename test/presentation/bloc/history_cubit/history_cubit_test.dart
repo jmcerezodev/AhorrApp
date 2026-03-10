@@ -7,6 +7,7 @@ import 'package:ahorrapp/data/local/models/local_recurrent_expense.dart';
 import 'package:ahorrapp/data/local/models/local_shopping_list_item.dart';
 import 'package:ahorrapp/data/local/models/local_shopping_template.dart';
 import 'package:ahorrapp/data/local/models/local_ticket_item.dart';
+import 'package:ahorrapp/data/local/models/local_debt_loan.dart';
 import 'package:ahorrapp/domain/usecases/get_movements_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
@@ -43,6 +44,7 @@ void main() {
     registerFallbackValue(<LocalShoppingItem>[]);
     registerFallbackValue(<LocalShoppingTemplate>[]);
     registerFallbackValue(<LocalTicketItem>[]);
+    registerFallbackValue(<LocalDebtLoan>[]);
   });
 
   setUp(() async {
@@ -123,6 +125,21 @@ void main() {
         },
       );
 
+      final mockDebtDoc = FakeDocument(
+        $id: 'debt_123',
+        $createdAt: now,
+        data: {
+          'userId': 'test-user',
+          'name': 'Préstamo',
+          'person': 'Amigo',
+          'totalAmount': 500.0,
+          'paidAmount': 0.0,
+          'type': 'debt',
+          'isCompleted': false,
+          'isInstallment': false,
+        },
+      );
+
       when(() => mockLocalDb.clearAll()).thenAnswer((_) async {});
       when(() => mockRepo.syncFullData(any(), any())).thenAnswer((_) async => {
         'balance': 1500.0,
@@ -132,6 +149,7 @@ void main() {
         'shopping': [mockShoppingDoc],
         'templates': [mockTemplateDoc],
         'tickets': [],
+        'debts': [mockDebtDoc],
         'savingGoal': 500.0,
       });
       when(() => mockLocalDb.saveHistoryItems(any())).thenAnswer((_) async {});
@@ -140,6 +158,7 @@ void main() {
       when(() => mockLocalDb.saveShoppingListItems(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveShoppingTemplates(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveTicketItems(any())).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveDebtLoans(any())).thenAnswer((_) async {}); // STUB NECESARIO
       when(() => mockLocalDb.saveSavingGoal(any(), any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveTotalBalance(any(), any())).thenAnswer((_) async {});
       when(() => mockGetMovementsUseCase(any(), any(), any())).thenAnswer((_) async => []);
@@ -152,6 +171,7 @@ void main() {
       verify(() => mockLocalDb.saveShoppingListItems(any())).called(1);
       verify(() => mockLocalDb.saveShoppingTemplates(any())).called(1);
       verify(() => mockLocalDb.saveTicketItems(any())).called(1);
+      verify(() => mockLocalDb.saveDebtLoans(any())).called(1); // VERIFICACIÓN NECESARIA
       expect(historyCubit.state.status, HistoryStatus.success);
     });
 

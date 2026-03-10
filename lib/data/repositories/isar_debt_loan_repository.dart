@@ -19,17 +19,16 @@ class IsarDebtLoanRepository implements DebtLoanRepository {
   Future<void> addDebtLoan(DebtLoan debtLoan) async {
     final isar = localDbService.isar;
     
-    final existingItem = await isar.localDebtLoans
-        .filter()
-        .appwriteIdEqualTo(debtLoan.id)
-        .findFirst();
-
-    final localItem = LocalDebtLoan.fromEntity(debtLoan);
-    if (existingItem != null) {
-      localItem.id = existingItem.id;
-    }
-
     await isar.writeTxn(() async {
+      final existingItem = await isar.localDebtLoans
+          .filter()
+          .appwriteIdEqualTo(debtLoan.id)
+          .findFirst();
+
+      final localItem = LocalDebtLoan.fromEntity(debtLoan);
+      if (existingItem != null) {
+        localItem.id = existingItem.id;
+      }
       await isar.localDebtLoans.put(localItem);
     });
   }
@@ -37,17 +36,18 @@ class IsarDebtLoanRepository implements DebtLoanRepository {
   @override
   Future<void> updateDebtLoan(DebtLoan debtLoan) async {
     final isar = localDbService.isar;
-    final existingItem = await isar.localDebtLoans
-        .filter()
-        .appwriteIdEqualTo(debtLoan.id)
-        .findFirst();
+    
+    await isar.writeTxn(() async {
+      final existingItem = await isar.localDebtLoans
+          .filter()
+          .appwriteIdEqualTo(debtLoan.id)
+          .findFirst();
 
-    if (existingItem != null) {
-      final updatedItem = LocalDebtLoan.fromEntity(debtLoan)..id = existingItem.id;
-      await isar.writeTxn(() async {
+      if (existingItem != null) {
+        final updatedItem = LocalDebtLoan.fromEntity(debtLoan)..id = existingItem.id;
         await isar.localDebtLoans.put(updatedItem);
-      });
-    }
+      }
+    });
   }
 
   @override

@@ -5,9 +5,13 @@ import 'package:ahorrapp/domain/repositories/debt_loan_repository.dart';
 import 'package:appwrite/appwrite.dart';
 
 class AppwriteDebtLoanRepository implements DebtLoanRepository {
-  final Databases _databases = AppwriteService().databases;
+  final Databases _databases;
   final String _databaseId = Env.appwriteDatabaseId;
   final String _collectionId = Env.debtsLoansCollectionId;
+
+  // Refactorizamos para permitir inyectar el servicio de bases de datos
+  AppwriteDebtLoanRepository({Databases? databases}) 
+    : _databases = databases ?? AppwriteService().databases;
 
   @override
   Future<List<DebtLoan>> getDebtsLoans(String userId) async {
