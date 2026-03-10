@@ -1,3 +1,4 @@
+import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
@@ -20,6 +21,15 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Buscamos si es una deuda vinculada
+    final debtsState = context.read<DebtsLoansCubit>().state;
+    DebtLoan? linkedDebt;
+    try {
+      linkedDebt = debtsState.debtsLoans.firstWhere((d) => d.recurrentExpenseId == expenseId);
+    } catch (_) {}
+
+    final bool isLinked = linkedDebt != null;
+
     return CustomDialogWrapper(
       borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
       horizontalInsetPadding: 30,
@@ -29,7 +39,7 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
           AppDialogs.dialogHeader(
             icon: Icons.delete_outline_rounded, 
             color: Colors.red.shade400, 
-            title: '¿ELIMINAR PAGO FIJO?',
+            title: '¿ELIMINAR GASTO FIJO?',
             circularBackground: true,
             iconSize: 32,
             colorScheme: colorScheme,
@@ -37,7 +47,9 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
           const SizedBox(height: 15),
           
           AppDialogs.dialogMessage(
-            'Estás a punto de borrar "$expenseName". Esta acción eliminará la automatización y no se puede deshacer.', 
+            isLinked 
+              ? 'Este pago fijo está vinculado a la deuda "${linkedDebt.name}". Si lo eliminas, la deuda también se borrará de tu lista. ¿Estás seguro?'
+              : 'Estás a punto de borrar "$expenseName". Esta acción eliminará la automatización y no se puede deshacer.', 
             colorScheme
           ),
           const SizedBox(height: 30),
@@ -66,7 +78,8 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
                     final debtsCubit = context.read<DebtsLoansCubit>();
                     context.read<RecurrentExpensesCubit>().deleteExpense(
                       expenseId, 
-                      debtsCubit: debtsCubit
+                      debtsCubit: debtsCubit,
+                      deleteDebt: isLinked // Si está vinculada, borramos la deuda también
                     );
                     context.pop(true);
                   }, 

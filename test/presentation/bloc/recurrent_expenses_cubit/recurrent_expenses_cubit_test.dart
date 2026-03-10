@@ -1,11 +1,13 @@
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
+import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/delete_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/get_recurrent_expenses_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/save_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
+import 'package:ahorrapp/presentation/bloc/debts_loans_cubit/debts_loans_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/recurrent_expenses_cubit/recurrent_expenses_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -15,6 +17,7 @@ class MockGetRecurrentExpensesUseCase extends Mock implements GetRecurrentExpens
 class MockSaveRecurrentExpenseUseCase extends Mock implements SaveRecurrentExpenseUseCase {}
 class MockDeleteRecurrentExpenseUseCase extends Mock implements DeleteRecurrentExpenseUseCase {}
 class MockSaveMovementUseCase extends Mock implements SaveMovementUseCase {}
+class MockDebtsLoansCubit extends Mock implements DebtsLoansCubit {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +26,7 @@ void main() {
   late MockSaveRecurrentExpenseUseCase mockSave;
   late MockDeleteRecurrentExpenseUseCase mockDelete;
   late MockSaveMovementUseCase mockSaveMovement;
+  late MockDebtsLoansCubit mockDebtsCubit;
 
   setUpAll(() {
     registerFallbackValue(RecurrentExpense(
@@ -57,6 +61,7 @@ void main() {
     mockSave = MockSaveRecurrentExpenseUseCase();
     mockDelete = MockDeleteRecurrentExpenseUseCase();
     mockSaveMovement = MockSaveMovementUseCase();
+    mockDebtsCubit = MockDebtsLoansCubit();
 
     getIt.reset();
     getIt.registerSingleton<GetRecurrentExpensesUseCase>(mockGet);
@@ -65,6 +70,44 @@ void main() {
     getIt.registerSingleton<SaveMovementUseCase>(mockSaveMovement);
 
     cubit = RecurrentExpensesCubit();
+  });
+
+  group('RecurrentExpensesCubit - Sincronización con Deudas', () {
+    test('applyExpenseManually debe actualizar deuda vinculada si existe', () async {
+      final expense = RecurrentExpense(id: 'exp1', userId: 'u1', name: 'Gasto', amount: 50, day: 1, startDate: DateTime.now(), position: 0);
+      final debt = DebtLoan(id: 'debt1', userId: 'u1', name: 'Deuda', person: 'Juan', totalAmount: 500, paidAmount: 0, type: DebtLoanType.debt, recurrentExpenseId: 'exp1');
+      
+      when(() => mockSaveMovement(any())).thenAnswer((_) async => {});
+      when(() => mockDebtsCubit.state).thenReturn(DebtsLoansState(debtsLoans: [debt]));
+      when(() => mockDebtsCubit.addPayment(any(), any(), addToHistory: false)).thenAnswer((_) async => {});
+
+      await cubit.applyExpenseManually(expense, debtsCubit: mockDebtsCubit);
+
+      verify(() => mockSaveMovement(any())).called(1);
+      verify(() => mockDebtsCubit.addPayment('debt1', 50, addToHistory: false)).called(1);
+    });
+
+    test('deleteExpense con deleteDebt true debe llamar a deleteByRecurrentId en deudas', () async {
+      when(() => mockDelete(any())).thenAnswer((_) async => {});
+      when(() => mockGet(any())).thenAnswer((_) async => []);
+      when(() => mockDebtsCubit.deleteByRecurrentId(any())).thenAnswer((_) async => {});
+
+      await cubit.deleteExpense('exp1', debtsCubit: mockDebtsCubit, deleteDebt: true);
+
+      verify(() => mockDelete('exp1')).called(1);
+      verify(() => mockDebtsCubit.deleteByRecurrentId('exp1')).called(1);
+    });
+
+    test('deleteExpense con deleteDebt false debe llamar a clearRecurrentReference en deudas', () async {
+      when(() => mockDelete(any())).thenAnswer((_) async => {});
+      when(() => mockGet(any())).thenAnswer((_) async => []);
+      when(() => mockDebtsCubit.clearRecurrentReference(any())).thenAnswer((_) async => {});
+
+      await cubit.deleteExpense('exp1', debtsCubit: mockDebtsCubit, deleteDebt: false);
+
+      verify(() => mockDelete('exp1')).called(1);
+      verify(() => mockDebtsCubit.clearRecurrentReference('exp1')).called(1);
+    });
   });
 
   group('RecurrentExpensesCubit - Lógica de Posicionamiento y Resumen', () {

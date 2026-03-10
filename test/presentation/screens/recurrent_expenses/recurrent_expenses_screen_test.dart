@@ -10,23 +10,33 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockRecurrentExpensesCubit extends Mock implements RecurrentExpensesCubit {}
+class MockDebtsLoansCubit extends Mock implements DebtsLoansCubit {}
 
 void main() {
   late MockRecurrentExpensesCubit mockCubit;
+  late MockDebtsLoansCubit mockDebtsCubit;
 
   setUp(() {
     mockCubit = MockRecurrentExpensesCubit();
+    mockDebtsCubit = MockDebtsLoansCubit();
+    
     when(() => mockCubit.loadExpenses()).thenAnswer((_) async => {});
     when(() => mockCubit.reorderExpenses(any(), any())).thenAnswer((_) async => {});
     when(() => mockCubit.stream).thenAnswer((_) => const Stream.empty());
+    
+    when(() => mockDebtsCubit.state).thenReturn(const DebtsLoansState());
+    when(() => mockDebtsCubit.stream).thenAnswer((_) => const Stream.empty());
   });
 
   Widget createWidgetUnderTest() {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        body: BlocProvider<RecurrentExpensesCubit>.value(
-          value: mockCubit,
+        body: MultiBlocProvider(
+          providers: [
+            BlocProvider<RecurrentExpensesCubit>.value(value: mockCubit),
+            BlocProvider<DebtsLoansCubit>.value(value: mockDebtsCubit),
+          ],
           child: const RecurrentExpensesScreen(),
         ),
       ),
@@ -79,8 +89,11 @@ void main() {
       when(() => mockCubit.state).thenReturn(RecurrentExpensesState(expenses: expenses));
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
-      await tester.drag(find.text('Netflix'), const Offset(500.0, 0.0));
-      await tester.pumpAndSettle();
+      
+      // Deslizamos lentamente para que el fondo se mantenga visible y no se dispare la acción de golpe
+      await tester.drag(find.text('Netflix'), const Offset(200.0, 0.0));
+      await tester.pump(); // Usamos pump en lugar de pumpAndSettle para ver el estado intermedio del swipe
+      
       expect(find.descendant(of: find.byType(SwipeBackgroundWidget), matching: find.text('EDITAR')), findsOneWidget);
     });
 
@@ -91,8 +104,11 @@ void main() {
       when(() => mockCubit.state).thenReturn(RecurrentExpensesState(expenses: expenses));
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
-      await tester.drag(find.text('Netflix'), const Offset(-500.0, 0.0));
-      await tester.pumpAndSettle();
+      
+      // Deslizamos lentamente hacia la izquierda
+      await tester.drag(find.text('Netflix'), const Offset(-200.0, 0.0));
+      await tester.pump();
+
       expect(find.descendant(of: find.byType(SwipeBackgroundWidget), matching: find.text('ELIMINAR')), findsOneWidget);
     });
 

@@ -185,6 +185,8 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<ProcessRecurrentExpensesUseCase>(() => ProcessRecurrentExpensesUseCase(
         localRepository: getIt<IRecurrentExpenseRepository>(instanceName: 'recurrent_local'),
         remoteRepository: getIt<IRecurrentExpenseRepository>(instanceName: 'recurrent_remote'),
+        debtLocalRepository: getIt<DebtLoanRepository>(instanceName: 'debt_local'),
+        debtRemoteRepository: getIt<DebtLoanRepository>(instanceName: 'debt_remote'),
         saveMovementUseCase: getIt<SaveMovementUseCase>(),
       ));
 

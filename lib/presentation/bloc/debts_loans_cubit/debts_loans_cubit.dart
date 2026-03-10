@@ -145,6 +145,19 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
     }
   }
 
+  /// Elimina deudas vinculadas a un gasto recurrente
+  Future<void> deleteByRecurrentId(String recurrentId) async {
+    try {
+      final affectedDebts = state.debtsLoans.where((d) => d.recurrentExpenseId == recurrentId).toList();
+      for (var debt in affectedDebts) {
+        await deleteDebtLoanUseCase(debt.id);
+      }
+      if (affectedDebts.isNotEmpty) {
+        await loadDebtsLoans();
+      }
+    } catch (_) {}
+  }
+
   /// Limpia la referencia al gasto recurrente en cualquier deuda vinculada
   Future<void> clearRecurrentReference(String recurrentId) async {
     try {
@@ -162,8 +175,15 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
     } catch (_) {}
   }
 
-  Future<void> deleteDebtLoan(String id) async {
+  Future<void> deleteDebtLoan(String id, {bool deleteRecurrent = false}) async {
     try {
+      if (deleteRecurrent) {
+        final debt = state.debtsLoans.firstWhere((d) => d.id == id);
+        if (debt.recurrentExpenseId != null && debt.recurrentExpenseId!.isNotEmpty) {
+          await recurrentExpensesCubit.deleteExpense(debt.recurrentExpenseId!);
+        }
+      }
+
       await deleteDebtLoanUseCase(id);
       await loadDebtsLoans();
     } catch (e) {

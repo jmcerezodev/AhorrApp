@@ -37,7 +37,6 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
   
   bool _isInstallment = false;
   bool _isAutoCalculate = true;
-  bool _addToRecurrent = false;
   bool _isLoading = false;
 
   // Errores de validación
@@ -60,9 +59,6 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
     _selectedDate = widget.item?.date;
     _dueDate = widget.item?.dueDate;
     _isInstallment = widget.item?.isInstallment ?? false;
-    
-    // CORRECCIÓN: Solo activamos si el ID existe y NO es una cadena vacía
-    _addToRecurrent = widget.item?.recurrentExpenseId != null && widget.item!.recurrentExpenseId!.isNotEmpty;
 
     _amountController.addListener(_onAmountOrMonthsChanged);
     _monthsController.addListener(_onAmountOrMonthsChanged);
@@ -80,10 +76,30 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
     super.dispose();
   }
 
+  /// Limpia y normaliza el string numérico para que double.tryParse lo entienda siempre.
+  double _parseInput(String input) {
+    String sanitized = input.trim();
+    if (sanitized.isEmpty) return 0;
+
+    if (sanitized.contains('.') && sanitized.contains(',')) {
+      sanitized = sanitized.replaceAll('.', '').replaceAll(',', '.');
+    } 
+    else if (sanitized.contains(',')) {
+      sanitized = sanitized.replaceAll(',', '.');
+    }
+    else if (sanitized.contains('.')) {
+      final parts = sanitized.split('.');
+      if (parts.length > 2 || (parts.length == 2 && parts[1].length != 2)) {
+         sanitized = sanitized.replaceAll('.', '');
+      }
+    }
+
+    return double.tryParse(sanitized) ?? 0;
+  }
+
   void _onAmountOrMonthsChanged() {
     if (_isAutoCalculate && _isInstallment) {
-      final totalStr = _amountController.text.replaceAll(',', '.').trim();
-      final total = double.tryParse(totalStr) ?? 0;
+      final total = _parseInput(_amountController.text);
       final months = int.tryParse(_monthsController.text.trim()) ?? 0;
       
       if (total > 0 && months > 0) {
@@ -164,8 +180,8 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
       monthsPassed += 1;
     }
 
-    final installment = double.tryParse(_installmentAmountController.text.replaceAll(',', '.')) ?? 0.0;
-    final total = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0.0;
+    final installment = _parseInput(_installmentAmountController.text);
+    final total = _parseInput(_amountController.text);
     
     double calculatedPaid = monthsPassed * installment;
     return calculatedPaid > total ? total : calculatedPaid;
@@ -175,7 +191,6 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bool areDatesSet = _selectedDate != null && _dueDate != null;
 
     return CustomDialogWrapper(
       borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
@@ -317,27 +332,6 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                       ),
                       const SizedBox(height: 15),
                       const Divider(height: 1),
-                      const SizedBox(height: 15),
-                      Row(
-                        children: [
-                          const Icon(Icons.repeat_rounded, color: Colors.orange, size: 18),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Text(
-                              'Añadir a Pagos Fijos automáticamente',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Transform.scale(
-                            scale: 0.7,
-                            child: CupertinoSwitch(
-                              value: _addToRecurrent, 
-                              onChanged: (val) => setState(() => _addToRecurrent = val), 
-                              activeColor: Colors.orange,
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   )
                 : const SizedBox.shrink(),
@@ -470,8 +464,8 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
       _nameError = _nameController.text.trim().isEmpty ? 'Campo obligatorio' : null;
       _personError = _personController.text.trim().isEmpty ? 'Campo obligatorio' : null;
       
-      final amount = double.tryParse(_amountController.text.replaceAll(',', '.').trim());
-      if (amount == null || amount <= 0) {
+      final amount = _parseInput(_amountController.text);
+      if (amount <= 0) {
         _amountError = 'Importe no válido';
       } else {
         _amountError = null;
@@ -492,7 +486,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
 
     setState(() => _isLoading = true);
     
-    final installmentAmount = double.tryParse(_installmentAmountController.text.replaceAll(',', '.').trim());
+    final installmentAmount = _parseInput(_installmentAmountController.text);
     final totalInstallments = int.tryParse(_monthsController.text.trim());
     final finalStartDate = _selectedDate ?? DateTime.now();
 
@@ -502,7 +496,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
       id: widget.item?.id,
       name: _nameController.text.trim(),
       person: _personController.text.trim(),
-      totalAmount: double.parse(_amountController.text.replaceAll(',', '.').trim()),
+      totalAmount: _parseInput(_amountController.text),
       paidAmount: initialPaid,
       type: _type,
       date: finalStartDate,
@@ -510,7 +504,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
       isInstallment: _isInstallment,
       totalInstallments: totalInstallments,
       installmentAmount: installmentAmount,
-      addToRecurrent: _addToRecurrent,
+      addToRecurrent: _isInstallment, // Automático si es a plazos
     );
 
     if (mounted) context.pop();

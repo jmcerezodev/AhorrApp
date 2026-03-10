@@ -156,7 +156,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     }
   }
 
-  Future<void> applyExpenseManually(RecurrentExpense expense) async {
+  Future<void> applyExpenseManually(RecurrentExpense expense, {DebtsLoansCubit? debtsCubit}) async {
     final dateService = Date();
     
     final movement = Movement(
@@ -175,6 +175,14 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
 
     try {
       await _saveMovementUseCase(movement);
+
+      // Si hay un cubit de deudas, actualizamos el progreso de la deuda vinculada
+      if (debtsCubit != null) {
+        final linkedDebt = debtsCubit.state.debtsLoans.where((d) => d.recurrentExpenseId == expense.id).firstOrNull;
+        if (linkedDebt != null) {
+          await debtsCubit.addPayment(linkedDebt.id, expense.amount, addToHistory: false);
+        }
+      }
     } catch (e) {
       emit(state.copyWith(
         status: RecurrentExpensesStatus.failure,
@@ -183,13 +191,17 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     }
   }
 
-  Future<void> deleteExpense(String id, {DebtsLoansCubit? debtsCubit}) async {
+  Future<void> deleteExpense(String id, {DebtsLoansCubit? debtsCubit, bool deleteDebt = false}) async {
     emit(state.copyWith(status: RecurrentExpensesStatus.loading));
     try {
       await _deleteRecurrentExpenseUseCase(id);
       
-      // DESVINCULACIÓN: Si nos pasan el cubit de deudas, limpiamos la referencia
-      if (debtsCubit != null) {
+      // SI ES ELIMINACIÓN TOTAL: Llamamos al cubit de deudas para borrar la deuda física
+      if (deleteDebt && debtsCubit != null) {
+        await debtsCubit.deleteByRecurrentId(id);
+      } 
+      // SI NO ES ELIMINACIÓN TOTAL: Solo limpiamos la referencia
+      else if (debtsCubit != null) {
         await debtsCubit.clearRecurrentReference(id);
       }
 
