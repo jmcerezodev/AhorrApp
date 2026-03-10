@@ -1,3 +1,4 @@
+import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/screens/recurrent_expenses_screen.dart';
@@ -29,15 +30,15 @@ void main() {
   });
 
   Widget createWidgetUnderTest() {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: MultiBlocProvider(
-          providers: [
-            BlocProvider<RecurrentExpensesCubit>.value(value: mockCubit),
-            BlocProvider<DebtsLoansCubit>.value(value: mockDebtsCubit),
-          ],
-          child: const RecurrentExpensesScreen(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<RecurrentExpensesCubit>.value(value: mockCubit),
+        BlocProvider<DebtsLoansCubit>.value(value: mockDebtsCubit),
+      ],
+      child: const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: RecurrentExpensesScreen(),
         ),
       ),
     );
@@ -59,6 +60,36 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
       expect(find.text('Netflix'), findsOneWidget);
+    });
+
+    testWidgets('Debe mostrar el nombre de la deuda y el chip DEUDA si está vinculada', (WidgetTester tester) async {
+      final expenses = [
+        RecurrentExpense(id: 'exp1', userId: 'u1', name: 'Gasto Original', amount: 50.0, day: 15, startDate: DateTime.now()),
+      ];
+      final debts = [
+        DebtLoan(
+          id: 'debt1', 
+          userId: 'u1', 
+          name: 'Nombre de Deuda', 
+          person: 'Banco', 
+          totalAmount: 1000, 
+          type: DebtLoanType.debt,
+          recurrentExpenseId: 'exp1'
+        ),
+      ];
+
+      when(() => mockCubit.state).thenReturn(RecurrentExpensesState(status: RecurrentExpensesStatus.success, expenses: expenses));
+      when(() => mockDebtsCubit.state).thenReturn(DebtsLoansState(debtsLoans: debts));
+
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      // Verificamos que usa el título de la deuda y NO el del gasto
+      expect(find.text('Nombre de Deuda'), findsOneWidget);
+      expect(find.text('Gasto Original'), findsNothing);
+      
+      // Verificamos que el chip DEUDA está presente
+      expect(find.text('DEUDA'), findsOneWidget);
     });
 
     testWidgets('Debe abrir el diálogo de añadir al pulsar la burbuja', (WidgetTester tester) async {
@@ -90,9 +121,8 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
       
-      // Deslizamos lentamente para que el fondo se mantenga visible y no se dispare la acción de golpe
       await tester.drag(find.text('Netflix'), const Offset(200.0, 0.0));
-      await tester.pump(); // Usamos pump en lugar de pumpAndSettle para ver el estado intermedio del swipe
+      await tester.pump();
       
       expect(find.descendant(of: find.byType(SwipeBackgroundWidget), matching: find.text('EDITAR')), findsOneWidget);
     });
@@ -105,7 +135,6 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
       
-      // Deslizamos lentamente hacia la izquierda
       await tester.drag(find.text('Netflix'), const Offset(-200.0, 0.0));
       await tester.pump();
 
@@ -117,7 +146,7 @@ void main() {
         RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 10, day: 1, startDate: DateTime.now(), position: 0),
         RecurrentExpense(id: '2', userId: 'u1', name: 'HBO', amount: 10, day: 1, startDate: DateTime.now(), position: 1),
       ];
-      when(() => mockCubit.state).thenReturn(RecurrentExpensesState(expenses: expenses));
+      when(() => mockCubit.state).thenReturn(RecurrentExpensesState(status: RecurrentExpensesStatus.success, expenses: expenses));
 
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
@@ -126,7 +155,7 @@ void main() {
       final secondItem = find.text('HBO');
 
       final TestGesture gesture = await tester.startGesture(tester.getCenter(firstItem));
-      await tester.pump(const Duration(seconds: 1)); // Long press
+      await tester.pump(const Duration(milliseconds: 500)); 
       await gesture.moveTo(tester.getCenter(secondItem));
       await gesture.up();
       await tester.pumpAndSettle();

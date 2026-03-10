@@ -1,4 +1,5 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
+import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
@@ -26,6 +27,17 @@ class RecurrentExpenseCard extends StatelessWidget {
     final int daysRemaining = nextPaymentDate.difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)).inDays;
     final double progress = _calculateProgress(nextPaymentDate);
     final bool showProgress = isAutomatic && expense.isActive;
+
+    // Buscamos si hay una deuda vinculada para ajustar el título y mostrar el chip
+    final debtsState = context.watch<DebtsLoansCubit>().state;
+    DebtLoan? linkedDebt;
+    try {
+      linkedDebt = debtsState.debtsLoans.firstWhere((d) => d.recurrentExpenseId == expense.id);
+    } catch (_) {}
+
+    final bool isLinked = linkedDebt != null;
+    // Si está vinculada, usamos el nombre de la deuda (concepto puro) como título
+    final String displayTitle = isLinked ? linkedDebt.name : expense.name;
 
     return Container(
       constraints: const BoxConstraints(minHeight: 92),
@@ -80,9 +92,9 @@ class RecurrentExpenseCard extends StatelessWidget {
               ],
             ),
             title: Text(
-              expense.name,
-              maxLines: 2, // Aumentado a 2 líneas
-              overflow: TextOverflow.visible, // Permitir salto de línea
+              displayTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 15,
@@ -156,17 +168,38 @@ class RecurrentExpenseCard extends StatelessWidget {
           if (showProgress)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  daysRemaining == 0 ? '¡Se cobra hoy!' : 'Próximo cobro en $daysRemaining días',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
-                    letterSpacing: 0.5,
+              child: Row(
+                children: [
+                  Text(
+                    daysRemaining == 0 ? '¡Se cobra hoy!' : 'Próximo cobro en $daysRemaining días',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                ),
+                  if (isLinked) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                      ),
+                      child: const Text(
+                        'DEUDA',
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 7.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
         ],
