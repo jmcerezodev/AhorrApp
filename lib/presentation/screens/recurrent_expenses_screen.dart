@@ -13,42 +13,98 @@ class RecurrentExpensesScreen extends StatefulWidget {
   State<RecurrentExpensesScreen> createState() => _RecurrentExpensesScreenState();
 }
 
-class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> {
+class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  int _currentTabIndex = 0;
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {
+          _currentTabIndex = _tabController.index;
+        });
+      }
+    });
     context.read<RecurrentExpensesCubit>().loadExpenses();
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. APPBAR COMPACTA
-          FadeInDown(
-            duration: const Duration(milliseconds: 500),
-            child: const RecurrentAppBar()
-          ),
+    final colorScheme = Theme.of(context).colorScheme;
 
-          // 2. TARJETA DE RESUMEN
-          FadeInDown(
-            delay: const Duration(milliseconds: 100),
-            child: const RecurrentSummaryWidget()
-          ),
+    return BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
+      builder: (context, state) {
+        return SafeArea(
+          child: Column(
+            children: [
+              // 1. APPBAR (Diseño idéntico a Deudas)
+              FadeInDown(
+                duration: const Duration(milliseconds: 500),
+                child: const RecurrentAppBar(),
+              ),
 
-          const SizedBox(height: 10),
+              // 2. TARJETA DE RESUMEN (Diseño idéntico a Deudas)
+              RecurrentSummaryWidget(
+                isIncomeTab: _currentTabIndex == 1,
+              ),
 
-          // 3. LISTADO Y FILTROS
-          Expanded(
-            child: FadeInUp(
-              delay: const Duration(milliseconds: 200),
-              child: const RecurrentHistoryWidget()
-            ),
+              // 3. PESTAÑAS (Diseño idéntico a Deudas)
+              FadeInDown(
+                delay: const Duration(milliseconds: 100),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Container(
+                    height: 45,
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      dividerColor: Colors.transparent,
+                      indicator: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25),
+                        color: Colors.orange,
+                      ),
+                      labelColor: Colors.white,
+                      unselectedLabelColor: colorScheme.onSurfaceVariant,
+                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      tabs: const [
+                        Tab(text: 'GASTOS'),
+                        Tab(text: 'INGRESOS'),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // 4. LISTADOS (TabBarView)
+              Expanded(
+                child: state.status == RecurrentExpensesStatus.loading && state.expenses.isEmpty
+                  ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+                  : TabBarView(
+                      controller: _tabController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: const [
+                        RecurrentHistoryWidget(isIncomeTab: false),
+                        RecurrentHistoryWidget(isIncomeTab: true),
+                      ],
+                    ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

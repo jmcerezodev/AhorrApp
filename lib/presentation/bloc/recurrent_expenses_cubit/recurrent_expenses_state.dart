@@ -10,7 +10,7 @@ class RecurrentExpensesState extends Equatable {
   final bool isFilterOpen;
   final bool showAutomatic;
   final bool showManual;
-  final List<String> selectedCategories; // NUEVO: Categorías seleccionadas para filtrar
+  final List<String> selectedCategories;
 
   const RecurrentExpensesState({
     this.expenses = const [],
@@ -20,44 +20,51 @@ class RecurrentExpensesState extends Equatable {
     this.isFilterOpen = false,
     this.showAutomatic = true,
     this.showManual = true,
-    this.selectedCategories = const [], // Por defecto vacío (todas visibles)
+    this.selectedCategories = const [],
   });
 
-  // Lógica centralizada para determinar si un gasto debe sumarse a los totales
   bool _shouldInclude(RecurrentExpense e) {
     if (!e.isActive) return false;
     return (e.day != null) || e.includeInSummary;
   }
 
-  // Cálculo de la carga mensual normalizada (prorrateo)
-  double get totalMonthlyNormalized {
+  // --- CÁLCULOS PARA GASTOS ---
+  double get totalExpenseProrated {
     double total = 0;
-    for (var expense in expenses) {
-      if (_shouldInclude(expense)) {
-        switch (expense.frequency) {
-          case RecurrentFrequency.monthly:
-            total += expense.amount;
-            break;
-          case RecurrentFrequency.quarterly:
-            total += expense.amount / 3;
-            break;
-          case RecurrentFrequency.semiAnnually:
-            total += expense.amount / 6;
-            break;
-          case RecurrentFrequency.annually:
-            total += expense.amount / 12;
-            break;
-        }
-      }
+    for (var e in expenses.where((e) => !e.isIncome && _shouldInclude(e))) {
+      total += e.amount / _getFrequencyFactor(e.frequency);
     }
     return total;
   }
 
-  // Cálculo de gastos estrictamente mensuales
-  double get totalStrictlyMonthly {
+  double get totalExpenseStrict {
     return expenses
-        .where((e) => _shouldInclude(e) && e.frequency == RecurrentFrequency.monthly)
+        .where((e) => !e.isIncome && _shouldInclude(e) && e.frequency == RecurrentFrequency.monthly)
         .fold(0, (sum, e) => sum + e.amount);
+  }
+
+  // --- CÁLCULOS PARA INGRESOS ---
+  double get totalIncomeProrated {
+    double total = 0;
+    for (var e in expenses.where((e) => e.isIncome && _shouldInclude(e))) {
+      total += e.amount / _getFrequencyFactor(e.frequency);
+    }
+    return total;
+  }
+
+  double get totalIncomeStrict {
+    return expenses
+        .where((e) => e.isIncome && _shouldInclude(e) && e.frequency == RecurrentFrequency.monthly)
+        .fold(0, (sum, e) => sum + e.amount);
+  }
+
+  double _getFrequencyFactor(RecurrentFrequency freq) {
+    switch (freq) {
+      case RecurrentFrequency.monthly: return 1;
+      case RecurrentFrequency.quarterly: return 3;
+      case RecurrentFrequency.semiAnnually: return 6;
+      case RecurrentFrequency.annually: return 12;
+    }
   }
 
   RecurrentExpensesState copyWith({

@@ -38,7 +38,8 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
       ..frequency = _mapToLocalFrequency(expense.frequency)
       ..startDate = expense.startDate
       ..position = expense.position
-      ..includeInSummary = expense.includeInSummary // NUEVO
+      ..includeInSummary = expense.includeInSummary
+      ..isIncome = expense.isIncome // NUEVO
       ..createdAt = existingItem?.createdAt ?? DateTime.now();
 
     await _localDb.saveRecurrentExpenses([localItem]);
@@ -72,7 +73,8 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
       frequency: _mapToDomainFrequency(local.frequency),
       startDate: local.startDate,
       position: local.position,
-      includeInSummary: local.includeInSummary, // NUEVO
+      includeInSummary: local.includeInSummary,
+      isIncome: local.isIncome, // NUEVO
     );
   }
 

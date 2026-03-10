@@ -79,6 +79,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     DateTime? startDate,
     int? position,
     bool? includeInSummary, 
+    bool isIncome = false,
   }) async {
     emit(state.copyWith(status: RecurrentExpensesStatus.loading));
     
@@ -102,6 +103,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
         if (includeInSummary == null) finalIncludeInSummary = currentExpense.includeInSummary;
       }
     } else {
+      // Diferenciar posición por tipo (opcional, pero mejor mantener orden global o por tipo)
       finalPosition = position ?? state.expenses.length;
     }
 
@@ -118,6 +120,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       startDate: finalStartDate,
       position: finalPosition,
       includeInSummary: finalIncludeInSummary,
+      isIncome: isIncome,
     );
 
     try {
@@ -131,24 +134,31 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     }
   }
 
-  Future<void> reorderExpenses(int oldIndex, int newIndex) async {
+  Future<void> reorderExpenses(int oldIndex, int newIndex, {required bool isIncome}) async {
     if (oldIndex < newIndex) {
       newIndex -= 1;
     }
 
-    final List<RecurrentExpense> items = List.from(state.expenses);
-    final RecurrentExpense item = items.removeAt(oldIndex);
-    items.insert(newIndex, item);
+    // Obtenemos solo la lista del tipo correspondiente para reordenar
+    final List<RecurrentExpense> allItems = List.from(state.expenses);
+    final List<RecurrentExpense> typeItems = allItems.where((e) => e.isIncome == isIncome).toList();
+    
+    final RecurrentExpense itemToMove = typeItems.removeAt(oldIndex);
+    typeItems.insert(newIndex, itemToMove);
 
-    final List<RecurrentExpense> updatedItems = [];
-    for (int i = 0; i < items.length; i++) {
-      updatedItems.add(items[i].copyWith(position: i));
+    // Actualizamos las posiciones dentro de su grupo
+    for (int i = 0; i < typeItems.length; i++) {
+      final updatedItem = typeItems[i].copyWith(position: i);
+      // Reemplazamos en la lista global
+      final indexInGlobal = allItems.indexWhere((e) => e.id == updatedItem.id);
+      allItems[indexInGlobal] = updatedItem;
     }
 
-    emit(state.copyWith(expenses: updatedItems));
+    emit(state.copyWith(expenses: allItems));
 
     try {
-      for (var expense in updatedItems) {
+      // Persistimos solo los cambios del grupo afectado
+      for (var expense in typeItems) {
         await _saveRecurrentExpenseUseCase(expense);
       }
     } catch (e) {
@@ -163,8 +173,8 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       id: const Uuid().v4(),
       name: expense.name,
       amount: expense.amount,
-      type: MovementType.expense,
-      isIncome: false,
+      type: expense.isIncome ? MovementType.income : MovementType.expense,
+      isIncome: expense.isIncome,
       date: dateService.currentDate(),
       hour: dateService.currentHour(),
       month: dateService.monthNames(),
@@ -176,8 +186,8 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     try {
       await _saveMovementUseCase(movement);
 
-      // Si hay un cubit de deudas, actualizamos el progreso de la deuda vinculada
-      if (debtsCubit != null) {
+      // Si hay un cubit de deudas, actualizamos el progreso de la deuda vinculada (solo gastos)
+      if (debtsCubit != null && !expense.isIncome) {
         final linkedDebt = debtsCubit.state.debtsLoans.where((d) => d.recurrentExpenseId == expense.id).firstOrNull;
         if (linkedDebt != null) {
           await debtsCubit.addPayment(linkedDebt.id, expense.amount, addToHistory: false);
@@ -186,7 +196,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     } catch (e) {
       emit(state.copyWith(
         status: RecurrentExpensesStatus.failure,
-        errorMessage: 'Error al añadir el gasto: $e',
+        errorMessage: 'Error al añadir el registro: $e',
       ));
     }
   }
@@ -196,11 +206,9 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     try {
       await _deleteRecurrentExpenseUseCase(id);
       
-      // SI ES ELIMINACIÓN TOTAL: Llamamos al cubit de deudas para borrar la deuda física
       if (deleteDebt && debtsCubit != null) {
         await debtsCubit.deleteByRecurrentId(id);
       } 
-      // SI NO ES ELIMINACIÓN TOTAL: Solo limpiamos la referencia
       else if (debtsCubit != null) {
         await debtsCubit.clearRecurrentReference(id);
       }
@@ -226,6 +234,7 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       startDate: expense.startDate,
       position: expense.position,
       includeInSummary: expense.includeInSummary,
+      isIncome: expense.isIncome,
     );
   }
 }

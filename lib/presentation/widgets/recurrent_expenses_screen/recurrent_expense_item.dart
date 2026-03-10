@@ -94,7 +94,10 @@ class RecurrentExpenseItem extends StatelessWidget {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => AddEditRecurrentExpenseDialog(expense: expense),
+        builder: (context) => AddEditRecurrentExpenseDialog(
+          expense: expense,
+          isIncome: expense.isIncome, // PASAMOS EL TIPO CORRECTO
+        ),
       );
     }
   }

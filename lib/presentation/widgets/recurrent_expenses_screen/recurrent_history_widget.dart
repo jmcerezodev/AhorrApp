@@ -8,7 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class RecurrentHistoryWidget extends StatelessWidget {
-  const RecurrentHistoryWidget({super.key});
+  final bool isIncomeTab;
+
+  const RecurrentHistoryWidget({
+    super.key,
+    required this.isIncomeTab,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,12 +26,12 @@ class RecurrentHistoryWidget extends StatelessWidget {
       children: [
         // CABECERA DE LISTADO CON FILTRO
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10), // Añadido vertical: 10 para igualar Home
+          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'LISTADO DE GASTOS',
+                isIncomeTab ? 'LISTADO DE INGRESOS' : 'LISTADO DE GASTOS',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -51,7 +56,7 @@ class RecurrentHistoryWidget extends StatelessWidget {
           ),
         ),
 
-        // PANEL DE FILTROS (Modular)
+        // PANEL DE FILTROS
         BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
           builder: (context, state) {
             if (state.isFilterOpen) {
@@ -72,10 +77,14 @@ class RecurrentHistoryWidget extends StatelessWidget {
               }
 
               if (state.status == RecurrentExpensesStatus.failure) {
-                return Center(child: Text(state.errorMessage ?? 'Error al cargar gastos fijos'));
+                return Center(child: Text(state.errorMessage ?? 'Error al cargar registros fijos'));
               }
 
               final filteredExpenses = state.expenses.where((e) {
+                // 1. Filtrar por pestaña (Ingreso/Gasto)
+                if (e.isIncome != isIncomeTab) return false;
+                
+                // 2. Otros filtros
                 final bool isAutomatic = e.day != null;
                 if (isAutomatic && !state.showAutomatic) return false;
                 if (!isAutomatic && !state.showManual) return false;
@@ -88,19 +97,15 @@ class RecurrentHistoryWidget extends StatelessWidget {
               }
 
               return ReorderableListView.builder(
-                padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20), // Igualado a Home (SliverPadding)
+                padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20),
                 physics: const BouncingScrollPhysics(),
                 itemCount: filteredExpenses.length,
                 onReorder: (oldIndex, newIndex) {
-                  final item = filteredExpenses[oldIndex];
-                  final actualOldIndex = state.expenses.indexOf(item);
-                  int actualNewIndex;
-                  if (newIndex < filteredExpenses.length) {
-                    actualNewIndex = state.expenses.indexOf(filteredExpenses[newIndex]);
-                  } else {
-                    actualNewIndex = state.expenses.indexOf(filteredExpenses.last) + 1;
-                  }
-                  context.read<RecurrentExpensesCubit>().reorderExpenses(actualOldIndex, actualNewIndex);
+                  context.read<RecurrentExpensesCubit>().reorderExpenses(
+                    oldIndex, 
+                    newIndex, 
+                    isIncome: isIncomeTab
+                  );
                 },
                 itemBuilder: (context, index) {
                   final expense = filteredExpenses[index];

@@ -25,7 +25,7 @@ class RecurrentAppBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'MIS PAGOS FIJOS',
+                'MIS FIJOS',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,

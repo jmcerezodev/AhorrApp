@@ -1,4 +1,5 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
+import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/add_edit_recurrent_expense_dialog.dart';
 import 'package:animate_do/animate_do.dart';
@@ -6,7 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class RecurrentSummaryWidget extends StatelessWidget {
-  const RecurrentSummaryWidget({super.key});
+  final bool isIncomeTab;
+
+  const RecurrentSummaryWidget({
+    super.key,
+    required this.isIncomeTab,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +22,13 @@ class RecurrentSummaryWidget extends StatelessWidget {
 
     return BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
       builder: (context, state) {
+        // Obtenemos el total según la pestaña activa (Ingreso o Gasto)
         final double totalToShow = state.showProrated 
-            ? state.totalMonthlyNormalized 
-            : state.totalStrictlyMonthly;
+            ? (isIncomeTab ? state.totalIncomeProrated : state.totalExpenseProrated)
+            : (isIncomeTab ? state.totalIncomeStrict : state.totalExpenseStrict);
 
         return FadeInDown(
+          duration: const Duration(milliseconds: 600),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             child: Container(
@@ -48,17 +56,16 @@ class RecurrentSummaryWidget extends StatelessWidget {
                   )
                 ],
               ),
-              child: IntrinsicHeight( // GARANTIZA SIMETRÍA VERTICAL
+              child: IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // COLUMNA 1: INFO Y CONTROL (Igual que en la Home)
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'RESUMEN DE PAGOS FIJOS',
+                            isIncomeTab ? 'TOTAL INGRESOS FIJOS' : 'TOTAL GASTOS FIJOS',
                             style: TextStyle(
                               color: Colors.orange.shade400,
                               fontSize: 10,
@@ -81,7 +88,7 @@ class RecurrentSummaryWidget extends StatelessWidget {
                             ),
                           ),
                           
-                          const SizedBox(height: 12), // ESPACIO ANTES DEL CHIP
+                          const SizedBox(height: 12),
                           
                           GestureDetector(
                             onTap: () => context.read<RecurrentExpensesCubit>().toggleProratedView(),
@@ -97,8 +104,7 @@ class RecurrentSummaryWidget extends StatelessWidget {
 
                     const SizedBox(width: 15),
 
-                    // COLUMNA 2: BURBUJA DE ACCIÓN (Ahora se estira al máximo)
-                    const _AddExpenseBubble(),
+                    _AddRecurrentBubble(isIncome: isIncomeTab),
                   ],
                 ),
               ),
@@ -110,8 +116,9 @@ class RecurrentSummaryWidget extends StatelessWidget {
   }
 }
 
-class _AddExpenseBubble extends StatelessWidget {
-  const _AddExpenseBubble();
+class _AddRecurrentBubble extends StatelessWidget {
+  final bool isIncome;
+  const _AddRecurrentBubble({required this.isIncome});
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +127,7 @@ class _AddExpenseBubble extends StatelessWidget {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const AddEditRecurrentExpenseDialog(),
+          builder: (context) => AddEditRecurrentExpenseDialog(isIncome: isIncome),
         );
       },
       child: Container(
@@ -133,19 +140,19 @@ class _AddExpenseBubble extends StatelessWidget {
             color: Colors.orange.withValues(alpha: 0.15),
           ),
         ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center, // CONTENIDO CENTRADO EN EL ALTO TOTAL
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.add_box_rounded,
               color: Colors.orange,
-              size: 32, // Aumentado de 28 a 32 para llenar mejor el espacio
+              size: 32,
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
-              'NUEVO GASTO',
+              isIncome ? 'NUEVO INGRESO' : 'NUEVO GASTO',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 8,
                 fontWeight: FontWeight.w900,
                 color: Colors.orange,

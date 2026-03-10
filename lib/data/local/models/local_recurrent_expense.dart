@@ -29,5 +29,7 @@ class LocalRecurrentExpense {
 
   late int position; 
 
-  late bool includeInSummary; // NUEVO: Para incluir o no en el resumen
+  late bool includeInSummary; 
+
+  late bool isIncome; // NUEVO: Para distinguir entre ingreso y gasto recurrente
 }

@@ -12,7 +12,8 @@ class RecurrentExpense {
   final RecurrentFrequency frequency;
   final DateTime startDate; 
   final int position; 
-  final bool includeInSummary; // NUEVO: Para incluir o no gastos manuales en el resumen
+  final bool includeInSummary; 
+  final bool isIncome; // NUEVO: Para distinguir entre ingreso y gasto recurrente
 
   RecurrentExpense({
     required this.id,
@@ -26,7 +27,8 @@ class RecurrentExpense {
     this.frequency = RecurrentFrequency.monthly,
     required this.startDate,
     this.position = 0,
-    this.includeInSummary = true, // Por defecto true
+    this.includeInSummary = true,
+    this.isIncome = false, // Por defecto es gasto
   });
 
   RecurrentExpense copyWith({
@@ -42,6 +44,7 @@ class RecurrentExpense {
     DateTime? startDate,
     int? position,
     bool? includeInSummary,
+    bool? isIncome,
   }) {
     return RecurrentExpense(
       id: id ?? this.id,
@@ -56,6 +59,7 @@ class RecurrentExpense {
       startDate: startDate ?? this.startDate,
       position: position ?? this.position,
       includeInSummary: includeInSummary ?? this.includeInSummary,
+      isIncome: isIncome ?? this.isIncome,
     );
   }
 }

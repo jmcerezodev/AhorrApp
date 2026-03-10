@@ -11,7 +11,13 @@ import 'package:intl/intl.dart';
 
 class AddEditRecurrentExpenseDialog extends StatefulWidget {
   final RecurrentExpense? expense;
-  const AddEditRecurrentExpenseDialog({super.key, this.expense});
+  final bool isIncome;
+
+  const AddEditRecurrentExpenseDialog({
+    super.key, 
+    this.expense,
+    required this.isIncome,
+  });
 
   @override
   State<AddEditRecurrentExpenseDialog> createState() => _AddEditRecurrentExpenseDialogState();
@@ -107,16 +113,20 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
         mainAxisSize: MainAxisSize.min,
         children: [
           AppDialogs.dialogRowHeader(
-            icon: widget.expense == null ? Icons.add_chart_rounded : Icons.edit_note_rounded,
-            title: widget.expense == null ? 'NUEVO GASTO FIJO' : 'EDITAR GASTO FIJO',
+            icon: widget.expense == null 
+              ? (widget.isIncome ? Icons.add_circle_outline_rounded : Icons.add_chart_rounded)
+              : Icons.edit_note_rounded,
+            title: widget.expense == null 
+              ? (widget.isIncome ? 'NUEVO INGRESO FIJO' : 'NUEVO GASTO FIJO') 
+              : (widget.isIncome ? 'EDITAR INGRESO FIJO' : 'EDITAR GASTO FIJO'),
             color: Colors.orange,
             colorScheme: colorScheme,
           ),
           const SizedBox(height: 25),
           CustomInputTextWidget(
             controller: _nameController,
-            label: 'Nombre del gasto',
-            hintText: 'Ej. Alquiler, Netflix...',
+            label: 'Nombre del registro',
+            hintText: widget.isIncome ? 'Ej. Nómina, Alquiler...' : 'Ej. Alquiler, Netflix...',
             enabled: !_isLoading,
             autoFocus: false,
           ),
@@ -217,7 +227,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                           const SizedBox(width: 12),
                           const Expanded(
                             child: Text(
-                              'Incluir en el resumen de gastos mensuales',
+                              'Incluir en el resumen mensual',
                               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                             ),
                           ),
@@ -383,6 +393,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
       frequency: _selectedFrequency,
       startDate: _selectedStartDate,
       includeInSummary: _includeInSummary,
+      isIncome: widget.isIncome,
     );
     if (mounted) context.pop();
   }
