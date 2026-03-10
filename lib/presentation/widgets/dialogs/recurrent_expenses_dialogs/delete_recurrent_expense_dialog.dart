@@ -63,7 +63,11 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
                 child: AppDialogs.dialogPrimaryButton(
                   text: 'ELIMINAR', 
                   onPressed: () {
-                    context.read<RecurrentExpensesCubit>().deleteExpense(expenseId);
+                    final debtsCubit = context.read<DebtsLoansCubit>();
+                    context.read<RecurrentExpensesCubit>().deleteExpense(
+                      expenseId, 
+                      debtsCubit: debtsCubit
+                    );
                     context.pop(true);
                   }, 
                   color: Colors.red.shade400

@@ -81,8 +81,8 @@ class RecurrentExpenseCard extends StatelessWidget {
             ),
             title: Text(
               expense.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 2, // Aumentado a 2 líneas
+              overflow: TextOverflow.visible, // Permitir salto de línea
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 15,

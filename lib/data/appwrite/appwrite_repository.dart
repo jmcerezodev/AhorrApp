@@ -17,6 +17,7 @@ class AppwriteRepository {
   final String _shoppingId = Env.appwriteShoppingListCollectionId;
   final String _templatesId = Env.appwriteShoppingTemplatesCollectionId;
   final String _ticketsId = Env.appwriteTicketsCollectionId;
+  final String _debtsId = Env.debtsLoansCollectionId;
   final String _ticketsBucketId = Env.appwriteTicketsBucketId;
 
   // --- STORAGE ---
@@ -85,14 +86,17 @@ class AppwriteRepository {
     List<models.Document> allShopping = [];
     List<models.Document> allTemplates = [];
     List<models.Document> allTickets = [];
+    List<models.Document> allDebts = [];
     
     try {
       final historyInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _historyId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
       final savingsInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _savingsId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
       final recurrentInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _recurrentId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
       final ticketsInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _ticketsId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
+      final debtsInfo = await _databases.listDocuments(databaseId: _databaseId, collectionId: _debtsId, queries: [Query.equal('userId', [userId]), Query.limit(1)]);
       
-      final int totalDocsCount = historyInfo.total + savingsInfo.total + recurrentInfo.total + ticketsInfo.total;
+      final int totalDocsCount = historyInfo.total + savingsInfo.total + recurrentInfo.total + ticketsInfo.total + debtsInfo.total;
+      
       if (totalDocsCount == 0) {
         await updateTotalBalance(0.0);
         return {
@@ -103,6 +107,7 @@ class AppwriteRepository {
           'shopping': [], 
           'templates': [],
           'tickets': [],
+          'debts': [],
           'savingGoal': 0.0
         };
       }
@@ -124,7 +129,7 @@ class AppwriteRepository {
           allHistory.add(doc);
         }
         processed += response.documents.length;
-        onProgress((processed / totalDocsCount) * 0.3);
+        onProgress((processed / totalDocsCount) * 0.2);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
 
@@ -139,7 +144,7 @@ class AppwriteRepository {
         );
         allSavings.addAll(response.documents);
         processed += response.documents.length;
-        onProgress((processed / totalDocsCount) * 0.5);
+        onProgress((processed / totalDocsCount) * 0.4);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
 
@@ -154,11 +159,26 @@ class AppwriteRepository {
         );
         allRecurrent.addAll(response.documents);
         processed += response.documents.length;
-        onProgress((processed / totalDocsCount) * 0.7);
+        onProgress((processed / totalDocsCount) * 0.6);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
 
-      // 4. Procesar Tickets
+      // 4. Procesar Deudas
+      hasMore = true;
+      lastId = null;
+      while (hasMore) {
+        final response = await _databases.listDocuments(
+          databaseId: _databaseId,
+          collectionId: _debtsId,
+          queries: [Query.equal('userId', [userId]), Query.limit(100), Query.orderAsc('\$id'), if (lastId != null) Query.cursorAfter(lastId)],
+        );
+        allDebts.addAll(response.documents);
+        processed += response.documents.length;
+        onProgress((processed / totalDocsCount) * 0.8);
+        if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
+      }
+
+      // 5. Procesar Tickets
       hasMore = true;
       lastId = null;
       while (hasMore) {
@@ -169,11 +189,11 @@ class AppwriteRepository {
         );
         allTickets.addAll(response.documents);
         processed += response.documents.length;
-        onProgress((processed / totalDocsCount) * 0.9);
+        onProgress((processed / totalDocsCount) * 0.95);
         if (response.documents.length < 100) hasMore = false; else lastId = response.documents.last.$id;
       }
 
-      // 5. Procesar Compra y Plantillas
+      // 6. Procesar Compra y Plantillas
       try {
         final shopResp = await _databases.listDocuments(databaseId: _databaseId, collectionId: _shoppingId, queries: [Query.equal('userId', [userId]), Query.limit(100)]);
         allShopping.addAll(shopResp.documents);
@@ -198,6 +218,7 @@ class AppwriteRepository {
         'shopping': allShopping,
         'templates': allTemplates,
         'tickets': allTickets,
+        'debts': allDebts,
         'savingGoal': savingGoal,
       };
     } catch (e) {

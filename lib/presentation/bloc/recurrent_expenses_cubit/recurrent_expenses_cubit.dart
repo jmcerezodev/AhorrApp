@@ -7,6 +7,7 @@ import 'package:ahorrapp/domain/usecases/recurrent_expenses/delete_recurrent_exp
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/get_recurrent_expenses_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/save_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
+import 'package:ahorrapp/presentation/bloc/debts_loans_cubit/debts_loans_cubit.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
@@ -73,11 +74,11 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     required double amount,
     int? day,
     String category = 'general',
-    bool? isActive, // Cambiado a nullable
+    bool? isActive, 
     RecurrentFrequency frequency = RecurrentFrequency.monthly,
     DateTime? startDate,
     int? position,
-    bool? includeInSummary, // Cambiado a nullable
+    bool? includeInSummary, 
   }) async {
     emit(state.copyWith(status: RecurrentExpensesStatus.loading));
     
@@ -182,10 +183,16 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     }
   }
 
-  Future<void> deleteExpense(String id) async {
+  Future<void> deleteExpense(String id, {DebtsLoansCubit? debtsCubit}) async {
     emit(state.copyWith(status: RecurrentExpensesStatus.loading));
     try {
       await _deleteRecurrentExpenseUseCase(id);
+      
+      // DESVINCULACIÓN: Si nos pasan el cubit de deudas, limpiamos la referencia
+      if (debtsCubit != null) {
+        await debtsCubit.clearRecurrentReference(id);
+      }
+
       await loadExpenses();
     } catch (e) {
       emit(state.copyWith(

@@ -3,6 +3,7 @@ import 'package:ahorrapp/data/datasources/local/tickets_local_datasource.dart';
 import 'package:ahorrapp/data/repositories/appwrite_recurrent_expense_repository.dart';
 import 'package:ahorrapp/data/repositories/appwrite_shopping_list_repository.dart';
 import 'package:ahorrapp/data/repositories/appwrite_shopping_template_repository.dart';
+import 'package:ahorrapp/data/repositories/appwrite_debt_loan_repository.dart';
 import 'package:ahorrapp/data/repositories/isar_debt_loan_repository.dart';
 import 'package:ahorrapp/data/repositories/isar_recurrent_expense_repository.dart';
 import 'package:ahorrapp/data/repositories/isar_shopping_list_repository.dart';
@@ -127,6 +128,11 @@ Future<void> setupServiceLocator() async {
     instanceName: 'debt_local',
   );
 
+  getIt.registerLazySingleton<DebtLoanRepository>(
+    () => AppwriteDebtLoanRepository(),
+    instanceName: 'debt_remote',
+  );
+
   // REPOSITORIO DE TICKETS
   getIt.registerLazySingleton<TicketsLocalDataSource>(() => TicketsLocalDataSource(getIt<LocalDbService>().isar));
   getIt.registerLazySingleton<TicketsRepository>(() => TicketsRepositoryImpl(getIt<TicketsLocalDataSource>()));
@@ -230,10 +236,25 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<ProcessTicketImageUseCase>(() => ProcessTicketImageUseCase(getIt<OCRService>()));
 
   // CASOS DE USO DEUDAS Y PRÉSTAMOS
-  getIt.registerLazySingleton<GetDebtsLoansUseCase>(() => GetDebtsLoansUseCase(getIt<DebtLoanRepository>(instanceName: 'debt_local')));
-  getIt.registerLazySingleton<AddDebtLoanUseCase>(() => AddDebtLoanUseCase(getIt<DebtLoanRepository>(instanceName: 'debt_local')));
-  getIt.registerLazySingleton<UpdateDebtLoanUseCase>(() => UpdateDebtLoanUseCase(getIt<DebtLoanRepository>(instanceName: 'debt_local')));
-  getIt.registerLazySingleton<DeleteDebtLoanUseCase>(() => DeleteDebtLoanUseCase(getIt<DebtLoanRepository>(instanceName: 'debt_local')));
+  getIt.registerLazySingleton<GetDebtsLoansUseCase>(() => GetDebtsLoansUseCase(
+    localRepository: getIt<DebtLoanRepository>(instanceName: 'debt_local'),
+    remoteRepository: getIt<DebtLoanRepository>(instanceName: 'debt_remote'),
+  ));
+  getIt.registerLazySingleton<AddDebtLoanUseCase>(() => AddDebtLoanUseCase(
+    localRepository: getIt<DebtLoanRepository>(instanceName: 'debt_local'),
+    remoteRepository: getIt<DebtLoanRepository>(instanceName: 'debt_remote'),
+    localDbService: getIt<LocalDbService>(),
+  ));
+  getIt.registerLazySingleton<UpdateDebtLoanUseCase>(() => UpdateDebtLoanUseCase(
+    localRepository: getIt<DebtLoanRepository>(instanceName: 'debt_local'),
+    remoteRepository: getIt<DebtLoanRepository>(instanceName: 'debt_remote'),
+    localDbService: getIt<LocalDbService>(),
+  ));
+  getIt.registerLazySingleton<DeleteDebtLoanUseCase>(() => DeleteDebtLoanUseCase(
+    localRepository: getIt<DebtLoanRepository>(instanceName: 'debt_local'),
+    remoteRepository: getIt<DebtLoanRepository>(instanceName: 'debt_remote'),
+    localDbService: getIt<LocalDbService>(),
+  ));
 
   // 4. CUBITS CORE (Permanentes)
   final totalMoneyCubit = TotalMoneyCubit();

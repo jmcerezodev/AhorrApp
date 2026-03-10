@@ -17,31 +17,47 @@ class IsarDebtLoanRepository implements DebtLoanRepository {
 
   @override
   Future<void> addDebtLoan(DebtLoan debtLoan) async {
+    final isar = localDbService.isar;
+    
+    final existingItem = await isar.localDebtLoans
+        .filter()
+        .appwriteIdEqualTo(debtLoan.id)
+        .findFirst();
+
     final localItem = LocalDebtLoan.fromEntity(debtLoan);
-    await localDbService.isar.writeTxn(() async {
-      await localDbService.isar.localDebtLoans.put(localItem);
+    if (existingItem != null) {
+      localItem.id = existingItem.id;
+    }
+
+    await isar.writeTxn(() async {
+      await isar.localDebtLoans.put(localItem);
     });
   }
 
   @override
   Future<void> updateDebtLoan(DebtLoan debtLoan) async {
-    final localItem = await localDbService.isar.localDebtLoans
+    final isar = localDbService.isar;
+    final existingItem = await isar.localDebtLoans
         .filter()
         .appwriteIdEqualTo(debtLoan.id)
         .findFirst();
 
-    if (localItem != null) {
-      final updatedItem = LocalDebtLoan.fromEntity(debtLoan)..id = localItem.id;
-      await localDbService.isar.writeTxn(() async {
-        await localDbService.isar.localDebtLoans.put(updatedItem);
+    if (existingItem != null) {
+      final updatedItem = LocalDebtLoan.fromEntity(debtLoan)..id = existingItem.id;
+      await isar.writeTxn(() async {
+        await isar.localDebtLoans.put(updatedItem);
       });
     }
   }
 
   @override
   Future<void> deleteDebtLoan(String id) async {
-    await localDbService.isar.writeTxn(() async {
-      await localDbService.isar.localDebtLoans.filter().appwriteIdEqualTo(id).deleteAll();
-    });
+    await localDbService.deleteDebtLoanByAppwriteId(id);
+  }
+  
+  // Nuevo método para guardado masivo durante sincronización completa
+  Future<void> saveAll(List<DebtLoan> items) async {
+    final localItems = items.map((e) => LocalDebtLoan.fromEntity(e)).toList();
+    await localDbService.saveDebtLoans(localItems);
   }
 }

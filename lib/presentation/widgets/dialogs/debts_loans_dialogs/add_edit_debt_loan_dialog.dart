@@ -29,6 +29,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
   late TextEditingController _amountController;
   late TextEditingController _installmentAmountController;
   late TextEditingController _monthsController;
+  late FocusNode _monthsFocusNode;
   
   late DateTime? _selectedDate;
   late DateTime? _dueDate;
@@ -36,7 +37,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
   
   bool _isInstallment = false;
   bool _isAutoCalculate = true;
-  bool _addToRecurrent = true;
+  bool _addToRecurrent = false;
   bool _isLoading = false;
 
   // Errores de validación
@@ -54,11 +55,14 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
     _amountController = TextEditingController(text: widget.item?.totalAmount.toString() ?? '');
     _installmentAmountController = TextEditingController(text: widget.item?.installmentAmount?.toString() ?? '');
     _monthsController = TextEditingController(text: widget.item?.totalInstallments?.toString() ?? '');
+    _monthsFocusNode = FocusNode();
     
     _selectedDate = widget.item?.date;
     _dueDate = widget.item?.dueDate;
     _isInstallment = widget.item?.isInstallment ?? false;
-    _addToRecurrent = widget.item?.recurrentExpenseId != null || _isInstallment;
+    
+    // CORRECCIÓN: Solo activamos si el ID existe y NO es una cadena vacía
+    _addToRecurrent = widget.item?.recurrentExpenseId != null && widget.item!.recurrentExpenseId!.isNotEmpty;
 
     _amountController.addListener(_onAmountOrMonthsChanged);
     _monthsController.addListener(_onAmountOrMonthsChanged);
@@ -72,24 +76,37 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
     _amountController.dispose();
     _installmentAmountController.dispose();
     _monthsController.dispose();
+    _monthsFocusNode.dispose();
     super.dispose();
   }
 
   void _onAmountOrMonthsChanged() {
     if (_isAutoCalculate && _isInstallment) {
-      final total = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0;
-      final months = int.tryParse(_monthsController.text) ?? 0;
+      final totalStr = _amountController.text.replaceAll(',', '.').trim();
+      final total = double.tryParse(totalStr) ?? 0;
+      final months = int.tryParse(_monthsController.text.trim()) ?? 0;
       
       if (total > 0 && months > 0) {
         final result = total / months;
         _installmentAmountController.text = result.toStringAsFixed(2);
+      } else {
+        _installmentAmountController.clear();
       }
     }
   }
 
   void _onMonthsChangedUpdateDate() {
-    if (_isInstallment && !(_selectedDate != null && _dueDate != null)) {
-      final months = int.tryParse(_monthsController.text) ?? 0;
+    if (_isInstallment && _monthsFocusNode.hasFocus) {
+      final text = _monthsController.text.trim();
+      
+      if (text.isEmpty) {
+        setState(() {
+          _dueDate = null;
+        });
+        return;
+      }
+
+      final months = int.tryParse(text) ?? 0;
       if (months > 0) {
         setState(() {
           final startDate = _selectedDate ?? DateTime.now();
@@ -131,6 +148,27 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
         _calculateMonthsFromDates();
       });
     }
+  }
+
+  double _calculateInitialPaidAmount() {
+    if (!_isInstallment || _selectedDate == null) return 0.0;
+    
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    
+    if (_selectedDate!.isAfter(today)) return 0.0;
+
+    int monthsPassed = (today.year - _selectedDate!.year) * 12 + (today.month - _selectedDate!.month);
+    
+    if (today.day >= _selectedDate!.day) {
+      monthsPassed += 1;
+    }
+
+    final installment = double.tryParse(_installmentAmountController.text.replaceAll(',', '.')) ?? 0.0;
+    final total = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0.0;
+    
+    double calculatedPaid = monthsPassed * installment;
+    return calculatedPaid > total ? total : calculatedPaid;
   }
 
   @override
@@ -183,7 +221,10 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
               errorText: _amountError,
               enabled: !_isLoading,
               textInputType: const TextInputType.numberWithOptions(decimal: true),
-              onChanged: (val) { if (_amountError != null) setState(() => _amountError = null); },
+              onChanged: (val) { 
+                if (_amountError != null) setState(() => _amountError = null);
+                _onAmountOrMonthsChanged();
+              },
             ),
             const SizedBox(height: 25),
 
@@ -200,13 +241,12 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                         children: [
                           Expanded(
                             child: _buildDatePicker(
-                              label: 'Fecha inicio (Opcional)',
+                              label: 'Fecha inicio',
                               date: _selectedDate,
                               onTap: () => _selectDate(context, false),
                               isOptional: true,
                               onClear: () => setState(() {
                                 _selectedDate = null;
-                                _onMonthsChangedUpdateDate();
                               }),
                             ),
                           ),
@@ -228,10 +268,15 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                           Expanded(
                             child: CustomInputTextWidget(
                               controller: _monthsController,
+                              focusNode: _monthsFocusNode,
                               label: 'Meses',
                               hintText: 'Ej. 12',
                               textInputType: TextInputType.number,
-                              enabled: !_isLoading && !areDatesSet,
+                              enabled: !_isLoading,
+                              onChanged: (val) {
+                                _onAmountOrMonthsChanged();
+                                _onMonthsChangedUpdateDate();
+                              },
                             ),
                           ),
                           const SizedBox(width: 15),
@@ -247,14 +292,6 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                         ],
                       ),
                       const SizedBox(height: 15),
-                      if (areDatesSet)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: Text(
-                            'Los meses se calculan según las fechas seleccionadas',
-                            style: TextStyle(fontSize: 10, color: Colors.orange.shade700, fontWeight: FontWeight.bold),
-                          ),
-                        ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
@@ -409,7 +446,15 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
             onChanged: (val) {
               setState(() {
                 _isInstallment = val;
-                if (val) _onMonthsChangedUpdateDate();
+                if (val && _selectedDate == null) {
+                  _selectedDate = DateTime.now();
+                }
+                if (val) {
+                  Future.delayed(const Duration(milliseconds: 10), () {
+                    _onMonthsChangedUpdateDate();
+                    _onAmountOrMonthsChanged();
+                  });
+                }
               });
             },
             activeColor: Colors.orange,
@@ -449,14 +494,18 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
     
     final installmentAmount = double.tryParse(_installmentAmountController.text.replaceAll(',', '.').trim());
     final totalInstallments = int.tryParse(_monthsController.text.trim());
+    final finalStartDate = _selectedDate ?? DateTime.now();
+
+    final double initialPaid = _calculateInitialPaidAmount();
 
     await context.read<DebtsLoansCubit>().addOrUpdateDebtLoan(
       id: widget.item?.id,
       name: _nameController.text.trim(),
       person: _personController.text.trim(),
       totalAmount: double.parse(_amountController.text.replaceAll(',', '.').trim()),
+      paidAmount: initialPaid,
       type: _type,
-      date: _selectedDate,
+      date: finalStartDate,
       dueDate: _dueDate,
       isInstallment: _isInstallment,
       totalInstallments: totalInstallments,

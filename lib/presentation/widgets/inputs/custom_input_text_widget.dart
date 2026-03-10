@@ -18,6 +18,7 @@ class CustomInputTextWidget extends StatelessWidget {
   final TextInputType? textInputType;
   final TextCapitalization textCapitalization;
   final bool enableInteractiveSelection;
+  final FocusNode? focusNode;
 
   const CustomInputTextWidget({
     super.key,
@@ -38,6 +39,7 @@ class CustomInputTextWidget extends StatelessWidget {
     this.onPressedSuffixIcon,
     this.textCapitalization = TextCapitalization.sentences,
     this.enableInteractiveSelection = true,
+    this.focusNode,
   });
 
   @override
@@ -62,6 +64,7 @@ class CustomInputTextWidget extends StatelessWidget {
         // Añadimos una key única basada en el label para asegurar reconstrucción y gestos limpios
         key: label != null ? Key('input_${label!.toLowerCase().replaceAll(' ', '_')}') : null,
         controller: controller,
+        focusNode: focusNode,
         onChanged: onChanged,
         initialValue: controller == null ? initialValue : null,
         validator: validator,

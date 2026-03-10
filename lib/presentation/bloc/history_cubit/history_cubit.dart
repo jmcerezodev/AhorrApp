@@ -10,6 +10,8 @@ import 'package:ahorrapp/data/local/models/local_saving.dart';
 import 'package:ahorrapp/data/local/models/local_shopping_list_item.dart';
 import 'package:ahorrapp/data/local/models/local_shopping_template.dart';
 import 'package:ahorrapp/data/local/models/local_ticket_item.dart';
+import 'package:ahorrapp/data/local/models/local_debt_loan.dart';
+import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/domain/usecases/get_movements_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:equatable/equatable.dart';
@@ -42,7 +44,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     emit(const HistoryCubitState());
   }
 
-  Future<void> forceBalanceResync(TotalMoneyCubit totalMoneyCubit, {SavingsCubit? savingsCubit, TicketsCubit? ticketsCubit}) async {
+  Future<void> forceBalanceResync(TotalMoneyCubit totalMoneyCubit, {SavingsCubit? savingsCubit, TicketsCubit? ticketsCubit, DebtsLoansCubit? debtsCubit}) async {
     if (state.isSyncing || Preferences.uId.isEmpty) return;
 
     emit(state.copyWith(status: HistoryStatus.loading, isSyncing: true, syncProgress: 0.0));
@@ -66,9 +68,12 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       final List<LocalShoppingTemplate> templateItems = _convertToLocalTemplates(fullData['templates']);
       await _localDb.saveShoppingTemplates(templateItems);
 
-      // NUEVO: Guardar Tickets usando el método de LocalDbService
       final List<LocalTicketItem> ticketItems = _convertToLocalTickets(fullData['tickets'] ?? []);
       await _localDb.saveTicketItems(ticketItems);
+
+      // NUEVO: Guardar Deudas y Préstamos
+      final List<LocalDebtLoan> debtItems = _convertToLocalDebts(fullData['debts'] ?? []);
+      await _localDb.saveDebtLoans(debtItems);
 
       await _localDb.saveSavingGoal(uid, fullData['savingGoal']);
       final double correctBalance = (fullData['balance'] as num).toDouble();
@@ -81,6 +86,10 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
 
       if (ticketsCubit != null) {
         await ticketsCubit.loadItems();
+      }
+
+      if (debtsCubit != null) {
+        await debtsCubit.loadDebtsLoans();
       }
       
       emit(state.copyWith(isSyncing: false, syncProgress: 1.0, status: HistoryStatus.success));
@@ -101,19 +110,19 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       'category': e.category,
       'ticketId': e.ticketId,
       'imagePath': e.imagePath,
-      'remoteImageId': e.remoteImageId, // AÑADIDO
+      'remoteImageId': e.remoteImageId,
       'isTransferred': e.isTransferred,
     }).toList();
     emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
   }
 
-  Future<void> loadHistoryByDate(String month, int year, {SavingsCubit? savingsCubit}) async {
+  Future<void> loadHistoryByDate(String month, int year, {SavingsCubit? savingsCubit, DebtsLoansCubit? debtsCubit}) async {
     if (year == 0 || Preferences.uId.isEmpty) return;
     if (state.isSyncing) return;
 
     final localTotalCount = await _localDb.getTotalCount();
     if (localTotalCount == 0 && state.syncProgress == 0.0) {
-      await forceBalanceResync(totalMoneyCubit, savingsCubit: savingsCubit);
+      await forceBalanceResync(totalMoneyCubit, savingsCubit: savingsCubit, debtsCubit: debtsCubit);
       return;
     }
 
@@ -130,7 +139,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         'category': e.category,
         'ticketId': e.ticketId,
         'imagePath': e.imagePath,
-        'remoteImageId': e.remoteImageId, // AÑADIDO
+        'remoteImageId': e.remoteImageId,
         'isTransferred': e.isTransferred,
       }).toList();
       emit(state.copyWith(historyList: uiList, status: HistoryStatus.success));
@@ -214,7 +223,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       ..category = doc.data['category'] ?? (doc.data['isIncome'] == true ? 'otro' : 'general')
       ..ticketId = doc.data['ticketId']
       ..imagePath = doc.data['imagePath']
-      ..remoteImageId = doc.data['remoteImageId'] // AÑADIDO
+      ..remoteImageId = doc.data['remoteImageId']
       ..isTransferred = doc.data['isTransferred'] ?? false
     ).toList();
   }
@@ -291,6 +300,27 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         ..position = doc.data['position'] ?? 0
         ..isTransferred = doc.data['isTransferred'] ?? false
         ..remoteImageId = doc.data['remoteImageId'];
+    }).toList();
+  }
+
+  List<LocalDebtLoan> _convertToLocalDebts(dynamic debtDocs) {
+    return (debtDocs as List).map((doc) {
+      return LocalDebtLoan()
+        ..appwriteId = doc.$id
+        ..userId = doc.data['userId'] ?? ''
+        ..name = doc.data['name'] ?? ''
+        ..person = doc.data['person'] ?? ''
+        ..totalAmount = (doc.data['totalAmount'] as num).toDouble()
+        ..paidAmount = (doc.data['paidAmount'] as num).toDouble()
+        ..date = doc.data['date'] != null ? DateTime.parse(doc.data['date']) : null
+        ..dueDate = doc.data['dueDate'] != null ? DateTime.parse(doc.data['dueDate']) : null
+        ..type = doc.data['type'] == 'debt' ? DebtLoanType.debt : DebtLoanType.loan
+        ..category = doc.data['category'] ?? 'general'
+        ..isCompleted = doc.data['isCompleted'] ?? false
+        ..isInstallment = doc.data['isInstallment'] ?? false
+        ..totalInstallments = doc.data['totalInstallments']
+        ..installmentAmount = doc.data['installmentAmount'] != null ? (doc.data['installmentAmount'] as num).toDouble() : null
+        ..recurrentExpenseId = doc.data['recurrentExpenseId'];
     }).toList();
   }
 

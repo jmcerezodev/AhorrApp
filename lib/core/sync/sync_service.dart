@@ -10,6 +10,8 @@ import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/pending_sync.dart';
 import 'package:ahorrapp/data/local/models/local_ticket_item.dart';
 import 'package:ahorrapp/data/local/models/local_history.dart';
+import 'package:ahorrapp/domain/repositories/debt_loan_repository.dart';
+import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:isar/isar.dart';
 
@@ -63,6 +65,8 @@ class SyncService {
             success = await _syncShoppingList(pending, data);
           } else if (pending.collection == 'tickets') {
             success = await _syncTickets(pending, data);
+          } else if (pending.collection == 'debts_loans') {
+            success = await _syncDebtsLoans(pending, data);
           }
 
           if (success) {
@@ -113,7 +117,6 @@ class SyncService {
       String? remoteImageId = data['remoteImageId'];
       final String? ticketId = data['ticketId'];
 
-      // FALLBACK: Si no tiene remoteImageId pero sí ticketId, lo buscamos en el ticket local
       if ((remoteImageId == null || remoteImageId.isEmpty) && ticketId != null) {
         final ticket = await _localDb.isar.localTicketItems.filter().ticketItemIdEqualTo(ticketId).findFirst();
         if (ticket != null && ticket.remoteImageId != null) {
@@ -254,24 +257,18 @@ class SyncService {
       String? remoteImageId = data['remoteImageId'];
       final String? localPath = data['imagePath'];
 
-      // SEGURIDAD: Antes de subir, verificamos si ya existe el ID remoto en la DB local
-      // Esto evita que tareas posteriores (como marcar como transferido) suban de nuevo si la UI mandó null
-      if (remoteImageId == null || remoteImageId.isEmpty) {
+      if ((remoteImageId == null || remoteImageId.isEmpty) && pending.appwriteId != null) {
         final localTicket = await _localDb.isar.localTicketItems.filter().ticketItemIdEqualTo(pending.appwriteId!).findFirst();
         if (localTicket != null && localTicket.remoteImageId != null && localTicket.remoteImageId!.isNotEmpty) {
           remoteImageId = localTicket.remoteImageId;
         }
       }
 
-      // 1. Si SIGUE sin tener ID remoto pero tenemos el path local, lo subimos
       if ((remoteImageId == null || remoteImageId.isEmpty) && localPath != null) {
         try {
           final file = File(localPath);
           if (await file.exists()) {
-            print('☁️ SyncService: Subiendo imagen ticket...');
             remoteImageId = await _appwriteRepo.uploadTicketImage(file);
-            
-            // Actualizar registro local en Isar
             final isar = _localDb.isar;
             final localTicket = await isar.localTicketItems.filter().ticketItemIdEqualTo(pending.appwriteId!).findFirst();
             if (localTicket != null) {
@@ -282,7 +279,6 @@ class SyncService {
             }
           }
         } catch (e) {
-          print('❌ Error subiendo imagen: $e');
           return false;
         }
       }
@@ -291,7 +287,6 @@ class SyncService {
       cleanData.remove('imagePath');
       cleanData['remoteImageId'] = remoteImageId;
 
-      // 2. Sincronizar documento
       try {
         await _appwriteRepo.updateTicket(
           documentId: pending.appwriteId!, 
@@ -320,6 +315,40 @@ class SyncService {
       try {
         await _appwriteRepo.deleteTicket(pending.appwriteId!);
       } catch (_) {}
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> _syncDebtsLoans(PendingSync pending, Map<String, dynamic> data) async {
+    final remoteRepo = getIt<DebtLoanRepository>(instanceName: 'debt_remote');
+    
+    final debtLoan = DebtLoan(
+      id: pending.appwriteId!,
+      userId: data['userId'],
+      name: data['name'],
+      person: data['person'],
+      totalAmount: (data['totalAmount'] as num).toDouble(),
+      paidAmount: (data['paidAmount'] as num).toDouble(),
+      date: data['date'] != null ? DateTime.parse(data['date']) : null,
+      dueDate: data['dueDate'] != null ? DateTime.parse(data['dueDate']) : null,
+      type: data['type'] == 'debt' ? DebtLoanType.debt : DebtLoanType.loan,
+      category: data['category'] ?? 'general',
+      isCompleted: data['isCompleted'] ?? false,
+      isInstallment: data['isInstallment'] ?? false,
+      totalInstallments: data['totalInstallments'],
+      installmentAmount: data['installmentAmount'] != null ? (data['installmentAmount'] as num).toDouble() : null,
+      recurrentExpenseId: data['recurrentExpenseId'],
+    );
+
+    if (pending.action == 'CREATE') {
+      await remoteRepo.addDebtLoan(debtLoan);
+      return true;
+    } else if (pending.action == 'UPDATE') {
+      await remoteRepo.updateDebtLoan(debtLoan);
+      return true;
+    } else if (pending.action == 'DELETE') {
+      await remoteRepo.deleteDebtLoan(pending.appwriteId!);
       return true;
     }
     return false;

@@ -43,6 +43,7 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
     required String person,
     required double totalAmount,
     required DebtLoanType type,
+    double paidAmount = 0.0,
     DateTime? date,
     DateTime? dueDate,
     bool isInstallment = false,
@@ -61,7 +62,7 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
         recurrentId = const Uuid().v4();
         await recurrentExpensesCubit.addOrUpdateExpense(
           id: recurrentId,
-          name: 'Pago: $name ($person)',
+          name: '$name ($person)',
           amount: installmentAmount,
           day: DateTime.now().day,
           category: 'deudas',
@@ -76,6 +77,7 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
         name: name,
         person: person,
         totalAmount: totalAmount,
+        paidAmount: paidAmount,
         date: date,
         dueDate: dueDate,
         type: type,
@@ -83,6 +85,7 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
         totalInstallments: totalInstallments,
         installmentAmount: installmentAmount,
         recurrentExpenseId: recurrentId,
+        isCompleted: paidAmount >= totalAmount,
       );
 
       if (isNew) {
@@ -113,6 +116,23 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
     } catch (e) {
       emit(state.copyWith(errorMessage: e.toString()));
     }
+  }
+
+  /// Limpia la referencia al gasto recurrente en cualquier deuda vinculada
+  Future<void> clearRecurrentReference(String recurrentId) async {
+    try {
+      // Buscamos si hay alguna deuda que apunte a este ID recurrente
+      final affectedDebts = state.debtsLoans.where((d) => d.recurrentExpenseId == recurrentId).toList();
+      
+      for (var debt in affectedDebts) {
+        final updatedDebt = debt.copyWith(recurrentExpenseId: '');
+        await updateDebtLoanUseCase(updatedDebt);
+      }
+      
+      if (affectedDebts.isNotEmpty) {
+        await loadDebtsLoans();
+      }
+    } catch (_) {}
   }
 
   Future<void> deleteDebtLoan(String id) async {
