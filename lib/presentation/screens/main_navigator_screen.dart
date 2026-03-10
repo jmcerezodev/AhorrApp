@@ -7,6 +7,7 @@ import 'package:ahorrapp/presentation/screens/home_screen.dart';
 import 'package:ahorrapp/presentation/screens/recurrent_expenses_screen.dart';
 import 'package:ahorrapp/presentation/screens/shopping_list_screen.dart';
 import 'package:ahorrapp/presentation/screens/tickets_screen.dart';
+import 'package:ahorrapp/presentation/screens/debts_loans_screen.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +28,7 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
     const ShoppingListScreen(key: ValueKey('shopping')),
     const HomeScreen(key: ValueKey('home')),
     const TicketsScreen(key: ValueKey('tickets')),
-    const Center(key: ValueKey('more'), child: Text('Más Ajustes\n(Próximamente)', textAlign: TextAlign.center)),
+    const DebtsLoansScreen(key: ValueKey('debts')),
   ];
 
   @override
@@ -115,7 +116,7 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
           TabItem(icon: Icons.shopping_basket_rounded, title: 'Compra'),
           TabItem(icon: Icons.home_rounded, title: 'Inicio'),
           TabItem(icon: Icons.qr_code_scanner_rounded, title: 'Tickets'),
-          TabItem(icon: Icons.grid_view_rounded, title: 'Más'),
+          TabItem(icon: Icons.handshake_rounded, title: 'Deudas'),
         ],
         onTap: (int i) => setState(() => _selectedIndex = i),
       ),

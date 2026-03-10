@@ -3,6 +3,7 @@ import 'package:ahorrapp/data/datasources/local/tickets_local_datasource.dart';
 import 'package:ahorrapp/data/repositories/appwrite_recurrent_expense_repository.dart';
 import 'package:ahorrapp/data/repositories/appwrite_shopping_list_repository.dart';
 import 'package:ahorrapp/data/repositories/appwrite_shopping_template_repository.dart';
+import 'package:ahorrapp/data/repositories/isar_debt_loan_repository.dart';
 import 'package:ahorrapp/data/repositories/isar_recurrent_expense_repository.dart';
 import 'package:ahorrapp/data/repositories/isar_shopping_list_repository.dart';
 import 'package:ahorrapp/data/repositories/isar_shopping_template_repository.dart';
@@ -11,6 +12,7 @@ import 'package:ahorrapp/data/services/google_mlkit_ocr_service.dart';
 import 'package:ahorrapp/data/services/google_mlkit_document_scanner_service.dart';
 import 'package:ahorrapp/data/services/openai_service.dart';
 import 'package:ahorrapp/data/services/ticket_export_service_impl.dart';
+import 'package:ahorrapp/domain/repositories/debt_loan_repository.dart';
 import 'package:ahorrapp/domain/repositories/i_recurrent_expense_repository.dart';
 import 'package:ahorrapp/domain/repositories/i_shopping_list_repository.dart';
 import 'package:ahorrapp/domain/repositories/i_shopping_template_repository.dart';
@@ -20,6 +22,10 @@ import 'package:ahorrapp/domain/services/document_scanner_service.dart';
 import 'package:ahorrapp/domain/services/ai_service.dart';
 import 'package:ahorrapp/domain/services/ticket_export_service.dart';
 import 'package:ahorrapp/domain/usecases/delete_movement_usecase.dart';
+import 'package:ahorrapp/domain/usecases/debts_loans/add_debt_loan_usecase.dart';
+import 'package:ahorrapp/domain/usecases/debts_loans/delete_debt_loan_usecase.dart';
+import 'package:ahorrapp/domain/usecases/debts_loans/get_debts_loans_usecase.dart';
+import 'package:ahorrapp/domain/usecases/debts_loans/update_debt_loan_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/delete_recurrent_expense_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/get_recurrent_expenses_usecase.dart';
 import 'package:ahorrapp/domain/usecases/recurrent_expenses/process_recurrent_expenses_usecase.dart';
@@ -114,6 +120,11 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<IShoppingTemplateRepository>(
     () => AppwriteShoppingTemplateRepository(),
     instanceName: 'template_remote',
+  );
+
+  getIt.registerLazySingleton<DebtLoanRepository>(
+    () => IsarDebtLoanRepository(getIt<LocalDbService>()),
+    instanceName: 'debt_local',
   );
 
   // REPOSITORIO DE TICKETS
@@ -218,6 +229,12 @@ Future<void> setupServiceLocator() async {
   ));
   getIt.registerLazySingleton<ProcessTicketImageUseCase>(() => ProcessTicketImageUseCase(getIt<OCRService>()));
 
+  // CASOS DE USO DEUDAS Y PRÉSTAMOS
+  getIt.registerLazySingleton<GetDebtsLoansUseCase>(() => GetDebtsLoansUseCase(getIt<DebtLoanRepository>(instanceName: 'debt_local')));
+  getIt.registerLazySingleton<AddDebtLoanUseCase>(() => AddDebtLoanUseCase(getIt<DebtLoanRepository>(instanceName: 'debt_local')));
+  getIt.registerLazySingleton<UpdateDebtLoanUseCase>(() => UpdateDebtLoanUseCase(getIt<DebtLoanRepository>(instanceName: 'debt_local')));
+  getIt.registerLazySingleton<DeleteDebtLoanUseCase>(() => DeleteDebtLoanUseCase(getIt<DebtLoanRepository>(instanceName: 'debt_local')));
+
   // 4. CUBITS CORE (Permanentes)
   final totalMoneyCubit = TotalMoneyCubit();
   getIt.registerSingleton<TotalMoneyCubit>(totalMoneyCubit);
@@ -243,6 +260,14 @@ Future<void> setupServiceLocator() async {
     reorderTicketItemsUseCase: getIt<ReorderTicketItemsUseCase>(),
     processTicketImageUseCase: getIt<ProcessTicketImageUseCase>(),
     documentScannerService: getIt<DocumentScannerService>(),
+  ));
+
+  getIt.registerSingleton<DebtsLoansCubit>(DebtsLoansCubit(
+    getDebtsLoansUseCase: getIt<GetDebtsLoansUseCase>(),
+    addDebtLoanUseCase: getIt<AddDebtLoanUseCase>(),
+    updateDebtLoanUseCase: getIt<UpdateDebtLoanUseCase>(),
+    deleteDebtLoanUseCase: getIt<DeleteDebtLoanUseCase>(),
+    recurrentExpensesCubit: getIt<RecurrentExpensesCubit>(),
   ));
   
   // 5. CUBITS DE FÁBRICA (Se crean bajo demanda)

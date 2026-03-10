@@ -8,6 +8,7 @@ export 'total_money_cubit/total_money_cubit.dart';
 export 'date_cubit/date_cubit.dart';
 export 'theme_cubit/theme_cubit.dart';
 export 'recurrent_expenses_cubit/recurrent_expenses_cubit.dart';
+export 'debts_loans_cubit/debts_loans_cubit.dart';
 
 // Autenticación (Carpeta corregida)
 export 'authentication_cubits/login_cubit/login_cubit.dart';

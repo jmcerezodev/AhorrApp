@@ -121,6 +121,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
   late final ShoppingListCubit _shoppingCubit;
   late final ShoppingTemplatesCubit _templatesCubit;
   late final TicketsCubit _ticketsCubit;
+  late final DebtsLoansCubit _debtsLoansCubit;
 
   @override
   void initState() {
@@ -134,6 +135,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
     _shoppingCubit = getIt<ShoppingListCubit>();
     _templatesCubit = getIt<ShoppingTemplatesCubit>();
     _ticketsCubit = getIt<TicketsCubit>();
+    _debtsLoansCubit = getIt<DebtsLoansCubit>();
 
     _updateAppSecurity();
   }
@@ -195,6 +197,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
         BlocProvider<ShoppingListCubit>.value(value: _shoppingCubit),
         BlocProvider<ShoppingTemplatesCubit>.value(value: _templatesCubit),
         BlocProvider<TicketsCubit>.value(value: _ticketsCubit),
+        BlocProvider<DebtsLoansCubit>.value(value: _debtsLoansCubit),
 
         BlocProvider(create: (_) => NewUserCubit()),
         BlocProvider(create: (_) => ResetPasswordCubit()),

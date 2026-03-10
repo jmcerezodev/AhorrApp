@@ -1,0 +1,469 @@
+import 'package:ahorrapp/domain/entities/debt_loan.dart';
+import 'package:ahorrapp/presentation/bloc/debts_loans_cubit/debts_loans_cubit.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
+import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+
+class AddEditDebtLoanDialog extends StatefulWidget {
+  final DebtLoan? item;
+  final DebtLoanType initialType;
+
+  const AddEditDebtLoanDialog({
+    super.key, 
+    this.item, 
+    required this.initialType
+  });
+
+  @override
+  State<AddEditDebtLoanDialog> createState() => _AddEditDebtLoanDialogState();
+}
+
+class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
+  late TextEditingController _nameController;
+  late TextEditingController _personController;
+  late TextEditingController _amountController;
+  late TextEditingController _installmentAmountController;
+  late TextEditingController _monthsController;
+  
+  late DateTime? _selectedDate;
+  late DateTime? _dueDate;
+  late DebtLoanType _type;
+  
+  bool _isInstallment = false;
+  bool _isAutoCalculate = true;
+  bool _addToRecurrent = true;
+  bool _isLoading = false;
+
+  // Errores de validación
+  String? _nameError;
+  String? _personError;
+  String? _amountError;
+  String? _dateError;
+
+  @override
+  void initState() {
+    super.initState();
+    _type = widget.item?.type ?? widget.initialType;
+    _nameController = TextEditingController(text: widget.item?.name ?? '');
+    _personController = TextEditingController(text: widget.item?.person ?? '');
+    _amountController = TextEditingController(text: widget.item?.totalAmount.toString() ?? '');
+    _installmentAmountController = TextEditingController(text: widget.item?.installmentAmount?.toString() ?? '');
+    _monthsController = TextEditingController(text: widget.item?.totalInstallments?.toString() ?? '');
+    
+    _selectedDate = widget.item?.date;
+    _dueDate = widget.item?.dueDate;
+    _isInstallment = widget.item?.isInstallment ?? false;
+    _addToRecurrent = widget.item?.recurrentExpenseId != null || _isInstallment;
+
+    _amountController.addListener(_onAmountOrMonthsChanged);
+    _monthsController.addListener(_onAmountOrMonthsChanged);
+    _monthsController.addListener(_onMonthsChangedUpdateDate);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _personController.dispose();
+    _amountController.dispose();
+    _installmentAmountController.dispose();
+    _monthsController.dispose();
+    super.dispose();
+  }
+
+  void _onAmountOrMonthsChanged() {
+    if (_isAutoCalculate && _isInstallment) {
+      final total = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0;
+      final months = int.tryParse(_monthsController.text) ?? 0;
+      
+      if (total > 0 && months > 0) {
+        final result = total / months;
+        _installmentAmountController.text = result.toStringAsFixed(2);
+      }
+    }
+  }
+
+  void _onMonthsChangedUpdateDate() {
+    if (_isInstallment && !(_selectedDate != null && _dueDate != null)) {
+      final months = int.tryParse(_monthsController.text) ?? 0;
+      if (months > 0) {
+        setState(() {
+          final startDate = _selectedDate ?? DateTime.now();
+          _dueDate = DateTime(startDate.year, startDate.month + months, startDate.day);
+        });
+      }
+    }
+  }
+
+  void _calculateMonthsFromDates() {
+    if (_selectedDate != null && _dueDate != null) {
+      final difference = _dueDate!.difference(_selectedDate!);
+      final months = (difference.inDays / 30).round();
+      if (months > 0) {
+        _monthsController.removeListener(_onMonthsChangedUpdateDate);
+        _monthsController.text = months.toString();
+        _monthsController.addListener(_onMonthsChangedUpdateDate);
+        _onAmountOrMonthsChanged();
+      }
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context, bool isDueDate) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: isDueDate ? (_dueDate ?? DateTime.now()) : (_selectedDate ?? DateTime.now()),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      locale: const Locale('es', 'ES'),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isDueDate) {
+          _dueDate = picked;
+          _dateError = null;
+        } else {
+          _selectedDate = picked;
+        }
+        _calculateMonthsFromDates();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool areDatesSet = _selectedDate != null && _dueDate != null;
+
+    return CustomDialogWrapper(
+      borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
+      horizontalInsetPadding: 20,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppDialogs.dialogRowHeader(
+              icon: _type == DebtLoanType.debt ? Icons.money_off_rounded : Icons.handshake_rounded,
+              title: widget.item == null 
+                ? (_type == DebtLoanType.debt ? 'NUEVA DEUDA' : 'NUEVO PRÉSTAMO')
+                : (_type == DebtLoanType.debt ? 'EDITAR DEUDA' : 'EDITAR PRÉSTAMO'),
+              color: Colors.orange,
+              colorScheme: colorScheme,
+            ),
+            const SizedBox(height: 25),
+            
+            CustomInputTextWidget(
+              controller: _nameController,
+              label: 'Concepto',
+              hintText: 'Ej. Préstamo coche, Cena...',
+              errorText: _nameError,
+              enabled: !_isLoading,
+              onChanged: (val) { if (_nameError != null) setState(() => _nameError = null); },
+            ),
+            const SizedBox(height: 15),
+            
+            CustomInputTextWidget(
+              controller: _personController,
+              label: _type == DebtLoanType.debt ? '¿A quién le debes?' : '¿Quién te debe?',
+              hintText: 'Nombre de la persona',
+              errorText: _personError,
+              enabled: !_isLoading,
+              onChanged: (val) { if (_personError != null) setState(() => _personError = null); },
+            ),
+            const SizedBox(height: 15),
+
+            CustomInputTextWidget(
+              controller: _amountController,
+              label: 'Importe Total',
+              hintText: '0.00',
+              errorText: _amountError,
+              enabled: !_isLoading,
+              textInputType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (val) { if (_amountError != null) setState(() => _amountError = null); },
+            ),
+            const SizedBox(height: 25),
+
+            _buildInstallmentToggle(colorScheme),
+
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              child: _isInstallment 
+                ? Column(
+                    children: [
+                      const SizedBox(height: 25),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _buildDatePicker(
+                              label: 'Fecha inicio (Opcional)',
+                              date: _selectedDate,
+                              onTap: () => _selectDate(context, false),
+                              isOptional: true,
+                              onClear: () => setState(() {
+                                _selectedDate = null;
+                                _onMonthsChangedUpdateDate();
+                              }),
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: _buildDatePicker(
+                              label: 'Vencimiento',
+                              date: _dueDate,
+                              errorText: _dateError,
+                              onTap: () => _selectDate(context, true),
+                              isOptional: false,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: CustomInputTextWidget(
+                              controller: _monthsController,
+                              label: 'Meses',
+                              hintText: 'Ej. 12',
+                              textInputType: TextInputType.number,
+                              enabled: !_isLoading && !areDatesSet,
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: CustomInputTextWidget(
+                              controller: _installmentAmountController,
+                              label: 'Cuota mensual',
+                              hintText: '0.00',
+                              textInputType: const TextInputType.numberWithOptions(decimal: true),
+                              enabled: !_isLoading && !_isAutoCalculate,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      if (areDatesSet)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Text(
+                            'Los meses se calculan según las fechas seleccionadas',
+                            style: TextStyle(fontSize: 10, color: Colors.orange.shade700, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: _isAutoCalculate, 
+                              onChanged: (val) => setState(() {
+                                _isAutoCalculate = val ?? true;
+                                if (_isAutoCalculate) _onAmountOrMonthsChanged();
+                              }),
+                              activeColor: Colors.orange,
+                            ),
+                            const Text(
+                              'Calcular cuota automáticamente',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      const Divider(height: 1),
+                      const SizedBox(height: 15),
+                      Row(
+                        children: [
+                          const Icon(Icons.repeat_rounded, color: Colors.orange, size: 18),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Text(
+                              'Añadir a Pagos Fijos automáticamente',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Transform.scale(
+                            scale: 0.7,
+                            child: CupertinoSwitch(
+                              value: _addToRecurrent, 
+                              onChanged: (val) => setState(() => _addToRecurrent = val), 
+                              activeColor: Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+            ),
+
+            const SizedBox(height: 35),
+            
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: _isLoading ? null : () => context.pop(),
+                    child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: AppDialogs.dialogPrimaryButton(
+                    text: 'GUARDAR',
+                    color: Colors.orange,
+                    isLoading: _isLoading,
+                    onPressed: _isLoading ? null : _save,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatePicker({
+    required String label, 
+    DateTime? date, 
+    required VoidCallback onTap,
+    bool isOptional = false,
+    VoidCallback? onClear,
+    String? errorText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: errorText != null ? Colors.red.shade800 : Colors.grey.shade300, width: errorText != null ? 2 : 1),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    date != null ? DateFormat('dd/MM/yy').format(date) : 'Seleccionar',
+                    style: TextStyle(
+                      fontSize: 12, 
+                      fontWeight: FontWeight.w600,
+                      color: date == null ? Colors.grey : null
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (isOptional && date != null)
+                  GestureDetector(
+                    onTap: onClear,
+                    child: const Icon(Icons.close_rounded, size: 14, color: Colors.red),
+                  )
+                else
+                  const Icon(Icons.calendar_month_rounded, color: Colors.orange, size: 16),
+              ],
+            ),
+          ),
+        ),
+        if (errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 5, left: 5),
+            child: Text(errorText, style: TextStyle(color: Colors.red.shade800, fontSize: 10, fontWeight: FontWeight.bold)),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildInstallmentToggle(ColorScheme colorScheme) {
+    return Row(
+      children: [
+        const Icon(Icons.calendar_today_rounded, color: Colors.orange, size: 20),
+        const SizedBox(width: 10),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Pago a Plazos', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              Text('Dividir el total en cuotas mensuales', style: TextStyle(fontSize: 10, color: Colors.grey)),
+            ],
+          ),
+        ),
+        Transform.scale(
+          scale: 0.8,
+          child: CupertinoSwitch(
+            value: _isInstallment, 
+            onChanged: (val) {
+              setState(() {
+                _isInstallment = val;
+                if (val) _onMonthsChangedUpdateDate();
+              });
+            },
+            activeColor: Colors.orange,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _save() async {
+    bool hasError = false;
+    setState(() {
+      _nameError = _nameController.text.trim().isEmpty ? 'Campo obligatorio' : null;
+      _personError = _personController.text.trim().isEmpty ? 'Campo obligatorio' : null;
+      
+      final amount = double.tryParse(_amountController.text.replaceAll(',', '.').trim());
+      if (amount == null || amount <= 0) {
+        _amountError = 'Importe no válido';
+      } else {
+        _amountError = null;
+      }
+
+      if (_isInstallment && _dueDate == null) {
+        _dateError = 'Campo obligatorio';
+      } else {
+        _dateError = null;
+      }
+
+      if (_nameError != null || _personError != null || _amountError != null || _dateError != null) {
+        hasError = true;
+      }
+    });
+
+    if (hasError) return;
+
+    setState(() => _isLoading = true);
+    
+    final installmentAmount = double.tryParse(_installmentAmountController.text.replaceAll(',', '.').trim());
+    final totalInstallments = int.tryParse(_monthsController.text.trim());
+
+    await context.read<DebtsLoansCubit>().addOrUpdateDebtLoan(
+      id: widget.item?.id,
+      name: _nameController.text.trim(),
+      person: _personController.text.trim(),
+      totalAmount: double.parse(_amountController.text.replaceAll(',', '.').trim()),
+      type: _type,
+      date: _selectedDate,
+      dueDate: _dueDate,
+      isInstallment: _isInstallment,
+      totalInstallments: totalInstallments,
+      installmentAmount: installmentAmount,
+      addToRecurrent: _addToRecurrent,
+    );
+
+    if (mounted) context.pop();
+  }
+}

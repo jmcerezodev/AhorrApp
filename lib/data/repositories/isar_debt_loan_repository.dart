@@ -1,0 +1,47 @@
+import 'package:ahorrapp/data/local/local_db_service.dart';
+import 'package:ahorrapp/data/local/models/local_debt_loan.dart';
+import 'package:ahorrapp/domain/entities/debt_loan.dart';
+import 'package:ahorrapp/domain/repositories/debt_loan_repository.dart';
+import 'package:isar/isar.dart';
+
+class IsarDebtLoanRepository implements DebtLoanRepository {
+  final LocalDbService localDbService;
+
+  IsarDebtLoanRepository(this.localDbService);
+
+  @override
+  Future<List<DebtLoan>> getDebtsLoans(String userId) async {
+    final localItems = await localDbService.getDebtLoans(userId);
+    return localItems.map((e) => e.toEntity()).toList();
+  }
+
+  @override
+  Future<void> addDebtLoan(DebtLoan debtLoan) async {
+    final localItem = LocalDebtLoan.fromEntity(debtLoan);
+    await localDbService.isar.writeTxn(() async {
+      await localDbService.isar.localDebtLoans.put(localItem);
+    });
+  }
+
+  @override
+  Future<void> updateDebtLoan(DebtLoan debtLoan) async {
+    final localItem = await localDbService.isar.localDebtLoans
+        .filter()
+        .appwriteIdEqualTo(debtLoan.id)
+        .findFirst();
+
+    if (localItem != null) {
+      final updatedItem = LocalDebtLoan.fromEntity(debtLoan)..id = localItem.id;
+      await localDbService.isar.writeTxn(() async {
+        await localDbService.isar.localDebtLoans.put(updatedItem);
+      });
+    }
+  }
+
+  @override
+  Future<void> deleteDebtLoan(String id) async {
+    await localDbService.isar.writeTxn(() async {
+      await localDbService.isar.localDebtLoans.filter().appwriteIdEqualTo(id).deleteAll();
+    });
+  }
+}

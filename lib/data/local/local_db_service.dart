@@ -9,6 +9,7 @@ import 'models/local_recurrent_expense.dart';
 import 'models/local_shopping_list_item.dart';
 import 'models/local_shopping_template.dart';
 import 'models/local_ticket_item.dart';
+import 'models/local_debt_loan.dart';
 
 class LocalDbService {
   static final LocalDbService _instance = LocalDbService._internal();
@@ -33,6 +34,7 @@ class LocalDbService {
           LocalShoppingItemSchema,
           LocalShoppingTemplateSchema,
           LocalTicketItemSchema,
+          LocalDebtLoanSchema,
         ],
         directory: dir.path,
       );
@@ -47,7 +49,8 @@ class LocalDbService {
     final int historyCount = await _isar.localHistorys.count();
     final int savingsCount = await _isar.localSavings.count();
     final int recurrentCount = await _isar.localRecurrentExpenses.count();
-    return historyCount + savingsCount + recurrentCount;
+    final int debtCount = await _isar.localDebtLoans.count();
+    return historyCount + savingsCount + recurrentCount + debtCount;
   }
 
   Future<int> getMinYear() async {
@@ -214,6 +217,27 @@ class LocalDbService {
     });
   }
 
+  // --- DEUDAS Y PRÉSTAMOS ---
+
+  Future<void> saveDebtLoans(List<LocalDebtLoan> items) async {
+    await _isar.writeTxn(() async {
+      await _isar.localDebtLoans.putAll(items);
+    });
+  }
+
+  Future<List<LocalDebtLoan>> getDebtLoans(String userId) async {
+    return await _isar.localDebtLoans
+        .filter()
+        .userIdEqualTo(userId)
+        .findAll();
+  }
+
+  Future<void> deleteDebtLoanByAppwriteId(String appwriteId) async {
+    await _isar.writeTxn(() async {
+      await _isar.localDebtLoans.filter().appwriteIdEqualTo(appwriteId).deleteAll();
+    });
+  }
+
   // --- RESUMEN FINANCIERO ---
 
   Future<void> saveSavingGoal(String userId, double goal) async {
@@ -278,6 +302,7 @@ class LocalDbService {
       await _isar.localShoppingItems.clear();
       await _isar.localShoppingTemplates.clear();
       await _isar.localTicketItems.clear();
+      await _isar.localDebtLoans.clear();
     });
   }
 
@@ -288,6 +313,7 @@ class LocalDbService {
       await _isar.localRecurrentExpenses.filter().appwriteIdEqualTo(appwriteId).deleteAll();
       await _isar.localShoppingItems.filter().appwriteIdEqualTo(appwriteId).deleteAll();
       await _isar.localShoppingTemplates.filter().appwriteIdEqualTo(appwriteId).deleteAll();
+      await _isar.localDebtLoans.filter().appwriteIdEqualTo(appwriteId).deleteAll();
     });
   }
 }
