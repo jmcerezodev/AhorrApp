@@ -173,7 +173,7 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
 
     return FadeInUp(
       child: ListView.builder(
-        padding: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20),
         itemCount: items.length,
         itemBuilder: (context, index) {
           final item = items[index];

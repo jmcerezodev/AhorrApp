@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/add_edit_debt_loan_dialog.dart';
 import 'package:animate_do/animate_do.dart';
@@ -16,6 +17,7 @@ class DebtsSummaryWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final humanizeNumbers = HumanizeNumbers();
     final colorScheme = Theme.of(context).colorScheme;
 
     return FadeInDown(
@@ -70,7 +72,7 @@ class DebtsSummaryWidget extends StatelessWidget {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          '${totalAmount.toStringAsFixed(2)}€',
+                          '${humanizeNumbers.number(totalAmount)}€',
                           style: TextStyle(
                             color: isDark ? Colors.white : colorScheme.onSurface,
                             fontSize: 30,

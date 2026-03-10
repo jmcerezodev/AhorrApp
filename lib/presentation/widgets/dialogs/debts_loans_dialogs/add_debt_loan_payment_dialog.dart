@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/debts_loans_cubit/debts_loans_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
@@ -44,6 +45,7 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDebt = widget.item.type == DebtLoanType.debt;
+    final humanizeNumbers = HumanizeNumbers();
 
     return CustomDialogWrapper(
       borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
@@ -63,7 +65,7 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           Text(
-            'Pendiente: ${widget.item.remainingAmount.toStringAsFixed(2)}€',
+            'Pendiente: ${humanizeNumbers.number(widget.item.remainingAmount)}€',
             style: TextStyle(fontSize: 12, color: colorScheme.onSurface.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 25),

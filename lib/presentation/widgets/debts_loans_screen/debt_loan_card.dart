@@ -27,8 +27,14 @@ class DebtLoanCard extends StatelessWidget {
     final double progress = item.totalAmount > 0 ? item.paidAmount / item.totalAmount : 0;
     final bool isFullyPaid = item.remainingAmount <= 0;
     
+    // Lógica para calcular cuotas
+    int installmentsPaid = 0;
+    if (item.isInstallment && item.installmentAmount != null && item.installmentAmount! > 0) {
+      installmentsPaid = (item.paidAmount / item.installmentAmount!).floor();
+    }
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Dismissible(
         key: Key('debt_loan_${item.id}'),
         direction: DismissDirection.horizontal,
@@ -117,9 +123,9 @@ class DebtLoanCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (item.dueDate != null)
+                    if (item.isInstallment && item.totalInstallments != null)
                       Text(
-                        'Vence: ${DateFormat('dd/MM/yyyy').format(item.dueDate!)}',
+                        'Cuota $installmentsPaid de ${item.totalInstallments}',
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.orange.withValues(alpha: 0.8),
@@ -173,7 +179,8 @@ class DebtLoanCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(width: 10),
-                    if (!item.isCompleted)
+                    // Solo mostrar el botón si NO es a plazos y NO está completada
+                    if (!item.isCompleted && !item.isInstallment)
                       IconButton(
                         onPressed: () => _showPaymentDialog(context),
                         icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.orange, size: 28),
@@ -190,11 +197,24 @@ class DebtLoanCard extends StatelessWidget {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
                           'Pagado: ${humanizeNumbers.number(item.paidAmount)}€',
                           style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
                         ),
+                        if (item.dueDate != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 2),
+                            child: Text(
+                              'Vence: ${DateFormat('dd/MM/yyyy').format(item.dueDate!)}',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.orange.withValues(alpha: 0.8),
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
                         Text(
                           'Total: ${humanizeNumbers.number(item.totalAmount)}€',
                           style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
