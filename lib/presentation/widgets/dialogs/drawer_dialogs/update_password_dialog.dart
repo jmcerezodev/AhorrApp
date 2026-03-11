@@ -1,6 +1,8 @@
+import 'package:ahorrapp/presentation/bloc/authentication_cubits/update_password_cubit/update_password_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
-import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
+import 'package:ahorrapp/presentation/widgets/inputs/forms/authentication_inputs_widget/update_password_input_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class UpdatePasswordDialog extends StatelessWidget {
   final String title;
@@ -17,40 +19,43 @@ class UpdatePasswordDialog extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return CustomDialogWrapper(
-      borderColor: colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4),
-      horizontalInsetPadding: 20,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+    return BlocProvider(
+      create: (context) => UpdatePasswordCubit(),
+      child: CustomDialogWrapper(
+        borderColor: colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4),
+        horizontalInsetPadding: 20,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.lock_reset_rounded, color: colorScheme.primary, size: 24),
                 ),
-                child: Icon(Icons.lock_reset_rounded, color: colorScheme.primary, size: 24),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Text(
-                  title.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: colorScheme.onSurface.withValues(alpha: 0.7),
-                    letterSpacing: 1.5,
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Text(
+                    title.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      letterSpacing: 1.5,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-  
-          const UpdatePasswordInputWidget(),
-        ],
+              ],
+            ),
+            const SizedBox(height: 20),
+    
+            const UpdatePasswordInputWidget(),
+          ],
+        ),
       ),
     );
   }

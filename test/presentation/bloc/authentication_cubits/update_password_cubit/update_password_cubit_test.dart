@@ -1,10 +1,6 @@
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/update_password_cubit/update_password_cubit.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
-
-class FakeBuildContext extends Fake implements BuildContext {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -57,12 +53,12 @@ void main() {
       expect(cubit.state.isValid, true);
     });
 
-    test('onSubmit con contraseñas que no coinciden debe emitir failure', () {
+    test('onSubmit con contraseñas que no coinciden debe emitir failure', () async {
       cubit.currentPasswordChanged('12345678');
       cubit.newPasswordChanged('87654321');
       cubit.confirmedPasswordChanged('diferente');
 
-      cubit.onSubmit(FakeBuildContext());
+      await cubit.onSubmit();
       expect(cubit.state.status, UpdatePasswordStatus.failure);
     });
   });

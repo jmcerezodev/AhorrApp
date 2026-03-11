@@ -1,5 +1,4 @@
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ahorrapp/core/inputs/inputs.dart';
 import 'package:equatable/equatable.dart';
@@ -12,7 +11,7 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
 
   UpdatePasswordCubit() : super(const UpdatePasswordState());
 
-  void onSubmit(BuildContext context) async {
+  Future<void> onSubmit() async {
     final currentPassword = Password.dirty(value: state.currentPassword.value);
     final newPassword = NewPassword.dirty(
       value: state.newPassword.value,
@@ -41,14 +40,13 @@ class UpdatePasswordCubit extends Cubit<UpdatePasswordState> {
     }
 
     try {
-      await _auth.updatePassword(
-        context, 
+      await _auth.updatePasswordRemote(
         state.newPassword.value, 
         state.currentPassword.value
       );
       emit(state.copyWith(status: UpdatePasswordStatus.success));
     } catch (e) {
-      emit(state.copyWith(status: UpdatePasswordStatus.failure, errorMessage: 'Error al actualizar la contraseña'));
+      emit(state.copyWith(status: UpdatePasswordStatus.failure, errorMessage: 'La contraseña no se ha podido actualizar. Verifica tu contraseña actual.'));
     }
   }
 

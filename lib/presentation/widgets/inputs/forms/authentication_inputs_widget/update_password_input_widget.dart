@@ -1,4 +1,5 @@
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -38,7 +39,22 @@ class _UpdatePasswordInputWidgetState extends State<UpdatePasswordInputWidget> {
     return BlocListener<UpdatePasswordCubit, UpdatePasswordState>(
       listener: (context, state) {
         if (state.status == UpdatePasswordStatus.success) {
-          context.pop();
+          context.pop(); // Cierra el diálogo de edición
+          showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (dialogContext) => const SuccessfulDialog(
+              sucessfulName: 'Contraseña Cambiada',
+              routeScreen: '/home-screen',
+            ),
+          );
+        } else if (state.status == UpdatePasswordStatus.failure) {
+          showDialog(
+            context: context,
+            builder: (dialogContext) => ErrorDialog(
+              errorMessage: state.errorMessage ?? '!Se ha producido un Error!\n La contraseña no ha cambiado',
+            ),
+          );
         }
       },
       child: Column(
@@ -114,9 +130,9 @@ class _UpdatePasswordInputWidgetState extends State<UpdatePasswordInputWidget> {
                 child: ElevatedButton(
                   onPressed: updatePasswordCubit.state.status == UpdatePasswordStatus.submitting 
                     ? null 
-                    : () async {
+                    : () {
                         setState(() => _formSubmitted = true);
-                        updatePasswordCubit.onSubmit(context);
+                        updatePasswordCubit.onSubmit();
                       },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange.shade600,

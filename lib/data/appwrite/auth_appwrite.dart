@@ -90,7 +90,6 @@ class AuthAppwrite {
     try {
       await _account.createRecovery(
         email: email,
-        // Usamos tu dominio real con HTTPS para que Appwrite Cloud lo autorice
         url: 'https://jmcerezo.dev/reset-password-confirm',
       );
     } catch (e) {
@@ -122,6 +121,13 @@ class AuthAppwrite {
     } catch (e) {
       return false;
     }
+  }
+
+  /// Actualiza la contraseña en Appwrite. 
+  /// Lanza excepción si falla para que el Cubit la capture.
+  Future<void> updatePasswordRemote(String newPassword, String oldPassword) async {
+    await _account.updatePassword(password: newPassword, oldPassword: oldPassword);
+    Preferences.password = newPassword;
   }
 
   Future deleteAcount(BuildContext context, {Function(double)? onProgress}) async {
