@@ -9,10 +9,10 @@ class NoMoneyDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return CustomDialogWrapper(
-      // Mantenemos fidelidad visual con el color de borde original para advertencias
-      borderColor: Colors.red.shade100,
+      borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
       horizontalInsetPadding: 30,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -20,13 +20,10 @@ class NoMoneyDialog extends StatelessWidget {
           AppDialogs.dialogHeader(
             icon: Icons.money_off_rounded,
             color: Colors.red.shade400,
-            title: 'SALDO INSUFICIENTE',
-            circularBackground: true,
-            iconSize: 32,
+            title: 'Saldo Insuficiente',
             colorScheme: colorScheme,
-            titleColor: Colors.blueGrey, // Fidelidad visual 1:1 con el color original
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
           
           AppDialogs.dialogMessage(
             'No tienes suficiente saldo disponible para realizar este gasto. Por favor, revisa tus ahorros o ingresos.',
@@ -39,7 +36,7 @@ class NoMoneyDialog extends StatelessWidget {
             child: AppDialogs.dialogPrimaryButton(
               text: 'ENTENDIDO',
               onPressed: () => context.pop(),
-              color: Colors.orange.shade600,
+              color: Colors.orange,
             ),
           ),
         ],

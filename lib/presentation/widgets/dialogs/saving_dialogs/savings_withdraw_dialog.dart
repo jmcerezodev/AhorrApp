@@ -42,62 +42,72 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
         }
       },
       child: CustomDialogWrapper(
-        borderColor: Colors.orange.shade700.withValues(alpha: isDark ? 0.3 : 0.5),
+        borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
         horizontalInsetPadding: 20,
-        wrapInScrollView: true, // ADN Original: permite scroll de toda la tarjeta
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             AppDialogs.dialogRowHeader(
               icon: Icons.outbox_rounded, 
-              title: 'RETIRAR AHORRO', 
-              color: Colors.orange.shade700, 
+              title: 'Retirar Ahorro', 
+              color: Colors.orange, 
               colorScheme: colorScheme
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 25),
             
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
                 color: colorScheme.onSurface.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
                 children: [
-                  Text('Ahorros disponibles', style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.5))),
-                  Text('${savingsTotal.toStringAsFixed(2)}€', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+                  Text('AHORROS DISPONIBLES', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
+                  const SizedBox(height: 5),
+                  Text('${savingsTotal.toStringAsFixed(2)}€', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
                 ],
               ),
             ),
       
             const SizedBox(height: 25),
       
-            CustomInputTextWidget(
-              controller: _amountController,
-              label: 'Cantidad a retirar',
-              hintText: '0.00',
-              enabled: !isLoading,
-              onChanged: (val) {
-                setState(() {
-                  _amountValue = val;
-                  final double? amount = double.tryParse(val.replaceAll(',', '.'));
-                  _isValid = amount != null && amount > 0 && amount <= savingsTotal;
-                });
-              },
-              textInputType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            
-            const SizedBox(height: 15),
-      
-            CustomInputTextWidget(
-              controller: _conceptController,
-              label: '¿En qué lo vas a gastar? (opcional)',
-              hintText: 'Ej. Reparación coche, Capricho...',
-              enabled: !isLoading,
-              autoFocus: false,
-              textInputType: TextInputType.text,
-              textCapitalization: TextCapitalization.sentences,
+            Flexible(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CustomInputTextWidget(
+                      controller: _amountController,
+                      label: 'CANTIDAD A RETIRAR',
+                      hintText: '0.00',
+                      enabled: !isLoading,
+                      onChanged: (val) {
+                        setState(() {
+                          _amountValue = val;
+                          final double? amount = double.tryParse(val.replaceAll(',', '.'));
+                          _isValid = amount != null && amount > 0 && amount <= savingsTotal;
+                        });
+                      },
+                      textInputType: const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                    
+                    const SizedBox(height: 15),
+              
+                    CustomInputTextWidget(
+                      controller: _conceptController,
+                      label: '¿EN QUÉ LO VAS A GASTAR? (OPCIONAL)',
+                      hintText: 'Ej. Reparación coche, Capricho...',
+                      enabled: !isLoading,
+                      autoFocus: false,
+                      textInputType: TextInputType.text,
+                      textCapitalization: TextCapitalization.sentences,
+                    ),
+                  ],
+                ),
+              ),
             ),
             
             const SizedBox(height: 30),
@@ -105,24 +115,17 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
             Row(
               children: [
                 Expanded(
-                  child: TextButton(
-                    onPressed: isLoading ? null : () => context.pop(),
-                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text(
-                      'CANCELAR', 
-                      style: TextStyle(
-                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                        fontWeight: FontWeight.bold, 
-                        letterSpacing: 1
-                      )
-                    ),
+                  child: AppDialogs.dialogSecondaryButton(
+                    text: 'CANCELAR', 
+                    onPressed: () => context.pop(), 
+                    colorScheme: colorScheme
                   ),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
                   child: AppDialogs.dialogPrimaryButton(
                     text: 'RETIRAR',
-                    color: Colors.orange.shade700,
+                    color: Colors.orange,
                     isLoading: isLoading,
                     onPressed: (_isValid && !isLoading)
                     ? () async {
@@ -137,7 +140,7 @@ class _SavingsWithdrawDialogState extends State<SavingsWithdrawDialog> {
                           customName: concept,
                         );
                       }
-                    : null, // Corregido: null para estado deshabilitado visual
+                    : null,
                   ),
                 ),
               ],

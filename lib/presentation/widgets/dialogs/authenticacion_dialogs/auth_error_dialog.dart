@@ -1,3 +1,5 @@
+import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:flutter/material.dart';
 
 class AuthErrorDialog extends StatelessWidget {
@@ -12,73 +14,35 @@ class AuthErrorDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Forzamos el tema claro siempre para este diálogo
-    return Theme(
-      data: ThemeData.light(),
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 30),
-        child: Container(
-          padding: const EdgeInsets.all(25),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: Colors.red.shade100, width: 1.5),
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return CustomDialogWrapper(
+      borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
+      horizontalInsetPadding: 30,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppDialogs.dialogHeader(
+            icon: Icons.lock_person_rounded, 
+            color: Colors.red.shade400, 
+            title: errorTitle,
+            colorScheme: colorScheme,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Icono de error en ROJO (Correcto según indicación)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.lock_person_rounded, color: Colors.red.shade400, size: 32),
-              ),
-              const SizedBox(height: 20),
-              
-              Text(
-                errorTitle.toUpperCase(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.blueGrey,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 15),
-              
-              Text(
-                errorText,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 30),
+          const SizedBox(height: 20),
+          
+          AppDialogs.dialogMessage(errorText, colorScheme),
+          const SizedBox(height: 30),
       
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.shade600, // NARANJA CORPORATIVO
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                  ),
-                  child: const Text('REINTENTAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-                ),
-              ),
-            ],
+          SizedBox(
+            width: double.infinity,
+            child: AppDialogs.dialogPrimaryButton(
+              text: 'REINTENTAR', 
+              onPressed: () => Navigator.of(context).pop(), 
+              color: Colors.orange
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

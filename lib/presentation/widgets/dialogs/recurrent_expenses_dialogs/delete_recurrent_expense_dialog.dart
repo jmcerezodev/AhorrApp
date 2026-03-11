@@ -46,49 +46,50 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
           AppDialogs.dialogHeader(
             icon: Icons.delete_outline_rounded, 
             color: Colors.red.shade400, 
-            title: isIncome ? '¿ELIMINAR INGRESO FIJO?' : '¿ELIMINAR GASTO FIJO?',
-            circularBackground: true,
-            iconSize: 32,
+            title: isIncome ? '¿Eliminar Ingreso Fijo?' : '¿Eliminar Gasto Fijo?',
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
           
-          Text.rich(
-            TextSpan(
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
-              children: [
-                TextSpan(text: '¿Estás seguro de que quieres eliminar este ${isIncome ? "ingreso" : "gasto"} '),
-                TextSpan(text: '"$expenseName"', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-                const TextSpan(text: '? '),
-                if (isLinked) ...[
-                  TextSpan(text: 'Este ${isIncome ? "ingreso" : "gasto"} está vinculado ${isLoan ? "al préstamo" : "a la deuda"} '),
-                  TextSpan(text: '"${linkedItem.name}"', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-                  TextSpan(text: '. Si lo eliminas, ${isLoan ? "el préstamo" : "la deuda"} también se '),
-                  const TextSpan(text: 'borrará de tu lista.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                ] else ...[
-                  const TextSpan(text: 'Esta acción eliminará la automatización y '),
-                  const TextSpan(text: 'no se puede deshacer.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                ],
-              ],
-            ),
+          AppDialogs.dialogMessage(
+            '¿Estás seguro de que quieres eliminar este registro automático?',
+            colorScheme,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '"$expenseName"',
             textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          
+          if (isLinked) ...[
+            const SizedBox(height: 15),
+            AppDialogs.dialogMessage(
+              'Este registro está vinculado ${isLoan ? "al préstamo" : "a la deuda"} "${linkedItem.name}". Si lo eliminas, también se borrará de tu lista de cuentas pendientes.',
+              colorScheme,
+              customColor: Colors.orange.shade700,
+            ),
+          ],
+          
+          const SizedBox(height: 15),
+          AppDialogs.dialogMessage(
+            'Esta acción no se puede deshacer.',
+            colorScheme,
+            customColor: Colors.red.shade400.withValues(alpha: 0.8),
           ),
           const SizedBox(height: 30),
 
           Row(
             children: [
               Expanded(
-                child: TextButton(
+                child: AppDialogs.dialogSecondaryButton(
+                  text: 'CANCELAR', 
                   onPressed: () => Navigator.of(context).pop(false),
-                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                  child: Text(
-                    'CANCELAR', 
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                      fontWeight: FontWeight.bold, 
-                      letterSpacing: 1
-                    )
-                  ),
+                  colorScheme: colorScheme,
                 ),
               ),
               const SizedBox(width: 15),

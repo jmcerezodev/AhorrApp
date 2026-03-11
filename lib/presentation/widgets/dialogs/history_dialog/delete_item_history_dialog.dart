@@ -50,42 +50,41 @@ class DeleteItemHistoryDialog extends StatelessWidget {
           AppDialogs.dialogHeader(
             icon: Icons.delete_outline_rounded, 
             color: Colors.red.shade400, 
-            title: isIncomeResult ? '¿ELIMINAR INGRESO?' : '¿ELIMINAR GASTO?',
-            circularBackground: true,
-            iconSize: 32,
+            title: isIncomeResult ? '¿Eliminar Ingreso?' : '¿Eliminar Gasto?',
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
           
-          Text.rich(
-            TextSpan(
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
-              children: [
-                const TextSpan(text: '¿Estás seguro de que quieres borrar este '),
-                TextSpan(text: isIncomeResult ? 'ingreso' : 'gasto', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-                TextSpan(text: ' "$itemName"'),
-                const TextSpan(text: ' del historial? Esta acción '),
-                const TextSpan(text: 'no se puede deshacer.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-              ],
-            ),
-            textAlign: TextAlign.center,
+          AppDialogs.dialogMessage(
+            '¿Estás seguro de que quieres borrar este registro de tu historial?',
+            colorScheme,
           ),
+          const SizedBox(height: 10),
+          Text(
+            '"$itemName"',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 15),
+          AppDialogs.dialogMessage(
+            'Esta acción no se puede deshacer.',
+            colorScheme,
+            customColor: Colors.red.shade400.withValues(alpha: 0.8),
+          ),
+          
           const SizedBox(height: 30),
 
           Row(
             children: [
               Expanded(
-                child: TextButton(
+                child: AppDialogs.dialogSecondaryButton(
+                  text: 'CANCELAR', 
                   onPressed: () => context.pop(),
-                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                  child: Text(
-                    'CANCELAR', 
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                      fontWeight: FontWeight.bold, 
-                      letterSpacing: 1
-                    )
-                  ),
+                  colorScheme: colorScheme,
                 ),
               ),
               const SizedBox(width: 15),

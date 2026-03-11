@@ -71,52 +71,59 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
     final bool isWithdrawal = oldAmount < 0;
 
     return CustomDialogWrapper(
-      borderColor: colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4),
+      borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
       horizontalInsetPadding: 20,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           AppDialogs.dialogRowHeader(
             icon: Icons.edit_note_rounded, 
-            title: isWithdrawal ? 'EDITAR RETIRADA' : 'EDITAR APORTACIÓN', 
-            color: colorScheme.primary, 
+            title: isWithdrawal ? 'Editar Retirada' : 'Editar Aportación', 
+            color: Colors.orange, 
             colorScheme: colorScheme
           ),
-          const SizedBox(height: 30),
-          CustomInputTextWidget(
-            controller: _controller,
-            label: isWithdrawal ? 'Nuevo importe de retirada' : 'Nuevo importe de ahorro', 
-            onChanged: (value) { 
-              setState(() { 
-                newValue = value; 
-                isValid = double.tryParse(value.replaceAll(',', '.')) != null; 
-              }); 
-            }, 
-            autoFocus: true, 
-            enabled: !_isLoading,
-            textInputType: const TextInputType.numberWithOptions(decimal: true)
+          const SizedBox(height: 25),
+
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CustomInputTextWidget(
+                    controller: _controller,
+                    label: isWithdrawal ? 'NUEVO IMPORTE RETIRADA' : 'NUEVO IMPORTE AHORRO', 
+                    onChanged: (value) { 
+                      setState(() { 
+                        newValue = value; 
+                        isValid = double.tryParse(value.replaceAll(',', '.')) != null; 
+                      }); 
+                    }, 
+                    autoFocus: true, 
+                    enabled: !_isLoading,
+                    textInputType: const TextInputType.numberWithOptions(decimal: true)
+                  ),
+                ],
+              ),
+            ),
           ),
+          
           const SizedBox(height: 30),
+
           Row(
             children: [
               Expanded(
-                child: TextButton(
-                  onPressed: _isLoading ? null : () => context.pop(), 
-                  child: Text(
-                    'CANCELAR', 
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                      fontWeight: FontWeight.bold, 
-                      letterSpacing: 1
-                    )
-                  )
-                )
+                child: AppDialogs.dialogSecondaryButton(
+                  text: 'CANCELAR', 
+                  onPressed: () => context.pop(), 
+                  colorScheme: colorScheme
+                ),
               ),
               const SizedBox(width: 15),
               Expanded(
                 child: AppDialogs.dialogPrimaryButton(
                   text: 'ACTUALIZAR',
-                  color: colorScheme.primary,
+                  color: Colors.orange,
                   isLoading: _isLoading,
                   onPressed: (isValid && !_isLoading) ? () async {
                     setState(() => _isLoading = true);
@@ -152,7 +159,7 @@ class _EditSavingDialogState extends State<EditSavingDialog> {
                         setState(() => _isLoading = false);
                       }
                     }
-                  } : () {},
+                  } : null,
                 ),
               ),
             ],

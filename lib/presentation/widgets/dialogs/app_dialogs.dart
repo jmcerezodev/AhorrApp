@@ -48,12 +48,12 @@ class AppDialogs {
         
         const SizedBox(height: 20),
         Text(
-          title,
+          title.toUpperCase(),
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: fontSize,
-            fontWeight: FontWeight.w800,
-            color: titleColor ?? colorScheme.onSurface.withValues(alpha: 0.7),
+            fontWeight: FontWeight.w900,
+            color: titleColor ?? colorScheme.onSurface,
             letterSpacing: 1.5,
           ),
         ),
@@ -86,8 +86,8 @@ class AppDialogs {
             title.toUpperCase(),
             style: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: colorScheme.onSurface.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w900,
+              color: colorScheme.onSurface,
               letterSpacing: 1.5,
             ),
           ),
@@ -102,8 +102,9 @@ class AppDialogs {
       textAlign: TextAlign.center,
       style: TextStyle(
         fontSize: 13,
-        color: customColor ?? colorScheme.onSurface.withValues(alpha: 0.5),
-        height: 1.5,
+        color: customColor ?? colorScheme.onSurface.withValues(alpha: 0.6),
+        height: 1.6,
+        fontWeight: FontWeight.w500,
       ),
     );
   }
@@ -128,9 +129,33 @@ class AppDialogs {
         child: isLoading
           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
           : Text(
-              text,
-              style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+              text.toUpperCase(),
+              style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
             ),
+      ),
+    );
+  }
+
+  static Widget dialogSecondaryButton({
+    required String text,
+    VoidCallback? onPressed,
+    required ColorScheme colorScheme,
+  }) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 15),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      ),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          color: (onPressed == null) 
+            ? colorScheme.onSurface.withValues(alpha: 0.2)
+            : colorScheme.onSurface.withValues(alpha: 0.4),
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1,
+        ),
       ),
     );
   }

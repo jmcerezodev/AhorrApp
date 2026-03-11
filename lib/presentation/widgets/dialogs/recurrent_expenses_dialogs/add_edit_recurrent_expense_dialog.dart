@@ -117,233 +117,225 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
               ? (widget.isIncome ? Icons.add_circle_outline_rounded : Icons.add_chart_rounded)
               : Icons.edit_note_rounded,
             title: widget.expense == null 
-              ? (widget.isIncome ? 'NUEVO INGRESO FIJO' : 'NUEVO GASTO FIJO') 
-              : (widget.isIncome ? 'EDITAR INGRESO FIJO' : 'EDITAR GASTO FIJO'),
+              ? (widget.isIncome ? 'Nuevo Ingreso Fijo' : 'Nuevo Gasto Fijo') 
+              : (widget.isIncome ? 'Editar Ingreso Fijo' : 'Editar Gasto Fijo'),
             color: Colors.orange,
             colorScheme: colorScheme,
           ),
           const SizedBox(height: 25),
-          CustomInputTextWidget(
-            controller: _nameController,
-            label: 'Nombre del registro',
-            hintText: widget.isIncome ? 'Ej. Nómina, Alquiler...' : 'Ej. Alquiler, Netflix...',
-            enabled: !_isLoading,
-            autoFocus: false,
-          ),
-          const SizedBox(height: 15),
-          CustomInputTextWidget(
-            controller: _amountController,
-            label: 'Importe',
-            hintText: '0.00',
-            enabled: !_isLoading,
-            autoFocus: false,
-            textInputType: const TextInputType.numberWithOptions(decimal: true),
-          ),
-          const SizedBox(height: 25),
           
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Categoría', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedCategory,
-                          isExpanded: true,
-                          borderRadius: BorderRadius.circular(15),
-                          items: _categories.map((cat) {
-                            return DropdownMenuItem<String>(
-                              value: cat['id'],
-                              child: Row(
-                                children: [
-                                  Icon(cat['icon'], size: 16, color: Colors.orange),
-                                  const SizedBox(width: 8),
-                                  Flexible(child: Text(cat['name'], style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis)),
-                                ],
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CustomInputTextWidget(
+                    controller: _nameController,
+                    label: 'NOMBRE DEL REGISTRO',
+                    hintText: widget.isIncome ? 'Ej. Nómina, Alquiler...' : 'Ej. Alquiler, Netflix...',
+                    enabled: !_isLoading,
+                    autoFocus: false,
+                  ),
+                  const SizedBox(height: 15),
+                  CustomInputTextWidget(
+                    controller: _amountController,
+                    label: 'IMPORTE',
+                    hintText: '0.00',
+                    enabled: !_isLoading,
+                    autoFocus: false,
+                    textInputType: const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                  const SizedBox(height: 25),
+                  
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('CATEGORÍA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
                               ),
-                            );
-                          }).toList(),
-                          onChanged: _isLoading ? null : (val) => setState(() => _selectedCategory = val ?? 'general'),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _selectedCategory,
+                                  isExpanded: true,
+                                  borderRadius: BorderRadius.circular(15),
+                                  items: _categories.map((cat) {
+                                    return DropdownMenuItem<String>(
+                                      value: cat['id'],
+                                      child: Row(
+                                        children: [
+                                          Icon(cat['icon'], size: 16, color: Colors.orange),
+                                          const SizedBox(width: 8),
+                                          Flexible(child: Text(cat['name'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: _isLoading ? null : (val) => setState(() => _selectedCategory = val ?? 'general'),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text('Automático', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
-                    const SizedBox(height: 5),
-                    Transform.scale(
-                      scale: 0.8,
-                      child: CupertinoSwitch(
-                        value: _hasFixedDay, 
-                        onChanged: _isLoading ? null : (val) {
-                          setState(() {
-                            _hasFixedDay = val;
-                            if (val) _includeInSummary = true;
-                          });
-                        },
-                        activeColor: Colors.orange,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            child: !_hasFixedDay 
-              ? Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.analytics_rounded, color: Colors.orange, size: 18),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              'Incluir en el resumen mensual',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text('AUTOMÁTICO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
+                            const SizedBox(height: 8),
+                            Transform.scale(
+                              scale: 0.7,
+                              child: CupertinoSwitch(
+                                value: _hasFixedDay, 
+                                onChanged: _isLoading ? null : (val) {
+                                  setState(() {
+                                    _hasFixedDay = val;
+                                    if (val) _includeInSummary = true;
+                                  });
+                                },
+                                activeColor: Colors.orange,
+                              ),
                             ),
-                          ),
-                          Checkbox(
-                            value: _includeInSummary, 
-                            activeColor: Colors.orange,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                            onChanged: _isLoading ? null : (val) => setState(() => _includeInSummary = val ?? true),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                )
-              : const SizedBox.shrink(),
-          ),
-
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: SizeTransition(
-                    sizeFactor: animation,
-                    axisAlignment: -1.0,
-                    child: child,
-                  ),
-                );
-              },
-              child: _hasFixedDay 
-                ? Column(
-                    key: const ValueKey('automatic_settings'),
-                    children: [
-                      const SizedBox(height: 25),
-                      const Divider(height: 1, thickness: 0.5),
-                      const SizedBox(height: 20),
-                      
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('Configuración del Ciclo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
-                      ),
-                      const SizedBox(height: 15),
-                      
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Frecuencia', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(15),
-                                    border: Border.all(color: Colors.grey.shade300),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<RecurrentFrequency>(
-                                      value: _selectedFrequency,
-                                      isExpanded: true,
-                                      borderRadius: BorderRadius.circular(15),
-                                      items: const [
-                                        DropdownMenuItem(value: RecurrentFrequency.monthly, child: Text('Mensual', style: TextStyle(fontSize: 13))),
-                                        DropdownMenuItem(value: RecurrentFrequency.quarterly, child: Text('Trimestral', style: TextStyle(fontSize: 13))),
-                                        DropdownMenuItem(value: RecurrentFrequency.semiAnnually, child: Text('Semestral', style: TextStyle(fontSize: 13))),
-                                        DropdownMenuItem(value: RecurrentFrequency.annually, child: Text('Anual', style: TextStyle(fontSize: 13))),
-                                      ],
-                                      onChanged: _isLoading ? null : (val) => setState(() => _selectedFrequency = val!),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Fecha de cobro', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 8),
-                                GestureDetector(
-                                  onTap: _isLoading ? null : () => _selectDate(context),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(15),
-                                      border: Border.all(color: Colors.grey.shade300),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            DateFormat('dd/MM/yy').format(_selectedStartDate),
-                                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        const Icon(Icons.calendar_month_rounded, color: Colors.orange, size: 16),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
-                  )
-                : const SizedBox.shrink(key: ValueKey('empty')),
+                  ),
+
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    child: !_hasFixedDay 
+                      ? Column(
+                          children: [
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    value: _includeInSummary, 
+                                    activeColor: Colors.orange,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                    onChanged: _isLoading ? null : (val) => setState(() => _includeInSummary = val ?? true),
+                                  ),
+                                  const Expanded(
+                                    child: Text(
+                                      'Incluir en el resumen mensual',
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      : const SizedBox.shrink(),
+                  ),
+
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    child: _hasFixedDay 
+                      ? Column(
+                          children: [
+                            const SizedBox(height: 25),
+                            const Divider(height: 1, thickness: 0.5),
+                            const SizedBox(height: 20),
+                            
+                            Text('CONFIGURACIÓN DEL CICLO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
+                            const SizedBox(height: 15),
+                            
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('FRECUENCIA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(15),
+                                          border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
+                                        ),
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<RecurrentFrequency>(
+                                            value: _selectedFrequency,
+                                            isExpanded: true,
+                                            borderRadius: BorderRadius.circular(15),
+                                            items: const [
+                                              DropdownMenuItem(value: RecurrentFrequency.monthly, child: Text('Mensual', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                                              DropdownMenuItem(value: RecurrentFrequency.quarterly, child: Text('Trimestral', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                                              DropdownMenuItem(value: RecurrentFrequency.semiAnnually, child: Text('Semestral', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                                              DropdownMenuItem(value: RecurrentFrequency.annually, child: Text('Anual', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                                            ],
+                                            onChanged: _isLoading ? null : (val) => setState(() => _selectedFrequency = val!),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 15),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('FECHA COBRO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+                                      const SizedBox(height: 8),
+                                      GestureDetector(
+                                        onTap: _isLoading ? null : () => _selectDate(context),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(15),
+                                            border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  DateFormat('dd/MM/yy').format(_selectedStartDate),
+                                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const Icon(Icons.calendar_month_rounded, color: Colors.orange, size: 16),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -351,9 +343,10 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
           Row(
             children: [
               Expanded(
-                child: TextButton(
-                  onPressed: _isLoading ? null : () => context.pop(),
-                  child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1)),
+                child: AppDialogs.dialogSecondaryButton(
+                  text: 'CANCELAR', 
+                  onPressed: () => context.pop(), 
+                  colorScheme: colorScheme
                 ),
               ),
               const SizedBox(width: 15),

@@ -1,8 +1,9 @@
+import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class ResetPasswordDialog extends StatelessWidget {
-
   final String errorTitle;
   final String errorText;
   
@@ -14,46 +15,35 @@ class ResetPasswordDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20.0),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              errorTitle,
-              style: const TextStyle(
-                fontSize: 20.0,
-                fontWeight: FontWeight.bold,
-              ),
+    return CustomDialogWrapper(
+      borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
+      horizontalInsetPadding: 30,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppDialogs.dialogHeader(
+            icon: Icons.error_outline_rounded, 
+            color: Colors.red.shade400, 
+            title: errorTitle,
+            colorScheme: colorScheme,
+          ),
+          const SizedBox(height: 20),
+          
+          AppDialogs.dialogMessage(errorText, colorScheme),
+          const SizedBox(height: 30),
+
+          SizedBox(
+            width: double.infinity,
+            child: AppDialogs.dialogPrimaryButton(
+              text: 'ENTENDIDO', 
+              onPressed: () => context.push('/login'), 
+              color: Colors.orange
             ),
-
-            const SizedBox(height: 10),
-
-            Text(
-              errorText, 
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 10),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () {
-                    context.push('/login');
-                  },
-                  child: const Text('Cerrar'),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

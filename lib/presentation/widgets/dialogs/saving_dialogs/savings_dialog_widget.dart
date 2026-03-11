@@ -19,8 +19,6 @@ class _SavingsDialogState extends State<SavingsDialog> {
   @override
   void initState() {
     super.initState();
-    // REVISIÓN: No reseteamos el Cubit completo, solo el formulario si es necesario.
-    // Pero para evitar el borrado visual, quitamos el resetCubit() que causaba el problema.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SavingsCubit>().resetForm();
     });
@@ -36,7 +34,6 @@ class _SavingsDialogState extends State<SavingsDialog> {
     return BlocListener<SavingsCubit, SavingsCubitState>(
       listener: (context, state) {
         if (state.status == SavingsStatus.success) {
-          // Si cerramos el diálogo tras éxito, el loadSavings ya se llamó en el Cubit
           context.pop();
         }
       },
@@ -46,13 +43,12 @@ class _SavingsDialogState extends State<SavingsDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: AppDialogs.dialogRowHeader(
-                    icon: Icons.savings_outlined, 
-                    title: 'GESTIÓN AHORROS', 
-                    color: colorScheme.primary, 
+                    icon: Icons.savings_rounded, 
+                    title: 'Gestión Ahorros', 
+                    color: Colors.orange, 
                     colorScheme: colorScheme
                   ),
                 ),
@@ -64,14 +60,14 @@ class _SavingsDialogState extends State<SavingsDialog> {
                       builder: const SavingsDeleteDialog(),
                     );
                   },
-                  icon: Icon(Icons.delete_sweep_rounded, color: Colors.red.shade300, size: 22),
+                  icon: Icon(Icons.delete_sweep_rounded, color: Colors.red.shade400, size: 22),
                 ),
               ],
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
 
             CustomInputTextWidget(
-              label: 'Cantidad a añadir',
+              label: 'CANTIDAD A AÑADIR',
               hintText: '0.00',
               onChanged: savingsCubit.savingChanged,
               errorText: savingsCubit.state.saving.isPure ? null : savingsCubit.state.saving.errorMessage,
@@ -80,43 +76,35 @@ class _SavingsDialogState extends State<SavingsDialog> {
             ),
             const SizedBox(height: 30),
 
-            Column(
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: AppDialogs.dialogPrimaryButton(
-                    text: 'AHORRAR',
-                    color: colorScheme.primary,
-                    isLoading: isLoading,
-                    onPressed: (savingsCubit.state.isValid && !isLoading)
-                    ? () async {
-                        await context.read<SavingsCubit>().addSaving(historyCubit);
-                      }
-                    : null,
-                  ),
-                ),
-                
-                const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: AppDialogs.dialogPrimaryButton(
+                text: 'AHORRAR',
+                color: Colors.orange,
+                isLoading: isLoading,
+                onPressed: (savingsCubit.state.isValid && !isLoading)
+                ? () async {
+                    await context.read<SavingsCubit>().addSaving(historyCubit);
+                  }
+                : null,
+              ),
+            ),
+            
+            const SizedBox(height: 10),
 
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton.icon(
-                    onPressed: isLoading ? null : () {
-                      context.pop();
-                      AppDialogs.showCustomDialog(
-                        context: context,
-                        builder: const SavingsWithdrawDialog(),
-                      );
-                    },
-                    icon: const Icon(Icons.outbox_rounded, size: 18),
-                    label: const Text('RETIRAR DINERO', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1)),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.orange.shade700,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                    ),
-                  ),
-                ),
-              ],
+            SizedBox(
+              width: double.infinity,
+              child: AppDialogs.dialogSecondaryButton(
+                text: 'RETIRAR DINERO',
+                colorScheme: colorScheme,
+                onPressed: isLoading ? null : () {
+                  context.pop();
+                  AppDialogs.showCustomDialog(
+                    context: context,
+                    builder: const SavingsWithdrawDialog(),
+                  );
+                },
+              ),
             ),
           ],
         ),

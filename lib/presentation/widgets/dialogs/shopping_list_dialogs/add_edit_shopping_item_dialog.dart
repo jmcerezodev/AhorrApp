@@ -1,5 +1,7 @@
 import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -51,177 +53,158 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(25),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4), width: 1.5)
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), shape: BoxShape.circle),
-                  child: Icon(widget.item == null ? Icons.add_shopping_cart_rounded : Icons.edit_note_rounded, color: Colors.orange, size: 24),
-                ),
-                const SizedBox(width: 15),
-                Text(
-                  widget.item == null ? 'AÑADIR PRODUCTO' : 'EDITAR PRODUCTO',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1.5),
-                ),
-              ],
-            ),
-            const SizedBox(height: 25),
-            
-            // ENVOLVEMOS EL CONTENIDO EN FLEXIBLE + SINGLECHILDSCROLLVIEW PARA EVITAR OVERFLOW
-            Flexible(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CustomInputTextWidget(
-                      controller: _nameController,
-                      label: 'Nombre del producto',
-                      hintText: 'Ej. Leche, Pan...',
-                      enabled: !_isLoading,
-                      errorText: _errorText,
-                      onChanged: (value) {
-                        if (_errorText != null && value.trim().isNotEmpty) {
-                          setState(() => _errorText = null);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 15),
-                    
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center, // Alineado al centro verticalmente
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: CustomInputTextWidget(
-                            controller: _amountController,
-                            label: 'Precio ud. (opcional)',
-                            hintText: '0.00',
-                            textInputType: const TextInputType.numberWithOptions(decimal: true),
-                            enabled: !_isLoading,
-                            autoFocus: false, // Evitamos que robe el foco al cargar si editamos
-                          ),
+    return CustomDialogWrapper(
+      borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
+      horizontalInsetPadding: 20,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppDialogs.dialogRowHeader(
+            icon: widget.item == null ? Icons.add_shopping_cart_rounded : Icons.edit_note_rounded, 
+            title: widget.item == null ? 'Añadir Producto' : 'Editar Producto', 
+            color: Colors.orange, 
+            colorScheme: colorScheme
+          ),
+          const SizedBox(height: 25),
+          
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CustomInputTextWidget(
+                    controller: _nameController,
+                    label: 'Nombre del producto',
+                    hintText: 'Ej. Leche, Pan...',
+                    enabled: !_isLoading,
+                    errorText: _errorText,
+                    onChanged: (value) {
+                      if (_errorText != null && value.trim().isNotEmpty) {
+                        setState(() => _errorText = null);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 15),
+                  
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: CustomInputTextWidget(
+                          controller: _amountController,
+                          label: 'Precio ud. (opcional)',
+                          hintText: '0.00',
+                          textInputType: const TextInputType.numberWithOptions(decimal: true),
+                          enabled: !_isLoading,
+                          autoFocus: false,
                         ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          flex: 1,
-                          child: Container(
-                            height: 60, // Altura ajustada para alinear con el CustomInputTextWidget
-                            padding: const EdgeInsets.symmetric(horizontal: 5),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                InkWell(
-                                  onTap: _quantity > 1 ? () => setState(() => _quantity--) : null,
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(5.0),
-                                    child: Icon(Icons.remove, size: 18, color: _quantity > 1 ? Colors.orange : Colors.grey.shade300),
-                                  ),
-                                ),
-                                Text('$_quantity', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                                InkWell(
-                                  onTap: () => setState(() => _quantity++),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(5.0),
-                                    child: Icon(Icons.add, size: 18, color: Colors.orange),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('Categoría', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface.withValues(alpha: 0.5))),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.grey.shade300),
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedCategory,
-                          isExpanded: true,
-                          borderRadius: BorderRadius.circular(15),
-                          items: _categories.map((cat) {
-                            return DropdownMenuItem<String>(
-                              value: cat['id'],
+                      const SizedBox(width: 15),
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('UDS.', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
+                            const SizedBox(height: 8),
+                            Container(
+                              height: 55,
+                              padding: const EdgeInsets.symmetric(horizontal: 5),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
+                              ),
                               child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  Icon(cat['icon'], size: 16, color: Colors.orange),
-                                  const SizedBox(width: 8),
-                                  Text(cat['name'], style: const TextStyle(fontSize: 13)),
+                                  InkWell(
+                                    onTap: _quantity > 1 ? () => setState(() => _quantity--) : null,
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: Icon(Icons.remove, size: 16, color: _quantity > 1 ? Colors.orange : Colors.grey.shade300),
+                                    ),
+                                  ),
+                                  Text('$_quantity', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                                  InkWell(
+                                    onTap: () => setState(() => _quantity++),
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(4.0),
+                                      child: Icon(Icons.add, size: 16, color: Colors.orange),
+                                    ),
+                                  ),
                                 ],
                               ),
-                            );
-                          }).toList(),
-                          onChanged: _isLoading ? null : (val) => setState(() => _selectedCategory = val ?? 'general'),
+                            ),
+                          ],
                         ),
                       ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  Text('CATEGORÍA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
                     ),
-                  ],
-                ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedCategory,
+                        isExpanded: true,
+                        borderRadius: BorderRadius.circular(15),
+                        items: _categories.map((cat) {
+                          return DropdownMenuItem<String>(
+                            value: cat['id'],
+                            child: Row(
+                              children: [
+                                Icon(cat['icon'], size: 16, color: Colors.orange),
+                                const SizedBox(width: 10),
+                                Text(cat['name'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: _isLoading ? null : (val) => setState(() => _selectedCategory = val ?? 'general'),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
 
-            const SizedBox(height: 30),
-            
-            // BOTONES EN HORIZONTAL PARA AHORRAR ESPACIO
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: _isLoading ? null : () => context.pop(),
-                    child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1)),
-                  ),
+          const SizedBox(height: 30),
+          
+          Row(
+            children: [
+              Expanded(
+                child: AppDialogs.dialogSecondaryButton(
+                  text: 'CANCELAR', 
+                  onPressed: () => context.pop(), 
+                  colorScheme: colorScheme
                 ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _save,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    ),
-                    child: _isLoading 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-                  ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: AppDialogs.dialogPrimaryButton(
+                  text: 'GUARDAR', 
+                  onPressed: _isLoading ? null : _save, 
+                  color: Colors.orange,
+                  isLoading: _isLoading,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

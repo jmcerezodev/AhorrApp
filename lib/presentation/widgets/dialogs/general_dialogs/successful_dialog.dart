@@ -29,12 +29,11 @@ class SuccessfulDialog extends StatelessWidget {
           AppDialogs.dialogHeader(
             icon: Icons.check_circle_outline_rounded, 
             color: Colors.green.shade400, 
-            title: '¡ÉXITO!',
-            circularBackground: true,
-            iconSize: 40,
+            title: '¡Éxito!',
+            titleColor: Colors.green.shade600,
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
           
           AppDialogs.dialogMessage('¡$sucessfulName correctamente!', colorScheme),
           

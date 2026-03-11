@@ -37,27 +37,37 @@ class UpdateNameDialog extends StatelessWidget {
         }
       },
       child: CustomDialogWrapper(
-        borderColor: colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4),
+        borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
         horizontalInsetPadding: 20,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             AppDialogs.dialogRowHeader(
               icon: Icons.badge_outlined, 
-              title: title, 
-              color: colorScheme.primary, 
+              title: 'Actualizar Nombre', 
+              color: Colors.orange, 
               colorScheme: colorScheme
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
 
-            CustomInputTextWidget(
-              label: 'Nuevo Nombre',
-              hintText: updateNameCubit.state.name,
-              onChanged: updateNameCubit.newNameChanged,
-              autoFocus: true,
-              obscureText: false,
-              textInputType: TextInputType.name,
-              textCapitalization: TextCapitalization.sentences,
+            Flexible(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CustomInputTextWidget(
+                      label: 'NUEVO NOMBRE',
+                      hintText: updateNameCubit.state.name,
+                      onChanged: updateNameCubit.newNameChanged,
+                      autoFocus: true,
+                      obscureText: false,
+                      textInputType: TextInputType.name,
+                      textCapitalization: TextCapitalization.sentences,
+                    ),
+                  ],
+                ),
+              ),
             ),
             
             const SizedBox(height: 30),
@@ -65,28 +75,21 @@ class UpdateNameDialog extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: TextButton(
-                    onPressed: () => context.pop(),
-                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text(
-                      'CANCELAR', 
-                      style: TextStyle(
-                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                        fontWeight: FontWeight.bold, 
-                        letterSpacing: 1
-                      )
-                    ),
+                  child: AppDialogs.dialogSecondaryButton(
+                    text: 'CANCELAR', 
+                    onPressed: () => context.pop(), 
+                    colorScheme: colorScheme
                   ),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
                   child: AppDialogs.dialogPrimaryButton(
                     text: 'ACTUALIZAR',
-                    color: colorScheme.primary,
+                    color: Colors.orange,
                     isLoading: updateNameCubit.state.status == UpdateNameStatus.submitting,
                     onPressed: updateNameCubit.state.isValid && updateNameCubit.state.status != UpdateNameStatus.submitting ? () {
                       updateNameCubit.onSubmit();
-                    } : () {},
+                    } : null,
                   ),
                 ),
               ],

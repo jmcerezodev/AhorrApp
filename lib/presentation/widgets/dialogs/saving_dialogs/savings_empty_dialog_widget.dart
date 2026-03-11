@@ -29,48 +29,45 @@ class SavingsDeleteDialog extends StatelessWidget {
         }
       },
       child: CustomDialogWrapper(
-        borderColor: colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4),
+        borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
         horizontalInsetPadding: 30,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             AppDialogs.dialogHeader(
               icon: Icons.warning_amber_rounded, 
-              color: colorScheme.primary, 
-              title: '¿VACIAR AHORROS?',
-              circularBackground: true,
-              iconSize: 32,
+              color: Colors.red.shade400, 
+              title: '¿Vaciar Ahorros?',
               colorScheme: colorScheme,
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 20),
             
             AppDialogs.dialogMessage(
-              'Tienes $totalSaving€ ahorrados. Al confirmar, el contador volverá a cero pero tus registros se mantendrán en el historial como "gastados".', 
+              'Tienes $totalSaving€ ahorrados. Al confirmar, el contador volverá a cero pero tus registros se mantendrán en el historial.', 
               colorScheme
+            ),
+            const SizedBox(height: 15),
+            AppDialogs.dialogMessage(
+              'Esta acción no se puede deshacer.',
+              colorScheme,
+              customColor: Colors.red.shade400.withValues(alpha: 0.8),
             ),
             const SizedBox(height: 30),
 
             Row(
               children: [
                 Expanded(
-                  child: TextButton(
-                    onPressed: isLoading ? null : () => context.pop(),
-                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text(
-                      'CANCELAR', 
-                      style: TextStyle(
-                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                        fontWeight: FontWeight.bold, 
-                        letterSpacing: 1
-                      )
-                    ),
+                  child: AppDialogs.dialogSecondaryButton(
+                    text: 'CANCELAR', 
+                    onPressed: isLoading ? null : () => context.pop(), 
+                    colorScheme: colorScheme
                   ),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
                   child: AppDialogs.dialogPrimaryButton(
                     text: 'VACIAR',
-                    color: colorScheme.primary,
+                    color: Colors.red.shade400,
                     isLoading: isLoading,
                     onPressed: isLoading 
                       ? null

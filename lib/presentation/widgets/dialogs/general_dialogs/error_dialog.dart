@@ -25,12 +25,11 @@ class ErrorDialog extends StatelessWidget {
           AppDialogs.dialogHeader(
             icon: Icons.error_outline_rounded, 
             color: Colors.red.shade400, 
-            title: '¡HA OCURRIDO UN ERROR!',
-            circularBackground: true,
-            iconSize: 40,
+            title: 'Ups, algo ha fallado',
+            titleColor: Colors.red.shade400,
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
           
           AppDialogs.dialogMessage(errorMessage, colorScheme),
           const SizedBox(height: 30),
@@ -38,7 +37,7 @@ class ErrorDialog extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: AppDialogs.dialogPrimaryButton(
-              text: 'REINTENTAR', 
+              text: 'ENTENDIDO',
               onPressed: () => context.pop(), 
               color: Colors.red.shade400
             ),

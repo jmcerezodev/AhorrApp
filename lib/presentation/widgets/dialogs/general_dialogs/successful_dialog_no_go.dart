@@ -27,13 +27,11 @@ class SuccessfulDialogNoGo extends StatelessWidget {
           AppDialogs.dialogHeader(
             icon: Icons.check_circle_outline_rounded, 
             color: Colors.green.shade400, 
-            title: title ?? '¡CONSEGUIDO!',
-            titleColor: Colors.green, // ADN: En éxitos el título es verde
-            circularBackground: true,
-            iconSize: 40,
+            title: title ?? '¡Conseguido!',
+            titleColor: Colors.green.shade600,
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
           
           AppDialogs.dialogMessage(sucessfulName, colorScheme),
           const SizedBox(height: 30),

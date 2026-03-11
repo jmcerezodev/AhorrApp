@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class ErrorDialogNoGo extends StatelessWidget {
-
   final String textError;
   
   const ErrorDialogNoGo({
@@ -15,33 +14,33 @@ class ErrorDialogNoGo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return CustomDialogWrapper(
-      borderColor: Colors.red.shade400,
+      borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
+      horizontalInsetPadding: 30,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 100),
-          const SizedBox(height: 10),
-
-          AppDialogs.dialogMessage(textError, colorScheme),
+          AppDialogs.dialogHeader(
+            icon: Icons.error_outline_rounded, 
+            color: Colors.red.shade400, 
+            title: 'Ups, algo ha fallado',
+            titleColor: Colors.red.shade400,
+            colorScheme: colorScheme,
+          ),
           const SizedBox(height: 20),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: () => context.pop(),
-                child: Text(
-                  'CERRAR',
-                  style: TextStyle(
-                    color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                    fontWeight: FontWeight.bold, 
-                    letterSpacing: 1
-                  )
-                ),
-              ),
-            ],
+          AppDialogs.dialogMessage(textError, colorScheme),
+          const SizedBox(height: 30),
+
+          SizedBox(
+            width: double.infinity,
+            child: AppDialogs.dialogPrimaryButton(
+              text: 'ENTENDIDO', 
+              onPressed: () => context.pop(), 
+              color: Colors.red.shade400
+            ),
           ),
         ],
       ),

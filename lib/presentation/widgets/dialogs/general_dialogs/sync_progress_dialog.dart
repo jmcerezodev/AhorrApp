@@ -12,7 +12,7 @@ class SyncProgressDialog extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return CustomDialogWrapper(
-      borderColor: colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4),
+      borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
       animate: false,
       child: PopScope(
         canPop: false,
@@ -21,13 +21,11 @@ class SyncProgressDialog extends StatelessWidget {
           children: [
             AppDialogs.dialogHeader(
               icon: Icons.sync_rounded, 
-              color: colorScheme.primary, 
-              title: 'SINCRONIZANDO DATOS',
-              circularBackground: true,
-              iconSize: 32,
+              color: Colors.orange, 
+              title: 'Sincronizando Datos',
               colorScheme: colorScheme,
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 20),
             
             AppDialogs.dialogMessage(
               'Estamos preparando tu balance global por primera vez. Solo tardará unos segundos...', 
@@ -39,18 +37,19 @@ class SyncProgressDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               child: LinearProgressIndicator(
                 value: progress,
-                minHeight: 8,
-                backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
-                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+                minHeight: 10,
+                backgroundColor: Colors.orange.withValues(alpha: 0.1),
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               '${(progress * 100).toInt()}%',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.primary,
+                fontWeight: FontWeight.w900,
+                color: Colors.orange,
+                letterSpacing: 1,
               ),
             ),
           ],

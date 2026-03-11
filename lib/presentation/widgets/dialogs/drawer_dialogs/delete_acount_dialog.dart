@@ -42,34 +42,32 @@ class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
               : null,
             icon: Icons.no_accounts_rounded, 
             color: Colors.red.shade400, 
-            title: widget.title.toUpperCase(),
-            circularBackground: true,
-            iconSize: 32,
+            title: '¿Eliminar Cuenta?',
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
           
           if (isSubmitting)
             AppDialogs.dialogMessage('Eliminando tus datos de forma segura...', colorScheme)
-          else
-            Text.rich(
-              TextSpan(
-                style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
-                children: [
-                  const TextSpan(text: 'Estás a punto de '),
-                  const TextSpan(text: 'eliminar permanentemente', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                  const TextSpan(text: ' tu cuenta y todos tus datos. Esta acción '),
-                  const TextSpan(text: 'no se puede deshacer.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                ],
-              ),
-              textAlign: TextAlign.center,
+          else ...[
+            AppDialogs.dialogMessage(
+              'Estás a punto de eliminar permanentemente tu cuenta y todos tus datos.',
+              colorScheme,
             ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 10),
+            AppDialogs.dialogMessage(
+              'Esta acción no se puede deshacer.',
+              colorScheme,
+              customColor: Colors.red.shade400.withValues(alpha: 0.8),
+            ),
+          ],
+          
+          const SizedBox(height: 25),
 
           if (!isSubmitting)
             CustomInputTextWidget(
               prefixIcon: Icons.key_rounded,
-              label: 'Contraseña para confirmar',
+              label: 'CONTRASEÑA PARA CONFIRMAR',
               hintText: 'Tu contraseña',
               onChanged: deleteAcountCubit.inputValueDeleteAcount,
               autoFocus: false,
@@ -92,8 +90,9 @@ class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
               '${(state.deleteProgress * 100).toInt()}%',
               style: TextStyle(
                 fontSize: 12, 
-                fontWeight: FontWeight.bold, 
-                color: Colors.red.shade400
+                fontWeight: FontWeight.w900, 
+                color: Colors.red.shade400,
+                letterSpacing: 1,
               ),
             ),
           ],
@@ -104,17 +103,10 @@ class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
             Row(
               children: [
                 Expanded(
-                  child: TextButton(
-                    onPressed: () => context.pop(),
-                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                    child: Text(
-                      'CANCELAR', 
-                      style: TextStyle(
-                        color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                        fontWeight: FontWeight.bold, 
-                        letterSpacing: 1
-                      )
-                    ),
+                  child: AppDialogs.dialogSecondaryButton(
+                    text: 'CANCELAR', 
+                    onPressed: () => context.pop(), 
+                    colorScheme: colorScheme
                   ),
                 ),
                 const SizedBox(width: 15),

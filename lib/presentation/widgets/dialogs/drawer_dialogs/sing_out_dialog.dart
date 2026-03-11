@@ -21,42 +21,30 @@ class SingOutDialog extends StatelessWidget {
           AppDialogs.dialogHeader(
             icon: Icons.logout_rounded, 
             color: Colors.red.shade400, 
-            title: '¿CERRAR SESIÓN?',
-            circularBackground: true,
-            iconSize: 32,
+            title: '¿Cerrar Sesión?',
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
           
-          Text.rich(
-            TextSpan(
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
-              children: [
-                const TextSpan(text: '¿Estás seguro de que quieres '),
-                const TextSpan(text: 'salir', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                const TextSpan(text: '?\nTendrás que volver a introducir tus credenciales si no activaste '),
-                const TextSpan(text: '"Recordarme"', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-                const TextSpan(text: '.'),
-              ],
-            ),
-            textAlign: TextAlign.center,
+          AppDialogs.dialogMessage(
+            '¿Estás seguro de que quieres salir de tu cuenta?',
+            colorScheme,
+          ),
+          const SizedBox(height: 15),
+          AppDialogs.dialogMessage(
+            'Tendrás que volver a identificarte para acceder a tus datos.',
+            colorScheme,
+            customColor: Colors.orange.shade700,
           ),
           const SizedBox(height: 30),
 
           Row(
             children: [
               Expanded(
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
-                  child: Text(
-                    'CANCELAR', 
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withValues(alpha: 0.4), 
-                      fontWeight: FontWeight.bold, 
-                      letterSpacing: 1
-                    )
-                  ),
+                child: AppDialogs.dialogSecondaryButton(
+                  text: 'CANCELAR', 
+                  onPressed: () => Navigator.of(context).pop(), 
+                  colorScheme: colorScheme
                 ),
               ),
               const SizedBox(width: 15),
