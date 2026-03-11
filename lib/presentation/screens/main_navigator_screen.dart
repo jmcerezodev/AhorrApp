@@ -55,6 +55,7 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
 
     return Scaffold(
       drawer: const SideMenuWidget(),
+      resizeToAvoidBottomInset: false, // EVITA QUE EL KEYBOARD EMPUJE LA LISTA DE FONDO Y CAUSE OVERFLOW
       body: Column(
         children: [
           // BANNER DE DESCONEXIÓN
