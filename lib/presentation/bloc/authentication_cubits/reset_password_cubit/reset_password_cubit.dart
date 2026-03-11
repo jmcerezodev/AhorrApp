@@ -8,9 +8,11 @@ import 'package:formz/formz.dart';
 part 'reset_password_state.dart';
 
 class ResetPasswordCubit extends Cubit<ResetPasswordState> {
-  final AuthAppwrite _auth = AuthAppwrite();
+  final AuthAppwrite _auth;
 
-  ResetPasswordCubit() : super(const ResetPasswordState());
+  ResetPasswordCubit({AuthAppwrite? auth}) 
+    : _auth = auth ?? AuthAppwrite(),
+      super(const ResetPasswordState());
 
   void onSubmit() async {
     final email = Email.dirty(value: state.resetPassword.value);
@@ -32,7 +34,7 @@ class ResetPasswordCubit extends Cubit<ResetPasswordState> {
       await _auth.resetPassword(state.resetPassword.value);
       emit(state.copyWith(status: ResetPasswordStatus.success));
     } on AppwriteException catch (e) {
-      String message = 'Error: ${e.message}'; // Mostramos el mensaje real de Appwrite
+      String message = 'Error: ${e.message}';
       if (e.code == 404) message = 'El correo electrónico no está registrado';
       if (e.code == 429) message = 'Demasiados intentos. Espera unos minutos';
       

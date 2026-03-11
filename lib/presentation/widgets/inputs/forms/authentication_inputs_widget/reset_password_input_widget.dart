@@ -25,10 +25,10 @@ class _ResetPasswordInputWidgetState extends State<ResetPasswordInputWidget> {
         if (state.status == ResetPasswordStatus.success) {
           showDialog(
             context: context,
-            builder: (context) => const ResetPasswordDialog(
-              errorTitle: 'Correo Enviado',
-              errorText:
-                  'Se ha enviado un correo para recuperar la contraseña. Revisa tu bandeja de entrada y spam.',
+            barrierDismissible: false,
+            builder: (context) => const SuccessfulDialog(
+              sucessfulName: 'Correo de recuperación enviado',
+              routeScreen: '/login',
             ),
           );
         } else if (state.status == ResetPasswordStatus.failure) {

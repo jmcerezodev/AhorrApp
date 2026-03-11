@@ -42,21 +42,27 @@ dependencies:
   printing: ^5.13.2
   gal: ^2.3.2
   file_picker: ^10.3.10
-
-dependency_overrides:
-  archive: ^4.0.7
+  flutter_web_plugins:
+    sdk: flutter
 
 dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
   isar_generator: ^3.1.0+1
-  build_runner: ^2.4.12
+  build_runner: ^2.4.14
   mocktail: ^1.0.4
   local_auth_platform_interface: ^1.1.0
+  bloc_test: any
 
 flutter:
   uses-material-design: true
   assets:
     - assets/
     - env.json
+
+dependency_overrides:
+  archive: ^4.0.7
+  analyzer: ^6.4.1
+  test_api: 0.7.9
+  matcher: 0.12.18

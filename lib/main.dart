@@ -15,11 +15,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; 
 import 'package:go_router/go_router.dart';
+import 'package:flutter_web_plugins/url_strategy.dart'; // Importante para quitar el '#' de la URL
 import 'dart:io';
 
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
+    
+    // Configura la estrategia de URL para no usar '#' (PathUrlStrategy)
+    // Esto es fundamental para que funcionen correctamente los App Links y evitar el 404
+    usePathUrlStrategy();
 
     await Preferences.init();
     await setupServiceLocator();
