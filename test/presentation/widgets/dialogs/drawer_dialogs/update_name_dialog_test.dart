@@ -22,7 +22,7 @@ void main() {
     
     // Stubs para acciones
     when(() => mockCubit.newNameChanged(any())).thenReturn(null);
-    when(() => mockCubit.onSubmit()).thenReturn(null);
+    when(() => mockCubit.onSubmit()).thenAnswer((_) async => {});
   });
 
   Widget createWidgetUnderTest() {

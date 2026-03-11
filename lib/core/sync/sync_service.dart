@@ -67,6 +67,8 @@ class SyncService {
             success = await _syncTickets(pending, data);
           } else if (pending.collection == 'debts_loans') {
             success = await _syncDebtsLoans(pending, data);
+          } else if (pending.collection == 'user') {
+            success = await _syncUser(pending, data);
           }
 
           if (success) {
@@ -110,6 +112,14 @@ class SyncService {
     } catch (_) {
       return false;
     }
+  }
+
+  Future<bool> _syncUser(PendingSync pending, Map<String, dynamic> data) async {
+    if (pending.action == 'update_name') {
+      final authService = getIt<AuthAppwrite>();
+      return await authService.updateRemoteName(data['name'] ?? '');
+    }
+    return false;
   }
 
   Future<bool> _syncHistory(PendingSync pending, Map<String, dynamic> data) async {

@@ -28,7 +28,9 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with 
         });
       }
     });
+    // Cargamos tanto los gastos fijos como las deudas/préstamos para asegurar la sincronización de títulos y chips
     context.read<RecurrentExpensesCubit>().loadExpenses();
+    context.read<DebtsLoansCubit>().loadDebtsLoans();
   }
 
   @override

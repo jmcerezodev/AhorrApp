@@ -64,16 +64,24 @@ void main() {
     historyCubit = HistoryCubit(totalMoneyCubit: mockTotalMoneyCubit);
   });
 
-  group('HistoryCubit - Blindaje de Lógica y Sesión', () {
+  group('HistoryCubit - Integridad Total de Tests', () {
     test('Estado inicial debe ser initial y lista vacía', () {
       expect(historyCubit.state.status, HistoryStatus.initial);
       expect(historyCubit.state.historyList, isEmpty);
     });
 
+    test('toggleFilterPanel debe cambiar el estado del filtro', () {
+      expect(historyCubit.state.isFilterOpen, false);
+      historyCubit.toggleFilterPanel();
+      expect(historyCubit.state.isFilterOpen, true);
+      historyCubit.toggleFilterPanel();
+      expect(historyCubit.state.isFilterOpen, false);
+    });
+
     test('prepareForNewLogin debe limpiar Isar y resetear el estado del Cubit', () async {
       when(() => mockLocalDb.clearAll()).thenAnswer((_) async {});
       
-      // Forzamos un estado previo sucio (cambiamos de 'descending' a 'ascending')
+      // Forzamos un estado previo sucio
       historyCubit.listOrder('ascending');
       expect(historyCubit.state.listOrder, 'ascending');
       
@@ -81,16 +89,13 @@ void main() {
       
       expect(historyCubit.state.status, HistoryStatus.initial);
       expect(historyCubit.state.historyList, isEmpty);
-      // Debe volver al valor por defecto real: 'descending'
       expect(historyCubit.state.listOrder, 'descending'); 
       verify(() => mockLocalDb.clearAll()).called(1);
     });
 
     test('loadHistoryByDate debe forzar sincronización remota si la base de datos está VACÍA', () async {
-      // GIVEN: Base de datos vacía (0 registros)
       when(() => mockLocalDb.getTotalCount()).thenAnswer((_) async => 0);
       
-      // Mock de sincronización exitosa
       when(() => mockRepo.syncFullData(any(), any())).thenAnswer((_) async => {
         'balance': 0.0,
         'history': [],
@@ -115,10 +120,8 @@ void main() {
       when(() => mockGetMovementsUseCase(any(), any(), any())).thenAnswer((_) async => []);
       when(() => mockTotalMoneyCubit.totalMoney(any())).thenReturn(null);
 
-      // WHEN: Cargamos historia
       await historyCubit.loadHistoryByDate('Enero', 2024);
 
-      // THEN: Se debe haber disparado la sincronización completa
       verify(() => mockRepo.syncFullData(any(), any())).called(1);
       expect(historyCubit.state.status, HistoryStatus.success);
     });

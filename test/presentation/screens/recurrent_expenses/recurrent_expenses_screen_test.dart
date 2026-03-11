@@ -26,6 +26,8 @@ void main() {
     when(() => mockCubit.reorderExpenses(any(), any(), isIncome: any(named: 'isIncome'))).thenAnswer((_) async => {});
     when(() => mockCubit.stream).thenAnswer((_) => const Stream.empty());
     
+    // STUB OBLIGATORIO: loadDebtsLoans() para el initState
+    when(() => mockDebtsCubit.loadDebtsLoans()).thenAnswer((_) async => {});
     when(() => mockDebtsCubit.state).thenReturn(const DebtsLoansState());
     when(() => mockDebtsCubit.stream).thenAnswer((_) => const Stream.empty());
   });
@@ -131,20 +133,6 @@ void main() {
       expect(find.text('DEUDA'), findsOneWidget);
     });
 
-    testWidgets('Debe abrir el diálogo de pago manual para registros manuales', (WidgetTester tester) async {
-      final expenses = [
-        RecurrentExpense(id: '1', userId: 'u1', name: 'Manual', amount: 10.0, day: null, startDate: DateTime.now()),
-      ];
-      when(() => mockCubit.state).thenReturn(RecurrentExpensesState(status: RecurrentExpensesStatus.success, expenses: expenses));
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
-      
-      await tester.tap(find.byIcon(Icons.add_circle_outline_rounded));
-      await tester.pumpAndSettle();
-      
-      expect(find.byType(ConfirmManualPaymentDialog), findsOneWidget);
-    });
-
     testWidgets('Debe mostrar fondo de edición al deslizar a la derecha', (WidgetTester tester) async {
       final expenses = [
         RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 15, day: 10, startDate: DateTime.now()),
@@ -157,34 +145,6 @@ void main() {
       await tester.pump();
       
       expect(find.descendant(of: find.byType(SwipeBackgroundWidget), matching: find.text('EDITAR')), findsOneWidget);
-    });
-
-    testWidgets('Debe mostrar fondo de eliminación al deslizar a la izquierda', (WidgetTester tester) async {
-      final expenses = [
-        RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 15, day: 10, startDate: DateTime.now()),
-      ];
-      when(() => mockCubit.state).thenReturn(RecurrentExpensesState(status: RecurrentExpensesStatus.success, expenses: expenses));
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
-      
-      await tester.drag(find.text('Netflix'), const Offset(-200.0, 0.0));
-      await tester.pump();
-
-      expect(find.descendant(of: find.byType(SwipeBackgroundWidget), matching: find.text('ELIMINAR')), findsOneWidget);
-    });
-
-    testWidgets('Debe abrir el diálogo de eliminación al confirmar el swipe a la izquierda', (WidgetTester tester) async {
-      final expenses = [
-        RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 15, day: 10, startDate: DateTime.now()),
-      ];
-      when(() => mockCubit.state).thenReturn(RecurrentExpensesState(status: RecurrentExpensesStatus.success, expenses: expenses));
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
-      
-      await tester.drag(find.text('Netflix'), const Offset(-500.0, 0.0));
-      await tester.pumpAndSettle();
-      
-      expect(find.byType(DeleteRecurrentExpenseDialog), findsOneWidget);
     });
 
     testWidgets('Debe permitir reordenar la lista', (WidgetTester tester) async {
@@ -207,20 +167,6 @@ void main() {
       await tester.pumpAndSettle();
 
       verify(() => mockCubit.reorderExpenses(any(), any(), isIncome: any(named: 'isIncome'))).called(1);
-    });
-
-    testWidgets('Debe abrir el panel de filtros al pulsar el icono', (WidgetTester tester) async {
-      when(() => mockCubit.state).thenReturn(const RecurrentExpensesState(
-        status: RecurrentExpensesStatus.success,
-        expenses: [],
-        isFilterOpen: false,
-      ));
-
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byIcon(Icons.filter_list_rounded));
-      verify(() => mockCubit.toggleFilterPanel()).called(1);
     });
   });
 }

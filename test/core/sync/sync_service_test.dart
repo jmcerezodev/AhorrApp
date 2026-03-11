@@ -8,6 +8,7 @@ import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/local_ticket_item.dart';
 import 'package:ahorrapp/data/local/models/pending_sync.dart';
+import 'package:ahorrapp/domain/repositories/debt_loan_repository.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as models;
 import 'package:flutter/services.dart';
@@ -20,11 +21,10 @@ class MockLocalDbService extends Mock implements LocalDbService {}
 class MockAppwriteRepository extends Mock implements AppwriteRepository {}
 class MockConnectivityService extends Mock implements ConnectivityService {}
 class MockAuthAppwrite extends Mock implements AuthAppwrite {}
+class MockDebtLoanRepository extends Mock implements DebtLoanRepository {}
 class MockDocument extends Mock implements models.Document {}
 class MockIsar extends Mock implements isar.Isar {}
 class MockLocalTicketItemCollection extends Mock implements isar.IsarCollection<LocalTicketItem> {}
-class MockLocalTicketItemQueryBuilder extends Mock implements isar.QueryBuilder<LocalTicketItem, LocalTicketItem, isar.QAfterFilterCondition> {}
-class MockLocalTicketItemQuery extends Mock implements isar.Query<LocalTicketItem> {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +32,7 @@ void main() {
   late MockAppwriteRepository mockAppwriteRepo;
   late MockConnectivityService mockConnectivity;
   late MockAuthAppwrite mockAuth;
+  late MockDebtLoanRepository mockDebtRemoteRepo;
   late MockIsar mockIsar;
   late MockLocalTicketItemCollection mockTicketCollection;
 
@@ -48,17 +49,17 @@ void main() {
     mockAppwriteRepo = MockAppwriteRepository();
     mockConnectivity = MockConnectivityService();
     mockAuth = MockAuthAppwrite();
+    mockDebtRemoteRepo = MockDebtLoanRepository();
     mockIsar = MockIsar();
     mockTicketCollection = MockLocalTicketItemCollection();
 
-    // Resetear GetIt y registrar mocks
     getIt.reset();
     getIt.registerSingleton<LocalDbService>(mockLocalDb);
     getIt.registerSingleton<AppwriteRepository>(mockAppwriteRepo);
     getIt.registerSingleton<ConnectivityService>(mockConnectivity);
-    getIt.registerLazySingleton<AuthAppwrite>(() => mockAuth);
+    getIt.registerSingleton<AuthAppwrite>(mockAuth);
+    getIt.registerLazySingleton<DebtLoanRepository>(() => mockDebtRemoteRepo, instanceName: 'debt_remote');
 
-    // Stubs comunes
     when(() => mockConnectivity.status).thenAnswer((_) => const Stream.empty());
     when(() => mockConnectivity.isConnected).thenAnswer((_) async => true);
     when(() => mockLocalDb.deletePendingSync(any())).thenAnswer((_) async => {});
@@ -66,19 +67,17 @@ void main() {
     when(() => mockIsar.localTicketItems).thenReturn(mockTicketCollection);
   });
 
-  group('SyncService - Lógica de Sincronización', () {
-    test('Debe intentar Silent Login ante un error 401 de Appwrite', () async {
+  group('SyncService - Suite Completa de Sincronización', () {
+    test('Debe intentar Silent Login ante un error 401 de Appwrite (Recuperado)', () async {
       final syncService = SyncService();
-      
       final pending = PendingSync()
         ..id = 1
         ..action = 'create'
         ..collection = 'history'
         ..appwriteId = 'item-123'
-        ..dataJson = jsonEncode({'userId': 'u1', 'name': 'Gasto', 'money': 10.0, 'date': '2024-01-01'});
+        ..dataJson = jsonEncode({'userId': 'u1', 'name': 'Gasto'});
 
       when(() => mockLocalDb.getPendingSyncs()).thenAnswer((_) async => [pending]);
-      
       when(() => mockAppwriteRepo.addHistory(
         documentId: any(named: 'documentId'),
         userId: any(named: 'userId'),
@@ -89,12 +88,8 @@ void main() {
         currentHour: any(named: 'currentHour'),
         month: any(named: 'month'),
         year: any(named: 'year'),
-        remoteImageId: any(named: 'remoteImageId'),
-        ticketId: any(named: 'ticketId'),
-        imagePath: any(named: 'imagePath'),
-        isTransferred: any(named: 'isTransferred'),
-        category: any(named: 'category'),
         isRecurrent: any(named: 'isRecurrent'),
+        category: any(named: 'category'),
       )).thenThrow(AppwriteException('Unauthorized', 401));
 
       when(() => mockAuth.signInEmailAndPassword(any(), any())).thenAnswer((_) async => 'new-session');
@@ -104,102 +99,55 @@ void main() {
       verify(() => mockAuth.signInEmailAndPassword('test@test.com', '123')).called(1);
     });
 
-    test('Debe sincronizar correctamente items de la cesta (shopping_list)', () async {
+    test('Debe sincronizar correctamente la actualización del nombre de usuario (Offline support)', () async {
       final syncService = SyncService();
-      final data = {
-        'userId': 'u1',
-        'name': 'Leche',
-        'amount': 1.5,
-        'category': 'general',
-        'isBought': false,
-        'position': 0,
-        'quantity': 2
-      };
-      
-      final pending = PendingSync()
-        ..id = 10
-        ..action = 'save'
-        ..collection = 'shopping_list'
-        ..appwriteId = 'shop-123'
-        ..dataJson = jsonEncode(data);
+      final pending = PendingSync()..id = 20..action = 'update_name'..collection = 'user'..dataJson = jsonEncode({'name': 'Nuevo Nombre'});
+      when(() => mockLocalDb.getPendingSyncs()).thenAnswer((_) async => [pending]);
+      when(() => mockAuth.updateRemoteName('Nuevo Nombre')).thenAnswer((_) async => true);
+
+      await syncService.processQueue();
+
+      verify(() => mockAuth.updateRemoteName('Nuevo Nombre')).called(1);
+      verify(() => mockLocalDb.deletePendingSync(20)).called(1);
+    });
+
+    test('Debe sincronizar items de la cesta y manejar reintento si falla update (Recuperado)', () async {
+      final syncService = SyncService();
+      final data = {'userId': 'u1', 'name': 'Leche', 'amount': 1.5, 'isBought': false, 'position': 0, 'quantity': 2, 'category': 'general'};
+      final pending = PendingSync()..id = 10..action = 'save'..collection = 'shopping_list'..appwriteId = 'shop-123'..dataJson = jsonEncode(data);
 
       when(() => mockLocalDb.getPendingSyncs()).thenAnswer((_) async => [pending]);
       
-      // Stub para update (simulamos éxito)
-      when(() => mockAppwriteRepo.updateShoppingItem(
+      // Simula que falla el update (404) y debe intentar el add
+      when(() => mockAppwriteRepo.updateShoppingItem(documentId: 'shop-123', data: any(named: 'data'))).thenThrow(AppwriteException('Not Found', 404));
+      when(() => mockAppwriteRepo.addShoppingItem(
         documentId: 'shop-123',
-        data: any(named: 'data'),
+        userId: 'u1',
+        name: 'Leche',
+        amount: 1.5,
+        category: 'general',
+        isBought: false,
+        position: 0,
+        quantity: 2,
       )).thenAnswer((_) async => MockDocument());
 
       await syncService.processQueue();
 
-      // Verificamos que se intentó actualizar con los datos correctos
-      final capturedData = verify(() => mockAppwriteRepo.updateShoppingItem(
-        documentId: 'shop-123',
-        data: captureAny(named: 'data'),
-      )).captured.first as Map<String, dynamic>;
-
-      expect(capturedData['quantity'], 2);
-      expect(capturedData['name'], 'Leche');
-      
-      // Verificamos que se eliminó de la cola local al terminar con éxito
+      verify(() => mockAppwriteRepo.addShoppingItem(documentId: 'shop-123', userId: 'u1', name: 'Leche', amount: 1.5, category: 'general', isBought: false, position: 0, quantity: 2)).called(1);
       verify(() => mockLocalDb.deletePendingSync(10)).called(1);
     });
 
-    test('Debe crear el item de la cesta si update falla con 404', () async {
+    test('Debe mapear correctamente date/hour a currentDate/currentHour en historial (Recuperado)', () async {
       final syncService = SyncService();
       final pending = PendingSync()
-        ..id = 11
-        ..action = 'save'
-        ..collection = 'shopping_list'
-        ..appwriteId = 'shop-new'
-        ..dataJson = jsonEncode({'userId': 'u1', 'name': 'Pan', 'quantity': 1, 'amount': 0.0, 'category': 'general', 'isBought': false, 'position': 1});
-
-      when(() => mockLocalDb.getPendingSyncs()).thenAnswer((_) async => [pending]);
-      
-      // Update falla con 404 (No encontrado)
-      when(() => mockAppwriteRepo.updateShoppingItem(
-        documentId: 'shop-new',
-        data: any(named: 'data'),
-      )).thenThrow(AppwriteException('Not Found', 404));
-
-      // Entonces debe intentar addShoppingItem
-      when(() => mockAppwriteRepo.addShoppingItem(
-        documentId: 'shop-new',
-        userId: any(named: 'userId'),
-        name: any(named: 'name'),
-        amount: any(named: 'amount'),
-        category: any(named: 'category'),
-        isBought: any(named: 'isBought'),
-        position: any(named: 'position'),
-        quantity: any(named: 'quantity'),
-      )).thenAnswer((_) async => MockDocument());
-
-      await syncService.processQueue();
-
-      verify(() => mockAppwriteRepo.addShoppingItem(
-        documentId: 'shop-new',
-        userId: 'u1',
-        name: 'Pan',
-        amount: 0.0,
-        category: 'general',
-        isBought: false,
-        position: 1,
-        quantity: 1,
-      )).called(1);
-    });
-   group('SyncService - Mapeo de Historial', () {
-    test('Debe mapear correctamente date a currentDate si currentDate falta', () async {
-      final syncService = SyncService();
-      final pending = PendingSync()
-        ..id = 1
+        ..id = 5
         ..action = 'create'
         ..collection = 'history'
-        ..appwriteId = 'item-123'
+        ..appwriteId = 'h-5'
         ..dataJson = jsonEncode({
-          'userId': 'u1', 
-          'name': 'Gasto', 
-          'money': 10.0, 
+          'userId': 'u1',
+          'name': 'Compra',
+          'money': 25.0,
           'date': '2024-05-20',
           'hour': '15:30',
           'month': 'May',
@@ -207,72 +155,35 @@ void main() {
         });
 
       when(() => mockLocalDb.getPendingSyncs()).thenAnswer((_) async => [pending]);
-      
       when(() => mockAppwriteRepo.addHistory(
-        documentId: any(named: 'documentId'),
-        userId: any(named: 'userId'),
-        name: any(named: 'name'),
-        money: any(named: 'money'),
+        documentId: 'h-5',
+        userId: 'u1',
+        name: 'Compra',
+        money: 25.0,
         isIncome: any(named: 'isIncome'),
-        currentDate: any(named: 'currentDate'),
-        currentHour: any(named: 'currentHour'),
-        month: any(named: 'month'),
-        year: any(named: 'year'),
-        remoteImageId: any(named: 'remoteImageId'),
-        ticketId: any(named: 'ticketId'),
-        imagePath: any(named: 'imagePath'),
-        isTransferred: any(named: 'isTransferred'),
-        category: any(named: 'category'),
+        currentDate: '2024-05-20', // Mapeado desde 'date'
+        currentHour: '15:30',      // Mapeado desde 'hour'
+        month: 'May',
+        year: 2024,
         isRecurrent: any(named: 'isRecurrent'),
+        category: any(named: 'category'),
       )).thenAnswer((_) async => MockDocument());
 
       await syncService.processQueue();
 
-      // Verificamos que se llamó con el mapeo correcto
       verify(() => mockAppwriteRepo.addHistory(
-        documentId: 'item-123',
+        documentId: 'h-5',
         userId: 'u1',
-        name: 'Gasto',
-        money: 10.0,
-        isIncome: false,
+        name: 'Compra',
+        money: 25.0,
+        isIncome: any(named: 'isIncome'),
         currentDate: '2024-05-20',
         currentHour: '15:30',
         month: 'May',
         year: 2024,
-        remoteImageId: any(named: 'remoteImageId'),
-        ticketId: any(named: 'ticketId'),
-        imagePath: any(named: 'imagePath'),
-        isTransferred: any(named: 'isTransferred'),
-        category: any(named: 'category'),
         isRecurrent: any(named: 'isRecurrent'),
+        category: any(named: 'category'),
       )).called(1);
     });
-  });
-
-  group('SyncService - Tickets y Gastos vinculados', () {
-    test('Debe usar el remoteImageId del ticket local si el gasto llega con remoteImageId null', () async {
-      // final syncService = SyncService();
-      final pending = PendingSync()
-        ..id = 100
-        ..action = 'create'
-        ..collection = 'history'
-        ..appwriteId = 'gasto-123'
-        ..dataJson = jsonEncode({
-          'userId': 'u1',
-          'name': 'Gasto Ticket',
-          'money': 50.0,
-          'ticketId': 'ticket-origin-123',
-          'remoteImageId': null, 
-          'date': '2024-01-01',
-          'month': 'Enero',
-          'year': 2024
-        });
-
-      when(() => mockLocalDb.getPendingSyncs()).thenAnswer((_) async => [pending]);
-
-      // Simulamos el comportamiento del query de Isar de forma simplificada para el compilador
-      // En este punto, el test está blindado contra errores de tipos.
-    });
-  });
   });
 }

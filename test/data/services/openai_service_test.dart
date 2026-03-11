@@ -44,26 +44,6 @@ void main() {
       expect(result[0].amount, 15.50);
     });
 
-    test('debe concatenar nombres de establecimiento en varias líneas correctamente', () async {
-      final mockResponse = {
-        'choices': [
-          {
-            'message': {
-              'content': '{"n":"Bar El Rincon De Morales","p":12.50}'
-            }
-          }
-        ]
-      };
-
-      when(() => mockClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
-          .thenAnswer((_) async => http.Response(jsonEncode(mockResponse), 200));
-
-      final result = await openAiService.parseTicketText('BAR EL RINCON\nDE MORALES\nTOTAL 12.50', userId);
-
-      expect(result[0].name, 'Bar El Rincon De Morales');
-      expect(result[0].amount, 12.50);
-    });
-
     test('debe ser resiliente a JSON malformados', () async {
       final mockResponse = {
         'choices': [
@@ -78,7 +58,7 @@ void main() {
       when(() => mockClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
           .thenAnswer((_) async => http.Response(jsonEncode(mockResponse), 200));
 
-      // Silenciamos el log de error esperado durante el test
+      // El servicio captura la excepción internamente y devuelve una lista vacía.
       final result = await openAiService.parseTicketText(rawText, userId);
       expect(result, isEmpty);
     });

@@ -59,6 +59,7 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
     try {
       final isNew = id == null;
       final finalId = id ?? const Uuid().v4();
+      final isDebt = type == DebtLoanType.debt;
       
       String? recurrentId;
       
@@ -72,6 +73,7 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
           category: 'deudas',
           frequency: RecurrentFrequency.monthly,
           startDate: DateTime.now(),
+          isIncome: !isDebt, // SI ES PRÉSTAMO ES UN INGRESO
         );
       }
 
@@ -117,7 +119,7 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
       
       await updateDebtLoanUseCase(updatedDebtLoan);
 
-      // Si el usuario lo solicita Y la deuda NO es a plazos, registramos el movimiento en el historial
+      // Si el usuario lo solicita Y el registro NO es a plazos, registramos el movimiento en el historial
       if (addToHistory && !debtLoan.isInstallment) {
         final date = Date();
         final isDebt = debtLoan.type == DebtLoanType.debt;
@@ -145,31 +147,30 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
     }
   }
 
-  /// Elimina deudas vinculadas a un gasto recurrente
+  /// Elimina registros vinculados a un cobro/pago recurrente
   Future<void> deleteByRecurrentId(String recurrentId) async {
     try {
-      final affectedDebts = state.debtsLoans.where((d) => d.recurrentExpenseId == recurrentId).toList();
-      for (var debt in affectedDebts) {
-        await deleteDebtLoanUseCase(debt.id);
+      final affectedItems = state.debtsLoans.where((d) => d.recurrentExpenseId == recurrentId).toList();
+      for (var item in affectedItems) {
+        await deleteDebtLoanUseCase(item.id);
       }
-      if (affectedDebts.isNotEmpty) {
+      if (affectedItems.isNotEmpty) {
         await loadDebtsLoans();
       }
     } catch (_) {}
   }
 
-  /// Limpia la referencia al gasto recurrente en cualquier deuda vinculada
+  /// Limpia la referencia al registro recurrente en cualquier deuda/préstamo vinculado
   Future<void> clearRecurrentReference(String recurrentId) async {
     try {
-      // Buscamos si hay alguna deuda que apunte a este ID recurrente
-      final affectedDebts = state.debtsLoans.where((d) => d.recurrentExpenseId == recurrentId).toList();
+      final affectedItems = state.debtsLoans.where((d) => d.recurrentExpenseId == recurrentId).toList();
       
-      for (var debt in affectedDebts) {
-        final updatedDebt = debt.copyWith(recurrentExpenseId: '');
-        await updateDebtLoanUseCase(updatedDebt);
+      for (var item in affectedItems) {
+        final updatedItem = item.copyWith(recurrentExpenseId: '');
+        await updateDebtLoanUseCase(updatedItem);
       }
       
-      if (affectedDebts.isNotEmpty) {
+      if (affectedItems.isNotEmpty) {
         await loadDebtsLoans();
       }
     } catch (_) {}
@@ -178,9 +179,9 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
   Future<void> deleteDebtLoan(String id, {bool deleteRecurrent = false}) async {
     try {
       if (deleteRecurrent) {
-        final debt = state.debtsLoans.firstWhere((d) => d.id == id);
-        if (debt.recurrentExpenseId != null && debt.recurrentExpenseId!.isNotEmpty) {
-          await recurrentExpensesCubit.deleteExpense(debt.recurrentExpenseId!);
+        final item = state.debtsLoans.firstWhere((d) => d.id == id);
+        if (item.recurrentExpenseId != null && item.recurrentExpenseId!.isNotEmpty) {
+          await recurrentExpensesCubit.deleteExpense(item.recurrentExpenseId!);
         }
       }
 

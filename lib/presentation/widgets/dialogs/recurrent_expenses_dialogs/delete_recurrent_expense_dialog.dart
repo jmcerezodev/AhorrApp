@@ -4,7 +4,6 @@ import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 class DeleteRecurrentExpenseDialog extends StatelessWidget {
   final String expenseId;
@@ -21,14 +20,22 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Buscamos si es una deuda vinculada
+    // Buscamos si hay un registro vinculado (deuda o préstamo)
     final debtsState = context.read<DebtsLoansCubit>().state;
-    DebtLoan? linkedDebt;
+    DebtLoan? linkedItem;
     try {
-      linkedDebt = debtsState.debtsLoans.firstWhere((d) => d.recurrentExpenseId == expenseId);
+      linkedItem = debtsState.debtsLoans.firstWhere((d) => d.recurrentExpenseId == expenseId);
     } catch (_) {}
 
-    final bool isLinked = linkedDebt != null;
+    final bool isLinked = linkedItem != null;
+    final bool isLoan = isLinked && linkedItem.type == DebtLoanType.loan;
+    
+    // Determinamos si el registro actual es un ingreso o un gasto fijo
+    final expenseState = context.read<RecurrentExpensesCubit>().state;
+    bool isIncome = false;
+    try {
+      isIncome = expenseState.expenses.firstWhere((e) => e.id == expenseId).isIncome;
+    } catch (_) {}
 
     return CustomDialogWrapper(
       borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
@@ -39,7 +46,7 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
           AppDialogs.dialogHeader(
             icon: Icons.delete_outline_rounded, 
             color: Colors.red.shade400, 
-            title: '¿ELIMINAR REGISTRO FIJO?',
+            title: isIncome ? '¿ELIMINAR INGRESO FIJO?' : '¿ELIMINAR GASTO FIJO?',
             circularBackground: true,
             iconSize: 32,
             colorScheme: colorScheme,
@@ -50,13 +57,13 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
             TextSpan(
               style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
               children: [
-                const TextSpan(text: '¿Estás seguro de que quieres eliminar '),
+                TextSpan(text: '¿Estás seguro de que quieres eliminar este ${isIncome ? "ingreso" : "gasto"} '),
                 TextSpan(text: '"$expenseName"', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
                 const TextSpan(text: '? '),
                 if (isLinked) ...[
-                  const TextSpan(text: 'Este registro está vinculado a la deuda '),
-                  TextSpan(text: '"${linkedDebt.name}"', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-                  const TextSpan(text: '. Si lo eliminas, la deuda también se '),
+                  TextSpan(text: 'Este ${isIncome ? "ingreso" : "gasto"} está vinculado ${isLoan ? "al préstamo" : "a la deuda"} '),
+                  TextSpan(text: '"${linkedItem.name}"', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                  TextSpan(text: '. Si lo eliminas, ${isLoan ? "el préstamo" : "la deuda"} también se '),
                   const TextSpan(text: 'borrará de tu lista.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
                 ] else ...[
                   const TextSpan(text: 'Esta acción eliminará la automatización y '),
@@ -72,7 +79,7 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
             children: [
               Expanded(
                 child: TextButton(
-                  onPressed: () => context.pop(false),
+                  onPressed: () => Navigator.of(context).pop(false),
                   style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
                   child: Text(
                     'CANCELAR', 
@@ -95,7 +102,7 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
                       debtsCubit: debtsCubit,
                       deleteDebt: isLinked
                     );
-                    context.pop(true);
+                    Navigator.of(context).pop(true);
                   }, 
                   color: Colors.red.shade400
                 ),

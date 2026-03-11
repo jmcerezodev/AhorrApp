@@ -115,6 +115,15 @@ class AuthAppwrite {
     }
   }
 
+  Future<bool> updateRemoteName(String name) async {
+    try {
+      await _account.updateName(name: name);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future deleteAcount(BuildContext context, {Function(double)? onProgress}) async {
     try {
       final String uid = Preferences.uId;

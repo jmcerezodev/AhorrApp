@@ -9,23 +9,24 @@ void main() {
     const MethodChannel pathChannel = MethodChannel('plugins.flutter.io/path_provider');
     const MethodChannel packageInfoChannel = MethodChannel('dev.fluttercommunity.plus/package_info');
     const MethodChannel deviceInfoChannel = MethodChannel('dev.fluttercommunity.plus/device_info');
+    const MethodChannel securityChannel = MethodChannel('dev.jmcerezo.ahorrapp/security');
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async => '.');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(packageInfoChannel, (MethodCall methodCall) async => {'appName': 'AhorrApp', 'packageName': 'dev.jmcerezo.ahorrapp', 'version': '1.0.0', 'buildNumber': '1'});
+    
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(deviceInfoChannel, (MethodCall methodCall) async {
-      if (methodCall.method == 'getDeviceInfo') {
-        return {
-          'computerName': 'Test-PC',
-          'numberOfCores': 4,
-          'systemMemoryInMegabytes': 8192,
-          'brand': 'Google',
-          'model': 'Pixel 4',
-          'sdkInt': 30,
-          'id': 'test-id',
-        };
-      }
-      return null;
+      return {
+        'brand': 'Google',
+        'model': 'Pixel 4',
+        'sdkInt': 30,
+        'id': 'test-id',
+        'systemName': 'Android',
+        'version': {'release': '11'},
+        'name': 'Android SDK built for x86',
+      };
     });
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(securityChannel, (MethodCall methodCall) async => null);
   });
 
   group('ResetPasswordCubit Tests', () {

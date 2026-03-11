@@ -29,7 +29,7 @@ class RecurrentExpenseItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Dismissible(
-        key: Key('dismiss_${expense.id}'),
+        key: Key('dismiss_recurrent_${expense.id}'),
         background: const SwipeBackgroundWidget(
           color: Colors.green,
           icon: Icons.edit_note_rounded,
@@ -47,13 +47,16 @@ class RecurrentExpenseItem extends StatelessWidget {
             _onEdit(context);
             return false;
           } else {
-            return await showDialog<bool>(
+            // ELIMINACIÓN: Invocamos el diálogo y esperamos su resultado real (bool)
+            final bool? result = await showDialog<bool>(
               context: context,
+              barrierDismissible: false,
               builder: (context) => DeleteRecurrentExpenseDialog(
                 expenseId: expense.id,
                 expenseName: expense.name,
               ),
             );
+            return result ?? false;
           }
         },
         child: RecurrentExpenseCard(
@@ -67,7 +70,6 @@ class RecurrentExpenseItem extends StatelessWidget {
   }
 
   void _onEdit(BuildContext context) {
-    // Buscamos si hay una deuda vinculada a este gasto recurrente
     final debtsState = context.read<DebtsLoansCubit>().state;
     DebtLoan? linkedDebt;
     
@@ -80,7 +82,6 @@ class RecurrentExpenseItem extends StatelessWidget {
     }
 
     if (linkedDebt != null) {
-      // Si hay deuda vinculada, abrimos el diálogo de deudas
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -90,13 +91,12 @@ class RecurrentExpenseItem extends StatelessWidget {
         ),
       );
     } else {
-      // Si es un gasto normal, abrimos el diálogo de gastos recurrentes
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => AddEditRecurrentExpenseDialog(
           expense: expense,
-          isIncome: expense.isIncome, // PASAMOS EL TIPO CORRECTO
+          isIncome: expense.isIncome,
         ),
       );
     }

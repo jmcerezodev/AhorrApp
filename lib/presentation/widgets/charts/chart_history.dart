@@ -92,7 +92,7 @@ class _ChartHistoryState extends State<ChartHistory> {
                               getTooltipColor: (group) => colorScheme.surface,
                               tooltipBorder: BorderSide(color: colorScheme.primary.withValues(alpha: 0.2)),
                               tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              tooltipRoundedRadius: 12,
+                              tooltipBorderRadius: BorderRadius.circular(12),
                               tooltipMargin: 20,
                               fitInsideVertically: true,
                               fitInsideHorizontally: true,

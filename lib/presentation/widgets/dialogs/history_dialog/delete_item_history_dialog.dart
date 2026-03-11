@@ -61,8 +61,9 @@ class DeleteItemHistoryDialog extends StatelessWidget {
             TextSpan(
               style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
               children: [
-                const TextSpan(text: '¿Estás seguro de que quieres borrar '),
-                TextSpan(text: '"$itemName"', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                const TextSpan(text: '¿Estás seguro de que quieres borrar este '),
+                TextSpan(text: isIncomeResult ? 'ingreso' : 'gasto', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                TextSpan(text: ' "$itemName"'),
                 const TextSpan(text: ' del historial? Esta acción '),
                 const TextSpan(text: 'no se puede deshacer.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
               ],

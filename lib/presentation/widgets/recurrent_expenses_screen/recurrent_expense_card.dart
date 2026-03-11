@@ -1,8 +1,9 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
-import 'package:ahorrapp/presentation/bloc/cubits.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
+import 'package:ahorrapp/presentation/bloc/debts_loans_cubit/debts_loans_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/recurrent_expenses_cubit/recurrent_expenses_cubit.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/confirm_manual_payment_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -28,16 +29,19 @@ class RecurrentExpenseCard extends StatelessWidget {
     final double progress = _calculateProgress(nextPaymentDate);
     final bool showProgress = isAutomatic && expense.isActive;
 
-    // Buscamos si hay una deuda vinculada para ajustar el título y mostrar el chip
+    // Buscamos si hay un registro vinculado (deuda o préstamo)
     final debtsState = context.watch<DebtsLoansCubit>().state;
-    DebtLoan? linkedDebt;
+    DebtLoan? linkedItem;
     try {
-      linkedDebt = debtsState.debtsLoans.firstWhere((d) => d.recurrentExpenseId == expense.id);
+      linkedItem = debtsState.debtsLoans.firstWhere((d) => d.recurrentExpenseId == expense.id);
     } catch (_) {}
 
-    final bool isLinked = linkedDebt != null;
-    // Si está vinculada, usamos el nombre de la deuda (concepto puro) como título
-    final String displayTitle = isLinked ? linkedDebt.name : expense.name;
+    final bool isLinked = linkedItem != null;
+    final bool isLoan = isLinked && linkedItem.type == DebtLoanType.loan;
+    final bool isIncome = expense.isIncome;
+    
+    // TÍTULO: Solo el concepto (si hay vínculo, el de la deuda/préstamo)
+    final String displayTitle = isLinked ? linkedItem.name : expense.name;
 
     return Container(
       constraints: const BoxConstraints(minHeight: 92),
@@ -130,12 +134,12 @@ class RecurrentExpenseCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${expense.isIncome ? "+" : "-"}${humanizeNumbers.number(expense.amount)}€',
+                  '${isIncome ? "+" : "-"}${humanizeNumbers.number(expense.amount)}€',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 16,
                     color: expense.isActive 
-                      ? (expense.isIncome ? Colors.green.shade400 : Colors.red.shade400)
+                      ? (isIncome ? Colors.green.shade400 : Colors.red.shade400)
                       : Colors.grey,
                   ),
                 ),
@@ -158,7 +162,7 @@ class RecurrentExpenseCard extends StatelessWidget {
                   child: Icon(
                     isAutomatic 
                       ? (expense.isActive ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded)
-                      : Icons.add_circle_outline_rounded,
+                      : (isIncome ? Icons.add_circle_rounded : Icons.add_circle_outline_rounded),
                     color: Colors.orange.withValues(alpha: 0.6),
                     size: 32,
                   ),
@@ -167,20 +171,24 @@ class RecurrentExpenseCard extends StatelessWidget {
             ),
           ),
           
-          if (showProgress)
+          // BLOQUE INFERIOR DE TIEMPO Y CHIP VINCULADO
+          if (showProgress || isLinked)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
               child: Row(
                 children: [
-                  Text(
-                    daysRemaining == 0 ? '¡Se cobra hoy!' : 'Próximo cobro en $daysRemaining días',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
-                      letterSpacing: 0.5,
+                  if (showProgress)
+                    Text(
+                      daysRemaining == 0 
+                        ? (isIncome ? '¡Te ingresan hoy!' : '¡Se cobra hoy!')
+                        : (isIncome ? 'Próximo ingreso en $daysRemaining días' : 'Próximo cobro en $daysRemaining días'),
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                  ),
                   if (isLinked) ...[
                     const SizedBox(width: 8),
                     Container(
@@ -190,9 +198,9 @@ class RecurrentExpenseCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
                       ),
-                      child: const Text(
-                        'DEUDA',
-                        style: TextStyle(
+                      child: Text(
+                        isLoan ? 'PRÉSTAMO' : 'DEUDA',
+                        style: const TextStyle(
                           color: Colors.orange,
                           fontSize: 7.5,
                           fontWeight: FontWeight.w900,
@@ -253,7 +261,8 @@ class RecurrentExpenseCard extends StatelessWidget {
   }
 
   String _getSubtitleText() {
-    if (expense.day == null) return 'Cobro manual';
+    final bool isIncome = expense.isIncome;
+    if (expense.day == null) return isIncome ? 'Ingreso manual' : 'Cobro manual';
 
     switch (expense.frequency) {
       case RecurrentFrequency.monthly:

@@ -16,12 +16,12 @@ class BiometricService {
 
   Future<bool> authenticate() async {
     try {
+      // Ajuste para local_auth ^3.0.1: se eliminó el parámetro 'options'
+      // y se usan parámetros directos. 'stickyAuth' ahora es 'persistAcrossBackgrounding'.
       return await _auth.authenticate(
         localizedReason: 'Por favor, autentícate para acceder a tus finanzas',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-        ),
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
       );
     } on PlatformException catch (_) {
       return false;

@@ -103,7 +103,6 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
         if (includeInSummary == null) finalIncludeInSummary = currentExpense.includeInSummary;
       }
     } else {
-      // Diferenciar posición por tipo (opcional, pero mejor mantener orden global o por tipo)
       finalPosition = position ?? state.expenses.length;
     }
 
@@ -139,17 +138,14 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       newIndex -= 1;
     }
 
-    // Obtenemos solo la lista del tipo correspondiente para reordenar
     final List<RecurrentExpense> allItems = List.from(state.expenses);
     final List<RecurrentExpense> typeItems = allItems.where((e) => e.isIncome == isIncome).toList();
     
     final RecurrentExpense itemToMove = typeItems.removeAt(oldIndex);
     typeItems.insert(newIndex, itemToMove);
 
-    // Actualizamos las posiciones dentro de su grupo
     for (int i = 0; i < typeItems.length; i++) {
       final updatedItem = typeItems[i].copyWith(position: i);
-      // Reemplazamos en la lista global
       final indexInGlobal = allItems.indexWhere((e) => e.id == updatedItem.id);
       allItems[indexInGlobal] = updatedItem;
     }
@@ -157,7 +153,6 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     emit(state.copyWith(expenses: allItems));
 
     try {
-      // Persistimos solo los cambios del grupo afectado
       for (var expense in typeItems) {
         await _saveRecurrentExpenseUseCase(expense);
       }
@@ -186,11 +181,11 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     try {
       await _saveMovementUseCase(movement);
 
-      // Si hay un cubit de deudas, actualizamos el progreso de la deuda vinculada (solo gastos)
-      if (debtsCubit != null && !expense.isIncome) {
-        final linkedDebt = debtsCubit.state.debtsLoans.where((d) => d.recurrentExpenseId == expense.id).firstOrNull;
-        if (linkedDebt != null) {
-          await debtsCubit.addPayment(linkedDebt.id, expense.amount, addToHistory: false);
+      // CORRECCIÓN: Si hay un cubit de deudas, actualizamos el progreso del registro vinculado (venga de deuda o préstamo)
+      if (debtsCubit != null) {
+        final linkedItem = debtsCubit.state.debtsLoans.where((d) => d.recurrentExpenseId == expense.id).firstOrNull;
+        if (linkedItem != null) {
+          await debtsCubit.addPayment(linkedItem.id, expense.amount, addToHistory: false);
         }
       }
     } catch (e) {

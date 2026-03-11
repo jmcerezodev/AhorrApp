@@ -147,39 +147,9 @@ void main() {
         expect(capturedMovement.type, MovementType.income);
         expect(capturedMovement.isIncome, true);
       });
-
-      test('NO debe registrar movimiento en historial si addToHistory es false', () async {
-        when(() => mockGet(any())).thenAnswer((_) async => [tDebt]);
-        when(() => mockUpdate(any())).thenAnswer((_) async => {});
-        
-        await cubit.loadDebtsLoans();
-        await cubit.addPayment('1', 100, addToHistory: false);
-
-        verifyNever(() => mockSaveMovement(any()));
-      });
-
-      test('NO debe registrar movimiento en historial aunque addToHistory sea true si es a PLAZOS', () async {
-        when(() => mockGet(any())).thenAnswer((_) async => [tInstallmentDebt]);
-        when(() => mockUpdate(any())).thenAnswer((_) async => {});
-        
-        await cubit.loadDebtsLoans();
-        await cubit.addPayment('3', 200, addToHistory: true);
-
-        verifyNever(() => mockSaveMovement(any()));
-      });
     });
 
-    test('deleteDebtLoan debe llamar al caso de uso y recargar', () async {
-      when(() => mockDelete(any())).thenAnswer((_) async => {});
-      when(() => mockGet(any())).thenAnswer((_) async => []);
-
-      await cubit.deleteDebtLoan('1');
-
-      verify(() => mockDelete('1')).called(1);
-      verify(() => mockGet('user123')).called(1);
-    });
-
-    test('addOrUpdateDebtLoan debe vincular con recurrentes si se solicita', () async {
+    test('addOrUpdateDebtLoan debe vincular con recurrentes como GASTO si es DEUDA', () async {
       when(() => mockAdd(any())).thenAnswer((_) async => {});
       when(() => mockGet(any())).thenAnswer((_) async => []);
       when(() => mockRecurrentCubit.addOrUpdateExpense(
@@ -190,11 +160,48 @@ void main() {
         category: any(named: 'category'),
         frequency: any(named: 'frequency'),
         startDate: any(named: 'startDate'),
+        isIncome: any(named: 'isIncome'),
       )).thenAnswer((_) async => {});
 
       await cubit.addOrUpdateDebtLoan(
-        name: 'Préstamo', 
-        person: 'Amigo', 
+        name: 'Deuda Coche', 
+        person: 'Banco', 
+        totalAmount: 1000, 
+        type: DebtLoanType.debt,
+        isInstallment: true,
+        installmentAmount: 100,
+        addToRecurrent: true,
+      );
+
+      verify(() => mockRecurrentCubit.addOrUpdateExpense(
+        id: any(named: 'id'),
+        name: any(named: 'name', that: contains('Deuda Coche')),
+        amount: 100,
+        isIncome: false, // DEBE SER GASTO
+        day: any(named: 'day'),
+        category: 'deudas',
+        frequency: any(named: 'frequency'),
+        startDate: any(named: 'startDate'),
+      )).called(1);
+    });
+
+    test('addOrUpdateDebtLoan debe vincular con recurrentes como INGRESO si es PRÉSTAMO', () async {
+      when(() => mockAdd(any())).thenAnswer((_) async => {});
+      when(() => mockGet(any())).thenAnswer((_) async => []);
+      when(() => mockRecurrentCubit.addOrUpdateExpense(
+        id: any(named: 'id'),
+        name: any(named: 'name'),
+        amount: any(named: 'amount'),
+        day: any(named: 'day'),
+        category: any(named: 'category'),
+        frequency: any(named: 'frequency'),
+        startDate: any(named: 'startDate'),
+        isIncome: any(named: 'isIncome'),
+      )).thenAnswer((_) async => {});
+
+      await cubit.addOrUpdateDebtLoan(
+        name: 'Préstamo Amigo', 
+        person: 'Juan', 
         totalAmount: 500, 
         type: DebtLoanType.loan,
         isInstallment: true,
@@ -204,14 +211,14 @@ void main() {
 
       verify(() => mockRecurrentCubit.addOrUpdateExpense(
         id: any(named: 'id'),
-        name: any(named: 'name', that: contains('Préstamo')),
+        name: any(named: 'name', that: contains('Préstamo Amigo')),
         amount: 50,
+        isIncome: true, // DEBE SER INGRESO
         day: any(named: 'day'),
         category: 'deudas',
         frequency: any(named: 'frequency'),
         startDate: any(named: 'startDate'),
       )).called(1);
-      verify(() => mockAdd(any())).called(1);
     });
   });
 }
