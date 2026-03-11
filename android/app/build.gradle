@@ -12,7 +12,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "dev.jmcerezo.ahorrapp"
-    compileSdk = 35 // Cambiado de 36 a 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -26,10 +26,15 @@ android {
 
     defaultConfig {
         applicationId = "dev.jmcerezo.ahorrapp"
-        minSdkVersion = flutter.minSdkVersion // Asegúrate de tener al menos 21
-        targetSdk = 35 // Cambiado de 36 a 35
+        minSdkVersion = flutter.minSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Placeholder para inyectar el ID de Appwrite en el AndroidManifest sin hardcodearlo allí
+        manifestPlaceholders += [
+            appwriteProjectId: "ahorrapp-proyect"
+        ]
     }
 
     signingConfigs {
@@ -44,6 +49,9 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.release
+        }
+        debug {
+            signingConfig = signingConfigs.debug
         }
     }
 }
