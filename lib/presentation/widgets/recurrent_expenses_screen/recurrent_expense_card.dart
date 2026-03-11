@@ -130,11 +130,13 @@ class RecurrentExpenseCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '-${humanizeNumbers.number(expense.amount)}€',
+                  '${expense.isIncome ? "+" : "-"}${humanizeNumbers.number(expense.amount)}€',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 16,
-                    color: expense.isActive ? Colors.red.shade400 : Colors.grey,
+                    color: expense.isActive 
+                      ? (expense.isIncome ? Colors.green.shade400 : Colors.red.shade400)
+                      : Colors.grey,
                   ),
                 ),
                 const SizedBox(width: 15),
