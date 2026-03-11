@@ -41,6 +41,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
 
   Future<void> prepareForNewLogin() async {
     await _localDb.clearAll();
+    // Limpiamos el estado del Cubit para que el loadHistory posterior no encuentre datos antiguos
     emit(const HistoryCubitState());
   }
 
@@ -71,7 +72,6 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
       final List<LocalTicketItem> ticketItems = _convertToLocalTickets(fullData['tickets'] ?? []);
       await _localDb.saveTicketItems(ticketItems);
 
-      // NUEVO: Guardar Deudas y Préstamos
       final List<LocalDebtLoan> debtItems = _convertToLocalDebts(fullData['debts'] ?? []);
       await _localDb.saveDebtLoans(debtItems);
 
@@ -121,6 +121,8 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
     if (state.isSyncing) return;
 
     final localTotalCount = await _localDb.getTotalCount();
+    
+    // CORRECCIÓN: Si no hay datos locales, forzamos sincronización
     if (localTotalCount == 0 && state.syncProgress == 0.0) {
       await forceBalanceResync(totalMoneyCubit, savingsCubit: savingsCubit, debtsCubit: debtsCubit);
       return;
@@ -258,6 +260,7 @@ class HistoryCubit extends Cubit<HistoryCubitState> {
         ..startDate = DateTime.parse(doc.data['startDate'] ?? doc.$createdAt)
         ..position = doc.data['position'] ?? 0 
         ..includeInSummary = doc.data['includeInSummary'] ?? true
+        ..isIncome = doc.data['isIncome'] ?? false // NUEVO
         ..createdAt = DateTime.parse(doc.$createdAt);
     }).toList();
   }

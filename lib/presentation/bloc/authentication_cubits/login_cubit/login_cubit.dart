@@ -10,7 +10,7 @@ part 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginCubitState> {
   final AuthAppwrite _auth = AuthAppwrite();
-  final HistoryCubit historyCubit; // NECESARIO PARA FORZAR SINCRONIZACIÓN
+  final HistoryCubit historyCubit; 
 
   LoginCubit({required this.historyCubit}) : super(LoginCubitState(
     email: Preferences.isRemember && Preferences.email.isNotEmpty 
@@ -46,18 +46,16 @@ class LoginCubit extends Cubit<LoginCubitState> {
         state.password.value,
       );
 
-      if (result is String) { // Éxito
+      if (result is String) { // Éxito: result es el userId
         
-        // CORRECCIÓN CRÍTICA: Preparamos Isar y el Historial para el nuevo usuario
+        // 1. Limpiamos datos de sesión anterior
         await historyCubit.prepareForNewLogin();
 
-        Preferences.isLoggedIn = true;
-        
-        // Se guardan las credenciales siempre en Preferences para uso interno (como biometría)
+        // 2. Establecemos credenciales y flags de sesión
+        Preferences.uId = result; // RESULTADO DE APPWRITE
         Preferences.email = state.email.value;
         Preferences.password = state.password.value;
-        
-        // Guardamos si el usuario quiere que se rellenen visualmente en el próximo login
+        Preferences.isLoggedIn = true;
         Preferences.isRemember = state.isRemember;
         
         emit(state.copyWith(status: LoginStatus.success));

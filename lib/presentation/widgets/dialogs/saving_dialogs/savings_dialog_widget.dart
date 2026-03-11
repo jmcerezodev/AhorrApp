@@ -19,8 +19,10 @@ class _SavingsDialogState extends State<SavingsDialog> {
   @override
   void initState() {
     super.initState();
+    // REVISIÓN: No reseteamos el Cubit completo, solo el formulario si es necesario.
+    // Pero para evitar el borrado visual, quitamos el resetCubit() que causaba el problema.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SavingsCubit>().resetCubit();
+      context.read<SavingsCubit>().resetForm();
     });
   }
 
@@ -34,13 +36,12 @@ class _SavingsDialogState extends State<SavingsDialog> {
     return BlocListener<SavingsCubit, SavingsCubitState>(
       listener: (context, state) {
         if (state.status == SavingsStatus.success) {
+          // Si cerramos el diálogo tras éxito, el loadSavings ya se llamó en el Cubit
           context.pop();
         }
       },
       child: CustomDialogWrapper(
         horizontalInsetPadding: 20,
-        // Eliminamos el scroll interno y las restricciones manuales. 
-        // El Wrapper ahora gestiona el scroll de la tarjeta completa como "Nuevo Ingreso".
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

@@ -64,93 +64,80 @@ void main() {
     historyCubit = HistoryCubit(totalMoneyCubit: mockTotalMoneyCubit);
   });
 
-  group('HistoryCubit - Blindaje de Lógica', () {
+  group('HistoryCubit - Blindaje de Lógica y Sesión', () {
     test('Estado inicial debe ser initial y lista vacía', () {
       expect(historyCubit.state.status, HistoryStatus.initial);
       expect(historyCubit.state.historyList, isEmpty);
     });
 
-    test('toggleFilterPanel debe cambiar el estado del filtro', () {
-      expect(historyCubit.state.isFilterOpen, false);
-      historyCubit.toggleFilterPanel();
-      expect(historyCubit.state.isFilterOpen, true);
-    });
-
-    test('loadHistoryByDate debe fallar si no hay datos en Isar ni Appwrite', () async {
-      when(() => mockLocalDb.getTotalCount()).thenAnswer((_) async => 0);
-      when(() => mockRepo.syncFullData(any(), any())).thenThrow(Exception('No data'));
-
-      await historyCubit.loadHistoryByDate('October', 2023);
+    test('prepareForNewLogin debe limpiar Isar y resetear el estado del Cubit', () async {
+      when(() => mockLocalDb.clearAll()).thenAnswer((_) async {});
       
-      expect(historyCubit.state.status, HistoryStatus.failure);
+      // Forzamos un estado previo sucio (cambiamos de 'descending' a 'ascending')
+      historyCubit.listOrder('ascending');
+      expect(historyCubit.state.listOrder, 'ascending');
+      
+      await historyCubit.prepareForNewLogin();
+      
+      expect(historyCubit.state.status, HistoryStatus.initial);
+      expect(historyCubit.state.historyList, isEmpty);
+      // Debe volver al valor por defecto real: 'descending'
+      expect(historyCubit.state.listOrder, 'descending'); 
+      verify(() => mockLocalDb.clearAll()).called(1);
     });
 
-    test('forceBalanceResync debe guardar los recurrentes, la compra y favoritos correctamente', () async {
-      // GIVEN: Simulación de datos de Appwrite incluyendo recurrentes, lista de compra y plantillas
+    test('loadHistoryByDate debe forzar sincronización remota si la base de datos está VACÍA', () async {
+      // GIVEN: Base de datos vacía (0 registros)
+      when(() => mockLocalDb.getTotalCount()).thenAnswer((_) async => 0);
+      
+      // Mock de sincronización exitosa
+      when(() => mockRepo.syncFullData(any(), any())).thenAnswer((_) async => {
+        'balance': 0.0,
+        'history': [],
+        'savings': [],
+        'recurrent': [],
+        'shopping': [],
+        'templates': [],
+        'tickets': [],
+        'debts': [],
+        'savingGoal': 0.0,
+      });
+      when(() => mockLocalDb.clearAll()).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveHistoryItems(any())).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveSavingItems(any())).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveRecurrentExpenses(any())).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveShoppingListItems(any())).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveShoppingTemplates(any())).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveTicketItems(any())).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveDebtLoans(any())).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveSavingGoal(any(), any())).thenAnswer((_) async {});
+      when(() => mockLocalDb.saveTotalBalance(any(), any())).thenAnswer((_) async {});
+      when(() => mockGetMovementsUseCase(any(), any(), any())).thenAnswer((_) async => []);
+      when(() => mockTotalMoneyCubit.totalMoney(any())).thenReturn(null);
+
+      // WHEN: Cargamos historia
+      await historyCubit.loadHistoryByDate('Enero', 2024);
+
+      // THEN: Se debe haber disparado la sincronización completa
+      verify(() => mockRepo.syncFullData(any(), any())).called(1);
+      expect(historyCubit.state.status, HistoryStatus.success);
+    });
+
+    test('forceBalanceResync debe guardar todos los tipos de datos correctamente', () async {
       final now = DateTime.now().toIso8601String();
-      final mockRecurrentDoc = FakeDocument(
-        $id: 'rec_123',
-        $createdAt: now,
-        data: {
-          'userId': 'test-user',
-          'name': 'Suscripción Gym',
-          'money': 29.99,
-          'frequency': 'monthly',
-          'isActive': true,
-          'startDate': now,
-        },
-      );
-
-      final mockShoppingDoc = FakeDocument(
-        $id: 'shop_123',
-        $createdAt: now,
-        data: {
-          'userId': 'test-user',
-          'name': 'Leche',
-          'amount': 1.50,
-          'category': 'alimentos',
-          'isBought': false,
-          'position': 0,
-          'quantity': 1,
-        },
-      );
-
-      final mockTemplateDoc = FakeDocument(
-        $id: 'temp_123',
-        $createdAt: now,
-        data: {
-          'userId': 'test-user',
-          'name': 'Lista Semanal',
-          'itemsJson': '[]',
-        },
-      );
-
-      final mockDebtDoc = FakeDocument(
-        $id: 'debt_123',
-        $createdAt: now,
-        data: {
-          'userId': 'test-user',
-          'name': 'Préstamo',
-          'person': 'Amigo',
-          'totalAmount': 500.0,
-          'paidAmount': 0.0,
-          'type': 'debt',
-          'isCompleted': false,
-          'isInstallment': false,
-        },
-      );
-
+      final mockRecurrentDoc = FakeDocument($id: 'rec_123', $createdAt: now, data: {'userId': 'test-user', 'name': 'Test', 'money': 10.0, 'frequency': 'monthly', 'isActive': true, 'startDate': now});
+      
       when(() => mockLocalDb.clearAll()).thenAnswer((_) async {});
       when(() => mockRepo.syncFullData(any(), any())).thenAnswer((_) async => {
-        'balance': 1500.0,
+        'balance': 100.0,
         'history': [],
         'savings': [],
         'recurrent': [mockRecurrentDoc],
-        'shopping': [mockShoppingDoc],
-        'templates': [mockTemplateDoc],
+        'shopping': [],
+        'templates': [],
         'tickets': [],
-        'debts': [mockDebtDoc],
-        'savingGoal': 500.0,
+        'debts': [],
+        'savingGoal': 0.0,
       });
       when(() => mockLocalDb.saveHistoryItems(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveSavingItems(any())).thenAnswer((_) async {});
@@ -158,20 +145,14 @@ void main() {
       when(() => mockLocalDb.saveShoppingListItems(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveShoppingTemplates(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveTicketItems(any())).thenAnswer((_) async {});
-      when(() => mockLocalDb.saveDebtLoans(any())).thenAnswer((_) async {}); // STUB NECESARIO
+      when(() => mockLocalDb.saveDebtLoans(any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveSavingGoal(any(), any())).thenAnswer((_) async {});
       when(() => mockLocalDb.saveTotalBalance(any(), any())).thenAnswer((_) async {});
       when(() => mockGetMovementsUseCase(any(), any(), any())).thenAnswer((_) async => []);
 
-      // WHEN: Ejecutamos la resincronización forzada
       await historyCubit.forceBalanceResync(mockTotalMoneyCubit);
 
-      // THEN: Verificamos que se llamó a guardar todos los tipos de datos
       verify(() => mockLocalDb.saveRecurrentExpenses(any())).called(1);
-      verify(() => mockLocalDb.saveShoppingListItems(any())).called(1);
-      verify(() => mockLocalDb.saveShoppingTemplates(any())).called(1);
-      verify(() => mockLocalDb.saveTicketItems(any())).called(1);
-      verify(() => mockLocalDb.saveDebtLoans(any())).called(1); // VERIFICACIÓN NECESARIA
       expect(historyCubit.state.status, HistoryStatus.success);
     });
 

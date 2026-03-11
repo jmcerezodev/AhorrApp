@@ -26,7 +26,6 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
   }
 
   Future<void> loadSavings() async {
-    // No emitimos loading aquí si ya tenemos datos para evitar parpadeos innecesarios en el login
     try {
       final String uid = Preferences.uId;
       if (uid.isEmpty) return;
@@ -47,7 +46,6 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
     }
   }
 
-  // Nuevo método explícito para reiniciar y cargar
   Future<void> refresh() async {
     await loadSavings();
   }
@@ -167,6 +165,14 @@ class SavingsCubit extends Cubit<SavingsCubitState> {
         errorMessage: 'Error al establecer meta: $e'
       ));
     }
+  }
+
+  void resetForm() {
+    emit(state.copyWith(
+      saving: const SavingInput.pure(),
+      isValid: false,
+      status: SavingsStatus.initial
+    ));
   }
 
   void resetCubit() {
