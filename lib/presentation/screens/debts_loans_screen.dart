@@ -2,6 +2,7 @@ import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/debts_loans_screen/debt_loan_card.dart';
 import 'package:ahorrapp/presentation/widgets/debts_loans_screen/debts_summary_widget.dart';
+import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -146,28 +147,10 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
 
   Widget _buildList(List<DebtLoan> items, bool isDebt, ColorScheme colorScheme, bool isDark) {
     if (items.isEmpty) {
-      return FadeInUp(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                isDebt ? Icons.money_off_rounded : Icons.handshake_rounded, 
-                size: 60, 
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
-              ),
-              const SizedBox(height: 10),
-              Text(
-                isDebt ? 'No tienes deudas pendientes' : 'No has realizado préstamos',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(
-                isDebt ? '¡Estás al día con tus pagos!' : 'Aún no le deben dinero a nadie.',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
+      return EmptyListWidget(
+        text: isDebt 
+          ? 'No tienes deudas pendientes.\n¡Estás al día con tus pagos!' 
+          : 'No has realizado préstamos.\nNo te debe dinero nadie.',
       );
     }
 

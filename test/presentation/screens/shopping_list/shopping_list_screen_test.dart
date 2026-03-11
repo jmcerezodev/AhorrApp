@@ -2,6 +2,7 @@ import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_templates_cubit.dart';
 import 'package:ahorrapp/presentation/screens/shopping_list_screen.dart';
+import 'package:ahorrapp/presentation/widgets/shared/empty_list_widget.dart';
 import 'package:ahorrapp/presentation/widgets/shopping_list_screen/shopping_list_summary_widget.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
@@ -93,6 +94,16 @@ void main() {
       expect(find.text('TOTAL EN LA CESTA'), findsOneWidget);
       expect(find.text('EN LA CESTA'), findsOneWidget);
       expect(find.byIcon(Icons.shopping_basket_rounded), findsOneWidget);
+    });
+
+    testWidgets('Debe mostrar EmptyListWidget cuando la lista está vacía', (WidgetTester tester) async {
+      when(() => mockShoppingCubit.state).thenReturn(const ShoppingState(items: []));
+      
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(EmptyListWidget), findsOneWidget);
+      expect(find.text('No tienes productos pendientes.\n¡Añade lo que necesites para tu próxima compra!'), findsOneWidget);
     });
 
     testWidgets('Los items de la lista deben tener un padding inferior de 8 para consistencia', (WidgetTester tester) async {

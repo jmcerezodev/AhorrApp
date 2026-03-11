@@ -4,7 +4,7 @@ import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.da
 import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/add_edit_shopping_item_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/delete_shopping_item_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
-import 'package:ahorrapp/presentation/widgets/shopping_list_screen/shopping_list_empty_state.dart';
+import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:ahorrapp/presentation/widgets/shopping_list_screen/shopping_list_item_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -41,7 +41,9 @@ class ShoppingListHistoryWidget extends StatelessWidget {
               }
 
               if (state.items.isEmpty) {
-                return ShoppingEmptyState(colorScheme: colorScheme);
+                return const EmptyListWidget(
+                  text: 'No tienes productos pendientes.\n¡Añade lo que necesites para tu próxima compra!',
+                );
               }
 
               return ReorderableListView.builder(

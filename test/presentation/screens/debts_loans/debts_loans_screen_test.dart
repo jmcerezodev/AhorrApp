@@ -2,6 +2,7 @@ import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/debts_loans_cubit/debts_loans_cubit.dart';
 import 'package:ahorrapp/presentation/screens/debts_loans_screen.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/add_edit_debt_loan_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/shared/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,18 +32,20 @@ void main() {
   }
 
   group('DebtsLoansScreen - Widget Tests', () {
-    testWidgets('Debe mostrar estados vacíos si no hay datos', (WidgetTester tester) async {
+    testWidgets('Debe mostrar EmptyListWidget si no hay datos', (WidgetTester tester) async {
       when(() => mockCubit.state).thenReturn(const DebtsLoansState(debtsLoans: []));
       
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('No tienes deudas pendientes'), findsOneWidget);
+      expect(find.byType(EmptyListWidget), findsOneWidget);
+      expect(find.text('No tienes deudas pendientes.\n¡Estás al día con tus pagos!'), findsOneWidget);
       
       // Cambiar a pestaña préstamos
       await tester.tap(find.text('PRÉSTAMOS'));
       await tester.pumpAndSettle();
-      expect(find.text('No has realizado préstamos'), findsOneWidget);
+      expect(find.byType(EmptyListWidget), findsOneWidget);
+      expect(find.text('No has realizado préstamos.\nNo te debe dinero nadie.'), findsOneWidget);
     });
 
     testWidgets('Debe mostrar deudas en la pestaña correspondiente', (WidgetTester tester) async {

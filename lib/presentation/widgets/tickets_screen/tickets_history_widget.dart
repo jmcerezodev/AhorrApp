@@ -4,6 +4,7 @@ import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/add_edit_t
 import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/delete_ticket_item_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:ahorrapp/presentation/widgets/tickets_screen/ticket_item_card.dart';
+import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -21,27 +22,10 @@ class TicketsHistoryWidget extends StatelessWidget {
         final items = state.filteredItems;
 
         if (items.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  state.searchQuery.isEmpty ? Icons.receipt_long_outlined : Icons.search_off_rounded,
-                  size: 80,
-                  color: colorScheme.onSurface.withValues(alpha: 0.1),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  state.searchQuery.isEmpty ? 'SIN TICKETS' : 'SIN RESULTADOS',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: colorScheme.onSurface.withValues(alpha: 0.2),
-                    letterSpacing: 2.0,
-                  ),
-                ),
-              ],
-            ),
+          return EmptyListWidget(
+            text: state.searchQuery.isEmpty 
+              ? 'Aún no tienes tickets registrados.\n¡Escanea o añade uno manualmente!' 
+              : 'No se encontraron tickets\nque coincidan con tu búsqueda.',
           );
         }
 
@@ -71,15 +55,13 @@ class TicketsHistoryWidget extends StatelessWidget {
                 ),
                 confirmDismiss: (direction) async {
                   if (direction == DismissDirection.startToEnd) {
-                    // EDITAR (Deslizar a la derecha)
                     showDialog(
                       context: context,
                       barrierDismissible: false,
                       builder: (context) => AddEditTicketItemDialog(item: item),
                     );
-                    return false; // No eliminar de la lista
+                    return false;
                   } else {
-                    // ELIMINAR (Deslizar a la izquierda)
                     return await showDialog<bool>(
                       context: context,
                       builder: (context) => DeleteTicketItemDialog(

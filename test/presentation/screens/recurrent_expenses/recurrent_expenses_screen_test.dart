@@ -3,8 +3,7 @@ import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/screens/recurrent_expenses_screen.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/add_edit_recurrent_expense_dialog.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/confirm_manual_payment_dialog.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/delete_recurrent_expense_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/shared/empty_list_widget.dart';
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -55,11 +54,11 @@ void main() {
       expect(find.text('MIS FIJOS'), findsOneWidget);
     });
 
-    testWidgets('Debe mostrar el estado vacío si no hay registros', (WidgetTester tester) async {
+    testWidgets('Debe mostrar EmptyListWidget si no hay registros', (WidgetTester tester) async {
       when(() => mockCubit.state).thenReturn(const RecurrentExpensesState(expenses: []));
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
-      expect(find.text('SIN GASTOS FIJOS'), findsOneWidget);
+      expect(find.byType(EmptyListWidget), findsOneWidget);
     });
 
     testWidgets('Debe mostrar la lista de gastos en la pestaña GASTOS', (WidgetTester tester) async {

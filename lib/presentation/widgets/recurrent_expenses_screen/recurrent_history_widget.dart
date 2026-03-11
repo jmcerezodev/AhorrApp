@@ -1,8 +1,8 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
-import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_empty_state.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_expense_item.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_filter_panel.dart';
+import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -93,7 +93,13 @@ class RecurrentHistoryWidget extends StatelessWidget {
               }).toList();
 
               if (filteredExpenses.isEmpty) {
-                return RecurrentEmptyState(colorScheme: colorScheme, isFiltered: state.isFilterOpen);
+                return EmptyListWidget(
+                  text: state.isFilterOpen 
+                    ? 'No hay registros que coincidan con los filtros seleccionados.'
+                    : (isIncomeTab 
+                        ? 'Añade tus ingresos recurrentes para que la app los anote automáticamente.'
+                        : 'Añade tus facturas o suscripciones para que la app las anote automáticamente.'),
+                );
               }
 
               return ReorderableListView.builder(

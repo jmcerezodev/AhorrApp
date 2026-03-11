@@ -1,6 +1,7 @@
 import 'package:ahorrapp/domain/entities/ticket_item.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
 import 'package:ahorrapp/presentation/screens/tickets_screen.dart';
+import 'package:ahorrapp/presentation/widgets/shared/empty_list_widget.dart';
 import 'package:ahorrapp/presentation/widgets/tickets_screen/tickets_summary_widget.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
@@ -98,14 +99,15 @@ void main() {
       verify(() => mockTicketsCubit.updateSearchQuery('Mercadona')).called(1);
     });
 
-    testWidgets('Debe mostrar el estado vacío si no hay items', (WidgetTester tester) async {
+    testWidgets('Debe mostrar EmptyListWidget si no hay items', (WidgetTester tester) async {
       when(() => mockTicketsCubit.state).thenReturn(const TicketsState(items: []));
       
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
       expect(find.byType(TicketsSummaryWidget), findsOneWidget);
-      expect(find.text('SIN TICKETS'), findsOneWidget);
+      expect(find.byType(EmptyListWidget), findsOneWidget);
+      expect(find.text('Aún no tienes tickets registrados.\n¡Escanea o añade uno manualmente!'), findsOneWidget);
     });
 
     testWidgets('Los items de la lista deben ser Dismissible (deslizables)', (WidgetTester tester) async {

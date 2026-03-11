@@ -378,8 +378,6 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
     String message = '';
     List<String> active = [];
     if (showIncomes) active.add('ingresos');
@@ -395,25 +393,7 @@ class _EmptyState extends StatelessWidget {
       message = 'Sin $filterText en el mes de $selectedDate';
     }
 
-    return Container(
-      width: double.infinity,
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.info_outline_rounded, color: colorScheme.onSurface.withValues(alpha: 0.1), size: 40),
-          const SizedBox(height: 10),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colorScheme.onSurface.withValues(alpha: 0.3), 
-              fontStyle: FontStyle.italic
-            ),
-          ),
-        ],
-      ),
-    );
+    return EmptyListWidget(text: message);
   }
 }
 
