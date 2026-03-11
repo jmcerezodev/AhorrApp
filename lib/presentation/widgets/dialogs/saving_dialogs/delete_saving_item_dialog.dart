@@ -46,12 +46,29 @@ class DeleteSavingItemDialog extends StatelessWidget {
             colorScheme: colorScheme,
           ),
           const SizedBox(height: 15),
-          AppDialogs.dialogMessage(
-            isWithdrawal 
-              ? 'Al eliminar esta retirada, el dinero se sumará de nuevo a tus ahorros totales.' 
-              : 'Esta aportación se restará de tus ahorros totales y se borrará del historial.', 
-            colorScheme
+          
+          Text.rich(
+            TextSpan(
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
+              children: [
+                if (isWithdrawal) ...[
+                  const TextSpan(text: 'Al eliminar esta '),
+                  const TextSpan(text: 'retirada', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                  const TextSpan(text: ', el dinero se sumará de nuevo a tus '),
+                  const TextSpan(text: 'ahorros totales', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                  const TextSpan(text: '.'),
+                ] else ...[
+                  const TextSpan(text: 'Esta '),
+                  const TextSpan(text: 'aportación', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                  const TextSpan(text: ' se restará de tus '),
+                  const TextSpan(text: 'ahorros totales', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                  const TextSpan(text: ' y se borrará del historial.'),
+                ],
+              ],
+            ),
+            textAlign: TextAlign.center,
           ),
+
           const SizedBox(height: 30),
           Row(
             children: [

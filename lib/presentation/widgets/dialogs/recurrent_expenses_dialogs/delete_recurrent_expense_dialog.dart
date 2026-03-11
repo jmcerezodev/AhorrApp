@@ -39,18 +39,32 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
           AppDialogs.dialogHeader(
             icon: Icons.delete_outline_rounded, 
             color: Colors.red.shade400, 
-            title: '¿ELIMINAR GASTO FIJO?',
+            title: '¿ELIMINAR REGISTRO FIJO?',
             circularBackground: true,
             iconSize: 32,
             colorScheme: colorScheme,
           ),
           const SizedBox(height: 15),
           
-          AppDialogs.dialogMessage(
-            isLinked 
-              ? 'Este pago fijo está vinculado a la deuda "${linkedDebt.name}". Si lo eliminas, la deuda también se borrará de tu lista. ¿Estás seguro?'
-              : 'Estás a punto de borrar "$expenseName". Esta acción eliminará la automatización y no se puede deshacer.', 
-            colorScheme
+          Text.rich(
+            TextSpan(
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
+              children: [
+                const TextSpan(text: '¿Estás seguro de que quieres eliminar '),
+                TextSpan(text: '"$expenseName"', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                const TextSpan(text: '? '),
+                if (isLinked) ...[
+                  const TextSpan(text: 'Este registro está vinculado a la deuda '),
+                  TextSpan(text: '"${linkedDebt.name}"', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                  const TextSpan(text: '. Si lo eliminas, la deuda también se '),
+                  const TextSpan(text: 'borrará de tu lista.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                ] else ...[
+                  const TextSpan(text: 'Esta acción eliminará la automatización y '),
+                  const TextSpan(text: 'no se puede deshacer.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                ],
+              ],
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 30),
 
@@ -79,7 +93,7 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
                     context.read<RecurrentExpensesCubit>().deleteExpense(
                       expenseId, 
                       debtsCubit: debtsCubit,
-                      deleteDebt: isLinked // Si está vinculada, borramos la deuda también
+                      deleteDebt: isLinked
                     );
                     context.pop(true);
                   }, 

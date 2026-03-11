@@ -23,7 +23,6 @@ class DeleteItemHistoryDialog extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // BÚSQUEDA SEGURA CON TIPADO FUERTE
     Map<String, dynamic>? itemResult;
     for (final item in historyState.historyList) {
       if (item['id'] == itemId) {
@@ -35,11 +34,12 @@ class DeleteItemHistoryDialog extends StatelessWidget {
     if (itemResult == null) return const SizedBox();
 
     final isIncomeResult = itemResult['isIncome'] ?? false;
+    final String itemName = itemResult['name'] ?? '';
     final double amount = (itemResult['money'] as num).toDouble();
     final String month = itemResult['month'] ?? '';
     final int year = itemResult['year'] ?? 0;
     final String typeStr = itemResult['type'] ?? 'expense';
-    final String? ticketId = itemResult['ticketId']; // Capturamos el ticketId si existe
+    final String? ticketId = itemResult['ticketId'];
 
     return CustomDialogWrapper(
       borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
@@ -57,9 +57,17 @@ class DeleteItemHistoryDialog extends StatelessWidget {
           ),
           const SizedBox(height: 15),
           
-          AppDialogs.dialogMessage(
-            'Esta acción no se puede deshacer.\n¿Estás seguro de que quieres borrar este registro del historial?', 
-            colorScheme
+          Text.rich(
+            TextSpan(
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
+              children: [
+                const TextSpan(text: '¿Estás seguro de que quieres borrar '),
+                TextSpan(text: '"$itemName"', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                const TextSpan(text: ' del historial? Esta acción '),
+                const TextSpan(text: 'no se puede deshacer.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+              ],
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 30),
 
@@ -84,33 +92,27 @@ class DeleteItemHistoryDialog extends StatelessWidget {
                 child: AppDialogs.dialogPrimaryButton(
                   text: 'ELIMINAR', 
                   onPressed: () async {
-                    // Construimos el objeto Movement para el caso de uso
                     final movement = Movement(
                       id: itemId,
-                      name: itemResult!['name'] ?? '',
+                      name: itemName,
                       amount: amount,
                       type: typeStr == 'income' ? MovementType.income : MovementType.expense,
                       isIncome: isIncomeResult,
-                      date: itemResult['currentDate'] ?? '',
+                      date: itemResult!['currentDate'] ?? '',
                       hour: itemResult['currentHour'] ?? '',
                       month: month,
                       year: year,
                       createdAt: DateTime.parse(itemResult['createdAt']),
-                      ticketId: ticketId, // Pasamos el ticketId para que se pueda desmarcar
+                      ticketId: ticketId,
                     );
 
-                    // Ejecutamos el caso de uso
                     await getIt<DeleteMovementUseCase>().call(movement);
                     
                     if (context.mounted) {
-                      // 1. Refrescamos historial
                       context.read<HistoryCubit>().loadHistoryByDate(month, year);
-                      
-                      // 2. Refrescamos tickets si había uno asociado
                       if (ticketId != null) {
                         getIt<TicketsCubit>().loadItems();
                       }
-
                       context.pop();
                     }
                   }, 

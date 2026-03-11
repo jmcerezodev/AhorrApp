@@ -36,12 +36,29 @@ class DeleteDebtLoanDialog extends StatelessWidget {
             colorScheme: colorScheme,
           ),
           const SizedBox(height: 15),
-          AppDialogs.dialogMessage(
-            hasRecurrent
-              ? 'Esta deuda está vinculada a un pago fijo automático. Si la eliminas, también se borrará de tu lista de Gastos Fijos. ¿Deseas continuar?'
-              : '¿Estás seguro de que quieres eliminar "${item.name}"? Esta acción no se puede deshacer.',
-            colorScheme,
+          
+          Text.rich(
+            TextSpan(
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
+              children: [
+                const TextSpan(text: '¿Estás seguro de que quieres eliminar '),
+                TextSpan(text: '"${item.name}"', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                const TextSpan(text: '? '),
+                if (hasRecurrent) ...[
+                  const TextSpan(text: 'Esta deuda está vinculada a un '),
+                  const TextSpan(text: 'pago fijo automático', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                  const TextSpan(text: '. Si la eliminas, también se borrará de tu lista de '),
+                  const TextSpan(text: 'Gastos Fijos', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                  const TextSpan(text: '.'),
+                ] else ...[
+                  const TextSpan(text: 'Esta acción '),
+                  const TextSpan(text: 'no se puede deshacer.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                ],
+              ],
+            ),
+            textAlign: TextAlign.center,
           ),
+
           const SizedBox(height: 30),
           Row(
             children: [
@@ -66,7 +83,7 @@ class DeleteDebtLoanDialog extends StatelessWidget {
                   onPressed: () {
                     context.read<DebtsLoansCubit>().deleteDebtLoan(
                       item.id, 
-                      deleteRecurrent: true // Siempre borrar el recurrente si existe el vínculo
+                      deleteRecurrent: true
                     );
                     context.pop(true);
                   },

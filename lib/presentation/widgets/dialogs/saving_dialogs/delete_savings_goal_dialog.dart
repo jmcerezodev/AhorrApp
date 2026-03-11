@@ -29,9 +29,18 @@ class DeleteSavingsGoalDialog extends StatelessWidget {
           ),
           const SizedBox(height: 15),
           
-          AppDialogs.dialogMessage(
-            'Tienes una meta de ahorro activa. Para establecer una nueva, primero debes eliminar la actual.', 
-            colorScheme
+          Text.rich(
+            TextSpan(
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
+              children: [
+                const TextSpan(text: 'Tienes una '),
+                const TextSpan(text: 'meta de ahorro', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                const TextSpan(text: ' activa. Para establecer una nueva, primero debes '),
+                const TextSpan(text: 'eliminar la actual', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                const TextSpan(text: '.'),
+              ],
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 30),
 

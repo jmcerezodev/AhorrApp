@@ -49,10 +49,21 @@ class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
           ),
           const SizedBox(height: 15),
           
-          AppDialogs.dialogMessage(
-            isSubmitting ? 'Eliminando tus datos de forma segura...' : widget.text, 
-            colorScheme
-          ),
+          if (isSubmitting)
+            AppDialogs.dialogMessage('Eliminando tus datos de forma segura...', colorScheme)
+          else
+            Text.rich(
+              TextSpan(
+                style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
+                children: [
+                  const TextSpan(text: 'Estás a punto de '),
+                  const TextSpan(text: 'eliminar permanentemente', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                  const TextSpan(text: ' tu cuenta y todos tus datos. Esta acción '),
+                  const TextSpan(text: 'no se puede deshacer.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                ],
+              ),
+              textAlign: TextAlign.center,
+            ),
           const SizedBox(height: 20),
 
           if (!isSubmitting)

@@ -118,11 +118,9 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
       return;
     }
 
-    // Si NO es a plazos, preguntamos si quiere añadirlo al historial
     if (!widget.item.isInstallment) {
       _showAddToHistoryConfirmation(amount);
     } else {
-      // Si es a plazos, se procesa directamente sin añadir al historial (porque ya suele estar vinculado a recurrentes)
       _processPayment(amount, false);
     }
   }
@@ -148,9 +146,21 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
               colorScheme: colorScheme,
             ),
             const SizedBox(height: 15),
-            AppDialogs.dialogMessage(
-              '¿Deseas registrar este ${isDebt ? "pago como un gasto" : "cobro como un ingreso"} en la pantalla principal?',
-              colorScheme,
+            Text.rich(
+              TextSpan(
+                style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
+                children: [
+                  const TextSpan(text: '¿Deseas registrar este '),
+                  TextSpan(
+                    text: isDebt ? "pago como un gasto" : "cobro como un ingreso",
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)
+                  ),
+                  const TextSpan(text: ' en la '),
+                  const TextSpan(text: 'pantalla principal', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                  const TextSpan(text: '?'),
+                ],
+              ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 30),
             Row(
@@ -202,7 +212,7 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
     );
     
     if (mounted) {
-      context.pop(); // Cierra el diálogo de pago
+      context.pop(); 
       
       if (isCompleting) {
         _showCompletionDialog(context);
@@ -240,17 +250,18 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
               ),
             ),
             const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Text(
-                'Has completado el pago de "${widget.item.name}". ¿Deseas eliminar este registro de la lista o mantenerlo como completado?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13, 
-                  color: colorScheme.onSurface.withValues(alpha: 0.7),
-                  height: 1.5
-                ),
+            Text.rich(
+              TextSpan(
+                style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.7), height: 1.5),
+                children: [
+                  const TextSpan(text: 'Has completado el pago de '),
+                  TextSpan(text: '"${widget.item.name}"', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                  const TextSpan(text: '. ¿Deseas '),
+                  const TextSpan(text: 'eliminar', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                  const TextSpan(text: ' este registro de la lista o mantenerlo como completado?'),
+                ],
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 35),
             Row(

@@ -28,9 +28,18 @@ class SingOutDialog extends StatelessWidget {
           ),
           const SizedBox(height: 15),
           
-          AppDialogs.dialogMessage(
-            '¿Estás seguro de que quieres salir?\nTendrás que volver a introducir tus credenciales si no activaste "Recordarme".', 
-            colorScheme
+          Text.rich(
+            TextSpan(
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
+              children: [
+                const TextSpan(text: '¿Estás seguro de que quieres '),
+                const TextSpan(text: 'salir', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                const TextSpan(text: '?\nTendrás que volver a introducir tus credenciales si no activaste '),
+                const TextSpan(text: '"Recordarme"', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                const TextSpan(text: '.'),
+              ],
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 30),
 
