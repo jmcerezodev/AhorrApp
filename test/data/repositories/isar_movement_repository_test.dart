@@ -19,8 +19,14 @@ void main() {
   setUpAll(() async {
     tempPath = p.join(Directory.current.path, 'test_db_movements');
     final dir = Directory(tempPath);
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
-    dir.createSync(recursive: true);
+    if (dir.existsSync()) {
+      try {
+        dir.deleteSync(recursive: true);
+      } catch (e) {
+        // Ignorar si el archivo está bloqueado temporalmente por otro proceso
+      }
+    }
+    if (!dir.existsSync()) dir.createSync(recursive: true);
 
     await Isar.initializeIsarCore(download: true);
     isar = await Isar.open(
@@ -30,7 +36,7 @@ void main() {
   });
 
   tearDownAll(() async {
-    await isar.close(deleteFromDisk: true);
+    await isar.close();
   });
 
   setUp(() {
@@ -71,7 +77,6 @@ void main() {
         await isar.localSavings.put(saving);
       });
 
-      // Mock de los métodos de búsqueda que usa el repositorio
       when(() => mockLocalDb.getHistoryByMonth('October', 2023)).thenAnswer((_) async {
         return await isar.localHistorys.filter().monthEqualTo('October').yearEqualTo(2023).findAll();
       });

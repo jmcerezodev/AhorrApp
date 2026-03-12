@@ -142,7 +142,7 @@ class DebtLoanCard extends StatelessWidget {
                       children: [
                         if (isFullyPaid)
                           const Text(
-                            'Pagada',
+                            'Finalizado',
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 14,
@@ -151,11 +151,11 @@ class DebtLoanCard extends StatelessWidget {
                           )
                         else
                           Text(
-                            '${isDebt ? "-" : "+"}${humanizeNumbers.number(item.remainingAmount)}€',
+                            '${humanizeNumbers.number(item.remainingAmount)}€',
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 16,
-                              color: isDebt ? Colors.red.shade400 : Colors.green.shade400,
+                              color: isDebt ? Colors.red.shade400 : Colors.blue.shade400,
                             ),
                           ),
                         if (item.isInstallment && !isFullyPaid)
@@ -178,7 +178,6 @@ class DebtLoanCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(width: 10),
-                    // Solo mostrar el botón si NO es a plazos y NO está completada
                     if (!item.isCompleted && !item.isInstallment)
                       IconButton(
                         onPressed: () => _showPaymentDialog(context),
@@ -199,7 +198,7 @@ class DebtLoanCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'Pagado: ${humanizeNumbers.number(item.paidAmount)}€',
+                          'Pendiente: ${humanizeNumbers.number(item.paidAmount)}€',
                           style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
                         ),
                         if (item.dueDate != null)

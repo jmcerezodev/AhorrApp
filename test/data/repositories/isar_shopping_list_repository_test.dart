@@ -20,8 +20,14 @@ void main() {
   setUpAll(() async {
     tempPath = p.join(Directory.current.path, 'test_db_shopping_qa');
     final dir = Directory(tempPath);
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
-    dir.createSync(recursive: true);
+    if (dir.existsSync()) {
+      try {
+        dir.deleteSync(recursive: true);
+      } catch (e) {
+        // Ignorar si el archivo está bloqueado
+      }
+    }
+    if (!dir.existsSync()) dir.createSync(recursive: true);
 
     await Isar.initializeIsarCore(download: true);
     isar = await Isar.open(
@@ -31,7 +37,7 @@ void main() {
   });
 
   tearDownAll(() async {
-    await isar.close(deleteFromDisk: true);
+    await isar.close();
   });
 
   setUp(() async {

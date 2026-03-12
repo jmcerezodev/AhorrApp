@@ -103,7 +103,9 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
         if (includeInSummary == null) finalIncludeInSummary = currentExpense.includeInSummary;
       }
     } else {
-      finalPosition = position ?? state.expenses.length;
+      // Al crear uno nuevo, lo ponemos al final de su tipo (ingreso o gasto)
+      final typeItems = state.expenses.where((e) => e.isIncome == isIncome).toList();
+      finalPosition = position ?? typeItems.length;
     }
 
     final expense = RecurrentExpense(
@@ -138,25 +140,39 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       newIndex -= 1;
     }
 
-    final List<RecurrentExpense> allItems = List.from(state.expenses);
-    final List<RecurrentExpense> typeItems = allItems.where((e) => e.isIncome == isIncome).toList();
+    // 1. Extraemos solo los items del tipo actual (Ingreso o Gasto)
+    final List<RecurrentExpense> typeItems = state.expenses
+        .where((e) => e.isIncome == isIncome)
+        .toList()
+      ..sort((a, b) => a.position.compareTo(b.position));
     
+    if (oldIndex >= typeItems.length) return;
+
+    // 2. Realizamos el movimiento en la lista local
     final RecurrentExpense itemToMove = typeItems.removeAt(oldIndex);
     typeItems.insert(newIndex, itemToMove);
 
+    // 3. Reasignamos las posiciones basándonos en el nuevo orden
+    final List<RecurrentExpense> updatedItems = [];
     for (int i = 0; i < typeItems.length; i++) {
-      final updatedItem = typeItems[i].copyWith(position: i);
-      final indexInGlobal = allItems.indexWhere((e) => e.id == updatedItem.id);
-      allItems[indexInGlobal] = updatedItem;
+      updatedItems.add(typeItems[i].copyWith(position: i));
     }
 
-    emit(state.copyWith(expenses: allItems));
+    // 4. Actualizamos el estado global combinando los items inalterados con los reordenados
+    final List<RecurrentExpense> finalGlobalList = state.expenses
+        .where((e) => e.isIncome != isIncome)
+        .toList()
+      ..addAll(updatedItems);
 
+    emit(state.copyWith(expenses: finalGlobalList));
+
+    // 5. Persistimos los cambios de posición uno a uno para evitar conflictos
     try {
-      for (var expense in typeItems) {
+      for (var expense in updatedItems) {
         await _saveRecurrentExpenseUseCase(expense);
       }
     } catch (e) {
+      // Si falla la persistencia, recargamos de la DB para revertir cambios visuales inconsistentes
       await loadExpenses();
     }
   }
@@ -181,7 +197,6 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     try {
       await _saveMovementUseCase(movement);
 
-      // CORRECCIÓN: Si hay un cubit de deudas, actualizamos el progreso del registro vinculado (venga de deuda o préstamo)
       if (debtsCubit != null) {
         final linkedItem = debtsCubit.state.debtsLoans.where((d) => d.recurrentExpenseId == expense.id).firstOrNull;
         if (linkedItem != null) {

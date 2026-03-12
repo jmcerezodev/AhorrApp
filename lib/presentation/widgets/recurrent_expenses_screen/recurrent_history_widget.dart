@@ -80,11 +80,14 @@ class RecurrentHistoryWidget extends StatelessWidget {
                 return Center(child: Text(state.errorMessage ?? 'Error al cargar registros fijos'));
               }
 
-              final filteredExpenses = state.expenses.where((e) {
-                // 1. Filtrar por pestaña (Ingreso/Gasto)
-                if (e.isIncome != isIncomeTab) return false;
-                
-                // 2. Otros filtros
+              // 1. Filtrar los items por tipo (Ingreso/Gasto) y ordenarlos por su posición actual
+              final List<dynamic> filteredExpenses = state.expenses
+                  .where((e) => e.isIncome == isIncomeTab)
+                  .toList()
+                ..sort((a, b) => a.position.compareTo(b.position));
+
+              // 2. Aplicar los filtros secundarios (Automático, Manual, Categoría)
+              final displayedExpenses = filteredExpenses.where((e) {
                 final bool isAutomatic = e.day != null;
                 if (isAutomatic && !state.showAutomatic) return false;
                 if (!isAutomatic && !state.showManual) return false;
@@ -92,7 +95,7 @@ class RecurrentHistoryWidget extends StatelessWidget {
                 return true;
               }).toList();
 
-              if (filteredExpenses.isEmpty) {
+              if (displayedExpenses.isEmpty) {
                 return EmptyListWidget(
                   text: state.isFilterOpen 
                     ? 'No hay registros que coincidan con los filtros seleccionados.'
@@ -105,8 +108,9 @@ class RecurrentHistoryWidget extends StatelessWidget {
               return ReorderableListView.builder(
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20),
                 physics: const BouncingScrollPhysics(),
-                itemCount: filteredExpenses.length,
+                itemCount: displayedExpenses.length,
                 onReorder: (oldIndex, newIndex) {
+                  // Pasamos la acción al Cubit asegurando que los índices corresponden a la lista filtrada por tipo
                   context.read<RecurrentExpensesCubit>().reorderExpenses(
                     oldIndex, 
                     newIndex, 
@@ -114,7 +118,7 @@ class RecurrentHistoryWidget extends StatelessWidget {
                   );
                 },
                 itemBuilder: (context, index) {
-                  final expense = filteredExpenses[index];
+                  final expense = displayedExpenses[index];
                   return RecurrentExpenseItem(
                     key: ValueKey(expense.id),
                     expense: expense,

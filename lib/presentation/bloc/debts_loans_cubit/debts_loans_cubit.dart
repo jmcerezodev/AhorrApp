@@ -54,27 +54,51 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
     int? totalInstallments,
     double? installmentAmount,
     bool addToRecurrent = false,
+    String? existingRecurrentId,
+    bool addToHistory = false,
   }) async {
     emit(state.copyWith(isLoading: true));
     try {
       final isNew = id == null;
       final finalId = id ?? const Uuid().v4();
       final isDebt = type == DebtLoanType.debt;
+      final finalStartDate = date ?? DateTime.now();
       
-      String? recurrentId;
+      String? recurrentId = existingRecurrentId;
       
       if (addToRecurrent && isInstallment && installmentAmount != null) {
-        recurrentId = const Uuid().v4();
+        recurrentId ??= const Uuid().v4();
+        
         await recurrentExpensesCubit.addOrUpdateExpense(
           id: recurrentId,
           name: '$name ($person)',
           amount: installmentAmount,
-          day: DateTime.now().day,
+          day: finalStartDate.day,
           category: 'deudas',
           frequency: RecurrentFrequency.monthly,
-          startDate: DateTime.now(),
-          isIncome: !isDebt, // SI ES PRÉSTAMO ES UN INGRESO
+          startDate: finalStartDate,
+          isIncome: !isDebt, // SI ES PRÉSTAMO ES UN INGRESO (te pagan a ti)
         );
+      }
+
+      // Registro Inicial en el Historial
+      if (isNew && addToHistory && !isInstallment) {
+        final dateObj = Date();
+        // Según requisitos: Tanto deudas como préstamos son GASTOS al crearse
+        final movement = Movement(
+          id: const Uuid().v4(),
+          name: '$name ($person)',
+          amount: totalAmount,
+          type: MovementType.expense, // Siempre gasto al inicio
+          isIncome: false,
+          date: dateObj.currentDate(),
+          hour: dateObj.currentHour(),
+          month: dateObj.monthNames(),
+          year: int.parse(dateObj.year()),
+          createdAt: DateTime.now(),
+          category: 'deudas',
+        );
+        await getIt<SaveMovementUseCase>().call(movement);
       }
 
       final debtLoan = DebtLoan(
@@ -84,7 +108,7 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
         person: person,
         totalAmount: totalAmount,
         paidAmount: paidAmount,
-        date: date,
+        date: finalStartDate,
         dueDate: dueDate,
         type: type,
         isInstallment: isInstallment,
@@ -119,11 +143,13 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
       
       await updateDebtLoanUseCase(updatedDebtLoan);
 
-      // Si el usuario lo solicita Y el registro NO es a plazos, registramos el movimiento en el historial
       if (addToHistory && !debtLoan.isInstallment) {
         final date = Date();
         final isDebt = debtLoan.type == DebtLoanType.debt;
         
+        // Al pagar/cobrar:
+        // Si es deuda -> Sigue siendo gasto.
+        // Si es préstamo -> Es ingreso (te devuelven dinero).
         final movement = Movement(
           id: const Uuid().v4(),
           name: debtLoan.name,
@@ -147,7 +173,6 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
     }
   }
 
-  /// Elimina registros vinculados a un cobro/pago recurrente
   Future<void> deleteByRecurrentId(String recurrentId) async {
     try {
       final affectedItems = state.debtsLoans.where((d) => d.recurrentExpenseId == recurrentId).toList();
@@ -160,7 +185,6 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
     } catch (_) {}
   }
 
-  /// Limpia la referencia al registro recurrente en cualquier deuda/préstamo vinculado
   Future<void> clearRecurrentReference(String recurrentId) async {
     try {
       final affectedItems = state.debtsLoans.where((d) => d.recurrentExpenseId == recurrentId).toList();

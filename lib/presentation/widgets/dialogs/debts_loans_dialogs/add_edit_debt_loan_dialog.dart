@@ -37,6 +37,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
   
   bool _isInstallment = false;
   bool _isAutoCalculate = true;
+  bool _addToHistory = false;
   bool _isLoading = false;
 
   String? _nameError;
@@ -76,10 +77,28 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
   }
 
   double _parseInput(String input) {
-    String sanitized = input.trim();
+    String sanitized = input.trim().replaceAll(' ', '').replaceAll('\u00A0', '');
     if (sanitized.isEmpty) return 0;
-    if (sanitized.contains(',') && sanitized.contains('.')) sanitized = sanitized.replaceAll('.', '').replaceAll(',', '.');
-    else if (sanitized.contains(',')) sanitized = sanitized.replaceAll(',', '.');
+
+    if (sanitized.contains('.') && sanitized.contains(',')) {
+      int dotIndex = sanitized.lastIndexOf('.');
+      int commaIndex = sanitized.lastIndexOf(',');
+      if (dotIndex > commaIndex) {
+        sanitized = sanitized.replaceAll(',', '');
+      } else {
+        sanitized = sanitized.replaceAll('.', '').replaceAll(',', '.');
+      }
+    } else if (sanitized.contains(',')) {
+      sanitized = sanitized.replaceAll(',', '.');
+    } else if (sanitized.contains('.')) {
+      final parts = sanitized.split('.');
+      if (parts.length > 2) {
+        sanitized = sanitized.replaceAll('.', '');
+      } else if (parts.length == 2 && parts[1].length == 3) {
+        sanitized = sanitized.replaceAll('.', '');
+      }
+    }
+
     return double.tryParse(sanitized) ?? 0;
   }
 
@@ -304,7 +323,46 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                             ),
                           ],
                         )
-                      : const SizedBox.shrink(),
+                      : Padding(
+                          padding: const EdgeInsets.only(top: 25),
+                          child: Column(
+                            children: [
+                              _buildDatePicker(
+                                label: 'FECHA LÍMITE (OPCIONAL)',
+                                date: _dueDate,
+                                onTap: () => _selectDate(context, true),
+                                isOptional: true,
+                                onClear: () => setState(() => _dueDate = null),
+                              ),
+                              const SizedBox(height: 15),
+                              if (widget.item == null) 
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withValues(alpha: 0.05),
+                                    borderRadius: BorderRadius.circular(15),
+                                    border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Checkbox(
+                                        value: _addToHistory, 
+                                        onChanged: (val) => setState(() => _addToHistory = val ?? false),
+                                        activeColor: Colors.orange,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                      ),
+                                      const Expanded(
+                                        child: Text(
+                                          'Registrar movimiento inicial en el historial',
+                                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                   ),
                 ],
               ),
@@ -441,6 +499,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
     final totalInstallments = int.tryParse(_monthsController.text.trim());
     final finalStartDate = _selectedDate ?? DateTime.now();
     final double initialPaid = _calculateInitialPaidAmount();
+    
     await context.read<DebtsLoansCubit>().addOrUpdateDebtLoan(
       id: widget.item?.id,
       name: _nameController.text.trim(),
@@ -454,6 +513,8 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
       totalInstallments: totalInstallments,
       installmentAmount: installmentAmount,
       addToRecurrent: _isInstallment,
+      existingRecurrentId: widget.item?.recurrentExpenseId,
+      addToHistory: _addToHistory, // PASAMOS EL NUEVO FLAG
     );
     if (mounted) context.pop();
   }
