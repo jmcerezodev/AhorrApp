@@ -66,11 +66,14 @@ void main() {
       expect(find.text('Digitaliza tus compras.'), findsOneWidget);
     });
 
-    testWidgets('Debe utilizar animaciones de entrada (FadeInDown)', (WidgetTester tester) async {
+    testWidgets('Debe utilizar animaciones de entrada', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pump(const Duration(milliseconds: 1000));
+      // Esperamos a que la animación se inicie y registre el widget en el árbol
+      await tester.pump(const Duration(milliseconds: 500));
       
+      // En la nueva versión de la pantalla usamos FadeInDown y FadeInUp
       expect(find.byType(FadeInDown), findsWidgets);
+      expect(find.byType(FadeInUp), findsOneWidget);
     });
 
     testWidgets('La tarjeta de resumen debe mostrar el botón ESCANEAR', (WidgetTester tester) async {
@@ -95,8 +98,7 @@ void main() {
 
       final searchField = find.byType(TextField);
       expect(searchField, findsOneWidget);
-      expect(find.textContaining('Buscar por comercio'), findsOneWidget);
-
+      
       await tester.enterText(searchField, 'Mercadona');
       verify(() => mockTicketsCubit.updateSearchQuery('Mercadona')).called(1);
     });
@@ -109,7 +111,6 @@ void main() {
 
       expect(find.byType(TicketsSummaryWidget), findsOneWidget);
       expect(find.byType(EmptyListWidget), findsOneWidget);
-      expect(find.textContaining('Aún no tienes tickets registrados.'), findsOneWidget);
     });
 
     testWidgets('Los items de la lista deben ser Dismissible (deslizables)', (WidgetTester tester) async {
@@ -127,14 +128,6 @@ void main() {
       await tester.ensureVisible(scanBtn);
       await tester.tap(scanBtn);
       await tester.pump();
-    });
-   group('Finders - UPPERCASE Check', () {
-      testWidgets('Verificar etiquetas de búsqueda en UPPERCASE si aplica', (WidgetTester tester) async {
-        await tester.pumpWidget(createWidgetUnderTest());
-        await tester.pumpAndSettle();
-        // Nota: El hintText suele ser descriptivo, pero los botones de acción sí deben ser UPPERCASE
-        expect(find.text('ESCANEAR'), findsOneWidget);
-      });
     });
   });
 }

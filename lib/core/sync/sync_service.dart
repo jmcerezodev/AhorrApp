@@ -30,9 +30,13 @@ class SyncService {
   // --- LÓGICA DE BACKOFF ---
   int _errorCount = 0;
   DateTime? _nextRetryTime;
-  
-  // Notificador dedicado para la UI de sincronización manual
   final ValueNotifier<SyncStatus> syncStatusNotifier = ValueNotifier(SyncStatus.idle);
+  
+  // Guard para evitar que sincronizaciones automáticas pisen el estado visual de una manual
+  bool _isManualInResultState = false;
+
+  // Tiempo de la última sincronización manual exitosa para evitar peticiones redundantes
+  DateTime? _lastManualSyncTime;
 
   void init() {
     _subscription = _connectivityService.status.listen((status) {
@@ -52,10 +56,21 @@ class SyncService {
   Future<void> forceSync() async {
     _errorCount = 0;
     _nextRetryTime = null;
+    _isManualInResultState = false; // Reset si se pulsa de nuevo
     await processQueue(isManual: true);
   }
 
   Future<void> processQueue({bool isManual = false}) async {
+    // Si estamos mostrando un resultado manual (Éxito/Error), ignoramos peticiones automáticas
+    if (!isManual && _isManualInResultState) return;
+
+    // Cooldown de 30 segundos tras una manual para evitar peticiones automáticas redundantes
+    if (!isManual && _lastManualSyncTime != null && 
+        DateTime.now().difference(_lastManualSyncTime!).inSeconds < 30) {
+      debugPrint('⏳ Sincronización automática bloqueada por cooldown manual.');
+      return;
+    }
+    
     if (_isSyncing || !Preferences.isLoggedIn) return;
     
     // Si no es manual, verificamos si estamos en periodo de "enfriamiento" (Backoff)
@@ -65,25 +80,33 @@ class SyncService {
     }
 
     if (!(await _connectivityService.isConnected)) {
-      if (isManual) syncStatusNotifier.value = SyncStatus.error;
+      if (isManual) {
+        _isManualInResultState = true;
+        syncStatusNotifier.value = SyncStatus.error;
+        _resetManualGuardAfterDelay();
+      }
       return;
     }
     
     _isSyncing = true;
     
-    // Solo mostramos el estado 'syncing' en el notificador si la acción es manual
-    if (isManual) {
+    // Solo actualizamos el notifier si es manual o si no estamos en guardia de resultado manual
+    if (isManual || !_isManualInResultState) {
       syncStatusNotifier.value = SyncStatus.syncing;
     }
 
     try {
       final pendingList = await _localDb.getPendingSyncs();
       if (pendingList.isEmpty) {
-        _isSyncing = false;
-        // Si es manual e intentamos sincronizar sin pendientes, notificamos éxito directamente
         if (isManual) {
+          _isManualInResultState = true;
+          _lastManualSyncTime = DateTime.now();
           syncStatusNotifier.value = SyncStatus.success;
+          _resetManualGuardAfterDelay();
+        } else if (!_isManualInResultState) {
+          syncStatusNotifier.value = SyncStatus.idle;
         }
+        _isSyncing = false;
         return;
       }
 
@@ -118,6 +141,7 @@ class SyncService {
             _nextRetryTime = null;
           }
         } catch (e) {
+          // Errores de autenticación
           if (e is AppwriteException && (e.code == 401 || e.code == 403)) {
             final reauthSuccess = await _attemptSilentLogin();
             if (reauthSuccess) {
@@ -127,6 +151,7 @@ class SyncService {
             }
           }
 
+          // Conflicto: Si ya existe en el servidor, lo damos por bueno y borramos de la cola local
           if (e is AppwriteException && e.code == 409) {
              await _localDb.deletePendingSync(pending.id);
              continue;
@@ -139,14 +164,29 @@ class SyncService {
 
       if (hasNetworkError) {
         _applyBackoff();
-        if (isManual) syncStatusNotifier.value = SyncStatus.error;
+        if (isManual || !_isManualInResultState) {
+          if (isManual) _isManualInResultState = true;
+          syncStatusNotifier.value = SyncStatus.error;
+          if (isManual) _resetManualGuardAfterDelay();
+        }
       } else {
-        if (isManual) syncStatusNotifier.value = SyncStatus.success;
+        if (isManual || !_isManualInResultState) {
+          if (isManual) {
+            _isManualInResultState = true;
+            _lastManualSyncTime = DateTime.now();
+          }
+          syncStatusNotifier.value = SyncStatus.success;
+          if (isManual) _resetManualGuardAfterDelay();
+        }
       }
 
     } catch (e) {
       _applyBackoff();
-      if (isManual) syncStatusNotifier.value = SyncStatus.error;
+      if (isManual || !_isManualInResultState) {
+        if (isManual) _isManualInResultState = true;
+        syncStatusNotifier.value = SyncStatus.error;
+        if (isManual) _resetManualGuardAfterDelay();
+      }
     } finally {
       _isSyncing = false;
     }
@@ -154,6 +194,15 @@ class SyncService {
 
   void resetSyncStatus() {
     syncStatusNotifier.value = SyncStatus.idle;
+  }
+
+  void _resetManualGuardAfterDelay() {
+    Future.delayed(const Duration(seconds: 4), () {
+      _isManualInResultState = false;
+      if (syncStatusNotifier.value != SyncStatus.syncing) {
+        syncStatusNotifier.value = SyncStatus.idle;
+      }
+    });
   }
 
   void _applyBackoff() {
@@ -180,7 +229,7 @@ class SyncService {
     }
   }
 
-  // --- MÉTODOS DE SINCRONIZACIÓN ---
+  // --- MÉTODOS DE SINCRONIZACIÓN (SIN CAMBIOS EN LA LÓGICA DE NEGOCIO) ---
 
   Future<bool> _syncUser(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'update_name') {

@@ -45,7 +45,7 @@ void main() {
           'currentDate': '02/01/2024',
           'currentHour': '10:30 AM',
           'createdAt': '2024-01-02T10:30:00Z',
-          'isRecurrent': true // MOVIMIENTO RECURRENTE
+          'isRecurrent': true 
         },
       ],
     ));
@@ -74,7 +74,8 @@ void main() {
   group('HistoryCustomWidget - Pruebas de Lista y Filtros', () {
     testWidgets('Debe mostrar los nombres y montos de los movimientos', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pump();
+      // pumpAndSettle es vital ahora que tenemos FadeInLeft con delay por cada ítem
+      await tester.pumpAndSettle();
 
       expect(find.text('Sueldo Mensual'), findsOneWidget);
       expect(find.text('Netflix'), findsOneWidget);
@@ -84,13 +85,13 @@ void main() {
 
     testWidgets('Debe mostrar el icono identificador solo en gastos recurrentes', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      // El icono repeat_rounded debe aparecer (para Netflix)
       expect(find.byIcon(Icons.repeat_rounded), findsOneWidget);
     });
 
     testWidgets('Debe ocultar los gastos si el filtro está desactivado', (WidgetTester tester) async {
+      // Configuramos el mock para que devuelva el filtro de gastos desactivado
       when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState(
         showIncomes: true,
         showExpenses: false,
@@ -102,7 +103,8 @@ void main() {
       ));
 
       await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pump();
+      // Esperamos a que cualquier cambio de tamaño o animación de filtrado se complete
+      await tester.pumpAndSettle();
 
       expect(find.text('Sueldo Mensual'), findsOneWidget);
       expect(find.text('Netflix'), findsNothing);

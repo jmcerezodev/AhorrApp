@@ -67,14 +67,12 @@ void main() {
 
       await syncService.forceSync();
 
-      // Debería pasar por syncing y terminar en success
       expect(states, contains(SyncStatus.syncing));
       expect(states.last, SyncStatus.success);
     });
 
     test('Exponential Backoff debe activar el estado de error ante fallos de red', () async {
       final syncService = SyncService();
-      // El appwriteId es obligatorio en la lógica de syncHistory/addHistory, si es null rompe antes del catch
       final pending = PendingSync()
         ..id = 1
         ..appwriteId = 'test-id'
@@ -84,7 +82,6 @@ void main() {
 
       when(() => mockLocalDb.getPendingSyncs()).thenAnswer((_) async => [pending]);
       
-      // Simular fallo de red
       when(() => mockAppwriteRepo.addHistory(
         documentId: any(named: 'documentId'),
         userId: any(named: 'userId'),
@@ -99,9 +96,8 @@ void main() {
         category: any(named: 'category'),
       )).thenThrow(AppwriteException('Network Error', 500));
 
-      // Primer fallo: En sincronización manual para asegurar que el notifier se actualice
       await syncService.processQueue(isManual: true);
-
+      
       expect(syncStatusNotifierValue(syncService), SyncStatus.error);
     });
 
@@ -113,6 +109,24 @@ void main() {
       
       expect(syncService.syncStatusNotifier.value, SyncStatus.idle);
       verifyNever(() => mockLocalDb.getPendingSyncs());
+    });
+
+    test('Sincronización automática debe ser bloqueada si estamos en periodo de resultado manual', () async {
+      final syncService = SyncService();
+      
+      // Simulamos que no hay pendientes para que la manual termine rápido en success
+      when(() => mockLocalDb.getPendingSyncs()).thenAnswer((_) async => []);
+
+      // 1. Ejecutamos sincronización manual (esto activa _isManualInResultState)
+      await syncService.processQueue(isManual: true);
+      expect(syncService.syncStatusNotifier.value, SyncStatus.success);
+      
+      // 2. Intentamos una sincronización automática inmediatamente
+      await syncService.processQueue(isManual: false);
+      
+      // Verificamos que getPendingSyncs solo se llamó una vez (por la manual)
+      // La automática debería haber retornado antes de consultar la DB
+      verify(() => mockLocalDb.getPendingSyncs()).called(1);
     });
   });
 }
