@@ -12,6 +12,7 @@ import 'package:ahorrapp/data/repositories/ticket_repository_impl.dart';
 import 'package:ahorrapp/data/services/google_mlkit_ocr_service.dart';
 import 'package:ahorrapp/data/services/google_mlkit_document_scanner_service.dart';
 import 'package:ahorrapp/data/services/openai_service.dart';
+import 'package:ahorrapp/data/services/pdf_export_service.dart';
 import 'package:ahorrapp/data/services/ticket_export_service_impl.dart';
 import 'package:ahorrapp/domain/repositories/debt_loan_repository.dart';
 import 'package:ahorrapp/domain/repositories/i_recurrent_expense_repository.dart';
@@ -81,6 +82,7 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<OCRService>(() => GoogleMlKitOCRService(getIt<AIService>()));
   getIt.registerLazySingleton<DocumentScannerService>(() => GoogleMlKitDocumentScannerService());
   getIt.registerLazySingleton<TicketExportService>(() => TicketExportServiceImpl());
+  getIt.registerLazySingleton<PdfExportService>(() => PdfExportService());
 
   // 2. REPOSITORIOS
   getIt.registerLazySingleton<IMovementRepository>(

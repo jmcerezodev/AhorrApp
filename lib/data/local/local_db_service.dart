@@ -78,6 +78,10 @@ class LocalDbService {
         .findAll();
   }
 
+  Future<List<LocalHistory>> getAllHistory() async {
+    return await _isar.localHistorys.where().sortByCreatedAtDesc().findAll();
+  }
+
   // --- HISTORIAL (INGRESOS / GASTOS) ---
 
   Future<void> saveHistoryItems(List<LocalHistory> items) async {

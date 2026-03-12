@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../dialogs/export_dialogs/export_pdf_dialog.dart';
 
 class SideMenuWidget extends StatelessWidget {
   const SideMenuWidget({super.key});
@@ -101,6 +102,19 @@ class SideMenuWidget extends StatelessWidget {
                         title: 'Cambio de contraseña',
                         text: '',
                       ),
+                    );
+                  },
+                ),
+
+                _DrawerItem(
+                  icon: Icons.picture_as_pdf_rounded,
+                  label: 'Exportar Reporte (PDF)',
+                  onTap: () {
+                    Navigator.pop(context);
+                    showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (context) => const ExportPdfDialog(),
                     );
                   },
                 ),
