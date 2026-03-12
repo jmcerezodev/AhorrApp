@@ -1,4 +1,3 @@
-import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/presentation/screens/screens.dart';
 import 'package:ahorrapp/presentation/screens/authentication/confirm_reset_password_screen.dart';
 import 'package:ahorrapp/presentation/screens/main_navigator_screen.dart';
@@ -36,15 +35,7 @@ GoRouter getAppRouter(String initialLocation) {
       ),
       GoRoute(
         path: '/licenses',
-        builder: (context, state) {
-          final String currentYear = Date().year().toString();
-          final String appVersion = state.extra as String? ?? '1.0.0';
-          return LicensePage(
-            applicationName: 'AhorrApp',
-            applicationVersion: appVersion,
-            applicationLegalese: '© $currentYear JMCerezoDev',
-          );
-        },
+        builder: (context, state) => const LicensesScreen(),
       ),
     ],
   );

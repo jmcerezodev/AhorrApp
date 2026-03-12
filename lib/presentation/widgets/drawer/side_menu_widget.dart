@@ -5,6 +5,7 @@ import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SideMenuWidget extends StatelessWidget {
   const SideMenuWidget({super.key});
@@ -158,7 +159,53 @@ class SideMenuWidget extends StatelessWidget {
               ],
             ),
           ),
+          const SafeArea(
+            top: false,
+            child: _Footer(),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _Footer extends StatelessWidget {
+  const _Footer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 25, top: 10),
+      child: GestureDetector(
+        onTap: () async {
+          final Uri url = Uri.parse('https://jmcerezo.dev');
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          }
+        },
+        child: Column(
+          children: [
+            Text(
+              'Desarrollado con ❤️ por',
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: Colors.blueGrey.shade300,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'JMCEREZO.DEV',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: Colors.orange.shade400,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
