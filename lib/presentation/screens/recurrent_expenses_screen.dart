@@ -48,20 +48,22 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with 
         return SafeArea(
           child: Column(
             children: [
-              // 1. APPBAR (Diseño idéntico a Deudas)
+              // 1. APPBAR - Desde arriba
               FadeInDown(
-                duration: const Duration(milliseconds: 500),
+                duration: const Duration(milliseconds: 600),
+                from: 100,
                 child: const RecurrentAppBar(),
               ),
 
-              // 2. TARJETA DE RESUMEN (Diseño idéntico a Deudas)
+              // 2. TARJETA DE RESUMEN
               RecurrentSummaryWidget(
                 isIncomeTab: _currentTabIndex == 1,
               ),
 
-              // 3. PESTAÑAS (Diseño idéntico a Deudas)
-              FadeInDown(
-                delay: const Duration(milliseconds: 100),
+              // 3. PESTAÑAS - Desde la IZQUIERDA
+              FadeInLeft(
+                duration: const Duration(milliseconds: 600),
+                from: 100,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Container(
@@ -90,17 +92,21 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with 
                 ),
               ),
 
-              // 4. LISTADOS (TabBarView)
+              // 4. LISTADOS - Desde abajo
               Expanded(
                 child: state.status == RecurrentExpensesStatus.loading && state.expenses.isEmpty
                   ? const Center(child: CircularProgressIndicator(color: Colors.orange))
-                  : TabBarView(
-                      controller: _tabController,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: const [
-                        RecurrentHistoryWidget(isIncomeTab: false),
-                        RecurrentHistoryWidget(isIncomeTab: true),
-                      ],
+                  : FadeInUp(
+                      duration: const Duration(milliseconds: 600),
+                      from: 100,
+                      child: TabBarView(
+                        controller: _tabController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: const [
+                          RecurrentHistoryWidget(isIncomeTab: false),
+                          RecurrentHistoryWidget(isIncomeTab: true),
+                        ],
+                      ),
                     ),
               ),
             ],

@@ -41,25 +41,29 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return BlocBuilder<DebtsLoansCubit, DebtsLoansState>(
       builder: (context, state) {
         return SafeArea(
           child: Column(
             children: [
+              // 1. APPBAR - Desde arriba
               FadeInDown(
                 duration: const Duration(milliseconds: 500),
+                from: 100,
                 child: _buildAppBar(context, colorScheme),
               ),
 
+              // 2. RESUMEN - Desde arriba
               DebtsSummaryWidget(
                 totalAmount: _currentTabIndex == 0 ? state.totalDebts : state.totalLoans,
                 isDebtView: _currentTabIndex == 0,
               ),
 
-              FadeInDown(
-                delay: const Duration(milliseconds: 100),
+              // 3. PESTAÑAS - Desde la DERECHA (FadeInRight) para Deudas
+              FadeInRight(
+                duration: const Duration(milliseconds: 600),
+                from: 100,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Container(
@@ -88,16 +92,21 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
                 ),
               ),
 
+              // 4. LISTADO - Desde abajo
               Expanded(
                 child: state.isLoading 
                   ? const Center(child: CircularProgressIndicator(color: Colors.orange))
-                  : TabBarView(
-                      controller: _tabController,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        _buildList(state.debtsLoans.where((e) => e.type == DebtLoanType.debt).toList(), true, colorScheme, isDark),
-                        _buildList(state.debtsLoans.where((e) => e.type == DebtLoanType.loan).toList(), false, colorScheme, isDark),
-                      ],
+                  : FadeInUp(
+                      duration: const Duration(milliseconds: 600),
+                      from: 100,
+                      child: TabBarView(
+                        controller: _tabController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          _buildList(state.debtsLoans.where((e) => e.type == DebtLoanType.debt).toList(), true),
+                          _buildList(state.debtsLoans.where((e) => e.type == DebtLoanType.loan).toList(), false),
+                        ],
+                      ),
                     ),
               ),
             ],
@@ -145,7 +154,7 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildList(List<DebtLoan> items, bool isDebt, ColorScheme colorScheme, bool isDark) {
+  Widget _buildList(List<DebtLoan> items, bool isDebt) {
     if (items.isEmpty) {
       return EmptyListWidget(
         text: isDebt 
@@ -154,19 +163,20 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
       );
     }
 
-    return FadeInUp(
-      child: ListView.builder(
-        padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return DebtLoanCard(
-            item: item, 
-            isDark: isDark, 
-            colorScheme: colorScheme,
-          );
-        },
-      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return DebtLoanCard(
+          item: item, 
+          isDark: isDark, 
+          colorScheme: colorScheme,
+        );
+      },
     );
   }
 }

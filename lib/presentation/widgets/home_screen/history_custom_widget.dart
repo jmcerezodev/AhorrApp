@@ -105,10 +105,14 @@ class HistoryCustomWidget extends StatelessWidget {
                   ),
                 ),
                 
-                if (historyCubit.state.isFilterOpen && !historyCubit.state.isChart)
-                  FadeInDown(
-                    duration: const Duration(milliseconds: 200),
-                    child: _FilterPanel(historyCubit: historyCubit),
+                // PANEL DE FILTROS ANIMADO
+                if (!historyCubit.state.isChart)
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    child: historyCubit.state.isFilterOpen
+                        ? _FilterPanel(historyCubit: historyCubit)
+                        : const SizedBox(width: double.infinity, height: 0),
                   ),
                 
                 const SizedBox(height: 5),
@@ -119,16 +123,23 @@ class HistoryCustomWidget extends StatelessWidget {
           // 2. CONTENIDO (Gráfico o Lista)
           if (historyCubit.state.isChart)
             SliverToBoxAdapter(
-              child: FadeInRight(child: const ChartHistory()),
+              child: FadeInRight(
+                duration: const Duration(milliseconds: 400),
+                child: const ChartHistory()
+              ),
             )
           else if (items.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
-              child: _EmptyState(
-                showIncomes: historyCubit.state.showIncomes,
-                showExpenses: historyCubit.state.showExpenses,
-                showSavings: historyCubit.state.showSavings,
-                selectedDate: "${dateState.month} de ${dateState.year}"
+              child: FadeInLeft(
+                duration: const Duration(milliseconds: 400),
+                from: 30,
+                child: _EmptyState(
+                  showIncomes: historyCubit.state.showIncomes,
+                  showExpenses: historyCubit.state.showExpenses,
+                  showSavings: historyCubit.state.showSavings,
+                  selectedDate: "${dateState.month} de ${dateState.year}"
+                ),
               ),
             )
           else
@@ -136,7 +147,12 @@ class HistoryCustomWidget extends StatelessWidget {
               padding: const EdgeInsets.only(top: 10, bottom: 20),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => _HistoryItem(item: items[index]),
+                  (context, index) => FadeInLeft(
+                    duration: const Duration(milliseconds: 400),
+                    delay: Duration(milliseconds: index * 20),
+                    from: 30,
+                    child: _HistoryItem(item: items[index]),
+                  ),
                   childCount: items.length,
                 ),
               ),

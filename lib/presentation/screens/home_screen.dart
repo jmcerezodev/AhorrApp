@@ -114,6 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
                   child: FadeInDown(
                     duration: const Duration(milliseconds: 500),
+                    from: 100,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -143,26 +144,39 @@ class _HomeScreenState extends State<HomeScreen> {
       
                 FadeInDown(
                   delay: const Duration(milliseconds: 100),
+                  from: 100,
                   child: const InfoGlogalWidget()
                 ),
       
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-                  child: FadeInDown(
-                    delay: const Duration(milliseconds: 200),
-                    child: const Row(
-                      children: [
-                        Expanded(flex: 3, child: DateCustomWidget()),
-                        SizedBox(width: 12),
-                        Expanded(flex: 2, child: MonthlyBalanceWidget()),
-                      ],
-                    ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3, 
+                        child: FadeInLeft(
+                          delay: const Duration(milliseconds: 200),
+                          from: 100,
+                          child: const DateCustomWidget()
+                        )
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2, 
+                        child: FadeInRight(
+                          delay: const Duration(milliseconds: 200),
+                          from: 100,
+                          child: const MonthlyBalanceWidget()
+                        )
+                      ),
+                    ],
                   ),
                 ),
       
                 const SizedBox(height: 5),
                 FadeInUp(
                   delay: const Duration(milliseconds: 300),
+                  from: 100,
                   child: const ExpensesIncomesCustomWidget()
                 ),
                 const SizedBox(height: 10),
@@ -170,6 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: FadeInUp(
                     delay: const Duration(milliseconds: 400),
+                    from: 100,
                     child: const HistoryCustomWidget()
                   ),
                 ),

@@ -28,7 +28,8 @@ class RecurrentSummaryWidget extends StatelessWidget {
             : (isIncomeTab ? state.totalIncomeStrict : state.totalExpenseStrict);
 
         return FadeInDown(
-          duration: const Duration(milliseconds: 600),
+          duration: const Duration(milliseconds: 1000), // Más lento
+          from: 50, // Más recorrido
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             child: Container(

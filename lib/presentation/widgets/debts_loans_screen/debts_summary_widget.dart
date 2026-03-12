@@ -22,6 +22,7 @@ class DebtsSummaryWidget extends StatelessWidget {
 
     return FadeInDown(
       duration: const Duration(milliseconds: 600),
+      from: 100, // Unificado a 100px
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         child: Container(

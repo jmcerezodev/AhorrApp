@@ -3,7 +3,6 @@ import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_expense_item.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_filter_panel.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -56,16 +55,16 @@ class RecurrentHistoryWidget extends StatelessWidget {
           ),
         ),
 
-        // PANEL DE FILTROS
+        // PANEL DE FILTROS ANIMADO
         BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
           builder: (context, state) {
-            if (state.isFilterOpen) {
-              return FadeInDown(
-                duration: const Duration(milliseconds: 200),
-                child: RecurrentFilterPanel(cubit: context.read<RecurrentExpensesCubit>()),
-              );
-            }
-            return const SizedBox.shrink();
+            return AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: state.isFilterOpen
+                  ? RecurrentFilterPanel(cubit: context.read<RecurrentExpensesCubit>())
+                  : const SizedBox(width: double.infinity, height: 0),
+            );
           },
         ),
 
@@ -80,13 +79,11 @@ class RecurrentHistoryWidget extends StatelessWidget {
                 return Center(child: Text(state.errorMessage ?? 'Error al cargar registros fijos'));
               }
 
-              // 1. Filtrar los items por tipo (Ingreso/Gasto) y ordenarlos por su posición actual
               final List<dynamic> filteredExpenses = state.expenses
                   .where((e) => e.isIncome == isIncomeTab)
                   .toList()
                 ..sort((a, b) => a.position.compareTo(b.position));
 
-              // 2. Aplicar los filtros secundarios (Automático, Manual, Categoría)
               final displayedExpenses = filteredExpenses.where((e) {
                 final bool isAutomatic = e.day != null;
                 if (isAutomatic && !state.showAutomatic) return false;
@@ -105,12 +102,13 @@ class RecurrentHistoryWidget extends StatelessWidget {
                 );
               }
 
+              // La animación principal (FadeInUp) se maneja ahora desde la pantalla (Screen)
+              // para asegurar que todo el bloque de la lista suba de forma coordinada.
               return ReorderableListView.builder(
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20),
                 physics: const BouncingScrollPhysics(),
                 itemCount: displayedExpenses.length,
                 onReorder: (oldIndex, newIndex) {
-                  // Pasamos la acción al Cubit asegurando que los índices corresponden a la lista filtrada por tipo
                   context.read<RecurrentExpensesCubit>().reorderExpenses(
                     oldIndex, 
                     newIndex, 
