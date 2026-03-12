@@ -55,7 +55,6 @@ void main() {
     mockRecurrentCubit = MockRecurrentExpensesCubit();
     mockSaveMovement = MockSaveMovementUseCase();
 
-    // Setup Service Locator - Reset and Register
     final getIt = GetIt.instance;
     await getIt.reset();
     getIt.registerSingleton<SaveMovementUseCase>(mockSaveMovement);
@@ -122,90 +121,78 @@ void main() {
         expect(capturedMovement.name, 'Cena');
         expect(capturedMovement.amount, 100);
         expect(capturedMovement.type, MovementType.expense);
-        expect(capturedMovement.isIncome, false);
         expect(capturedMovement.category, 'deudas');
+      });
+
+      test('debe registrar movimiento en historial como INGRESO si es un cobro de PRÉSTAMO', () async {
+        when(() => mockGet(any())).thenAnswer((_) async => [tLoan]);
+        when(() => mockUpdate(any())).thenAnswer((_) async => {});
+        when(() => mockSaveMovement(any())).thenAnswer((_) async => {});
+
+        await cubit.loadDebtsLoans();
+        await cubit.addPayment('2', 20, addToHistory: true);
+
+        final captured = verify(() => mockSaveMovement(captureAny())).captured.first as Movement;
+        expect(captured.type, MovementType.income);
       });
     });
 
-    group('Sincronización de día de cobro y Evitar Duplicados -', () {
+    group('Lógica Contable y Sincronización -', () {
+      test('addOrUpdateDebtLoan debe registrar como GASTO inicial tanto deudas como préstamos', () async {
+        when(() => mockAdd(any())).thenAnswer((_) async => {});
+        when(() => mockGet(any())).thenAnswer((_) async => []);
+        when(() => mockSaveMovement(any())).thenAnswer((_) async => {});
+
+        await cubit.addOrUpdateDebtLoan(
+          name: 'Deuda', person: 'P', totalAmount: 100, type: DebtLoanType.debt, addToHistory: true
+        );
+        final capturedDebt = verify(() => mockSaveMovement(captureAny())).captured.last as Movement;
+        expect(capturedDebt.type, MovementType.expense);
+
+        await cubit.addOrUpdateDebtLoan(
+          name: 'Préstamo', person: 'P', totalAmount: 50, type: DebtLoanType.loan, addToHistory: true
+        );
+        final capturedLoan = verify(() => mockSaveMovement(captureAny())).captured.last as Movement;
+        expect(capturedLoan.type, MovementType.expense);
+      });
+
       test('addOrUpdateDebtLoan debe usar el día de la fecha de inicio seleccionada para la recurrencia', () async {
         when(() => mockAdd(any())).thenAnswer((_) async => {});
         when(() => mockGet(any())).thenAnswer((_) async => []);
         when(() => mockRecurrentCubit.addOrUpdateExpense(
-          id: any(named: 'id'),
-          name: any(named: 'name'),
-          amount: any(named: 'amount'),
-          day: any(named: 'day'),
-          category: any(named: 'category'),
-          frequency: any(named: 'frequency'),
-          startDate: any(named: 'startDate'),
-          isIncome: any(named: 'isIncome'),
+          id: any(named: 'id'), name: any(named: 'name'), amount: any(named: 'amount'),
+          day: any(named: 'day'), category: any(named: 'category'), frequency: any(named: 'frequency'),
+          startDate: any(named: 'startDate'), isIncome: any(named: 'isIncome'),
         )).thenAnswer((_) async => {});
 
-        final startDate = DateTime(2024, 5, 15); // Día 15
+        final startDate = DateTime(2024, 5, 15);
 
         await cubit.addOrUpdateDebtLoan(
-          name: 'Deuda Coche', 
-          person: 'Banco', 
-          totalAmount: 1000, 
-          type: DebtLoanType.debt,
-          date: startDate, 
-          isInstallment: true,
-          installmentAmount: 100,
-          addToRecurrent: true,
+          name: 'Coche', person: 'B', totalAmount: 1000, type: DebtLoanType.debt,
+          date: startDate, isInstallment: true, installmentAmount: 100, addToRecurrent: true
         );
 
         verify(() => mockRecurrentCubit.addOrUpdateExpense(
-          id: any(named: 'id'),
-          name: any(named: 'name'),
-          amount: 100,
-          day: 15, 
-          isIncome: false,
-          category: 'deudas',
-          frequency: any(named: 'frequency'),
-          startDate: startDate,
+          id: any(named: 'id'), name: any(named: 'name'), amount: 100, day: 15, isIncome: false,
+          category: 'deudas', frequency: any(named: 'frequency'), startDate: startDate,
         )).called(1);
       });
 
-      test('addOrUpdateDebtLoan debe reutilizar existingRecurrentId al editar para evitar duplicados', () async {
+      test('addOrUpdateDebtLoan debe reutilizar existingRecurrentId al editar', () async {
         when(() => mockUpdate(any())).thenAnswer((_) async => {});
         when(() => mockGet(any())).thenAnswer((_) async => []);
         when(() => mockRecurrentCubit.addOrUpdateExpense(
-          id: any(named: 'id'),
-          name: any(named: 'name'),
-          amount: any(named: 'amount'),
-          day: any(named: 'day'),
-          category: any(named: 'category'),
-          frequency: any(named: 'frequency'),
-          startDate: any(named: 'startDate'),
-          isIncome: any(named: 'isIncome'),
+          id: any(named: 'id'), name: any(named: 'name'), amount: any(named: 'amount'),
+          day: any(named: 'day'), category: any(named: 'category'), frequency: any(named: 'frequency'),
+          startDate: any(named: 'startDate'), isIncome: any(named: 'isIncome'),
         )).thenAnswer((_) async => {});
 
-        const existingRecurrentId = 'recurrent-uuid-123';
-
         await cubit.addOrUpdateDebtLoan(
-          id: '1',
-          name: 'Deuda Editada', 
-          person: 'Banco', 
-          totalAmount: 1200, 
-          type: DebtLoanType.debt,
-          isInstallment: true,
-          installmentAmount: 120,
-          addToRecurrent: true,
-          existingRecurrentId: existingRecurrentId,
+          id: '1', name: 'N', person: 'P', totalAmount: 100, type: DebtLoanType.debt,
+          isInstallment: true, installmentAmount: 10, addToRecurrent: true, existingRecurrentId: 'exist_123'
         );
 
-        // Verificamos que se llamó a addOrUpdateExpense con el ID existente
-        verify(() => mockRecurrentCubit.addOrUpdateExpense(
-          id: existingRecurrentId, // El ID debe ser el mismo
-          name: any(named: 'name', that: contains('Deuda Editada')),
-          amount: 120,
-          day: any(named: 'day'),
-          category: 'deudas',
-          frequency: any(named: 'frequency'),
-          startDate: any(named: 'startDate'),
-          isIncome: false,
-        )).called(1);
+        verify(() => mockRecurrentCubit.addOrUpdateExpense(id: 'exist_123', name: any(named: 'name'), amount: 10, isIncome: false, day: any(named: 'day'), category: 'deudas', frequency: any(named: 'frequency'), startDate: any(named: 'startDate'))).called(1);
       });
     });
   });

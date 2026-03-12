@@ -51,14 +51,14 @@ void main() {
       expect(find.byIcon(Icons.add_circle_outline_rounded), findsNothing);
     });
 
-    testWidgets('Debe mostrar "Pagada" si el importe pendiente es 0', (WidgetTester tester) async {
+    testWidgets('Debe mostrar "Finalizado" si el importe pendiente es 0', (WidgetTester tester) async {
       final item = DebtLoan(
         id: '1', userId: 'u', name: 'Test', person: 'P', 
         totalAmount: 100, paidAmount: 100, type: DebtLoanType.debt, isCompleted: true
       );
 
       await tester.pumpWidget(createWidgetUnderTest(item));
-      expect(find.text('Pagada'), findsOneWidget);
+      expect(find.text('Finalizado'), findsOneWidget);
     });
 
     testWidgets('Debe mostrar el progreso de cuotas si es a plazos', (WidgetTester tester) async {

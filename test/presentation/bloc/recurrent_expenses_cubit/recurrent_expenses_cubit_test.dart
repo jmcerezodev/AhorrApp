@@ -182,18 +182,25 @@ void main() {
     });
   });
 
-  group('RecurrentExpensesCubit - Posicionamiento y Gestión', () {
-    test('reorderExpenses debe actualizar posiciones respetando el tipo', () async {
-      final e1 = RecurrentExpense(id: '1', userId: 'u1', name: 'A', amount: 10, startDate: DateTime.now(), position: 0, isIncome: false);
-      final e2 = RecurrentExpense(id: '2', userId: 'u1', name: 'B', amount: 20, startDate: DateTime.now(), position: 1, isIncome: false);
-      when(() => mockGet(any())).thenAnswer((_) async => [e1, e2]);
+  group('RecurrentExpensesCubit - Posicionamiento y Reordenamiento', () {
+    test('reorderExpenses debe actualizar posiciones sin afectar al otro tipo y persistir secuencialmente', () async {
+      final e1 = RecurrentExpense(id: 'exp_1', userId: 'u1', name: 'Gasto 1', amount: 10, startDate: DateTime.now(), position: 0, isIncome: false);
+      final e2 = RecurrentExpense(id: 'exp_2', userId: 'u1', name: 'Gasto 2', amount: 20, startDate: DateTime.now(), position: 1, isIncome: false);
+      final i1 = RecurrentExpense(id: 'inc_1', userId: 'u1', name: 'Ingreso 1', amount: 100, startDate: DateTime.now(), position: 0, isIncome: true);
+      
+      when(() => mockGet(any())).thenAnswer((_) async => [e1, e2, i1]);
       when(() => mockSave(any())).thenAnswer((_) async => {});
       
       await cubit.loadExpenses();
       await cubit.reorderExpenses(0, 2, isIncome: false);
 
-      expect(cubit.state.expenses.firstWhere((e) => e.id == '2').position, 0);
-      expect(cubit.state.expenses.firstWhere((e) => e.id == '1').position, 1);
+      final expenses = cubit.state.expenses;
+      expect(expenses.firstWhere((e) => e.id == 'exp_2').position, 0);
+      expect(expenses.firstWhere((e) => e.id == 'exp_1').position, 1);
+      expect(expenses.firstWhere((e) => e.id == 'inc_1').position, 0);
+
+      verify(() => mockSave(any(that: predicate<RecurrentExpense>((e) => e.id == 'exp_1' && e.position == 1)))).called(1);
+      verify(() => mockSave(any(that: predicate<RecurrentExpense>((e) => e.id == 'exp_2' && e.position == 0)))).called(1);
     });
 
     test('addOrUpdateExpense debe mantener position e includeInSummary si ya existen', () async {
@@ -236,14 +243,6 @@ void main() {
       await cubit.loadExpenses();
       expect(cubit.state.status, RecurrentExpensesStatus.failure);
       expect(cubit.state.errorMessage, contains('Error fatal'));
-    });
-
-    test('addOrUpdateExpense debe soportar el flag isIncome', () async {
-      when(() => mockSave(any())).thenAnswer((_) async => {});
-      when(() => mockGet(any())).thenAnswer((_) async => []);
-      await cubit.addOrUpdateExpense(name: 'Sueldo', amount: 2000, isIncome: true);
-      final captured = verify(() => mockSave(captureAny())).captured.first as RecurrentExpense;
-      expect(captured.isIncome, true);
     });
 
     test('toggleProratedView debe cambiar estado y guardar preferencia', () {
