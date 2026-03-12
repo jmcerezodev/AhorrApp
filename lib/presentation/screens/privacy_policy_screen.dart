@@ -6,40 +6,33 @@ class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
   final String _privacyPolicyMarkdown = '''
-# Política de Privacidad de AhorrApp
+# Política de Privacidad AhorrApp
 
-**Fecha de entrada en vigor: 1 de enero de 2024**
+En AhorrApp, diseñamos nuestra tecnología para que tu tranquilidad financiera vaya de la mano con la seguridad de tus datos. No vendemos ni compartimos tu información personal con fines comerciales.
 
-En AhorrApp, valoramos tu privacidad y la seguridad de tus datos financieros. Esta política describe cómo manejamos tu información.
+## 1. Tratamiento de IA
+Procesado híbrido de seguridad: utilizamos **Google ML Kit** para la extracción local de datos en tu dispositivo. Solo el texto procesado se envía a **OpenAI** para su clasificación financiera, garantizando que tus imágenes originales nunca se compartan con terceros.
 
-## 1. Recolección de Datos
-AhorrApp recolecta los siguientes datos:
-- **Correo electrónico y nombre:** Para la creación y gestión de tu cuenta.
-- **Datos financieros:** Ingresos, gastos y ahorros que registres manualmente.
-- **Imágenes de tickets:** Si utilizas el escáner de tickets, procesamos la imagen localmente y en la nube.
+## 2. Seguridad Biométrica
+Protección de acceso mediante la interfaz nativa de tu sistema operativo (huella o rostro). ADN AhorrApp **no accede, no almacena ni conoce** tus datos biométricos; solo recibe la validación segura del hardware de tu dispositivo.
 
-## 2. Uso de la Información
-Tus datos se utilizan exclusivamente para:
-- Proporcionarte el servicio de gestión financiera.
-- Sincronizar tus datos entre múltiples dispositivos a través de **Appwrite**.
-- Procesar tickets mediante **OpenAI** (solo enviamos el texto extraído, nunca tus datos personales).
+## 3. Infraestructura Privada (VPS)
+Tus datos residen en la plataforma **Appwrite**, alojada exclusivamente en nuestro propio **Servidor VPS (Servidor Privado Virtual)** gestionado por el desarrollador. Esto garantiza la soberanía digital absoluta, evitando el uso de nubes públicas comerciales.
 
-## 3. Almacenamiento y Seguridad
-- Tus datos se guardan localmente en tu dispositivo (**Isar**) y se sincronizan de forma segura con nuestros servidores.
-- Utilizamos **biometría local** para proteger el acceso a la aplicación.
-- Tienes el control total: puedes eliminar todos tus datos desde el menú de gestión de cuenta.
-
-## 4. Terceros
-No vendemos ni compartimos tus datos con anunciantes. Utilizamos proveedores de confianza como Appwrite (Base de datos) y OpenAI (Procesamiento de texto de tickets).
+## 4. Derechos y Portabilidad
+Garantizamos el control total sobre tu información:
+- **Exportación:** Generación de reportes financieros en **PDF** con el diseño oficial de la app.
+- **Eliminación:** Borrado total, inmediato y permanente de tu cuenta y todos los datos asociados desde el menú de ajustes.
 ''';
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
+    const orangePrimary = Color(0xFFFFA500);
+    const boneWhite = Color(0xFFFFFBF5);
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF0F1112) : const Color(0xFFFFFBF5),
+      backgroundColor: isDarkMode ? const Color(0xFF0F1112) : boneWhite,
       appBar: AppBar(
         title: const Text('POLÍTICA DE PRIVACIDAD'),
         centerTitle: true,
@@ -52,10 +45,27 @@ No vendemos ni compartimos tus datos con anunciantes. Utilizamos proveedores de 
                 data: _privacyPolicyMarkdown,
                 padding: const EdgeInsets.all(25.0),
                 styleSheet: MarkdownStyleSheet(
-                  h1: TextStyle(color: primaryColor, fontSize: 22, fontWeight: FontWeight.bold),
-                  h2: TextStyle(color: primaryColor, fontSize: 18, fontWeight: FontWeight.bold, height: 2.0),
-                  p: TextStyle(color: isDarkMode ? Colors.white70 : Colors.blueGrey.shade800, fontSize: 15, height: 1.5),
-                  strong: TextStyle(color: isDarkMode ? Colors.white : Colors.blueGrey.shade900, fontWeight: FontWeight.bold),
+                  h1: const TextStyle(
+                    color: orangePrimary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  h2: const TextStyle(
+                    color: orangePrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    height: 2.0,
+                  ),
+                  p: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.blueGrey.shade800,
+                    fontSize: 15,
+                    height: 1.5,
+                  ),
+                  pPadding: const EdgeInsets.only(bottom: 12.0),
+                  strong: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.blueGrey.shade900,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -63,7 +73,9 @@ No vendemos ni compartimos tus datos con anunciantes. Utilizamos proveedores de 
               padding: const EdgeInsets.all(25.0),
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  final Uri url = Uri.parse('https://jmcerezo.dev/politicasprivacidad/ahorrapp.html');
+                  final Uri url = Uri.parse(
+                    'https://jmcerezo.dev/politicasprivacidad/ahorrapp.html',
+                  );
                   if (await canLaunchUrl(url)) {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   }
@@ -71,10 +83,12 @@ No vendemos ni compartimos tus datos con anunciantes. Utilizamos proveedores de 
                 icon: const Icon(Icons.language_rounded),
                 label: const Text('VER VERSIÓN WEB OFICIAL'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
+                  backgroundColor: orangePrimary,
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 55),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                 ),
               ),
             ),
