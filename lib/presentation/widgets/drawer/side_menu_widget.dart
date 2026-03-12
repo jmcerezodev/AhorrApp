@@ -1,5 +1,8 @@
 import 'package:ahorrapp/core/auth/biometric_service.dart';
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
+import 'package:ahorrapp/core/sync/sync_service.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +19,7 @@ class SideMenuWidget extends StatelessWidget {
     final themeCubit = context.watch<ThemeCubit>();
     final isDark = themeCubit.state == ThemeMode.dark;
     final biometricService = BiometricService();
+    final primaryOrange = Theme.of(context).primaryColor;
 
     return Drawer(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -33,6 +37,8 @@ class SideMenuWidget extends StatelessWidget {
               padding: EdgeInsets.zero,
               physics: const BouncingScrollPhysics(),
               children: [
+                const SizedBox(height: 10),
+                const _SyncButton(),
                 const SizedBox(height: 10),
                 const _SectionTitle(title: 'AJUSTES DE LA APP'),
                 
@@ -72,9 +78,9 @@ class SideMenuWidget extends StatelessWidget {
                   inactiveIcon: Icons.lock_outline_rounded,
                 ),
 
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 25, vertical: 5),
-                  child: Divider(height: 1, thickness: 0.5, color: Colors.orange),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
+                  child: Divider(height: 1, thickness: 0.5, color: primaryOrange.withOpacity(0.3)),
                 ),
 
                 const _SectionTitle(title: 'GESTIÓN DE CUENTA'),
@@ -150,9 +156,9 @@ class SideMenuWidget extends StatelessWidget {
                   },
                 ),
                 
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 25, vertical: 5),
-                  child: Divider(height: 1, thickness: 0.5, color: Colors.orange),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
+                  child: Divider(height: 1, thickness: 0.5, color: primaryOrange.withOpacity(0.3)),
                 ),
 
                 const _SectionTitle(title: 'INFORMACIÓN Y LEGAL'),
@@ -186,11 +192,152 @@ class SideMenuWidget extends StatelessWidget {
   }
 }
 
+class _SyncButton extends StatelessWidget {
+  const _SyncButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryOrange = Theme.of(context).primaryColor;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25),
+      child: OutlinedButton.icon(
+        onPressed: () => _showSyncDialog(context),
+        icon: const Icon(Icons.sync_rounded, size: 18),
+        label: const Text('SINCRONIZAR AHORA', style: TextStyle(fontSize: 11, letterSpacing: 1)),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primaryOrange,
+          side: BorderSide(color: primaryOrange.withOpacity(0.5)),
+          minimumSize: const Size(double.infinity, 45),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          backgroundColor: isDark ? primaryOrange.withOpacity(0.05) : Colors.white,
+        ),
+      ),
+    );
+  }
+
+  void _showSyncDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const _SyncStatusDialog(),
+    ).then((_) {
+      // Al cerrar el diálogo (ya sea manual o automático), reseteamos el estado a idle
+      getIt<SyncService>().resetSyncStatus();
+    });
+    getIt<SyncService>().forceSync();
+  }
+}
+
+class _SyncStatusDialog extends StatefulWidget {
+  const _SyncStatusDialog();
+
+  @override
+  State<_SyncStatusDialog> createState() => _SyncStatusDialogState();
+}
+
+class _SyncStatusDialogState extends State<_SyncStatusDialog> with SingleTickerProviderStateMixin {
+  late AnimationController _rotationController;
+  final SyncService _syncService = getIt<SyncService>();
+
+  @override
+  void initState() {
+    super.initState();
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
+
+    _syncService.syncStatusNotifier.addListener(_onStatusChange);
+  }
+
+  @override
+  void dispose() {
+    _syncService.syncStatusNotifier.removeListener(_onStatusChange);
+    _rotationController.dispose();
+    super.dispose();
+  }
+
+  void _onStatusChange() {
+    if (!mounted) return;
+    final status = _syncService.syncStatusNotifier.value;
+    if (status == SyncStatus.success || status == SyncStatus.error) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted && Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryOrange = Theme.of(context).primaryColor;
+
+    return ValueListenableBuilder<SyncStatus>(
+      valueListenable: _syncService.syncStatusNotifier,
+      builder: (context, status, child) {
+        IconData icon = Icons.sync_rounded;
+        String title = 'Sincronizando...';
+        String message = 'Estamos subiendo tus datos financieros a la nube segura.';
+        Color iconColor = primaryOrange;
+
+        if (status == SyncStatus.success) {
+          icon = Icons.check_circle_outline_rounded;
+          title = '¡Éxito!';
+          message = 'Tus datos están sincronizados correctamente.';
+          iconColor = Colors.green;
+          _rotationController.stop();
+        } else if (status == SyncStatus.error) {
+          icon = Icons.error_outline_rounded;
+          title = 'Error de conexión';
+          message = 'No se ha podido sincronizar. Reintentando en unos momentos...';
+          iconColor = Colors.orange;
+          _rotationController.stop();
+        }
+
+        return CustomDialogWrapper(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RotationTransition(
+                turns: status == SyncStatus.syncing ? _rotationController : const AlwaysStoppedAnimation(0),
+                child: Icon(icon, color: iconColor, size: 50),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13, color: Colors.grey),
+              ),
+              if (status == SyncStatus.success || status == SyncStatus.error) ...[
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('CERRAR'),
+                ),
+              ]
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _Footer extends StatelessWidget {
   const _Footer();
 
   @override
   Widget build(BuildContext context) {
+    final primaryOrange = Theme.of(context).primaryColor;
     return Padding(
       padding: const EdgeInsets.only(bottom: 25, top: 10),
       child: GestureDetector(
@@ -217,7 +364,7 @@ class _Footer extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
-                color: Colors.orange.shade400,
+                color: primaryOrange,
                 letterSpacing: 2,
               ),
             ),
@@ -248,12 +395,13 @@ class _CustomSwitchItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryOrange = Theme.of(context).primaryColor;
     
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
       child: Row(
         children: [
-          Icon(leadingIcon, color: Colors.orange.shade400, size: 20),
+          Icon(leadingIcon, color: primaryOrange, size: 20),
           const SizedBox(width: 15),
           Expanded(
             child: Text(
@@ -274,9 +422,9 @@ class _CustomSwitchItem extends StatelessWidget {
               height: 28,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: value ? Colors.orange.shade400 : Colors.grey.shade100,
+                color: value ? primaryOrange : (isDark ? Colors.white12 : Colors.grey.shade100),
                 border: Border.all(
-                  color: Colors.orange.shade300.withValues(alpha: 0.5),
+                  color: primaryOrange.withOpacity(0.3),
                   width: 1.5,
                 ),
               ),
@@ -295,7 +443,7 @@ class _CustomSwitchItem extends StatelessWidget {
                     child: Icon(
                       value ? activeIcon : inactiveIcon,
                       size: 13,
-                      color: value ? Colors.orange.shade700 : Colors.grey.shade400,
+                      color: value ? primaryOrange : Colors.grey.shade400,
                     ),
                   ),
                 ),
@@ -314,17 +462,18 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryOrange = Theme.of(context).primaryColor;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(15, 30, 15, 10),
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1A1C1E) : Colors.white,
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.orange.shade100.withValues(alpha: 0.3)),
+        border: Border.all(color: primaryOrange.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.shade100.withValues(alpha: 0.1),
+            color: primaryOrange.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -399,6 +548,7 @@ class _DrawerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryOrange = Theme.of(context).primaryColor;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 1),
       child: ListTile(
@@ -406,7 +556,7 @@ class _DrawerItem extends StatelessWidget {
         dense: true,
         visualDensity: VisualDensity.compact,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        leading: Icon(icon, color: iconColor ?? Colors.orange.shade400, size: 20),
+        leading: Icon(icon, color: iconColor ?? primaryOrange, size: 20),
         title: Text(
           label,
           style: TextStyle(

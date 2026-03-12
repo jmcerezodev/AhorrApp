@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/network/connectivity_service.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
@@ -13,7 +14,10 @@ import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/domain/repositories/debt_loan_repository.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:appwrite/appwrite.dart';
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
+
+enum SyncStatus { idle, syncing, success, error }
 
 class SyncService {
   final LocalDbService _localDb = getIt<LocalDbService>();
@@ -22,6 +26,13 @@ class SyncService {
   
   StreamSubscription<NetworkStatus>? _subscription;
   bool _isSyncing = false;
+
+  // --- LÓGICA DE BACKOFF ---
+  int _errorCount = 0;
+  DateTime? _nextRetryTime;
+  
+  // Notificador dedicado para la UI de sincronización manual
+  final ValueNotifier<SyncStatus> syncStatusNotifier = ValueNotifier(SyncStatus.idle);
 
   void init() {
     _subscription = _connectivityService.status.listen((status) {
@@ -34,19 +45,49 @@ class SyncService {
 
   void dispose() {
     _subscription?.cancel();
+    syncStatusNotifier.dispose();
   }
 
-  Future<void> processQueue() async {
-    if (_isSyncing || !Preferences.isLoggedIn || !(await _connectivityService.isConnected)) return;
+  /// Fuerza una sincronización inmediata ignorando el cooldown del backoff.
+  Future<void> forceSync() async {
+    _errorCount = 0;
+    _nextRetryTime = null;
+    await processQueue(isManual: true);
+  }
+
+  Future<void> processQueue({bool isManual = false}) async {
+    if (_isSyncing || !Preferences.isLoggedIn) return;
+    
+    // Si no es manual, verificamos si estamos en periodo de "enfriamiento" (Backoff)
+    if (!isManual && _nextRetryTime != null && DateTime.now().isBefore(_nextRetryTime!)) {
+      debugPrint('⏳ Sincronización en cooldown hasta: $_nextRetryTime');
+      return;
+    }
+
+    if (!(await _connectivityService.isConnected)) {
+      if (isManual) syncStatusNotifier.value = SyncStatus.error;
+      return;
+    }
     
     _isSyncing = true;
+    
+    // Solo mostramos el estado 'syncing' en el notificador si la acción es manual
+    if (isManual) {
+      syncStatusNotifier.value = SyncStatus.syncing;
+    }
 
     try {
       final pendingList = await _localDb.getPendingSyncs();
       if (pendingList.isEmpty) {
         _isSyncing = false;
+        // Si es manual e intentamos sincronizar sin pendientes, notificamos éxito directamente
+        if (isManual) {
+          syncStatusNotifier.value = SyncStatus.success;
+        }
         return;
       }
+
+      bool hasNetworkError = false;
 
       for (var pending in pendingList) {
         bool success = false;
@@ -73,28 +114,53 @@ class SyncService {
 
           if (success) {
             await _localDb.deletePendingSync(pending.id);
+            _errorCount = 0;
+            _nextRetryTime = null;
           }
         } catch (e) {
           if (e is AppwriteException && (e.code == 401 || e.code == 403)) {
             final reauthSuccess = await _attemptSilentLogin();
             if (reauthSuccess) {
               _isSyncing = false;
-              await processQueue();
+              await processQueue(isManual: isManual);
               return;
             }
           }
 
           if (e is AppwriteException && e.code == 409) {
              await _localDb.deletePendingSync(pending.id);
+             continue;
           }
-          continue; 
+
+          hasNetworkError = true;
+          break; 
         }
       }
+
+      if (hasNetworkError) {
+        _applyBackoff();
+        if (isManual) syncStatusNotifier.value = SyncStatus.error;
+      } else {
+        if (isManual) syncStatusNotifier.value = SyncStatus.success;
+      }
+
     } catch (e) {
-      // General error handling
+      _applyBackoff();
+      if (isManual) syncStatusNotifier.value = SyncStatus.error;
     } finally {
       _isSyncing = false;
     }
+  }
+
+  void resetSyncStatus() {
+    syncStatusNotifier.value = SyncStatus.idle;
+  }
+
+  void _applyBackoff() {
+    _errorCount++;
+    final secondsToWait = min(5 * pow(3, _errorCount - 1).toInt(), 600);
+    _nextRetryTime = DateTime.now().add(Duration(seconds: secondsToWait));
+    debugPrint('⚠️ Error de sincronización ($_errorCount). Reintento en $secondsToWait segundos.');
   }
 
   Future<bool> _attemptSilentLogin() async {
@@ -113,6 +179,8 @@ class SyncService {
       return false;
     }
   }
+
+  // --- MÉTODOS DE SINCRONIZACIÓN ---
 
   Future<bool> _syncUser(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'update_name') {
