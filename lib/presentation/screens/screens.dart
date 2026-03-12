@@ -5,6 +5,7 @@ export 'recurrent_expenses_screen.dart';
 export 'tickets_screen.dart';
 export 'debts_loans_screen.dart';
 export 'licenses_screen.dart';
+export 'privacy_policy_screen.dart';
 
 // Autenticación
 export 'authentication/login_screen.dart';

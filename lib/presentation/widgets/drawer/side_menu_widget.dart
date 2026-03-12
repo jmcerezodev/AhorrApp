@@ -166,8 +166,11 @@ class SideMenuWidget extends StatelessWidget {
                 ),
                 _DrawerItem(
                   icon: Icons.privacy_tip_outlined,
-                  label: 'Política de Privacidad',
-                  onTap: () {},
+                  label: 'Privacidad',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/privacy');
+                  },
                 ),
                 const SizedBox(height: 20),
               ],

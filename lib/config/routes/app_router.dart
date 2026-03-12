@@ -1,6 +1,7 @@
 import 'package:ahorrapp/presentation/screens/screens.dart';
 import 'package:ahorrapp/presentation/screens/authentication/confirm_reset_password_screen.dart';
 import 'package:ahorrapp/presentation/screens/main_navigator_screen.dart';
+import 'package:ahorrapp/presentation/screens/privacy_policy_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -36,6 +37,10 @@ GoRouter getAppRouter(String initialLocation) {
       GoRoute(
         path: '/licenses',
         builder: (context, state) => const LicensesScreen(),
+      ),
+      GoRoute(
+        path: '/privacy',
+        builder: (context, state) => const PrivacyPolicyScreen(),
       ),
     ],
   );
