@@ -48,7 +48,7 @@ void main() {
                 ),
               );
             },
-            child: const Text('Show Dialog'),
+            child: const Text('SHOW DIALOG'),
           ),
         ),
       ),
@@ -64,7 +64,10 @@ void main() {
       ]));
 
       await tester.pumpWidget(createWidgetUnderTest('exp1', 'Netflix'));
-      await tester.tap(find.text('Show Dialog'));
+      
+      final showBtn = find.text('SHOW DIALOG');
+      await tester.ensureVisible(showBtn);
+      await tester.tap(showBtn);
       await tester.pumpAndSettle();
 
       expect(find.textContaining('vinculado a la deuda "Deuda Coche"'), findsOneWidget);
@@ -79,10 +82,15 @@ void main() {
           .thenAnswer((_) async => {});
 
       await tester.pumpWidget(createWidgetUnderTest('exp1', 'Netflix'));
-      await tester.tap(find.text('Show Dialog'));
+      
+      final showBtn = find.text('SHOW DIALOG');
+      await tester.ensureVisible(showBtn);
+      await tester.tap(showBtn);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('ELIMINAR'));
+      final deleteBtn = find.text('ELIMINAR');
+      await tester.ensureVisible(deleteBtn);
+      await tester.tap(deleteBtn);
       await tester.pumpAndSettle(); 
       
       verify(() => mockRecurrentCubit.deleteExpense(any(), debtsCubit: any(named: 'debtsCubit'), deleteDebt: any(named: 'deleteDebt'))).called(1);

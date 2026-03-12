@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 class MockUpdateNameCubit extends Mock implements UpdateNameCubit {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late MockUpdateNameCubit mockCubit;
 
   setUp(() {
@@ -23,6 +24,7 @@ void main() {
     // Stubs para acciones
     when(() => mockCubit.newNameChanged(any())).thenReturn(null);
     when(() => mockCubit.onSubmit()).thenAnswer((_) async => {});
+    when(() => mockCubit.resetCubit()).thenReturn(null);
   });
 
   Widget createWidgetUnderTest() {
@@ -41,7 +43,8 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('CAMBIAR NOMBRE'), findsOneWidget);
+      // El widget usa dialogRowHeader con title: 'Actualizar Nombre' y le aplica .toUpperCase()
+      expect(find.text('ACTUALIZAR NOMBRE'), findsOneWidget);
       // El CustomInputTextWidget usa el state.name como hintText
       expect(find.text('Juan'), findsOneWidget);
     });
@@ -65,7 +68,9 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
       
-      await tester.tap(find.text('ACTUALIZAR'));
+      final updateBtn = find.text('ACTUALIZAR');
+      await tester.ensureVisible(updateBtn);
+      await tester.tap(updateBtn);
       await tester.pump();
 
       verify(() => mockCubit.onSubmit()).called(1);

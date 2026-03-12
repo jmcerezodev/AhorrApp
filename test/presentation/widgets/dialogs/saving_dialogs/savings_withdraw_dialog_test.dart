@@ -79,8 +79,11 @@ void main() {
       await tester.enterText(amountField, '200');
       await tester.pump();
 
+      final withdrawBtn = find.text('RETIRAR');
+      await tester.ensureVisible(withdrawBtn);
+
       final withdrawButton = tester.widget<ElevatedButton>(
-        find.ancestor(of: find.text('RETIRAR'), matching: find.byType(ElevatedButton))
+        find.ancestor(of: withdrawBtn, matching: find.byType(ElevatedButton))
       );
       expect(withdrawButton.onPressed, isNull);
       
@@ -96,8 +99,11 @@ void main() {
       await tester.enterText(amountField, '50');
       await tester.pump();
 
+      final withdrawBtn = find.text('RETIRAR');
+      await tester.ensureVisible(withdrawBtn);
+
       final withdrawButton = tester.widget<ElevatedButton>(
-        find.ancestor(of: find.text('RETIRAR'), matching: find.byType(ElevatedButton))
+        find.ancestor(of: withdrawBtn, matching: find.byType(ElevatedButton))
       );
       expect(withdrawButton.onPressed, isNotNull);
       

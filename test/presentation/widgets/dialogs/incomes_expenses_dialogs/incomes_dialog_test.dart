@@ -50,8 +50,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('NUEVO INGRESO'), findsOneWidget);
-      expect(find.text('Origen del ingreso'), findsOneWidget);
-      expect(find.text('Importe'), findsOneWidget);
+      expect(find.text('ORIGEN DEL INGRESO'), findsOneWidget);
+      expect(find.text('IMPORTE'), findsOneWidget);
       expect(find.text('GUARDAR'), findsOneWidget);
     });
 

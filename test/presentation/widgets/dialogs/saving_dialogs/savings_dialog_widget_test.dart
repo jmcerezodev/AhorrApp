@@ -74,5 +74,15 @@ void main() {
       // El texto AHORRAR no desaparece ahora, se reemplaza por el cargador dentro del botón estandarizado
       expect(find.text('AHORRAR'), findsNothing);
     });
+
+    testWidgets('Debe asegurar visibilidad antes de pulsar AHORRAR', (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+      
+      final saveBtn = find.text('AHORRAR');
+      await tester.ensureVisible(saveBtn);
+      await tester.tap(saveBtn);
+      await tester.pump();
+    });
   });
 }

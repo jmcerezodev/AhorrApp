@@ -2,6 +2,7 @@ import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/sync/sync_service.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/update_name/update_name_cubit.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +19,20 @@ void main() {
   setUpAll(() {
     // Registro de fallbacks para mocktail
     registerFallbackValue(<String, dynamic>{});
+    
+    // Mock de Device Info
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(const MethodChannel('dev.fluttercommunity.plus/device_info'), (methodCall) async {
+      if (methodCall.method == 'getDeviceInfo') {
+        return {
+          'model': 'iPhone',
+          'identifierForVendor': '12345',
+          'systemVersion': '15.0',
+          'name': 'Test Device'
+        };
+      }
+      return null;
+    });
   });
 
   setUp(() async {

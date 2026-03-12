@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/new_user_screen/new_user_form_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -10,6 +11,24 @@ import 'package:go_router/go_router.dart';
 class MockNewUserCubit extends Mock implements NewUserCubit {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('dev.fluttercommunity.plus/device_info'),
+      (methodCall) async {
+        return {
+          'model': 'iPhone Test',
+          'identifierForVendor': '123456',
+          'systemVersion': '16.0',
+          'name': 'iPhone',
+          'systemName': 'iOS',
+        };
+      },
+    );
+  });
+
   late MockNewUserCubit mockNewUserCubit;
   late StreamController<NewUserCubitState> stateController;
 
@@ -45,6 +64,8 @@ void main() {
   group('UserInputWidget - Pruebas de Registro y Éxito', () {
     testWidgets('Debe mostrar todos los campos de entrada y el botón', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      
+      // Sincronización con los labels exactos de UserInputWidget en lib/
       expect(find.text('Tu Nombre'), findsOneWidget);
       expect(find.text('Correo Electronico'), findsOneWidget);
       expect(find.text('Contraseña'), findsOneWidget);
@@ -70,6 +91,7 @@ void main() {
 
       // Pulsamos el botón del diálogo
       final startButton = find.text('EMPEZAR AHORA');
+      await tester.ensureVisible(startButton);
       await tester.tap(startButton);
       await tester.pumpAndSettle();
 

@@ -15,37 +15,23 @@ void main() {
   setUpAll(() {
     const MethodChannel pathChannel = MethodChannel('plugins.flutter.io/path_provider');
     const MethodChannel packageInfoChannel = MethodChannel('dev.fluttercommunity.plus/package_info');
-    const MethodChannel deviceInfoChannel = MethodChannel('dev.fluttercommunity.plus/device_info');
     const MethodChannel securityChannel = MethodChannel('dev.jmcerezo.ahorrapp/security');
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async => '.');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(packageInfoChannel, (MethodCall methodCall) async => {'appName': 'AhorrApp', 'packageName': 'dev.jmcerezo.ahorrapp', 'version': '1.0.0', 'buildNumber': '1'});
     
-    // Mock robusto de Device Info para evitar errores de nulidad
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(deviceInfoChannel, (MethodCall methodCall) async {
-      return {
-        'brand': 'Google',
-        'model': 'Pixel 4',
-        'sdkInt': 30,
-        'id': 'test-device-id',
-        'systemName': 'Android',
-        'version': {'release': '11'},
-        'name': 'Android SDK built for x86',
-        'computerName': 'Test-PC',
-        'numberOfCores': 4,
-        'systemMemoryInMegabytes': 8192,
-        'localizedModel': 'iPhone',
-        'identifierForVendor': 'test-vendor-id',
-        'isPhysicalDevice': false,
-        'utsname': {
-          'sysname': 'Darwin',
-          'nodename': 'test-node',
-          'release': '1.0.0',
-          'version': '1.0.0',
-          'machine': 'x86_64',
-        }
-      };
-    });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('dev.fluttercommunity.plus/device_info'),
+      (methodCall) async {
+        return {
+          'model': 'iPhone Test',
+          'identifierForVendor': '123456',
+          'systemVersion': '16.0',
+          'name': 'iPhone',
+          'systemName': 'iOS',
+        };
+      },
+    );
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(securityChannel, (MethodCall methodCall) async => null);
   });

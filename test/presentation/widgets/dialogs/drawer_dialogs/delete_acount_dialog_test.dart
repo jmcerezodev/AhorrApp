@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class MockDeleteAcountCubit extends Mock implements DeleteAcountCubit {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late MockDeleteAcountCubit mockCubit;
 
   setUpAll(() async {
@@ -47,7 +48,8 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('ELIMINAR CUENTA'), findsOneWidget);
+      // El widget usa AppDialogs.dialogHeader con title: '¿Eliminar Cuenta?' -> '¿ELIMINAR CUENTA?'
+      expect(find.text('¿ELIMINAR CUENTA?'), findsOneWidget);
       expect(find.byIcon(Icons.no_accounts_rounded), findsOneWidget);
     });
 
@@ -73,8 +75,11 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
       
+      final deleteBtn = find.text('ELIMINAR');
+      await tester.ensureVisible(deleteBtn);
+      
       final elevatedButton = tester.widget<ElevatedButton>(
-        find.ancestor(of: find.text('ELIMINAR'), matching: find.byType(ElevatedButton))
+        find.ancestor(of: deleteBtn, matching: find.byType(ElevatedButton))
       );
       
       expect(elevatedButton.style?.backgroundColor?.resolve({}), Colors.red.shade400);

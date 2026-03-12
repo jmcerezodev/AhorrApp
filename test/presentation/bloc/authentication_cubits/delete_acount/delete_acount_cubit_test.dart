@@ -20,16 +20,16 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async => '.');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(packageInfoChannel, (MethodCall methodCall) async => {'appName': 'AhorrApp', 'packageName': 'dev.jmcerezo.ahorrapp', 'version': '1.0.0', 'buildNumber': '1'});
     
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(deviceInfoChannel, (MethodCall methodCall) async {
-      return {
-        'brand': 'Google',
-        'model': 'Pixel 4',
-        'sdkInt': 30,
-        'id': 'test-id',
-        'systemName': 'Android',
-        'version': {'release': '11'},
-        'name': 'Android SDK built for x86',
-      };
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(deviceInfoChannel, (methodCall) async {
+      if (methodCall.method == 'getDeviceInfo') {
+        return {
+          'model': 'iPhone',
+          'identifierForVendor': '12345',
+          'systemVersion': '15.0',
+          'name': 'Test Device'
+        };
+      }
+      return null;
     });
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(securityChannel, (MethodCall methodCall) async => null);

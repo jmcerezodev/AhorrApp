@@ -36,7 +36,7 @@ void main() {
                     child: const SavingsGoalDialog(),
                   ),
                 ),
-                child: const Text('Open'),
+                child: const Text('OPEN'),
               ),
             ),
           ),
@@ -55,7 +55,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Abrimos el diálogo para que esté en el stack de navegación
-      await tester.tap(find.text('Open'));
+      final openBtn = find.text('OPEN');
+      await tester.ensureVisible(openBtn);
+      await tester.tap(openBtn);
       await tester.pumpAndSettle();
 
       expect(find.text('ESTABLECER META'), findsOneWidget);
@@ -65,6 +67,7 @@ void main() {
       await tester.pump(); 
 
       final saveButtonFinder = find.text('GUARDAR');
+      await tester.ensureVisible(saveButtonFinder);
       await tester.tap(saveButtonFinder);
       
       // Ahora context.pop() cerrará el diálogo y volveremos a '/'

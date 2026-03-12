@@ -67,6 +67,9 @@ void main() {
       // Buscamos el botón por el texto
       final loginButton = find.text('ENTRAR');
 
+      // Sincronización: asegurar visibilidad antes del tap
+      await tester.ensureVisible(loginButton);
+
       // Simulamos el toque
       await tester.tap(loginButton);
       await tester.pump(); // Esperamos a que la UI reaccione

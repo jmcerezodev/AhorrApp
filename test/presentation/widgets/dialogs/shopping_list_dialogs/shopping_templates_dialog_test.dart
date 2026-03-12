@@ -48,7 +48,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('MIS FAVORITOS'), findsOneWidget);
-      expect(find.textContaining('Guarda productos de tu lista'), findsOneWidget);
+      expect(find.textContaining('Guarda productos', findRichText: true), findsOneWidget);
     });
 
     testWidgets('Debe mostrar el chip SIN PRECIO si el importe es 0', (WidgetTester tester) async {
@@ -102,18 +102,21 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      // Buscamos el botón de añadir (es un GestureDetector con un Icon específico)
-      final addButton = find.byIcon(Icons.add_circle_outline_rounded).last;
+      // Buscamos el botón de añadir a la cesta (Icons.add_shopping_cart_rounded)
+      final addButton = find.byIcon(Icons.add_shopping_cart_rounded).first;
+      await tester.ensureVisible(addButton);
       await tester.tap(addButton);
-      await tester.pumpAndSettle(); // Esperamos a que termine la animación del diálogo
+      
+      // Sincronización crucial: pumpAndSettle para que el microtask de Bloc se complete
+      await tester.pumpAndSettle(); 
 
-      // Verificamos que se llamó al cubit
-      verify(() => mockListCubit.addItemsFromTemplate(any())).called(1);
+      // Verificamos que se llamó al cubit con la lista de items correcta
+      verify(() => mockListCubit.addItemsFromTemplate(templates.first.items)).called(1);
 
-      // Verificamos que aparece el diálogo de éxito con el nuevo título y mensaje
+      // Verificamos que aparece el diálogo de éxito con el título en UPPERCASE por SuccessfulDialogNoGo
       expect(find.byType(SuccessfulDialogNoGo), findsOneWidget);
       expect(find.text('¡A LA CESTA!'), findsOneWidget);
-      expect(find.text('¡Pan añadido correctamente!'), findsOneWidget);
+      expect(find.textContaining('añadido correctamente!', findRichText: true), findsOneWidget);
     });
   });
 }

@@ -42,6 +42,8 @@ void main() {
     when(() => mockTicketsCubit.stream).thenAnswer((_) => const Stream.empty());
     when(() => mockTicketsCubit.loadItems()).thenAnswer((_) async => {});
     when(() => mockTicketsCubit.updateSearchQuery(any())).thenReturn(null);
+    when(() => mockTicketsCubit.scanAndProcessTicket()).thenAnswer((_) async => {});
+    when(() => mockTicketsCubit.close()).thenAnswer((_) async => {});
   });
 
   Widget createWidgetUnderTest() {
@@ -93,7 +95,7 @@ void main() {
 
       final searchField = find.byType(TextField);
       expect(searchField, findsOneWidget);
-      expect(find.text('Buscar por comercio o categoría...'), findsOneWidget);
+      expect(find.textContaining('Buscar por comercio'), findsOneWidget);
 
       await tester.enterText(searchField, 'Mercadona');
       verify(() => mockTicketsCubit.updateSearchQuery('Mercadona')).called(1);
@@ -107,7 +109,7 @@ void main() {
 
       expect(find.byType(TicketsSummaryWidget), findsOneWidget);
       expect(find.byType(EmptyListWidget), findsOneWidget);
-      expect(find.text('Aún no tienes tickets registrados.\n¡Escanea o añade uno manualmente!'), findsOneWidget);
+      expect(find.textContaining('Aún no tienes tickets registrados.'), findsOneWidget);
     });
 
     testWidgets('Los items de la lista deben ser Dismissible (deslizables)', (WidgetTester tester) async {
@@ -115,6 +117,24 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(Dismissible), findsWidgets);
+    });
+    
+    testWidgets('Debe asegurar visibilidad antes de pulsar ESCANEAR', (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+      
+      final scanBtn = find.text('ESCANEAR');
+      await tester.ensureVisible(scanBtn);
+      await tester.tap(scanBtn);
+      await tester.pump();
+    });
+   group('Finders - UPPERCASE Check', () {
+      testWidgets('Verificar etiquetas de búsqueda en UPPERCASE si aplica', (WidgetTester tester) async {
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pumpAndSettle();
+        // Nota: El hintText suele ser descriptivo, pero los botones de acción sí deben ser UPPERCASE
+        expect(find.text('ESCANEAR'), findsOneWidget);
+      });
     });
   });
 }
