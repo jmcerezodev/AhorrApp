@@ -2,45 +2,47 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   ThemeData getTheme({bool isDarkMode = false}) {
-    const primaryColor = Colors.orange;
+    // ADN AhorrApp: Naranja exacto #FFA500
+    const primaryOrange = Color(0xFFFFA500);
+    const backgroundCream = Color(0xFFFFFBF5);
+    const darkBg = Color(0xFF0F1112);
+    const darkSurface = Color(0xFF1A1C1E);
     
-    final scaffoldBg = isDarkMode ? const Color(0xFF0F1112) : const Color(0xFFFFFBF5);
-    final surfaceColor = isDarkMode ? const Color(0xFF1A1C1E) : Colors.white;
+    final scaffoldBg = isDarkMode ? darkBg : backgroundCream;
+    final surfaceColor = isDarkMode ? darkSurface : Colors.white;
 
-    // Definimos el ColorScheme manualmente para evitar que Material 3 genere "morados"
     final colorScheme = isDarkMode 
       ? const ColorScheme.dark(
-          primary: primaryColor,
+          primary: primaryOrange,
           onPrimary: Colors.white,
-          secondary: primaryColor,
+          secondary: primaryOrange,
           onSecondary: Colors.white,
-          surface: Color(0xFF1A1C1E),
+          surface: darkSurface,
           onSurface: Colors.white,
           error: Colors.redAccent,
         )
       : ColorScheme.light(
-          primary: primaryColor,
+          primary: primaryOrange,
           onPrimary: Colors.white,
-          secondary: primaryColor,
+          secondary: primaryOrange,
           onSecondary: Colors.white,
           surface: Colors.white,
-          onSurface: Colors.blueGrey.shade900,
-          outline: Colors.orange.shade100,
-          error: Colors.red.shade800,
+          onSurface: Color(0xFF263238), // blueGrey.shade900
+          outline: Color(0xFFFFE0B2), // Borde sutil #FFE0B2
+          error: Color(0xFFC62828), // red.shade800
         );
 
     return ThemeData(
       useMaterial3: true,
       brightness: isDarkMode ? Brightness.dark : Brightness.light,
       scaffoldBackgroundColor: scaffoldBg,
-      primaryColor: primaryColor,
+      primaryColor: primaryOrange,
       colorScheme: colorScheme,
 
-      // ESTO ES LO QUE CONTROLA LA "GOTA" Y EL CURSOR GLOBALMENTE
       textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: primaryColor,
-        selectionColor: Color(0x4DFF9800), // Naranja con 30% de opacidad
-        selectionHandleColor: primaryColor,
+        cursorColor: primaryOrange,
+        selectionColor: Color(0x4DFFA500), // Naranja #FFA500 con 30% de opacidad
+        selectionHandleColor: primaryOrange,
       ),
 
       appBarTheme: AppBarTheme(
@@ -52,19 +54,73 @@ class AppTheme {
           fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
-        iconTheme: const IconThemeData(color: primaryColor),
+        iconTheme: const IconThemeData(color: primaryOrange),
       ),
 
       cardTheme: CardThemeData(
         color: surfaceColor,
         elevation: isDarkMode ? 0 : 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: isDarkMode ? Colors.white10 : Colors.orange.shade50),
+          borderRadius: BorderRadius.circular(20), // ADN: 20px
+          side: BorderSide(color: isDarkMode ? Colors.white10 : const Color(0xFFFFE0B2)),
         ),
       ),
 
-      listTileTheme: const ListTileThemeData(iconColor: primaryColor),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryOrange,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15), // ADN: 15px
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primaryOrange,
+          side: const BorderSide(color: primaryOrange),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15), // ADN: 15px
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primaryOrange,
+          textStyle: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFFFE0B2)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFFFE0B2)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: primaryOrange, width: 2),
+        ),
+        labelStyle: const TextStyle(color: Colors.grey),
+        prefixIconColor: primaryOrange,
+      ),
+
+      listTileTheme: const ListTileThemeData(iconColor: primaryOrange),
+      
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primaryOrange,
+        foregroundColor: Colors.white,
+      ),
     );
   }
 }

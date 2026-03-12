@@ -14,29 +14,24 @@ void main() {
   late IsarMovementRepository repository;
   late MockLocalDbService mockLocalDb;
   late Isar isar;
-  late String tempPath;
+  late Directory tempDir;
 
   setUpAll(() async {
-    tempPath = p.join(Directory.current.path, 'test_db_movements');
-    final dir = Directory(tempPath);
-    if (dir.existsSync()) {
-      try {
-        dir.deleteSync(recursive: true);
-      } catch (e) {
-        // Ignorar si el archivo está bloqueado temporalmente por otro proceso
-      }
-    }
-    if (!dir.existsSync()) dir.createSync(recursive: true);
-
+    // Uso de un subdirectorio único en el sistema temporal para evitar bloqueos de isar.dll
+    tempDir = await Directory.systemTemp.createTemp('isar_movement_test_');
+    
     await Isar.initializeIsarCore(download: true);
     isar = await Isar.open(
       [LocalHistorySchema, LocalSavingSchema],
-      directory: tempPath,
+      directory: tempDir.path,
     );
   });
 
   tearDownAll(() async {
     await isar.close();
+    if (tempDir.existsSync()) {
+      await tempDir.delete(recursive: true);
+    }
   });
 
   setUp(() {

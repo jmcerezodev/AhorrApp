@@ -17,6 +17,22 @@ class _ExportPdfDialogState extends State<ExportPdfDialog> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+  bool _hasMovements = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkMovements();
+  }
+
+  Future<void> _checkMovements() async {
+    final movements = await getIt<LocalDbService>().getAllHistory();
+    if (mounted) {
+      setState(() {
+        _hasMovements = movements.isNotEmpty;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -37,8 +53,16 @@ class _ExportPdfDialogState extends State<ExportPdfDialog> {
 
     try {
       final movements = await getIt<LocalDbService>().getAllHistory();
-      final double balanceValue = context.read<TotalMoneyCubit>().state.totalMoney;
       
+      if (movements.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'No hay datos para exportar';
+        });
+        return;
+      }
+
+      final double balanceValue = context.read<TotalMoneyCubit>().state.totalMoney;
       await getIt<PdfExportService>().exportFinancialReport(movements, balanceValue);
       
       if (mounted) Navigator.pop(context);
@@ -53,34 +77,56 @@ class _ExportPdfDialogState extends State<ExportPdfDialog> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final primaryOrange = Theme.of(context).primaryColor;
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: isDarkMode ? const Color(0xFF1A1C1E) : Colors.white,
-      title: const Column(
+      title: Column(
         children: [
-          Icon(Icons.picture_as_pdf_rounded, color: Colors.orange, size: 40),
-          SizedBox(height: 10),
-          Text('Exportar Reporte', textAlign: TextAlign.center),
+          Icon(Icons.picture_as_pdf_rounded, color: primaryOrange, size: 40),
+          const SizedBox(height: 10),
+          const Text('Exportar Reporte', textAlign: TextAlign.center),
         ],
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Para exportar tus datos financieros de forma segura, por favor introduce tu contraseña.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.grey),
-          ),
+          if (!_hasMovements)
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.redAccent, size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'No hay movimientos registrados para exportar en este momento.',
+                      style: TextStyle(fontSize: 12, color: Colors.redAccent, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            const Text(
+              'Para exportar tus datos financieros de forma segura, por favor introduce tu contraseña.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
           const SizedBox(height: 20),
           TextField(
             controller: _passwordController,
             obscureText: true,
+            enabled: _hasMovements,
             decoration: InputDecoration(
               labelText: 'Contraseña',
               errorText: _errorMessage,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-              prefixIcon: const Icon(Icons.lock_outline_rounded, color: Colors.orange),
+              prefixIcon: const Icon(Icons.lock_outline_rounded),
             ),
           ),
         ],
@@ -91,12 +137,7 @@ class _ExportPdfDialogState extends State<ExportPdfDialog> {
           child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
         ),
         ElevatedButton(
-          onPressed: _isLoading ? null : _handleExport,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          ),
+          onPressed: (_isLoading || !_hasMovements) ? null : _handleExport,
           child: _isLoading 
             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
             : const Text('Generar PDF'),

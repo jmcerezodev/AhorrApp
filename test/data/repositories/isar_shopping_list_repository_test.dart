@@ -15,29 +15,23 @@ void main() {
   late IsarShoppingListRepository repository;
   late MockLocalDbService mockLocalDb;
   late Isar isar;
-  late String tempPath;
+  late Directory tempDir;
 
   setUpAll(() async {
-    tempPath = p.join(Directory.current.path, 'test_db_shopping_qa');
-    final dir = Directory(tempPath);
-    if (dir.existsSync()) {
-      try {
-        dir.deleteSync(recursive: true);
-      } catch (e) {
-        // Ignorar si el archivo está bloqueado
-      }
-    }
-    if (!dir.existsSync()) dir.createSync(recursive: true);
-
+    tempDir = await Directory.systemTemp.createTemp('isar_shopping_test_');
+    
     await Isar.initializeIsarCore(download: true);
     isar = await Isar.open(
       [LocalShoppingItemSchema],
-      directory: tempPath,
+      directory: tempDir.path,
     );
   });
 
   tearDownAll(() async {
     await isar.close();
+    if (tempDir.existsSync()) {
+      await tempDir.delete(recursive: true);
+    }
   });
 
   setUp(() async {
