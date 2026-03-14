@@ -1,9 +1,11 @@
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
+import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_state.dart';
 import 'package:ahorrapp/presentation/widgets/home_screen/history_custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../../helpers/mocks.dart';
 
 class MockHistoryCubit extends Mock implements HistoryCubit {}
 class MockDateCubit extends Mock implements DateCubit {}
@@ -11,10 +13,12 @@ class MockDateCubit extends Mock implements DateCubit {}
 void main() {
   late MockHistoryCubit mockHistoryCubit;
   late MockDateCubit mockDateCubit;
+  late MockThemeCubit mockThemeCubit;
 
   setUp(() {
     mockHistoryCubit = MockHistoryCubit();
     mockDateCubit = MockDateCubit();
+    mockThemeCubit = MockThemeCubit();
 
     // Estado inicial con movimientos de prueba
     when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState(
@@ -55,6 +59,12 @@ void main() {
     when(() => mockDateCubit.state).thenReturn(const DateCubitState(month: 'Enero', year: 2024));
     when(() => mockDateCubit.stream).thenAnswer((_) => const Stream.empty());
     when(() => mockDateCubit.close()).thenAnswer((_) async => {});
+
+    when(() => mockThemeCubit.state).thenReturn(ThemeState(
+      themeMode: ThemeMode.light,
+      isPrivacyModeActive: false,
+    ));
+    when(() => mockThemeCubit.stream).thenAnswer((_) => const Stream.empty());
   });
 
   Widget createWidgetUnderTest() {
@@ -62,6 +72,7 @@ void main() {
       providers: [
         BlocProvider<HistoryCubit>.value(value: mockHistoryCubit),
         BlocProvider<DateCubit>.value(value: mockDateCubit),
+        BlocProvider<ThemeCubit>.value(value: mockThemeCubit),
       ],
       child: const MaterialApp(
         home: Scaffold(
@@ -74,7 +85,8 @@ void main() {
   group('HistoryCustomWidget - Pruebas de Lista y Filtros', () {
     testWidgets('Debe mostrar los nombres y montos de los movimientos', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
-      // pumpAndSettle es vital ahora que tenemos FadeInLeft con delay por cada ítem
+      // Forzar el cambio de _hasAnimated a true
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
       expect(find.text('Sueldo Mensual'), findsOneWidget);
@@ -85,13 +97,13 @@ void main() {
 
     testWidgets('Debe mostrar el icono identificador solo en gastos recurrentes', (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.repeat_rounded), findsOneWidget);
     });
 
     testWidgets('Debe ocultar los gastos si el filtro está desactivado', (WidgetTester tester) async {
-      // Configuramos el mock para que devuelva el filtro de gastos desactivado
       when(() => mockHistoryCubit.state).thenReturn(const HistoryCubitState(
         showIncomes: true,
         showExpenses: false,
@@ -103,7 +115,7 @@ void main() {
       ));
 
       await tester.pumpWidget(createWidgetUnderTest());
-      // Esperamos a que cualquier cambio de tamaño o animación de filtrado se complete
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
       expect(find.text('Sueldo Mensual'), findsOneWidget);

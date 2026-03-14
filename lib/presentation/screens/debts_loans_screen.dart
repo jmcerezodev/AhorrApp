@@ -17,6 +17,7 @@ class DebtsLoansScreen extends StatefulWidget {
 class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentTabIndex = 0;
+  bool _hasAnimated = false;
 
   @override
   void initState() {
@@ -30,6 +31,12 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
       }
     });
     context.read<DebtsLoansCubit>().loadDebtsLoans();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) setState(() => _hasAnimated = true);
+      });
+    });
   }
 
   @override
@@ -47,20 +54,20 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
         return SafeArea(
           child: Column(
             children: [
-              // 1. APPBAR - Desde arriba
+              // 1. APPBAR
               FadeInDown(
                 duration: const Duration(milliseconds: 500),
                 from: 100,
                 child: _buildAppBar(context, colorScheme),
               ),
 
-              // 2. RESUMEN - Desde arriba
+              // 2. RESUMEN
               DebtsSummaryWidget(
                 totalAmount: _currentTabIndex == 0 ? state.totalDebts : state.totalLoans,
                 isDebtView: _currentTabIndex == 0,
               ),
 
-              // 3. PESTAÑAS - Desde la DERECHA (FadeInRight) para Deudas
+              // 3. PESTAÑAS
               FadeInRight(
                 duration: const Duration(milliseconds: 600),
                 from: 100,
@@ -92,7 +99,7 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
                 ),
               ),
 
-              // 4. LISTADO - Desde abajo
+              // 4. LISTADO
               Expanded(
                 child: state.isLoading 
                   ? const Center(child: CircularProgressIndicator(color: Colors.orange))
@@ -171,10 +178,20 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        return DebtLoanCard(
+        final card = DebtLoanCard(
           item: item, 
           isDark: isDark, 
           colorScheme: colorScheme,
+        );
+
+        if (_hasAnimated) return card;
+
+        return FadeInUp(
+          key: ValueKey('debt_anim_${item.id}'),
+          duration: const Duration(milliseconds: 400),
+          delay: Duration(milliseconds: index * 30),
+          from: 30,
+          child: card,
         );
       },
     );

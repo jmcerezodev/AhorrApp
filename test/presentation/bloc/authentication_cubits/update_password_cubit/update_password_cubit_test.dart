@@ -1,4 +1,5 @@
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/update_password_cubit/update_password_cubit.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../../../../helpers/mock_platform.dart';
 
@@ -6,6 +7,16 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(const MethodChannel('plugins.flutter.io/device_info'),
+            (methodCall) async {
+      return <String, dynamic>{
+        'identifierForVendor': 'test-id',
+        'brand': 'apple',
+        'model': 'iphone',
+        'androidId': 'test-id',
+      };
+    });
     setupMockPlatform();
   });
 

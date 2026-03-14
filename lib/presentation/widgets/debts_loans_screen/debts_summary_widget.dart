@@ -114,7 +114,7 @@ class DebtsSummaryWidget extends StatelessWidget {
                 const SizedBox(width: 15),
 
                 // COLUMNA 2: BURBUJA DE ACCIÓN
-                _AddDebtLoanBubble(isDebtView: isDebtView),
+                BurbujaResumenWidget(isDebtView: isDebtView),
               ],
             ),
           ),
@@ -124,9 +124,9 @@ class DebtsSummaryWidget extends StatelessWidget {
   }
 }
 
-class _AddDebtLoanBubble extends StatelessWidget {
+class BurbujaResumenWidget extends StatelessWidget {
   final bool isDebtView;
-  const _AddDebtLoanBubble({required this.isDebtView});
+  const BurbujaResumenWidget({super.key, required this.isDebtView});
 
   @override
   Widget build(BuildContext context) {

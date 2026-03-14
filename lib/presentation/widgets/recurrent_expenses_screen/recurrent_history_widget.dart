@@ -3,16 +3,34 @@ import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_expense_item.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_filter_panel.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class RecurrentHistoryWidget extends StatelessWidget {
+class RecurrentHistoryWidget extends StatefulWidget {
   final bool isIncomeTab;
 
   const RecurrentHistoryWidget({
     super.key,
     required this.isIncomeTab,
   });
+
+  @override
+  State<RecurrentHistoryWidget> createState() => _RecurrentHistoryWidgetState();
+}
+
+class _RecurrentHistoryWidgetState extends State<RecurrentHistoryWidget> {
+  bool _hasAnimated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (mounted) setState(() => _hasAnimated = true);
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +48,7 @@ class RecurrentHistoryWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isIncomeTab ? 'LISTADO DE INGRESOS' : 'LISTADO DE GASTOS',
+                widget.isIncomeTab ? 'LISTADO DE INGRESOS' : 'LISTADO DE GASTOS',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -80,7 +98,7 @@ class RecurrentHistoryWidget extends StatelessWidget {
               }
 
               final List<dynamic> filteredExpenses = state.expenses
-                  .where((e) => e.isIncome == isIncomeTab)
+                  .where((e) => e.isIncome == widget.isIncomeTab)
                   .toList()
                 ..sort((a, b) => a.position.compareTo(b.position));
 
@@ -96,14 +114,12 @@ class RecurrentHistoryWidget extends StatelessWidget {
                 return EmptyListWidget(
                   text: state.isFilterOpen 
                     ? 'No hay registros que coincidan con los filtros seleccionados.'
-                    : (isIncomeTab 
+                    : (widget.isIncomeTab 
                         ? 'Añade tus ingresos recurrentes para que la app los anote automáticamente.'
                         : 'Añade tus facturas o suscripciones para que la app las anote automáticamente.'),
                 );
               }
 
-              // La animación principal (FadeInUp) se maneja ahora desde la pantalla (Screen)
-              // para asegurar que todo el bloque de la lista suba de forma coordinada.
               return ReorderableListView.builder(
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20),
                 physics: const BouncingScrollPhysics(),
@@ -112,18 +128,27 @@ class RecurrentHistoryWidget extends StatelessWidget {
                   context.read<RecurrentExpensesCubit>().reorderExpenses(
                     oldIndex, 
                     newIndex, 
-                    isIncome: isIncomeTab
+                    isIncome: widget.isIncomeTab
                   );
                 },
                 itemBuilder: (context, index) {
                   final expense = displayedExpenses[index];
-                  return RecurrentExpenseItem(
-                    key: ValueKey(expense.id),
+                  final item = RecurrentExpenseItem(
                     expense: expense,
                     index: index,
                     humanizeNumbers: humanizeNumbers,
                     colorScheme: colorScheme,
                     isDark: isDark,
+                  );
+
+                  if (_hasAnimated) return Container(key: ValueKey(expense.id), child: item);
+
+                  return FadeInUp(
+                    key: ValueKey(expense.id),
+                    duration: const Duration(milliseconds: 400),
+                    delay: Duration(milliseconds: index * 30),
+                    from: 30,
+                    child: item,
                   );
                 },
               );

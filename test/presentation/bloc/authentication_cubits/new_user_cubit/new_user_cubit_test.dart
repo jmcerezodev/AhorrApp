@@ -1,4 +1,5 @@
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/new_user_cubit/new_user_cubit.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
@@ -8,6 +9,16 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(const MethodChannel('plugins.flutter.io/device_info'),
+            (methodCall) async {
+      return <String, dynamic>{
+        'identifierForVendor': 'test-id',
+        'brand': 'apple',
+        'model': 'iphone',
+        'androidId': 'test-id',
+      };
+    });
     setupMockPlatform();
   });
 

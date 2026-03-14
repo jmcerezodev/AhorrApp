@@ -6,6 +6,7 @@ import 'package:ahorrapp/presentation/screens/recurrent_expenses_screen.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/add_edit_recurrent_expense_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/shared/empty_list_widget.dart';
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +29,7 @@ void main() {
     when(() => mockCubit.loadExpenses()).thenAnswer((_) async => {});
     when(() => mockCubit.reorderExpenses(any(), any(), isIncome: any(named: 'isIncome'))).thenAnswer((_) async => {});
     when(() => mockCubit.stream).thenAnswer((_) => const Stream.empty());
+    when(() => mockCubit.state).thenReturn(const RecurrentExpensesState());
     
     when(() => mockDebtsCubit.loadDebtsLoans()).thenAnswer((_) async => {});
     when(() => mockDebtsCubit.state).thenReturn(const DebtsLoansState());
@@ -65,18 +67,18 @@ void main() {
   group('RecurrentExpensesScreen - Pruebas de Interfaz', () {
     testWidgets('Debe mostrar el título MIS FIJOS en la AppBar', (WidgetTester tester) async {
       setupScreenSize(tester);
-      when(() => mockCubit.state).thenReturn(const RecurrentExpensesState(expenses: []));
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
       expect(find.text('MIS FIJOS'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('Debe mostrar EmptyListWidget si no hay registros', (WidgetTester tester) async {
       setupScreenSize(tester);
-      when(() => mockCubit.state).thenReturn(const RecurrentExpensesState(expenses: []));
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
       expect(find.byType(EmptyListWidget), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('Debe mostrar la lista de gastos en la pestaña GASTOS', (WidgetTester tester) async {
@@ -86,9 +88,11 @@ void main() {
       ];
       when(() => mockCubit.state).thenReturn(RecurrentExpensesState(status: RecurrentExpensesStatus.success, expenses: expenses));
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
       
       expect(find.text('Netflix'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('Debe mostrar la lista de ingresos al cambiar de pestaña', (WidgetTester tester) async {
@@ -102,9 +106,11 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('INGRESOS'));
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
       expect(find.text('Sueldo'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('Debe abrir el diálogo de añadir con el tipo correcto (Gasto)', (WidgetTester tester) async {
@@ -118,6 +124,7 @@ void main() {
       
       final dialog = tester.widget<AddEditRecurrentExpenseDialog>(find.byType(AddEditRecurrentExpenseDialog));
       expect(dialog.isIncome, false);
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('Debe abrir el diálogo de añadir con el tipo correcto (Ingreso)', (WidgetTester tester) async {
@@ -134,6 +141,7 @@ void main() {
       
       final dialog = tester.widget<AddEditRecurrentExpenseDialog>(find.byType(AddEditRecurrentExpenseDialog));
       expect(dialog.isIncome, true);
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('Debe mostrar el nombre de la deuda y el chip DEUDA si está vinculada', (WidgetTester tester) async {
@@ -149,10 +157,12 @@ void main() {
       when(() => mockDebtsCubit.state).thenReturn(DebtsLoansState(debtsLoans: debts));
 
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
       expect(find.text('Nombre de Deuda'), findsOneWidget);
       expect(find.text('DEUDA'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('Debe mostrar fondo de edición al deslizar a la derecha', (WidgetTester tester) async {
@@ -162,12 +172,14 @@ void main() {
       ];
       when(() => mockCubit.state).thenReturn(RecurrentExpensesState(status: RecurrentExpensesStatus.success, expenses: expenses));
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
       
       await tester.drag(find.text('Netflix'), const Offset(200.0, 0.0));
-      await tester.pump();
+      await tester.pumpAndSettle();
       
       expect(find.descendant(of: find.byType(SwipeBackgroundWidget), matching: find.text('EDITAR')), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('Debe permitir reordenar la lista', (WidgetTester tester) async {
@@ -179,6 +191,7 @@ void main() {
       when(() => mockCubit.state).thenReturn(RecurrentExpensesState(status: RecurrentExpensesStatus.success, expenses: expenses));
 
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
       final firstItem = find.text('Netflix');
@@ -191,6 +204,22 @@ void main() {
       await tester.pumpAndSettle();
 
       verify(() => mockCubit.reorderExpenses(any(), any(), isIncome: any(named: 'isIncome'))).called(1);
+      await tester.pump(const Duration(seconds: 5));
+    });
+   group('RecurrentHistoryWidget Animation Tests', () {
+      testWidgets('Debe utilizar FadeInUp para el listado', (WidgetTester tester) async {
+        setupScreenSize(tester);
+        final expenses = [
+          RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 10, day: 1, startDate: DateTime.now()),
+        ];
+        when(() => mockCubit.state).thenReturn(RecurrentExpensesState(status: RecurrentExpensesStatus.success, expenses: expenses));
+        
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pump(const Duration(milliseconds: 100));
+        
+        expect(find.byType(FadeInUp).first, findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
+      });
     });
   });
 }

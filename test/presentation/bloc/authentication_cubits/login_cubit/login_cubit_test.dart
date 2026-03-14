@@ -14,16 +14,17 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
-    const MethodChannel pathChannel = MethodChannel('plugins.flutter.io/path_provider');
-    const MethodChannel packageInfoChannel = MethodChannel('dev.fluttercommunity.plus/package_info');
-    const MethodChannel securityChannel = MethodChannel('dev.jmcerezo.ahorrapp/security');
-
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async => '.');
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(packageInfoChannel, (MethodCall methodCall) async => {'appName': 'AhorrApp', 'packageName': 'dev.jmcerezo.ahorrapp', 'version': '1.0.0', 'buildNumber': '1'});
-    
-    setupMockPlatform();
-
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(securityChannel, (MethodCall methodCall) async => null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(const MethodChannel('plugins.flutter.io/device_info'),
+            (methodCall) async {
+      return <String, dynamic>{
+        'identifierForVendor': 'test-id',
+        'brand': 'apple',
+        'model': 'iphone',
+        'androidId': 'test-id',
+      };
+    });
+    setupAllMocks();
   });
 
   group('LoginCubit - Persistencia de Credenciales', () {

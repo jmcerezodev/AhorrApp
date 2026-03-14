@@ -4,25 +4,33 @@ import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_state.dart';
 import 'package:ahorrapp/presentation/screens/debts_loans_screen.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/add_edit_debt_loan_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/debts_loans_screen/debts_summary_widget.dart';
 import 'package:ahorrapp/presentation/widgets/shared/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import '../../../helpers/mocks.dart';
+import '../../../helpers/mock_platform.dart';
 
 class MockDebtsLoansCubit extends Mock implements DebtsLoansCubit {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late MockDebtsLoansCubit mockCubit;
   late MockThemeCubit mockThemeCubit;
+
+  setUpAll(() {
+    setupAllMocks();
+  });
 
   setUp(() {
     mockCubit = MockDebtsLoansCubit();
     mockThemeCubit = MockThemeCubit();
     
-    when(() => mockCubit.loadDebtsLoans()).thenAnswer((_) async => {});
+    when(() => mockCubit.state).thenReturn(const DebtsLoansState());
     when(() => mockCubit.stream).thenAnswer((_) => const Stream.empty());
+    when(() => mockCubit.loadDebtsLoans()).thenAnswer((_) async => {});
     
     when(() => mockThemeCubit.state).thenReturn(ThemeState(
       themeMode: ThemeMode.light,
@@ -55,8 +63,6 @@ void main() {
   group('DebtsLoansScreen - Widget Tests', () {
     testWidgets('Debe mostrar EmptyListWidget si no hay datos', (WidgetTester tester) async {
       setupScreenSize(tester);
-      when(() => mockCubit.state).thenReturn(const DebtsLoansState(debtsLoans: []));
-      
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
@@ -67,6 +73,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(EmptyListWidget), findsOneWidget);
       expect(find.text('No has realizado préstamos.\nNo te debe dinero nadie.'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 3));
     });
 
     testWidgets('Debe mostrar deudas en la pestaña correspondiente', (WidgetTester tester) async {
@@ -77,23 +85,52 @@ void main() {
       when(() => mockCubit.state).thenReturn(DebtsLoansState(debtsLoans: debts));
 
       await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
       expect(find.text('Coche'), findsOneWidget);
-      // Ajuste si se busca texto de moneda específico en el futuro
+
+      await tester.pump(const Duration(seconds: 3));
     });
 
     testWidgets('Debe abrir el diálogo de añadir al pulsar la burbuja de resumen', (WidgetTester tester) async {
       setupScreenSize(tester);
-      when(() => mockCubit.state).thenReturn(const DebtsLoansState(debtsLoans: []));
-      
       await tester.pumpWidget(createWidgetUnderTest());
+      
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('NUEVA DEUDA'));
-      await tester.pumpAndSettle();
+      // Tap efectivo usando el tipo de widget ahora público
+      final burbuja = find.byType(BurbujaResumenWidget);
+      await tester.tap(burbuja);
+      await tester.pump(); 
+      await tester.pumpAndSettle(); 
 
+      // Verificación universal por descendencia (TextField)
+      expect(find.byType(TextField), findsAtLeastNWidgets(1));
       expect(find.byType(AddEditDebtLoanDialog), findsOneWidget);
+
+      // Limpieza quirúrgica del árbol y timers
+      await tester.pumpWidget(Container());
+      await tester.pump(const Duration(seconds: 3));
+    });
+
+    group('Consistencia de Formato de Moneda', () {
+      testWidgets('Debe mostrar importes sin decimales innecesarios', (WidgetTester tester) async {
+        setupScreenSize(tester);
+        final debts = [
+          DebtLoan(id: '1', userId: 'u', name: 'Test', person: 'P', totalAmount: 100, type: DebtLoanType.debt)
+        ];
+        when(() => mockCubit.state).thenReturn(DebtsLoansState(debtsLoans: debts));
+
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pumpAndSettle();
+
+        expect(find.text('100€').first, findsOneWidget);
+        
+        await tester.pump(const Duration(seconds: 3));
+      });
     });
   });
 }

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../helpers/mock_platform.dart';
 
 class MockAppwriteService extends Mock implements AppwriteService {}
 class MockAccount extends Mock implements Account {}
@@ -14,24 +15,17 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
-    const MethodChannel pathChannel = MethodChannel('plugins.flutter.io/path_provider');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async => '.');
-
-    const MethodChannel packageInfoChannel = MethodChannel('dev.fluttercommunity.plus/package_info');
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(packageInfoChannel, (MethodCall methodCall) async {
-      return {
-        'appName': 'AhorrApp',
-        'packageName': 'dev.jmcerezo.ahorrapp',
-        'version': '1.0.0',
-        'buildNumber': '1',
+        .setMockMethodCallHandler(const MethodChannel('plugins.flutter.io/device_info'),
+            (methodCall) async {
+      return <String, dynamic>{
+        'identifierForVendor': 'test-id',
+        'brand': 'apple',
+        'model': 'iphone',
+        'androidId': 'test-id',
       };
     });
-
-    const channel = MethodChannel('dev.fluttercommunity.plus/device_info');
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (methodCall) async => {});
+    setupAllMocks();
   });
 
   setUp(() async {

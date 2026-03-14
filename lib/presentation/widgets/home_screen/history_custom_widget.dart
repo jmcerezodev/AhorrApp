@@ -7,8 +7,25 @@ import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 
-class HistoryCustomWidget extends StatelessWidget {
+class HistoryCustomWidget extends StatefulWidget {
   const HistoryCustomWidget({super.key});
+
+  @override
+  State<HistoryCustomWidget> createState() => _HistoryCustomWidgetState();
+}
+
+class _HistoryCustomWidgetState extends State<HistoryCustomWidget> {
+  bool _hasAnimated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) setState(() => _hasAnimated = true);
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -147,12 +164,17 @@ class HistoryCustomWidget extends StatelessWidget {
               padding: const EdgeInsets.only(top: 10, bottom: 20),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => FadeInLeft(
-                    duration: const Duration(milliseconds: 400),
-                    delay: Duration(milliseconds: index * 20),
-                    from: 30,
-                    child: _HistoryItem(item: items[index]),
-                  ),
+                  (context, index) {
+                    final item = _HistoryItem(item: items[index]);
+                    if (_hasAnimated) return item;
+
+                    return FadeInLeft(
+                      duration: const Duration(milliseconds: 400),
+                      delay: Duration(milliseconds: index * 20),
+                      from: 30,
+                      child: item,
+                    );
+                  },
                   childCount: items.length,
                 ),
               ),

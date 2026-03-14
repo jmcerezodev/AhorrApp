@@ -5,11 +5,29 @@ import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/delete_tic
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
 import 'package:ahorrapp/presentation/widgets/tickets_screen/ticket_item_card.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class TicketsHistoryWidget extends StatelessWidget {
+class TicketsHistoryWidget extends StatefulWidget {
   const TicketsHistoryWidget({super.key});
+
+  @override
+  State<TicketsHistoryWidget> createState() => _TicketsHistoryWidgetState();
+}
+
+class _TicketsHistoryWidgetState extends State<TicketsHistoryWidget> {
+  bool _hasAnimated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) setState(() => _hasAnimated = true);
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +53,7 @@ class TicketsHistoryWidget extends StatelessWidget {
           onReorder: (oldIndex, newIndex) => context.read<TicketsCubit>().reorderItems(oldIndex, newIndex),
           itemBuilder: (context, index) {
             final item = items[index];
-            return Padding(
+            final card = Padding(
               key: ValueKey(item.id),
               padding: const EdgeInsets.only(bottom: 8),
               child: Dismissible(
@@ -83,6 +101,16 @@ class TicketsHistoryWidget extends StatelessWidget {
                   isDark: isDark,
                 ),
               ),
+            );
+
+            if (_hasAnimated) return card;
+
+            return FadeInUp(
+              key: ValueKey('anim_${item.id}'),
+              duration: const Duration(milliseconds: 400),
+              delay: Duration(milliseconds: index * 20),
+              from: 30,
+              child: card,
             );
           },
         );
