@@ -1,10 +1,10 @@
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/delete_acount/delete_acount_cubit.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../helpers/mock_platform.dart';
 
 class FakeBuildContext extends Fake implements BuildContext {}
 
@@ -12,27 +12,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
-    const MethodChannel pathChannel = MethodChannel('plugins.flutter.io/path_provider');
-    const MethodChannel packageInfoChannel = MethodChannel('dev.fluttercommunity.plus/package_info');
-    const MethodChannel deviceInfoChannel = MethodChannel('dev.fluttercommunity.plus/device_info');
-    const MethodChannel securityChannel = MethodChannel('dev.jmcerezo.ahorrapp/security');
-
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async => '.');
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(packageInfoChannel, (MethodCall methodCall) async => {'appName': 'AhorrApp', 'packageName': 'dev.jmcerezo.ahorrapp', 'version': '1.0.0', 'buildNumber': '1'});
-    
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(deviceInfoChannel, (methodCall) async {
-      if (methodCall.method == 'getDeviceInfo') {
-        return {
-          'model': 'iPhone',
-          'identifierForVendor': '12345',
-          'systemVersion': '15.0',
-          'name': 'Test Device'
-        };
-      }
-      return null;
-    });
-
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(securityChannel, (MethodCall methodCall) async => null);
+    setupMockPlatform();
   });
 
   group('DeleteAcountCubit Tests', () {

@@ -2,11 +2,14 @@ import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_templates_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_state.dart';
 import 'package:ahorrapp/presentation/widgets/shopping_list_screen/shopping_list_item_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../../helpers/mocks.dart';
 
 class MockShoppingListCubit extends Mock implements ShoppingListCubit {}
 class MockShoppingTemplatesCubit extends Mock implements ShoppingTemplatesCubit {}
@@ -14,14 +17,22 @@ class MockShoppingTemplatesCubit extends Mock implements ShoppingTemplatesCubit 
 void main() {
   late MockShoppingListCubit mockShoppingCubit;
   late MockShoppingTemplatesCubit mockTemplatesCubit;
+  late MockThemeCubit mockThemeCubit;
   final humanizeNumbers = HumanizeNumbers();
 
   setUp(() {
     mockShoppingCubit = MockShoppingListCubit();
     mockTemplatesCubit = MockShoppingTemplatesCubit();
+    mockThemeCubit = MockThemeCubit();
 
     when(() => mockTemplatesCubit.state).thenReturn(const ShoppingTemplatesState());
     when(() => mockTemplatesCubit.stream).thenAnswer((_) => const Stream.empty());
+    
+    when(() => mockThemeCubit.state).thenReturn(ThemeState(
+      themeMode: ThemeMode.light,
+      isPrivacyModeActive: false,
+    ));
+    when(() => mockThemeCubit.stream).thenAnswer((_) => const Stream.empty());
   });
 
   Widget createWidgetUnderTest(ShoppingListItem item) {
@@ -31,6 +42,7 @@ void main() {
           providers: [
             BlocProvider<ShoppingListCubit>.value(value: mockShoppingCubit),
             BlocProvider<ShoppingTemplatesCubit>.value(value: mockTemplatesCubit),
+            BlocProvider<ThemeCubit>.value(value: mockThemeCubit),
           ],
           child: ShoppingItemCard(
             item: item,
@@ -50,12 +62,10 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest(item));
 
       expect(find.text('PRECIO'), findsOneWidget);
-      expect(find.byIcon(Icons.add_rounded), findsOneWidget); // Icono dentro del botón precio
-      expect(find.byIcon(Icons.star_outline_rounded), findsOneWidget); // Favorito
+      expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.star_outline_rounded), findsOneWidget);
       
-      // No debe haber badge de cantidad x1
       expect(find.text('x1'), findsNothing);
-      // No debe haber botones del stepper (+/-)
       expect(find.byIcon(Icons.remove_rounded), findsNothing);
     });
 
@@ -64,12 +74,12 @@ void main() {
 
       await tester.pumpWidget(createWidgetUnderTest(item));
 
-      expect(find.text('1,50€'), findsOneWidget);
+      // 1.5 -> "1,5€" con el nuevo formato (sin ceros innecesarios)
+      expect(find.text('1,5€'), findsOneWidget);
       expect(find.text('x1'), findsOneWidget);
-      expect(find.byIcon(Icons.add_rounded), findsOneWidget); // Ahora es del stepper
-      expect(find.byIcon(Icons.remove_rounded), findsOneWidget); // Stepper
+      expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.remove_rounded), findsOneWidget);
       
-      // No debe mostrar precio unitario si la cantidad es 1
       expect(find.textContaining('€/ud'), findsNothing);
     });
 
@@ -78,8 +88,10 @@ void main() {
 
       await tester.pumpWidget(createWidgetUnderTest(item));
 
-      expect(find.text('3€'), findsOneWidget); // Total (HumanizeNumbers quita decimales si son .00)
-      expect(find.text('1,50€/ud'), findsOneWidget); // Unitario
+      // 1.5 * 2 = 3.0 -> "3€"
+      expect(find.text('3€'), findsOneWidget);
+      // Unitario: 1.5 -> "1,5€/ud"
+      expect(find.text('1,5€/ud'), findsOneWidget);
       expect(find.text('x2'), findsOneWidget);
       expect(find.byIcon(Icons.add_rounded), findsOneWidget);
       expect(find.byIcon(Icons.remove_rounded), findsOneWidget);

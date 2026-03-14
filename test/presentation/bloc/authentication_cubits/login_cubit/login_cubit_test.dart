@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:get_it/get_it.dart';
+import '../../../../helpers/mock_platform.dart';
 
 class MockHistoryCubit extends Mock implements HistoryCubit {}
 
@@ -20,18 +21,7 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async => '.');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(packageInfoChannel, (MethodCall methodCall) async => {'appName': 'AhorrApp', 'packageName': 'dev.jmcerezo.ahorrapp', 'version': '1.0.0', 'buildNumber': '1'});
     
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-      const MethodChannel('dev.fluttercommunity.plus/device_info'),
-      (methodCall) async {
-        return {
-          'model': 'iPhone Test',
-          'identifierForVendor': '123456',
-          'systemVersion': '16.0',
-          'name': 'iPhone',
-          'systemName': 'iOS',
-        };
-      },
-    );
+    setupMockPlatform();
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(securityChannel, (MethodCall methodCall) async => null);
   });
@@ -41,7 +31,6 @@ void main() {
     late MockHistoryCubit mockHistoryCubit;
 
     setUp(() async {
-      // Limpieza de GetIt para evitar interferencias entre tests
       GetIt.instance.reset();
 
       SharedPreferences.setMockInitialValues({});

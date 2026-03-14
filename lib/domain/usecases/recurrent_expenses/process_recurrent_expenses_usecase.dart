@@ -39,7 +39,6 @@ class ProcessRecurrentExpensesUseCase {
 
       if (_shouldApply(expense, now, effectiveDay)) {
         // 1. Crear el movimiento en el historial (Ingreso o Gasto)
-        // Usamos la fecha efectiva (ej: 28/02/2024) para el registro exacto
         final String effectiveDate = "$effectiveDay/${now.month}/${now.year}";
 
         final movement = Movement(
@@ -75,7 +74,7 @@ class ProcessRecurrentExpensesUseCase {
           }
         } catch (_) {}
 
-        // 3. Actualizar fecha de última aplicación (MM-YYYY)
+        // 3. Actualizar fecha de última aplicación (M-YYYY)
         final lastAppliedKey = "${now.month}-${now.year}";
         await localRepository.updateLastApplied(expense.id, lastAppliedKey);
         
@@ -90,21 +89,28 @@ class ProcessRecurrentExpensesUseCase {
     if (now.day < effectiveDay) return false;
     if (expense.lastApplied == null) return true;
 
-    final parts = expense.lastApplied!.split('-');
-    final lastMonth = int.parse(parts[0]);
-    final lastYear = int.parse(parts[1]);
+    try {
+      final parts = expense.lastApplied!.split('-');
+      final lastMonth = int.parse(parts[0]);
+      final lastYear = int.parse(parts[1]);
 
-    final monthsDiff = (now.year - lastYear) * 12 + (now.month - lastMonth);
+      // Si ya se aplicó este mismo mes y año, no duplicar
+      if (lastMonth == now.month && lastYear == now.year) return false;
 
-    switch (expense.frequency) {
-      case RecurrentFrequency.monthly:
-        return monthsDiff >= 1;
-      case RecurrentFrequency.quarterly:
-        return monthsDiff >= 3;
-      case RecurrentFrequency.semiAnnually:
-        return monthsDiff >= 6;
-      case RecurrentFrequency.annually:
-        return monthsDiff >= 12;
+      final monthsDiff = (now.year - lastYear) * 12 + (now.month - lastMonth);
+
+      switch (expense.frequency) {
+        case RecurrentFrequency.monthly:
+          return monthsDiff >= 1;
+        case RecurrentFrequency.quarterly:
+          return monthsDiff >= 3;
+        case RecurrentFrequency.semiAnnually:
+          return monthsDiff >= 6;
+        case RecurrentFrequency.annually:
+          return monthsDiff >= 12;
+      }
+    } catch (_) {
+      return true; // Si hay error en el formato, intentamos aplicar
     }
   }
 }

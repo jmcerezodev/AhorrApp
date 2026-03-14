@@ -1,25 +1,39 @@
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/debts_loans_cubit/debts_loans_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_state.dart';
 import 'package:ahorrapp/presentation/widgets/debts_loans_screen/debt_loan_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../../helpers/mocks.dart';
 
 class MockDebtsLoansCubit extends Mock implements DebtsLoansCubit {}
 
 void main() {
   late MockDebtsLoansCubit mockCubit;
+  late MockThemeCubit mockThemeCubit;
 
   setUp(() {
     mockCubit = MockDebtsLoansCubit();
+    mockThemeCubit = MockThemeCubit();
+
+    when(() => mockThemeCubit.state).thenReturn(ThemeState(
+      themeMode: ThemeMode.light,
+      isPrivacyModeActive: false,
+    ));
+    when(() => mockThemeCubit.stream).thenAnswer((_) => const Stream.empty());
   });
 
   Widget createWidgetUnderTest(DebtLoan item) {
     return MaterialApp(
       home: Scaffold(
-        body: BlocProvider<DebtsLoansCubit>.value(
-          value: mockCubit,
+        body: MultiBlocProvider(
+          providers: [
+            BlocProvider<DebtsLoansCubit>.value(value: mockCubit),
+            BlocProvider<ThemeCubit>.value(value: mockThemeCubit),
+          ],
           child: DebtLoanCard(
             item: item,
             isDark: false,

@@ -15,7 +15,7 @@ void main() {
 
     test('Estado inicial debe ser light por defecto si no hay preferencias', () {
       final themeCubit = ThemeCubit();
-      expect(themeCubit.state, ThemeMode.light);
+      expect(themeCubit.state.themeMode, ThemeMode.light);
       themeCubit.close();
     });
 
@@ -23,11 +23,11 @@ void main() {
       final themeCubit = ThemeCubit();
       
       themeCubit.toggleTheme();
-      expect(themeCubit.state, ThemeMode.dark);
+      expect(themeCubit.state.themeMode, ThemeMode.dark);
       expect(Preferences.isDarkMode, true);
 
       themeCubit.toggleTheme();
-      expect(themeCubit.state, ThemeMode.light);
+      expect(themeCubit.state.themeMode, ThemeMode.light);
       expect(Preferences.isDarkMode, false);
       
       themeCubit.close();

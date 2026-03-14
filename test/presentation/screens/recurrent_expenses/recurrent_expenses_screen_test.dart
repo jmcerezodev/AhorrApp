@@ -1,6 +1,7 @@
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
+import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_state.dart';
 import 'package:ahorrapp/presentation/screens/recurrent_expenses_screen.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/add_edit_recurrent_expense_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/shared/empty_list_widget.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../../helpers/mocks.dart';
 
 class MockRecurrentExpensesCubit extends Mock implements RecurrentExpensesCubit {}
 class MockDebtsLoansCubit extends Mock implements DebtsLoansCubit {}
@@ -16,19 +18,26 @@ class MockDebtsLoansCubit extends Mock implements DebtsLoansCubit {}
 void main() {
   late MockRecurrentExpensesCubit mockCubit;
   late MockDebtsLoansCubit mockDebtsCubit;
+  late MockThemeCubit mockThemeCubit;
 
   setUp(() {
     mockCubit = MockRecurrentExpensesCubit();
     mockDebtsCubit = MockDebtsLoansCubit();
+    mockThemeCubit = MockThemeCubit();
     
     when(() => mockCubit.loadExpenses()).thenAnswer((_) async => {});
     when(() => mockCubit.reorderExpenses(any(), any(), isIncome: any(named: 'isIncome'))).thenAnswer((_) async => {});
     when(() => mockCubit.stream).thenAnswer((_) => const Stream.empty());
     
-    // STUB OBLIGATORIO: loadDebtsLoans() para el initState
     when(() => mockDebtsCubit.loadDebtsLoans()).thenAnswer((_) async => {});
     when(() => mockDebtsCubit.state).thenReturn(const DebtsLoansState());
     when(() => mockDebtsCubit.stream).thenAnswer((_) => const Stream.empty());
+
+    when(() => mockThemeCubit.state).thenReturn(ThemeState(
+      themeMode: ThemeMode.light,
+      isPrivacyModeActive: false,
+    ));
+    when(() => mockThemeCubit.stream).thenAnswer((_) => const Stream.empty());
   });
 
   Widget createWidgetUnderTest() {
@@ -36,6 +45,7 @@ void main() {
       providers: [
         BlocProvider<RecurrentExpensesCubit>.value(value: mockCubit),
         BlocProvider<DebtsLoansCubit>.value(value: mockDebtsCubit),
+        BlocProvider<ThemeCubit>.value(value: mockThemeCubit),
       ],
       child: const MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -46,8 +56,15 @@ void main() {
     );
   }
 
+  void setupScreenSize(WidgetTester tester) {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+  }
+
   group('RecurrentExpensesScreen - Pruebas de Interfaz', () {
     testWidgets('Debe mostrar el título MIS FIJOS en la AppBar', (WidgetTester tester) async {
+      setupScreenSize(tester);
       when(() => mockCubit.state).thenReturn(const RecurrentExpensesState(expenses: []));
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
@@ -55,6 +72,7 @@ void main() {
     });
 
     testWidgets('Debe mostrar EmptyListWidget si no hay registros', (WidgetTester tester) async {
+      setupScreenSize(tester);
       when(() => mockCubit.state).thenReturn(const RecurrentExpensesState(expenses: []));
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
@@ -62,6 +80,7 @@ void main() {
     });
 
     testWidgets('Debe mostrar la lista de gastos en la pestaña GASTOS', (WidgetTester tester) async {
+      setupScreenSize(tester);
       final expenses = [
         RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 10, day: 1, startDate: DateTime.now(), isIncome: false),
       ];
@@ -73,6 +92,7 @@ void main() {
     });
 
     testWidgets('Debe mostrar la lista de ingresos al cambiar de pestaña', (WidgetTester tester) async {
+      setupScreenSize(tester);
       final items = [
         RecurrentExpense(id: '1', userId: 'u1', name: 'Sueldo', amount: 2000, day: 1, startDate: DateTime.now(), isIncome: true),
       ];
@@ -88,6 +108,7 @@ void main() {
     });
 
     testWidgets('Debe abrir el diálogo de añadir con el tipo correcto (Gasto)', (WidgetTester tester) async {
+      setupScreenSize(tester);
       when(() => mockCubit.state).thenReturn(const RecurrentExpensesState(status: RecurrentExpensesStatus.success, expenses: []));
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
@@ -100,6 +121,7 @@ void main() {
     });
 
     testWidgets('Debe abrir el diálogo de añadir con el tipo correcto (Ingreso)', (WidgetTester tester) async {
+      setupScreenSize(tester);
       when(() => mockCubit.state).thenReturn(const RecurrentExpensesState(status: RecurrentExpensesStatus.success, expenses: []));
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
@@ -115,6 +137,7 @@ void main() {
     });
 
     testWidgets('Debe mostrar el nombre de la deuda y el chip DEUDA si está vinculada', (WidgetTester tester) async {
+      setupScreenSize(tester);
       final expenses = [
         RecurrentExpense(id: 'exp1', userId: 'u1', name: 'Gasto Original', amount: 50.0, day: 15, startDate: DateTime.now(), isIncome: false),
       ];
@@ -133,6 +156,7 @@ void main() {
     });
 
     testWidgets('Debe mostrar fondo de edición al deslizar a la derecha', (WidgetTester tester) async {
+      setupScreenSize(tester);
       final expenses = [
         RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 15, day: 10, startDate: DateTime.now()),
       ];
@@ -147,6 +171,7 @@ void main() {
     });
 
     testWidgets('Debe permitir reordenar la lista', (WidgetTester tester) async {
+      setupScreenSize(tester);
       final expenses = [
         RecurrentExpense(id: '1', userId: 'u1', name: 'Netflix', amount: 10, day: 1, startDate: DateTime.now(), position: 0),
         RecurrentExpense(id: '2', userId: 'u1', name: 'HBO', amount: 10, day: 1, startDate: DateTime.now(), position: 1),

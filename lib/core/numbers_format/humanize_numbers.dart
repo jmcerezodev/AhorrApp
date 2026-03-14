@@ -5,12 +5,11 @@ class HumanizeNumbers {
     if (isPrivacyModeActive) {
       return '••••';
     }
-    
-    final formatter = NumberFormat.currency(
-      locale: 'es_ES',
-      symbol: '',
-      decimalDigits: 2,
-    );
+
+    final formatter = NumberFormat.decimalPattern('es_ES')
+      ..minimumFractionDigits = 0
+      ..maximumFractionDigits = 2;
+
     return formatter.format(number).trim();
   }
 }

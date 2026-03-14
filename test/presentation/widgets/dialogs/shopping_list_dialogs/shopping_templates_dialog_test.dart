@@ -84,7 +84,8 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      expect(find.text('1,50€'), findsOneWidget);
+      // Ajustado de "1,50€" a "1,5€" según la nueva lógica de HumanizeNumbers
+      expect(find.text('1,5€'), findsOneWidget);
     });
 
     testWidgets('Debe llamar a addItemsFromTemplate y mostrar SuccessfulDialogNoGo al añadir un producto', (WidgetTester tester) async {
@@ -102,18 +103,14 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
-      // Buscamos el botón de añadir a la cesta (Icons.add_shopping_cart_rounded)
       final addButton = find.byIcon(Icons.add_shopping_cart_rounded).first;
       await tester.ensureVisible(addButton);
       await tester.tap(addButton);
       
-      // Sincronización crucial: pumpAndSettle para que el microtask de Bloc se complete
       await tester.pumpAndSettle(); 
 
-      // Verificamos que se llamó al cubit con la lista de items correcta
       verify(() => mockListCubit.addItemsFromTemplate(templates.first.items)).called(1);
 
-      // Verificamos que aparece el diálogo de éxito con el título en UPPERCASE por SuccessfulDialogNoGo
       expect(find.byType(SuccessfulDialogNoGo), findsOneWidget);
       expect(find.text('¡A LA CESTA!'), findsOneWidget);
       expect(find.textContaining('añadido correctamente!', findRichText: true), findsOneWidget);
