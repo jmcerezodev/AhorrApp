@@ -1,5 +1,6 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
+import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -10,6 +11,7 @@ class MonthlyBalanceWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final historyList = context.watch<HistoryCubit>().state.historyList;
     final dateState = context.watch<DateCubit>().state;
+    final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
     final humanizeNumbers = HumanizeNumbers();
 
     double monthlyTotal = 0;
@@ -49,8 +51,9 @@ class MonthlyBalanceWidget extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                '${isPositive ? "+" : ""}${humanizeNumbers.number(monthlyTotal)}€',
+              child: PrivacyAmountText(
+                amount: '${isPositive ? "+" : ""}${humanizeNumbers.number(monthlyTotal, isPrivacyModeActive: isPrivacyActive)}€',
+                isPrivacyActive: isPrivacyActive,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w900,

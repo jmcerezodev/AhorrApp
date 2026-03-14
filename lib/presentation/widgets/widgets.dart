@@ -10,3 +10,4 @@ export 'login_screen/login_form_widget.dart';
 export 'new_user_screen/new_user_form_widget.dart';
 export 'charts/chart_history.dart';
 export 'shared/empty_list_widget.dart';
+export 'shared/privacy_amount_text.dart';

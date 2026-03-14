@@ -1,9 +1,9 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
-import 'package:ahorrapp/presentation/bloc/debts_loans_cubit/debts_loans_cubit.dart';
-import 'package:ahorrapp/presentation/bloc/recurrent_expenses_cubit/recurrent_expenses_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/confirm_manual_payment_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -28,6 +28,7 @@ class RecurrentExpenseCard extends StatelessWidget {
     final int daysRemaining = nextPaymentDate.difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)).inDays;
     final double progress = _calculateProgress(nextPaymentDate);
     final bool showProgress = isAutomatic && expense.isActive;
+    final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
 
     // Buscamos si hay un registro vinculado (deuda o préstamo)
     final debtsState = context.watch<DebtsLoansCubit>().state;
@@ -120,11 +121,14 @@ class RecurrentExpenseCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 3,
-                      backgroundColor: Colors.orange.withValues(alpha: 0.05),
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.orange.withValues(alpha: 0.4)),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      child: LinearProgressIndicator(
+                        value: isPrivacyActive ? 0.0 : progress,
+                        minHeight: 3,
+                        backgroundColor: Colors.orange.withValues(alpha: 0.05),
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.orange.withValues(alpha: 0.4)),
+                      ),
                     ),
                   ),
                 ]
@@ -133,8 +137,9 @@ class RecurrentExpenseCard extends StatelessWidget {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  '${isIncome ? "+" : "-"}${humanizeNumbers.number(expense.amount)}€',
+                PrivacyAmountText(
+                  amount: '${isIncome ? "+" : "-"}${humanizeNumbers.number(expense.amount, isPrivacyModeActive: isPrivacyActive)}€',
+                  isPrivacyActive: isPrivacyActive,
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 16,
@@ -154,7 +159,7 @@ class RecurrentExpenseCard extends StatelessWidget {
                         barrierDismissible: false,
                         builder: (context) => ConfirmManualPaymentDialog(
                           expense: expense,
-                          amount: humanizeNumbers.number(expense.amount),
+                          amount: humanizeNumbers.number(expense.amount, isPrivacyModeActive: isPrivacyActive),
                         ),
                       );
                     }

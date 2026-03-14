@@ -1,10 +1,13 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
+import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/add_debt_loan_payment_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/add_edit_debt_loan_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/delete_debt_loan_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/shared/swipe_background_widget.dart';
+import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 class DebtLoanCard extends StatelessWidget {
@@ -23,6 +26,8 @@ class DebtLoanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final humanizeNumbers = HumanizeNumbers();
     final bool isDebt = item.type == DebtLoanType.debt;
+    final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
+    
     final double progress = item.totalAmount > 0 ? item.paidAmount / item.totalAmount : 0;
     final bool isFullyPaid = item.remainingAmount <= 0;
     
@@ -150,8 +155,9 @@ class DebtLoanCard extends StatelessWidget {
                             ),
                           )
                         else
-                          Text(
-                            '${humanizeNumbers.number(item.remainingAmount)}€',
+                          PrivacyAmountText(
+                            amount: '${humanizeNumbers.number(item.remainingAmount, isPrivacyModeActive: isPrivacyActive)}€',
+                            isPrivacyActive: isPrivacyActive,
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 16,
@@ -166,8 +172,9 @@ class DebtLoanCard extends StatelessWidget {
                               color: Colors.orange.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(5),
                             ),
-                            child: Text(
-                              '${humanizeNumbers.number(item.installmentAmount ?? 0)}€/mes',
+                            child: PrivacyAmountText(
+                              amount: '${humanizeNumbers.number(item.installmentAmount ?? 0, isPrivacyModeActive: isPrivacyActive)}€/mes',
+                              isPrivacyActive: isPrivacyActive,
                               style: const TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w800,
@@ -197,8 +204,9 @@ class DebtLoanCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          'Pendiente: ${humanizeNumbers.number(item.paidAmount)}€',
+                        PrivacyAmountText(
+                          amount: 'Pagado: ${humanizeNumbers.number(item.paidAmount, isPrivacyModeActive: isPrivacyActive)}€',
+                          isPrivacyActive: isPrivacyActive,
                           style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
                         ),
                         if (item.dueDate != null)
@@ -213,8 +221,9 @@ class DebtLoanCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                        Text(
-                          'Total: ${humanizeNumbers.number(item.totalAmount)}€',
+                        PrivacyAmountText(
+                          amount: 'Total: ${humanizeNumbers.number(item.totalAmount, isPrivacyModeActive: isPrivacyActive)}€',
+                          isPrivacyActive: isPrivacyActive,
                           style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -223,7 +232,7 @@ class DebtLoanCard extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: LinearProgressIndicator(
-                        value: progress,
+                        value: isPrivacyActive ? 0.0 : progress,
                         minHeight: 6,
                         backgroundColor: Colors.orange.withValues(alpha: 0.05),
                         valueColor: AlwaysStoppedAnimation<Color>(

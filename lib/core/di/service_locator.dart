@@ -46,6 +46,7 @@ import 'package:ahorrapp/domain/usecases/tickets/save_ticket_item_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/transfer_tickets_to_expenses_usecase.dart';
 import 'package:ahorrapp/domain/usecases/update_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
+import 'package:ahorrapp/presentation/bloc/security_cubit/security_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_templates_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
@@ -265,6 +266,7 @@ Future<void> setupServiceLocator() async {
   getIt.registerSingleton<TotalMoneyCubit>(totalMoneyCubit);
   getIt.registerSingleton<DateCubit>(DateCubit());
   getIt.registerSingleton<ThemeCubit>(ThemeCubit());
+  getIt.registerSingleton<SecurityCubit>(SecurityCubit());
   
   getIt.registerSingleton<HistoryCubit>(HistoryCubit(totalMoneyCubit: totalMoneyCubit));
   getIt.registerSingleton<SavingsCubit>(SavingsCubit());

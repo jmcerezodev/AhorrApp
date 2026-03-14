@@ -36,8 +36,11 @@ class Preferences {
   static bool get isSavingsIncludedInBalance => _prefs.getBool('isSavingsIncludedInBalance') ?? false;
   static set isSavingsIncludedInBalance(bool value) => _prefs.setBool('isSavingsIncludedInBalance', value);
 
-  static bool get isProratedView => _prefs.getBool('isProratedView') ?? false; // NUEVO: Valor por defecto mensual
+  static bool get isProratedView => _prefs.getBool('isProratedView') ?? false;
   static set isProratedView(bool value) => _prefs.setBool('isProratedView', value);
+
+  static bool get isPrivacyModeActive => _prefs.getBool('isPrivacyModeActive') ?? false;
+  static set isPrivacyModeActive(bool value) => _prefs.setBool('isPrivacyModeActive', value);
 
   // --- LIMPIEZA SEGURA ---
   static Future<void> clearAll() async {
@@ -48,6 +51,7 @@ class Preferences {
     final currentPassword = password;
     final currentIsSavingsIncluded = isSavingsIncludedInBalance;
     final currentIsProratedView = isProratedView;
+    final currentIsPrivacyModeActive = isPrivacyModeActive;
     
     // 2. En lugar de .clear(), reseteamos los valores a su estado inicial
     uId = '';
@@ -56,11 +60,13 @@ class Preferences {
     isBiometricActive = false;
     isSavingsIncludedInBalance = false;
     isProratedView = false;
+    isPrivacyModeActive = false;
 
     // 3. Restauramos o limpiamos credenciales según la preferencia del usuario
     isDarkMode = currentDarkMode;
     isSavingsIncludedInBalance = currentIsSavingsIncluded;
     isProratedView = currentIsProratedView;
+    isPrivacyModeActive = currentIsPrivacyModeActive;
     
     if (currentRemember) {
       isRemember = true;

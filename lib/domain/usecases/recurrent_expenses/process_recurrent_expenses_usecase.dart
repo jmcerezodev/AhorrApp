@@ -1,5 +1,4 @@
 import 'package:ahorrapp/core/date/date.dart';
-import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/domain/repositories/debt_loan_repository.dart';
@@ -32,15 +31,24 @@ class ProcessRecurrentExpensesUseCase {
       // Solo procesamos automáticos activos
       if (!expense.isActive || expense.day == null) continue;
 
-      if (_shouldApply(expense, now)) {
+      // Calcular el día efectivo de cobro para el mes actual
+      final int lastDayOfMonth = DateTime(now.year, now.month + 1, 0).day;
+      final int effectiveDay = (expense.day! > lastDayOfMonth) 
+          ? lastDayOfMonth 
+          : expense.day!;
+
+      if (_shouldApply(expense, now, effectiveDay)) {
         // 1. Crear el movimiento en el historial (Ingreso o Gasto)
+        // Usamos la fecha efectiva (ej: 28/02/2024) para el registro exacto
+        final String effectiveDate = "$effectiveDay/${now.month}/${now.year}";
+
         final movement = Movement(
           id: const Uuid().v4(),
           name: expense.name,
           amount: expense.amount,
           type: expense.isIncome ? MovementType.income : MovementType.expense,
           isIncome: expense.isIncome,
-          date: dateService.currentDate(),
+          date: effectiveDate,
           hour: dateService.currentHour(),
           month: dateService.monthNames(),
           year: now.year,
@@ -78,8 +86,8 @@ class ProcessRecurrentExpensesUseCase {
     }
   }
 
-  bool _shouldApply(RecurrentExpense expense, DateTime now) {
-    if (now.day < expense.day!) return false;
+  bool _shouldApply(RecurrentExpense expense, DateTime now, int effectiveDay) {
+    if (now.day < effectiveDay) return false;
     if (expense.lastApplied == null) return true;
 
     final parts = expense.lastApplied!.split('-');

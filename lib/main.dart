@@ -1,6 +1,5 @@
 import 'package:ahorrapp/config/routes/app_router.dart';
 import 'package:ahorrapp/config/theme/app_theme.dart';
-import 'package:ahorrapp/core/auth/biometric_service.dart';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/core/sync/sync_service.dart';
@@ -9,21 +8,17 @@ import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_templates_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
-import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
+import 'package:ahorrapp/presentation/screens/security_lock_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; 
 import 'package:go_router/go_router.dart';
-import 'package:flutter_web_plugins/url_strategy.dart'; // Importante para quitar el '#' de la URL
-import 'dart:io';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
-    
-    // Configura la estrategia de URL para no usar '#' (PathUrlStrategy)
-    // Esto es fundamental para que funcionen correctamente los App Links y evitar el 404
     usePathUrlStrategy();
 
     await Preferences.init();
@@ -42,23 +37,12 @@ void main() async {
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
     final authService = getIt<AuthAppwrite>();
-    final biometricService = getIt<BiometricService>();
-    
     String initialRoute = '/login';
     
     final bool hasActiveSession = Preferences.uId.isNotEmpty && Preferences.isLoggedIn;
 
     if (hasActiveSession) {
-      if (Preferences.isBiometricActive) {
-        final bool authenticated = await biometricService.authenticate();
-        if (authenticated) {
-          initialRoute = '/home-screen';
-        } else {
-          exit(0); 
-        }
-      } else {
-        initialRoute = '/home-screen';
-      }
+      initialRoute = '/home-screen';
     } else {
       initialRoute = await authService.getInitialRoute();
     }
@@ -69,8 +53,11 @@ void main() async {
     ]);
 
     runApp(
-      BlocProvider(
-        create: (_) => ThemeCubit(),
+      MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: getIt<ThemeCubit>()),
+          BlocProvider.value(value: getIt<SecurityCubit>()),
+        ],
         child: MainAppWrapper(initialRoute: initialRoute),
       )
     );
@@ -116,8 +103,6 @@ class MainAppWrapper extends StatefulWidget {
 
 class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObserver {
   late GoRouter router;
-  bool _isAuthenticating = false;
-  bool _wasPaused = false;
   static const platform = MethodChannel('dev.jmcerezo.ahorrapp/security');
 
   late final TotalMoneyCubit _totalMoneyCubit;
@@ -135,8 +120,8 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
     router = getAppRouter(widget.initialRoute);
 
     _totalMoneyCubit = getIt<TotalMoneyCubit>();
-    _historyCubit = HistoryCubit(totalMoneyCubit: _totalMoneyCubit);
-    _loginCubit = LoginCubit(historyCubit: _historyCubit);
+    _historyCubit = getIt<HistoryCubit>();
+    _loginCubit = getIt<LoginCubit>();
     _shoppingCubit = getIt<ShoppingListCubit>();
     _templatesCubit = getIt<ShoppingTemplatesCubit>();
     _ticketsCubit = getIt<TicketsCubit>();
@@ -156,12 +141,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
     _updateAppSecurity();
 
     if (state == AppLifecycleState.paused) {
-      _wasPaused = true;
-    }
-
-    if (state == AppLifecycleState.resumed && _wasPaused) {
-      _wasPaused = false;
-      _checkBiometricsOnResume();
+      context.read<SecurityCubit>().lock();
     }
   }
 
@@ -173,26 +153,10 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
     }
   }
 
-  Future<void> _checkBiometricsOnResume() async {
-    if (Preferences.uId.isEmpty || !Preferences.isBiometricActive || _isAuthenticating) return;
-
-    _isAuthenticating = true;
-    
-    final biometricService = getIt<BiometricService>();
-    final authenticated = await biometricService.authenticate();
-    
-    if (!authenticated) {
-      exit(0); 
-    }
-    
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _isAuthenticating = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final themeMode = context.watch<ThemeCubit>().state;
+    final themeState = context.watch<ThemeCubit>().state;
+    final securityStatus = context.watch<SecurityCubit>().state.status;
 
     return MultiBlocProvider(
       providers: [
@@ -204,15 +168,15 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
         BlocProvider<TicketsCubit>.value(value: _ticketsCubit),
         BlocProvider<DebtsLoansCubit>.value(value: _debtsLoansCubit),
 
-        BlocProvider(create: (_) => NewUserCubit()),
-        BlocProvider(create: (_) => ResetPasswordCubit()),
-        BlocProvider(create: (_) => UpdatePasswordCubit()),
-        BlocProvider(create: (_) => UpdateNameCubit()),
-        BlocProvider(create: (_) => DeleteAcountCubit()),
-        BlocProvider(create: (_) => SavingsCubit()),
-        BlocProvider(create: (_) => DateCubit()),
-        BlocProvider(create: (_) => IncomesCubit()),
-        BlocProvider(create: (_) => ExpensesCubit()),
+        BlocProvider(create: (_) => getIt<NewUserCubit>()),
+        BlocProvider(create: (_) => getIt<ResetPasswordCubit>()),
+        BlocProvider(create: (_) => getIt<UpdatePasswordCubit>()),
+        BlocProvider(create: (_) => getIt<UpdateNameCubit>()),
+        BlocProvider(create: (_) => getIt<DeleteAcountCubit>()),
+        BlocProvider(create: (_) => getIt<SavingsCubit>()),
+        BlocProvider(create: (_) => getIt<DateCubit>()),
+        BlocProvider(create: (_) => getIt<IncomesCubit>()),
+        BlocProvider(create: (_) => getIt<ExpensesCubit>()),
         BlocProvider(create: (_) => getIt<RecurrentExpensesCubit>()),
       ],
       child: MaterialApp.router(
@@ -220,7 +184,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
         debugShowCheckedModeBanner: false,
         theme: AppTheme().getTheme(isDarkMode: false),
         darkTheme: AppTheme().getTheme(isDarkMode: true),
-        themeMode: themeMode,
+        themeMode: themeState.themeMode,
         routerConfig: router,
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
@@ -230,6 +194,15 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
         supportedLocales: const [
           Locale('es', 'ES'),
         ],
+        builder: (context, child) {
+          return Stack(
+            children: [
+              if (child != null) child,
+              if (securityStatus == SecurityStatus.locked)
+                const SecurityLockScreen(),
+            ],
+          );
+        },
       ),
     );
   }

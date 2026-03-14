@@ -1,7 +1,7 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
-import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/add_edit_recurrent_expense_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,6 +19,7 @@ class RecurrentSummaryWidget extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final humanizeNumbers = HumanizeNumbers();
     final colorScheme = Theme.of(context).colorScheme;
+    final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
 
     return BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
       builder: (context, state) {
@@ -65,21 +66,35 @@ class RecurrentSummaryWidget extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            isIncomeTab ? 'TOTAL INGRESOS FIJOS' : 'TOTAL GASTOS FIJOS',
-                            style: TextStyle(
-                              color: Colors.orange.shade400,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                isIncomeTab ? 'TOTAL INGRESOS FIJOS' : 'TOTAL GASTOS FIJOS',
+                                style: TextStyle(
+                                  color: Colors.orange.shade400,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              GestureDetector(
+                                onTap: () => context.read<ThemeCubit>().togglePrivacyMode(),
+                                child: Icon(
+                                  isPrivacyActive ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                  size: 14,
+                                  color: Colors.orange.shade400.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 2),
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
-                            child: Text(
-                              '${humanizeNumbers.number(totalToShow)}€',
+                            child: PrivacyAmountText(
+                              amount: '${humanizeNumbers.number(totalToShow, isPrivacyModeActive: isPrivacyActive)}€',
+                              isPrivacyActive: isPrivacyActive,
                               style: TextStyle(
                                 color: isDark ? Colors.white : colorScheme.onSurface,
                                 fontSize: 30,

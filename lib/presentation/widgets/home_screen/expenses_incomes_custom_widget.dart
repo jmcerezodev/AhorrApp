@@ -5,6 +5,7 @@ import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/core/singletons/global_variables_singleton.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
+import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 
@@ -20,6 +21,7 @@ class ExpensesIncomesCustomWidget extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
   
     final historyCubit = context.watch<HistoryCubit>().state;
+    final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -29,12 +31,15 @@ class ExpensesIncomesCustomWidget extends StatelessWidget {
             child: FadeInLeft(
               child: _CompactActionCard(
                 title: 'INGRESOS',
-                money: (historyCubit.historyList.isNotEmpty) ? humanizeNumbers.number(filterLists.totalIncome(context, historyCubit.historyList)) : '0',
+                money: (historyCubit.historyList.isNotEmpty) 
+                    ? humanizeNumbers.number(filterLists.totalIncome(context, historyCubit.historyList), isPrivacyModeActive: isPrivacyActive) 
+                    : (isPrivacyActive ? '••••' : '0'),
+                isPrivacyActive: isPrivacyActive,
                 icon: Icons.arrow_upward_rounded,
                 iconColor: Colors.green.shade600,
                 bgColor: Colors.green.shade50.withValues(alpha: colorScheme.brightness == Brightness.dark ? 0.1 : 1.0),
-                borderColor: colorScheme.primary, // Unificado
-                glowColor: colorScheme.primary, // Unificado
+                borderColor: colorScheme.primary,
+                glowColor: colorScheme.primary,
                 onPressed: () {
                   context.read<DateCubit>().isOpen(false);
                   if ((sigleton.currentDate['month'] == date.monthNames() && (sigleton.currentDate['year'] == date.year()))) {
@@ -59,12 +64,15 @@ class ExpensesIncomesCustomWidget extends StatelessWidget {
             child: FadeInRight(
               child: _CompactActionCard(
                 title: 'GASTOS',
-                money: (historyCubit.historyList.isNotEmpty) ? humanizeNumbers.number(filterLists.totalExpense(context, historyCubit.historyList)) : '0',
+                money: (historyCubit.historyList.isNotEmpty) 
+                    ? humanizeNumbers.number(filterLists.totalExpense(context, historyCubit.historyList), isPrivacyModeActive: isPrivacyActive) 
+                    : (isPrivacyActive ? '••••' : '0'),
+                isPrivacyActive: isPrivacyActive,
                 icon: Icons.arrow_downward_rounded,
                 iconColor: Colors.red.shade600,
                 bgColor: Colors.red.shade50.withValues(alpha: colorScheme.brightness == Brightness.dark ? 0.1 : 1.0),
-                borderColor: colorScheme.primary, // Unificado
-                glowColor: colorScheme.primary, // Unificado
+                borderColor: colorScheme.primary,
+                glowColor: colorScheme.primary,
                 onPressed: () {
                   context.read<DateCubit>().isOpen(false);
                   if ((sigleton.currentDate['month'] == date.monthNames() && (sigleton.currentDate['year'] == date.year()))) {
@@ -95,6 +103,7 @@ class ExpensesIncomesCustomWidget extends StatelessWidget {
 class _CompactActionCard extends StatelessWidget {
   final String title;
   final String money;
+  final bool isPrivacyActive;
   final IconData icon;
   final Color iconColor;
   final Color bgColor;
@@ -105,6 +114,7 @@ class _CompactActionCard extends StatelessWidget {
   const _CompactActionCard({
     required this.title,
     required this.money,
+    required this.isPrivacyActive,
     required this.icon,
     required this.iconColor,
     required this.bgColor,
@@ -127,12 +137,12 @@ class _CompactActionCard extends StatelessWidget {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3), // Intensidad unificada
+            color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3),
             width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: colorScheme.primary.withValues(alpha: 0.05), // Sombra unificada
+              color: colorScheme.primary.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -165,8 +175,9 @@ class _CompactActionCard extends StatelessWidget {
                   ),
                   FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text(
-                      '$money€',
+                    child: PrivacyAmountText(
+                      amount: '$money€',
+                      isPrivacyActive: isPrivacyActive,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,

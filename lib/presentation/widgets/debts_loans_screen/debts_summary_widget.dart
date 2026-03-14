@@ -1,8 +1,11 @@
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
+import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/add_edit_debt_loan_dialog.dart';
+import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DebtsSummaryWidget extends StatelessWidget {
   final double totalAmount;
@@ -19,6 +22,7 @@ class DebtsSummaryWidget extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final humanizeNumbers = HumanizeNumbers();
     final colorScheme = Theme.of(context).colorScheme;
+    final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
 
     return FadeInDown(
       duration: const Duration(milliseconds: 600),
@@ -59,21 +63,35 @@ class DebtsSummaryWidget extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        isDebtView ? 'TOTAL QUE DEBES' : 'TOTAL QUE TE DEBEN',
-                        style: TextStyle(
-                          color: Colors.orange.shade400,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            isDebtView ? 'TOTAL QUE DEBES' : 'TOTAL QUE TE DEBEN',
+                            style: TextStyle(
+                              color: Colors.orange.shade400,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          GestureDetector(
+                            onTap: () => context.read<ThemeCubit>().togglePrivacyMode(),
+                            child: Icon(
+                              isPrivacyActive ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              size: 14,
+                              color: Colors.orange.shade400.withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 2),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
-                        child: Text(
-                          '${humanizeNumbers.number(totalAmount)}€',
+                        child: PrivacyAmountText(
+                          amount: '${humanizeNumbers.number(totalAmount, isPrivacyModeActive: isPrivacyActive)}€',
+                          isPrivacyActive: isPrivacyActive,
                           style: TextStyle(
                             color: isDark ? Colors.white : colorScheme.onSurface,
                             fontSize: 30,
