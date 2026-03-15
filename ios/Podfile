@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '13.0'
+platform :ios, '15.6'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -29,7 +29,6 @@ flutter_ios_podfile_setup
 
 target 'Runner' do
   use_frameworks!
-  use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
@@ -40,12 +39,11 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
-
-    # --- INICIO DE LA ACTUALIZACIÓN ---
     target.build_configurations.each do |config|
-      # Esto soluciona el error de "higher minimum deployment target" para Firebase 12.8.0
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      # Fuerza la versión en cada librería
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.6'
+      # Limpia cualquier exclusión de arquitectura vieja
+      config.build_settings.delete 'EXCLUDED_ARCHS[sdk=iphonesimulator*]'
     end
-    # --- FIN DE LA ACTUALIZACIÓN ---
   end
-end]]
+end
