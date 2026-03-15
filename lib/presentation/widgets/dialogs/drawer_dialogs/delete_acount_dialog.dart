@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/delete_acount/delete_acount_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
@@ -32,20 +33,20 @@ class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
 
     return CustomDialogWrapper(
       borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
-      horizontalInsetPadding: 30,
+      horizontalInsetPadding: 30.w,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           AppDialogs.dialogHeader(
             customIcon: isSubmitting 
-              ? const SizedBox(width: 32, height: 32, child: CircularProgressIndicator(color: Colors.red, strokeWidth: 3))
+              ? SizedBox(width: 32.w, height: 32.w, child: const CircularProgressIndicator(color: Colors.red, strokeWidth: 3))
               : null,
             icon: Icons.no_accounts_rounded, 
             color: Colors.red.shade400, 
             title: '¿Eliminar Cuenta?',
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
           
           if (isSubmitting)
             AppDialogs.dialogMessage('Eliminando tus datos de forma segura...', colorScheme)
@@ -54,7 +55,7 @@ class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
               'Estás a punto de eliminar permanentemente tu cuenta y todos tus datos.',
               colorScheme,
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
             AppDialogs.dialogMessage(
               'Esta acción no se puede deshacer.',
               colorScheme,
@@ -62,34 +63,39 @@ class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
             ),
           ],
           
-          const SizedBox(height: 25),
+          SizedBox(height: 25.h),
 
           if (!isSubmitting)
-            CustomInputTextWidget(
-              prefixIcon: Icons.key_rounded,
-              label: 'CONTRASEÑA PARA CONFIRMAR',
-              hintText: 'Tu contraseña',
-              onChanged: deleteAcountCubit.inputValueDeleteAcount,
-              autoFocus: false,
-              obscureText: true,
-              textInputType: TextInputType.name,
-              textCapitalization: TextCapitalization.none,
+            Flexible(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: CustomInputTextWidget(
+                  prefixIcon: Icons.key_rounded,
+                  label: 'CONTRASEÑA PARA CONFIRMAR',
+                  hintText: 'Tu contraseña',
+                  onChanged: deleteAcountCubit.inputValueDeleteAcount,
+                  autoFocus: false,
+                  obscureText: true,
+                  textInputType: TextInputType.name,
+                  textCapitalization: TextCapitalization.none,
+                ),
+              ),
             ),
 
           if (isSubmitting) ...[
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
             LinearProgressIndicator(
               value: state.deleteProgress,
               backgroundColor: colorScheme.onSurface.withValues(alpha: 0.1),
               color: Colors.red.shade400,
-              borderRadius: BorderRadius.circular(10),
-              minHeight: 8,
+              borderRadius: BorderRadius.circular(10.w),
+              minHeight: 8.h,
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
             Text(
               '${(state.deleteProgress * 100).toInt()}%',
               style: TextStyle(
-                fontSize: 12, 
+                fontSize: 12.sp, 
                 fontWeight: FontWeight.w900, 
                 color: Colors.red.shade400,
                 letterSpacing: 1,
@@ -97,20 +103,24 @@ class _DeleteAcountDialogState extends State<DeleteAcountDialog> {
             ),
           ],
 
-          const SizedBox(height: 30),
+          SizedBox(height: 30.h),
 
           if (!isSubmitting)
-            Row(
+            OverflowBar(
+              spacing: 15.w,
+              overflowSpacing: 10.h,
+              alignment: MainAxisAlignment.center,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 120.w,
                   child: AppDialogs.dialogSecondaryButton(
                     text: 'CANCELAR', 
                     onPressed: () => context.pop(), 
                     colorScheme: colorScheme
                   ),
                 ),
-                const SizedBox(width: 15),
-                Expanded(
+                SizedBox(
+                  width: 120.w,
                   child: AppDialogs.dialogPrimaryButton(
                     text: 'ELIMINAR', 
                     onPressed: state.deleteAcountValueInput != Preferences.password

@@ -1,4 +1,5 @@
 import 'package:ahorrapp/core/auth/biometric_service.dart';
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/core/sync/sync_service.dart';
@@ -20,13 +21,16 @@ class SideMenuWidget extends StatelessWidget {
     final isDark = themeCubit.state == ThemeMode.dark;
     final biometricService = BiometricService();
     final primaryOrange = Theme.of(context).primaryColor;
+    
+    // Detectamos si es pantalla pequeña (iPhone 7 altura aprox 667)
+    final bool isSmallScreen = MediaQuery.of(context).size.height <= 700;
 
     return Drawer(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
-          topRight: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+          topRight: Radius.circular(30.w),
+          bottomRight: Radius.circular(30.w),
         ),
       ),
       child: Column(
@@ -37,9 +41,9 @@ class SideMenuWidget extends StatelessWidget {
               padding: EdgeInsets.zero,
               physics: const BouncingScrollPhysics(),
               children: [
-                const SizedBox(height: 10),
+                SizedBox(height: 10.h),
                 const _SyncButton(),
-                const SizedBox(height: 10),
+                SizedBox(height: 10.h),
                 const _SectionTitle(title: 'AJUSTES DE LA APP'),
                 
                 _CustomSwitchItem(
@@ -79,14 +83,15 @@ class SideMenuWidget extends StatelessWidget {
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
-                  child: Divider(height: 1, thickness: 0.5, color: primaryOrange.withOpacity(0.3)),
+                  padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 5.h),
+                  child: Divider(height: 1.h, thickness: 0.5, color: primaryOrange.withOpacity(0.3)),
                 ),
 
                 const _SectionTitle(title: 'GESTIÓN DE CUENTA'),
                 _DrawerItem(
                   icon: Icons.badge_outlined,
                   label: 'Cambiar Nombre',
+                  isSmallScreen: isSmallScreen,
                   onTap: () {
                     Navigator.pop(context);
                     showDialog(
@@ -99,6 +104,7 @@ class SideMenuWidget extends StatelessWidget {
                 _DrawerItem(
                   icon: Icons.lock_reset_rounded,
                   label: 'Cambiar Contraseña',
+                  isSmallScreen: isSmallScreen,
                   onTap: () {
                     Navigator.pop(context);
                     showDialog(
@@ -115,6 +121,7 @@ class SideMenuWidget extends StatelessWidget {
                 _DrawerItem(
                   icon: Icons.picture_as_pdf_rounded,
                   label: 'Exportar Reporte (PDF)',
+                  isSmallScreen: isSmallScreen,
                   onTap: () {
                     Navigator.pop(context);
                     showDialog(
@@ -128,6 +135,7 @@ class SideMenuWidget extends StatelessWidget {
                 _DrawerItem(
                   icon: Icons.logout_rounded,
                   label: 'Cerrar Sesión',
+                  isSmallScreen: isSmallScreen,
                   onTap: () {
                     Navigator.pop(context);
                     showDialog(
@@ -143,6 +151,7 @@ class SideMenuWidget extends StatelessWidget {
                   label: 'Eliminar Cuenta',
                   iconColor: Colors.red.shade300,
                   labelColor: Colors.red.shade300,
+                  isSmallScreen: isSmallScreen,
                   onTap: () {
                     Navigator.pop(context);
                     showDialog(
@@ -157,14 +166,15 @@ class SideMenuWidget extends StatelessWidget {
                 ),
                 
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
-                  child: Divider(height: 1, thickness: 0.5, color: primaryOrange.withOpacity(0.3)),
+                  padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 5.h),
+                  child: Divider(height: 1.h, thickness: 0.5, color: primaryOrange.withOpacity(0.3)),
                 ),
 
                 const _SectionTitle(title: 'INFORMACIÓN Y LEGAL'),
                 _DrawerItem(
                   icon: Icons.verified_user_outlined,
                   label: 'Licencias',
+                  isSmallScreen: isSmallScreen,
                   onTap: () {
                     Navigator.pop(context);
                     context.push('/licenses');
@@ -173,12 +183,13 @@ class SideMenuWidget extends StatelessWidget {
                 _DrawerItem(
                   icon: Icons.privacy_tip_outlined,
                   label: 'Privacidad',
+                  isSmallScreen: isSmallScreen,
                   onTap: () {
                     Navigator.pop(context);
                     context.push('/privacy');
                   },
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20.h),
               ],
             ),
           ),
@@ -201,16 +212,16 @@ class _SyncButton extends StatelessWidget {
     final primaryOrange = Theme.of(context).primaryColor;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
+      padding: EdgeInsets.symmetric(horizontal: 25.w),
       child: OutlinedButton.icon(
         onPressed: () => _showSyncDialog(context),
-        icon: const Icon(Icons.sync_rounded, size: 18),
-        label: const Text('SINCRONIZAR AHORA', style: TextStyle(fontSize: 11, letterSpacing: 1)),
+        icon: Icon(Icons.sync_rounded, size: 18.w),
+        label: Text('SINCRONIZAR AHORA', style: TextStyle(fontSize: 11.sp, letterSpacing: 1)),
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryOrange,
           side: BorderSide(color: primaryOrange.withOpacity(0.5)),
-          minimumSize: const Size(double.infinity, 45),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          minimumSize: Size(double.infinity, 45.h),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.w)),
           backgroundColor: isDark ? primaryOrange.withOpacity(0.05) : Colors.white,
         ),
       ),
@@ -223,7 +234,6 @@ class _SyncButton extends StatelessWidget {
       barrierDismissible: false,
       builder: (context) => const _SyncStatusDialog(),
     ).then((_) {
-      // Al cerrar el diálogo (ya sea manual o automático), reseteamos el estado a idle
       getIt<SyncService>().resetSyncStatus();
     });
     getIt<SyncService>().forceSync();
@@ -303,22 +313,22 @@ class _SyncStatusDialogState extends State<_SyncStatusDialog> with SingleTickerP
             children: [
               RotationTransition(
                 turns: status == SyncStatus.syncing ? _rotationController : const AlwaysStoppedAnimation(0),
-                child: Icon(icon, color: iconColor, size: 50),
+                child: Icon(icon, color: iconColor, size: 50.w),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.sp),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10.h),
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: Colors.grey),
+                style: TextStyle(fontSize: 13.sp, color: Colors.grey),
               ),
               if (status == SyncStatus.success || status == SyncStatus.error) ...[
-                const SizedBox(height: 20),
+                SizedBox(height: 20.h),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text('CERRAR'),
@@ -339,7 +349,7 @@ class _Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     final primaryOrange = Theme.of(context).primaryColor;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 25, top: 10),
+      padding: EdgeInsets.only(bottom: 25.h, top: 10.h),
       child: GestureDetector(
         onTap: () async {
           final Uri url = Uri.parse('https://jmcerezo.dev');
@@ -352,17 +362,17 @@ class _Footer extends StatelessWidget {
             Text(
               'Desarrollado con ❤️ por',
               style: TextStyle(
-                fontSize: 9,
+                fontSize: 9.sp,
                 fontWeight: FontWeight.w600,
                 color: Colors.blueGrey.shade300,
                 letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.h),
             Text(
               'JMCEREZO.DEV',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 11.sp,
                 fontWeight: FontWeight.w900,
                 color: primaryOrange,
                 letterSpacing: 2,
@@ -398,51 +408,51 @@ class _CustomSwitchItem extends StatelessWidget {
     final primaryOrange = Theme.of(context).primaryColor;
     
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
+      padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 5.h),
       child: Row(
         children: [
-          Icon(leadingIcon, color: primaryOrange, size: 20),
-          const SizedBox(width: 15),
+          Icon(leadingIcon, color: primaryOrange, size: 20.w),
+          SizedBox(width: 15.w),
           Expanded(
             child: Text(
               label,
               style: TextStyle(
                 color: isDark ? Colors.white70 : Colors.blueGrey.shade800,
-                fontSize: 13,
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10.w),
           GestureDetector(
             onTap: () => onChanged(!value),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
-              width: 50,
-              height: 28,
+              width: 50.w,
+              height: 28.h,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20.w),
                 color: value ? primaryOrange : (isDark ? Colors.white12 : Colors.grey.shade100),
                 border: Border.all(
                   color: primaryOrange.withOpacity(0.3),
-                  width: 1.5,
+                  width: 1.5.w,
                 ),
               ),
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 250),
                 alignment: value ? Alignment.centerRight : Alignment.centerLeft,
                 child: Padding(
-                  padding: const EdgeInsets.all(2.0),
+                  padding: EdgeInsets.all(2.0.w),
                   child: Container(
-                    width: 22,
-                    height: 22,
+                    width: 22.w,
+                    height: 22.w,
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white,
                     ),
                     child: Icon(
                       value ? activeIcon : inactiveIcon,
-                      size: 13,
+                      size: 13.w,
                       color: value ? primaryOrange : Colors.grey.shade400,
                     ),
                   ),
@@ -465,41 +475,41 @@ class _Header extends StatelessWidget {
     final primaryOrange = Theme.of(context).primaryColor;
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(15, 30, 15, 10),
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+      margin: EdgeInsets.fromLTRB(15.w, 30.h, 15.w, 10.h),
+      padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1C1E) : Colors.white,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(25.w),
         border: Border.all(color: primaryOrange.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
             color: primaryOrange.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            blurRadius: 10.w,
+            offset: Offset(0, 5.h),
           ),
         ],
       ),
       child: Column(
         children: [
-          Image.asset('assets/Logo.png', height: 45, fit: BoxFit.contain),
-          const SizedBox(height: 15),
+          Image.asset('assets/Logo.png', height: 45.h, fit: BoxFit.contain),
+          SizedBox(height: 15.h),
           Text(
             Preferences.name,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: isDark ? Colors.white : Colors.blueGrey.shade900,
-              fontSize: 16,
+              fontSize: 16.sp,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: 2.h),
           Text(
             Preferences.email,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: isDark ? Colors.white54 : Colors.blueGrey.shade400,
-              fontSize: 12,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -516,11 +526,11 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(25, 10, 25, 5),
+      padding: EdgeInsets.fromLTRB(25.w, 10.h, 25.w, 5.h),
       child: Text(
         title,
         style: TextStyle(
-          fontSize: 9,
+          fontSize: 9.sp,
           fontWeight: FontWeight.w900,
           color: Colors.blueGrey.shade300,
           letterSpacing: 1.5,
@@ -536,6 +546,7 @@ class _DrawerItem extends StatelessWidget {
   final VoidCallback onTap;
   final Color? iconColor;
   final Color? labelColor;
+  final bool isSmallScreen;
 
   const _DrawerItem({
     required this.icon,
@@ -543,6 +554,7 @@ class _DrawerItem extends StatelessWidget {
     required this.onTap,
     this.iconColor,
     this.labelColor,
+    this.isSmallScreen = false,
   });
 
   @override
@@ -550,18 +562,19 @@ class _DrawerItem extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryOrange = Theme.of(context).primaryColor;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 1),
+      padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 1.h),
       child: ListTile(
         onTap: onTap,
         dense: true,
-        visualDensity: VisualDensity.compact,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        leading: Icon(icon, color: iconColor ?? primaryOrange, size: 20),
+        // Ajustamos la densidad visual si la pantalla es pequeña (iPhone 7)
+        visualDensity: isSmallScreen ? VisualDensity.compact : VisualDensity.standard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.w)),
+        leading: Icon(icon, color: iconColor ?? primaryOrange, size: 20.w),
         title: Text(
           label,
           style: TextStyle(
             color: labelColor ?? (isDark ? Colors.white70 : Colors.blueGrey.shade800),
-            fontSize: 13,
+            fontSize: 13.sp,
             fontWeight: FontWeight.w700,
           ),
         ),

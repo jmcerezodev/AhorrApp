@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:flutter/material.dart';
 
 /// Clase de utilidad para invocar diálogos siguiendo el estándar visual de AhorrApp.
@@ -36,25 +37,28 @@ class AppDialogs {
       children: [
         if (circularBackground)
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: customIcon ?? Icon(icon, color: color, size: iconSize),
+            child: customIcon ?? Icon(icon, color: color, size: iconSize.w),
           )
         else
-          customIcon ?? Icon(icon, color: color, size: iconSize),
+          customIcon ?? Icon(icon, color: color, size: iconSize.w),
         
-        const SizedBox(height: 20),
-        Text(
-          title.toUpperCase(),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.w900,
-            color: titleColor ?? colorScheme.onSurface,
-            letterSpacing: 1.5,
+        SizedBox(height: 20.h),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            title.toUpperCase(),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: fontSize.sp,
+              fontWeight: FontWeight.w900,
+              color: titleColor ?? colorScheme.onSurface,
+              letterSpacing: 1.5,
+            ),
           ),
         ),
       ],
@@ -73,22 +77,26 @@ class AppDialogs {
       key: key,
       children: [
         Container(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: color, size: 24),
+          child: Icon(icon, color: color, size: 24.w),
         ),
-        const SizedBox(width: 15),
+        SizedBox(width: 15.w),
         Expanded(
-          child: Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: colorScheme.onSurface,
-              letterSpacing: 1.5,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              title.toUpperCase(),
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w900,
+                color: colorScheme.onSurface,
+                letterSpacing: 1.5,
+              ),
             ),
           ),
         ),
@@ -101,9 +109,9 @@ class AppDialogs {
       message,
       textAlign: TextAlign.center,
       style: TextStyle(
-        fontSize: 13,
+        fontSize: 12.sp, // Bajamos de 13 a 12 para iPhone 7
         color: customColor ?? colorScheme.onSurface.withValues(alpha: 0.6),
-        height: 1.6,
+        height: 1.5,
         fontWeight: FontWeight.w500,
       ),
     );
@@ -120,17 +128,21 @@ class AppDialogs {
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 15),
+        padding: EdgeInsets.symmetric(vertical: 12.h), // Bajamos de 15 a 12
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.w)),
         disabledBackgroundColor: color.withValues(alpha: 0.3),
       ),
       child: Center(
         child: isLoading
-          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+          ? SizedBox(width: 18.w, height: 18.w, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
           : Text(
               text.toUpperCase(),
-              style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
+              style: TextStyle(
+                fontSize: 11.sp, 
+                fontWeight: FontWeight.w900, 
+                letterSpacing: 1
+              ),
             ),
       ),
     );
@@ -144,8 +156,8 @@ class AppDialogs {
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.w)),
       ),
       child: Text(
         text.toUpperCase(),
@@ -153,6 +165,7 @@ class AppDialogs {
           color: (onPressed == null) 
             ? colorScheme.onSurface.withValues(alpha: 0.2)
             : colorScheme.onSurface.withValues(alpha: 0.4),
+          fontSize: 11.sp,
           fontWeight: FontWeight.w900,
           letterSpacing: 1,
         ),

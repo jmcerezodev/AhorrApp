@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/update_password_cubit/update_password_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
@@ -24,7 +25,7 @@ class UpdatePasswordDialog extends StatelessWidget {
       create: (context) => UpdatePasswordCubit(),
       child: CustomDialogWrapper(
         borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
-        horizontalInsetPadding: 20,
+        horizontalInsetPadding: 20.w,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -34,7 +35,7 @@ class UpdatePasswordDialog extends StatelessWidget {
               color: Colors.orange, 
               colorScheme: colorScheme
             ),
-            const SizedBox(height: 25),
+            SizedBox(height: 25.h),
     
             const UpdatePasswordInputWidget(),
           ],

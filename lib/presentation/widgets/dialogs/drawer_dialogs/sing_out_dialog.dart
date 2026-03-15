@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
@@ -14,7 +15,7 @@ class SingOutDialog extends StatelessWidget {
 
     return CustomDialogWrapper(
       borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
-      horizontalInsetPadding: 30,
+      horizontalInsetPadding: 30.w,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -24,31 +25,35 @@ class SingOutDialog extends StatelessWidget {
             title: '¿Cerrar Sesión?',
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
           
           AppDialogs.dialogMessage(
             '¿Estás seguro de que quieres salir de tu cuenta?',
             colorScheme,
           ),
-          const SizedBox(height: 15),
+          SizedBox(height: 15.h),
           AppDialogs.dialogMessage(
             'Tendrás que volver a identificarte para acceder a tus datos.',
             colorScheme,
             customColor: Colors.orange.shade700,
           ),
-          const SizedBox(height: 30),
+          SizedBox(height: 30.h),
 
-          Row(
+          OverflowBar(
+            spacing: 15.w,
+            overflowSpacing: 10.h,
+            alignment: MainAxisAlignment.center,
             children: [
-              Expanded(
+              SizedBox(
+                width: 120.w,
                 child: AppDialogs.dialogSecondaryButton(
                   text: 'CANCELAR', 
                   onPressed: () => Navigator.of(context).pop(), 
                   colorScheme: colorScheme
                 ),
               ),
-              const SizedBox(width: 15),
-              Expanded(
+              SizedBox(
+                width: 120.w,
                 child: AppDialogs.dialogPrimaryButton(
                   text: 'SALIR', 
                   onPressed: () async {

@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/update_name/update_name_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
@@ -38,7 +39,7 @@ class UpdateNameDialog extends StatelessWidget {
       },
       child: CustomDialogWrapper(
         borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
-        horizontalInsetPadding: 20,
+        horizontalInsetPadding: 20.w,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -48,7 +49,7 @@ class UpdateNameDialog extends StatelessWidget {
               color: Colors.orange, 
               colorScheme: colorScheme
             ),
-            const SizedBox(height: 25),
+            SizedBox(height: 25.h),
 
             Flexible(
               child: SingleChildScrollView(
@@ -70,19 +71,23 @@ class UpdateNameDialog extends StatelessWidget {
               ),
             ),
             
-            const SizedBox(height: 30),
+            SizedBox(height: 30.h),
 
-            Row(
+            OverflowBar(
+              spacing: 15.w,
+              overflowSpacing: 10.h,
+              alignment: MainAxisAlignment.center,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 120.w,
                   child: AppDialogs.dialogSecondaryButton(
                     text: 'CANCELAR', 
                     onPressed: () => context.pop(), 
                     colorScheme: colorScheme
                   ),
                 ),
-                const SizedBox(width: 15),
-                Expanded(
+                SizedBox(
+                  width: 120.w,
                   child: AppDialogs.dialogPrimaryButton(
                     text: 'ACTUALIZAR',
                     color: Colors.orange,
