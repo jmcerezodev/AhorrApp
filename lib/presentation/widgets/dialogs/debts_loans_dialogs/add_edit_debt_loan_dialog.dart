@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/debts_loans_cubit/debts_loans_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
@@ -51,8 +52,9 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
     _type = widget.item?.type ?? widget.initialType;
     _nameController = TextEditingController(text: widget.item?.name ?? '');
     _personController = TextEditingController(text: widget.item?.person ?? '');
-    _amountController = TextEditingController(text: widget.item?.totalAmount.toString() ?? '');
-    _installmentAmountController = TextEditingController(text: widget.item?.installmentAmount?.toString() ?? '');
+    // REGLA DE ORO: Formato entero
+    _amountController = TextEditingController(text: widget.item?.totalAmount.toInt().toString() ?? '');
+    _installmentAmountController = TextEditingController(text: widget.item?.installmentAmount?.toInt().toString() ?? '');
     _monthsController = TextEditingController(text: widget.item?.totalInstallments?.toString() ?? '');
     _monthsFocusNode = FocusNode();
     
@@ -79,26 +81,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
   double _parseInput(String input) {
     String sanitized = input.trim().replaceAll(' ', '').replaceAll('\u00A0', '');
     if (sanitized.isEmpty) return 0;
-
-    if (sanitized.contains('.') && sanitized.contains(',')) {
-      int dotIndex = sanitized.lastIndexOf('.');
-      int commaIndex = sanitized.lastIndexOf(',');
-      if (dotIndex > commaIndex) {
-        sanitized = sanitized.replaceAll(',', '');
-      } else {
-        sanitized = sanitized.replaceAll('.', '').replaceAll(',', '.');
-      }
-    } else if (sanitized.contains(',')) {
-      sanitized = sanitized.replaceAll(',', '.');
-    } else if (sanitized.contains('.')) {
-      final parts = sanitized.split('.');
-      if (parts.length > 2) {
-        sanitized = sanitized.replaceAll('.', '');
-      } else if (parts.length == 2 && parts[1].length == 3) {
-        sanitized = sanitized.replaceAll('.', '');
-      }
-    }
-
+    sanitized = sanitized.replaceAll(',', '.');
     return double.tryParse(sanitized) ?? 0;
   }
 
@@ -108,7 +91,8 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
       final months = int.tryParse(_monthsController.text.trim()) ?? 0;
       if (total > 0 && months > 0) {
         final result = total / months;
-        _installmentAmountController.text = result.toStringAsFixed(2);
+        // Mostramos entero en el input si es posible, o redondeamos
+        _installmentAmountController.text = result.toInt().toString();
       } else {
         _installmentAmountController.clear();
       }
@@ -179,7 +163,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
 
     return CustomDialogWrapper(
       borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
-      horizontalInsetPadding: 20,
+      horizontalInsetPadding: 20.w,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -191,7 +175,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
             color: Colors.orange,
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 25),
+          SizedBox(height: 25.h),
           
           Flexible(
             child: SingleChildScrollView(
@@ -208,7 +192,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                     enabled: !_isLoading,
                     onChanged: (val) { if (_nameError != null) setState(() => _nameError = null); },
                   ),
-                  const SizedBox(height: 15),
+                  SizedBox(height: 15.h),
                   
                   CustomInputTextWidget(
                     controller: _personController,
@@ -218,21 +202,21 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                     enabled: !_isLoading,
                     onChanged: (val) { if (_personError != null) setState(() => _personError = null); },
                   ),
-                  const SizedBox(height: 15),
+                  SizedBox(height: 15.h),
 
                   CustomInputTextWidget(
                     controller: _amountController,
                     label: 'IMPORTE TOTAL',
-                    hintText: '0.00',
+                    hintText: '0',
                     errorText: _amountError,
                     enabled: !_isLoading,
-                    textInputType: const TextInputType.numberWithOptions(decimal: true),
+                    textInputType: const TextInputType.numberWithOptions(decimal: false),
                     onChanged: (val) { 
                       if (_amountError != null) setState(() => _amountError = null);
                       _onAmountOrMonthsChanged();
                     },
                   ),
-                  const SizedBox(height: 25),
+                  SizedBox(height: 25.h),
 
                   _buildInstallmentToggle(colorScheme),
 
@@ -241,7 +225,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                     child: _isInstallment 
                       ? Column(
                           children: [
-                            const SizedBox(height: 25),
+                            SizedBox(height: 25.h),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -254,7 +238,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                                     onClear: () => setState(() => _selectedDate = null),
                                   ),
                                 ),
-                                const SizedBox(width: 15),
+                                SizedBox(width: 15.w),
                                 Expanded(
                                   child: _buildDatePicker(
                                     label: 'VENCIMIENTO',
@@ -266,7 +250,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 20),
+                            SizedBox(height: 20.h),
                             Row(
                               children: [
                                 Expanded(
@@ -283,24 +267,24 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                                     },
                                   ),
                                 ),
-                                const SizedBox(width: 15),
+                                SizedBox(width: 15.w),
                                 Expanded(
                                   child: CustomInputTextWidget(
                                     controller: _installmentAmountController,
                                     label: 'CUOTA MENSUAL',
-                                    hintText: '0.00',
-                                    textInputType: const TextInputType.numberWithOptions(decimal: true),
+                                    hintText: '0',
+                                    textInputType: const TextInputType.numberWithOptions(decimal: false),
                                     enabled: !_isLoading && !_isAutoCalculate,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 15),
+                            SizedBox(height: 15.h),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 2.h),
                               decoration: BoxDecoration(
                                 color: Colors.orange.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(15),
+                                borderRadius: BorderRadius.circular(15.w),
                                 border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
                               ),
                               child: Row(
@@ -312,11 +296,13 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                                       if (_isAutoCalculate) _onAmountOrMonthsChanged();
                                     }),
                                     activeColor: Colors.orange,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.w)),
                                   ),
-                                  const Text(
-                                    'Calcular cuota automáticamente',
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                                  Expanded(
+                                    child: Text(
+                                      'Calcular cuota automáticamente',
+                                      style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -324,7 +310,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                           ],
                         )
                       : Padding(
-                          padding: const EdgeInsets.only(top: 25),
+                          padding: EdgeInsets.only(top: 25.h),
                           child: Column(
                             children: [
                               _buildDatePicker(
@@ -334,13 +320,13 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                                 isOptional: true,
                                 onClear: () => setState(() => _dueDate = null),
                               ),
-                              const SizedBox(height: 15),
+                              SizedBox(height: 15.h),
                               if (widget.item == null) 
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 2.h),
                                   decoration: BoxDecoration(
                                     color: Colors.orange.withValues(alpha: 0.05),
-                                    borderRadius: BorderRadius.circular(15),
+                                    borderRadius: BorderRadius.circular(15.w),
                                     border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
                                   ),
                                   child: Row(
@@ -349,12 +335,12 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                                         value: _addToHistory, 
                                         onChanged: (val) => setState(() => _addToHistory = val ?? false),
                                         activeColor: Colors.orange,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.w)),
                                       ),
-                                      const Expanded(
+                                      Expanded(
                                         child: Text(
                                           'Registrar movimiento inicial en el historial',
-                                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                                          style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600),
                                         ),
                                       ),
                                     ],
@@ -369,19 +355,23 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
             ),
           ),
 
-          const SizedBox(height: 30),
+          SizedBox(height: 30.h),
           
-          Row(
+          OverflowBar(
+            spacing: 15.w,
+            overflowSpacing: 10.h,
+            alignment: MainAxisAlignment.center,
             children: [
-              Expanded(
+              SizedBox(
+                width: 120.w,
                 child: AppDialogs.dialogSecondaryButton(
                   text: 'CANCELAR', 
                   onPressed: () => context.pop(),
                   colorScheme: colorScheme,
                 ),
               ),
-              const SizedBox(width: 15),
-              Expanded(
+              SizedBox(
+                width: 120.w,
                 child: AppDialogs.dialogPrimaryButton(
                   text: 'GUARDAR',
                   color: Colors.orange,
@@ -407,14 +397,14 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
-        const SizedBox(height: 8),
+        Text(label, style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+        SizedBox(height: 8.h),
         GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(15.w),
               border: Border.all(color: errorText != null ? Colors.red.shade800 : Colors.grey.shade300, width: errorText != null ? 1.5 : 1),
             ),
             child: Row(
@@ -423,22 +413,22 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                 Flexible(
                   child: Text(
                     date != null ? DateFormat('dd/MM/yy').format(date) : 'Seleccionar',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: date == null ? Colors.grey : null),
+                    style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: date == null ? Colors.grey : null),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (isOptional && date != null)
-                  GestureDetector(onTap: onClear, child: const Icon(Icons.close_rounded, size: 14, color: Colors.red))
+                  GestureDetector(onTap: onClear, child: Icon(Icons.close_rounded, size: 14.w, color: Colors.red))
                 else
-                  const Icon(Icons.calendar_month_rounded, color: Colors.orange, size: 16),
+                  Icon(Icons.calendar_month_rounded, color: Colors.orange, size: 16.w),
               ],
             ),
           ),
         ),
         if (errorText != null)
           Padding(
-            padding: const EdgeInsets.only(top: 5, left: 5),
-            child: Text(errorText, style: TextStyle(color: Colors.red.shade800, fontSize: 10, fontWeight: FontWeight.bold)),
+            padding: EdgeInsets.only(top: 5.h, left: 5.w),
+            child: Text(errorText, style: TextStyle(color: Colors.red.shade800, fontSize: 10.sp, fontWeight: FontWeight.bold)),
           ),
       ],
     );
@@ -446,21 +436,21 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
 
   Widget _buildInstallmentToggle(ColorScheme colorScheme) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.w),
       ),
       child: Row(
         children: [
-          const Icon(Icons.calendar_today_rounded, color: Colors.orange, size: 20),
-          const SizedBox(width: 12),
-          const Expanded(
+          Icon(Icons.calendar_today_rounded, color: Colors.orange, size: 20.w),
+          SizedBox(width: 12.w),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Pago a Plazos', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900)),
-                Text('Dividir el total en cuotas mensuales', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500)),
+                Text('Pago a Plazos', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w900)),
+                Text('Dividir el total en cuotas mensuales', style: TextStyle(fontSize: 10.sp, color: Colors.grey, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -504,17 +494,17 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
       id: widget.item?.id,
       name: _nameController.text.trim(),
       person: _personController.text.trim(),
-      totalAmount: _parseInput(_amountController.text),
-      paidAmount: initialPaid,
+      totalAmount: _parseInput(_amountController.text).toInt().toDouble(),
+      paidAmount: initialPaid.toInt().toDouble(),
       type: _type,
       date: finalStartDate,
       dueDate: _dueDate,
       isInstallment: _isInstallment,
       totalInstallments: totalInstallments,
-      installmentAmount: installmentAmount,
+      installmentAmount: installmentAmount.toInt().toDouble(),
       addToRecurrent: _isInstallment,
       existingRecurrentId: widget.item?.recurrentExpenseId,
-      addToHistory: _addToHistory, // PASAMOS EL NUEVO FLAG
+      addToHistory: _addToHistory,
     );
     if (mounted) context.pop();
   }

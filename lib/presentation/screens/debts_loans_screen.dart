@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/debts_loans_screen/debt_loan_card.dart';
@@ -33,7 +34,7 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
     context.read<DebtsLoansCubit>().loadDebtsLoans();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 1500), () {
+      Future.delayed(const Duration(milliseconds: 1000), () {
         if (mounted) setState(() => _hasAnimated = true);
       });
     });
@@ -48,50 +49,56 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    Responsive.init(context);
+    final bool isSmallScreen = MediaQuery.of(context).size.width <= 375;
 
     return BlocBuilder<DebtsLoansCubit, DebtsLoansState>(
       builder: (context, state) {
         return SafeArea(
+          bottom: false,
           child: Column(
             children: [
-              // 1. APPBAR
+              // 1. APPBAR (FIJO)
               FadeInDown(
                 duration: const Duration(milliseconds: 500),
-                from: 100,
+                from: 50.h,
                 child: _buildAppBar(context, colorScheme),
               ),
 
-              // 2. RESUMEN
+              // 2. RESUMEN (FIJO)
               DebtsSummaryWidget(
                 totalAmount: _currentTabIndex == 0 ? state.totalDebts : state.totalLoans,
                 isDebtView: _currentTabIndex == 0,
               ),
 
-              // 3. PESTAÑAS
+              // 3. PESTAÑAS (FIJO)
               FadeInRight(
                 duration: const Duration(milliseconds: 600),
-                from: 100,
+                from: 50.w,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w, 
+                    vertical: isSmallScreen ? 5.h : 10.h
+                  ),
                   child: Container(
-                    height: 45,
+                    height: 40.h,
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(25.w),
                     ),
                     child: TabBar(
                       controller: _tabController,
                       indicatorSize: TabBarIndicatorSize.tab,
                       dividerColor: Colors.transparent,
                       indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(25),
+                        borderRadius: BorderRadius.circular(25.w),
                         color: Colors.orange,
                       ),
                       labelColor: Colors.white,
                       unselectedLabelColor: colorScheme.onSurfaceVariant,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp),
                       tabs: const [
-                        Tab(text: 'MIS DEUDAS'),
+                        Tab(text: 'DEUDAS'),
                         Tab(text: 'PRÉSTAMOS'),
                       ],
                     ),
@@ -99,16 +106,16 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
                 ),
               ),
 
-              // 4. LISTADO
+              // 4. LISTADO (SCROLLABLE INDEPENDIENTE)
               Expanded(
                 child: state.isLoading 
                   ? const Center(child: CircularProgressIndicator(color: Colors.orange))
                   : FadeInUp(
                       duration: const Duration(milliseconds: 600),
-                      from: 100,
+                      from: 50.h,
                       child: TabBarView(
                         controller: _tabController,
-                        physics: const NeverScrollableScrollPhysics(),
+                        physics: const BouncingScrollPhysics(),
                         children: [
                           _buildList(state.debtsLoans.where((e) => e.type == DebtLoanType.debt).toList(), true),
                           _buildList(state.debtsLoans.where((e) => e.type == DebtLoanType.loan).toList(), false),
@@ -125,14 +132,14 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
 
   Widget _buildAppBar(BuildContext context, ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
+      padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 5.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Builder(
             builder: (context) => IconButton(
               onPressed: () => Scaffold.of(context).openDrawer(),
-              icon: Icon(Icons.menu_rounded, color: colorScheme.onSurface, size: 30),
+              icon: Icon(Icons.menu_rounded, color: colorScheme.onSurface, size: 30.w),
             ),
           ),
           Column(
@@ -141,15 +148,15 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
               Text(
                 'CUENTAS PENDIENTES',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.w900,
                   color: colorScheme.onSurface,
                 ),
               ),
-              const Text(
+              Text(
                 'Lo que debes y lo que te deben.',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 11.sp,
                   color: Colors.orange,
                   fontWeight: FontWeight.w600,
                 ),
@@ -174,7 +181,8 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
     final colorScheme = Theme.of(context).colorScheme;
 
     return ListView.builder(
-      padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20),
+      padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 10.h, bottom: 100.h),
+      physics: const BouncingScrollPhysics(),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
@@ -190,7 +198,7 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
           key: ValueKey('debt_anim_${item.id}'),
           duration: const Duration(milliseconds: 400),
           delay: Duration(milliseconds: index * 30),
-          from: 30,
+          from: 30.h,
           child: card,
         );
       },

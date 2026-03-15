@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
@@ -27,6 +28,7 @@ class DebtLoanCard extends StatelessWidget {
     final humanizeNumbers = HumanizeNumbers();
     final bool isDebt = item.type == DebtLoanType.debt;
     final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
+    final bool isSmallScreen = MediaQuery.of(context).size.width <= 375;
     
     final double progress = item.totalAmount > 0 ? item.paidAmount / item.totalAmount : 0;
     final bool isFullyPaid = item.remainingAmount <= 0;
@@ -38,7 +40,7 @@ class DebtLoanCard extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: 8.h),
       child: Dismissible(
         key: Key('debt_loan_${item.id}'),
         direction: DismissDirection.horizontal,
@@ -65,185 +67,202 @@ class DebtLoanCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-            borderRadius: BorderRadius.circular(25),
+            borderRadius: BorderRadius.circular(25.w),
             border: Border.all(
               color: Colors.orange.withValues(alpha: 0.15),
-              width: 1.5,
+              width: 1.2.w,
             ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
+                blurRadius: 10.w,
+                offset: Offset(0, 5.h),
               )
             ],
           ),
-          child: Column(
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.fromLTRB(20, 10, 10, 10),
-                leading: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isDebt ? Icons.money_off_rounded : Icons.handshake_rounded,
-                    color: Colors.orange,
-                    size: 24,
-                  ),
-                ),
-                title: Text(
-                  item.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: isDebt ? "A: " : "De: ",
-                            style: const TextStyle(
-                              color: Colors.orange,
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ),
-                          TextSpan(
-                            text: item.person,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ],
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width - 40.w,
+              child: Column(
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.fromLTRB(
+                      (isSmallScreen ? 12 : 20).w, 
+                      10.h, 
+                      10.w, 
+                      10.h
+                    ),
+                    leading: Container(
+                      padding: EdgeInsets.all(12.w),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isDebt ? Icons.money_off_rounded : Icons.handshake_rounded,
+                        color: Colors.orange,
+                        size: 24.w,
                       ),
                     ),
-                    if (item.isInstallment && item.totalInstallments != null)
-                      Text(
-                        'Cuota $installmentsPaid de ${item.totalInstallments}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.orange.withValues(alpha: 0.8),
-                          fontWeight: FontWeight.w700,
-                        ),
+                    title: Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15.sp,
                       ),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (isFullyPaid)
-                          const Text(
-                            'Finalizado',
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: isDebt ? "A: " : "De: ",
+                                style: const TextStyle(
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                              ),
+                              TextSpan(
+                                text: item.person,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (item.isInstallment && item.totalInstallments != null)
+                          Text(
+                            'Cuota $installmentsPaid de ${item.totalInstallments}',
                             style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 14,
-                              color: Colors.green,
-                            ),
-                          )
-                        else
-                          PrivacyAmountText(
-                            amount: '${humanizeNumbers.number(item.remainingAmount, isPrivacyModeActive: isPrivacyActive)}€',
-                            isPrivacyActive: isPrivacyActive,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                              color: isDebt ? Colors.red.shade400 : Colors.blue.shade400,
+                              fontSize: 10.sp,
+                              color: Colors.orange.withValues(alpha: 0.8),
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        if (item.isInstallment && !isFullyPaid)
-                          Container(
-                            margin: const EdgeInsets.only(top: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: PrivacyAmountText(
-                              amount: '${humanizeNumbers.number(item.installmentAmount ?? 0, isPrivacyModeActive: isPrivacyActive)}€/mes',
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            if (isFullyPaid)
+                              Text(
+                                'Finalizado',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14.sp,
+                                  color: Colors.green,
+                                ),
+                              )
+                            else
+                              PrivacyAmountText(
+                                // REGLA DE ORO: Formato entero
+                                amount: '${humanizeNumbers.number(item.remainingAmount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
+                                isPrivacyActive: isPrivacyActive,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16.sp,
+                                  color: isDebt ? Colors.red.shade400 : Colors.blue.shade400,
+                                ),
+                              ),
+                            if (item.isInstallment && !isFullyPaid)
+                              Container(
+                                margin: EdgeInsets.only(top: 4.h),
+                                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(5.w),
+                                ),
+                                child: PrivacyAmountText(
+                                  amount: '${humanizeNumbers.number(item.installmentAmount?.toInt().toDouble() ?? 0, isPrivacyModeActive: isPrivacyActive)}€/mes',
+                                  isPrivacyActive: isPrivacyActive,
+                                  style: TextStyle(
+                                    fontSize: 9.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        SizedBox(width: 10.w),
+                        if (!item.isCompleted && !item.isInstallment)
+                          IconButton(
+                            onPressed: () => _showPaymentDialog(context),
+                            icon: Icon(Icons.add_circle_outline_rounded, color: Colors.orange, size: 28.w),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                      ],
+                    ),
+                  ),
+                  
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      (isSmallScreen ? 12 : 20).w, 
+                      0, 
+                      (isSmallScreen ? 12 : 20).w, 
+                      15.h
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            PrivacyAmountText(
+                              amount: 'Pagado: ${humanizeNumbers.number(item.paidAmount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
                               isPrivacyActive: isPrivacyActive,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.orange,
-                              ),
+                              style: TextStyle(fontSize: 10.sp, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
                             ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(width: 10),
-                    if (!item.isCompleted && !item.isInstallment)
-                      IconButton(
-                        onPressed: () => _showPaymentDialog(context),
-                        icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.orange, size: 28),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                  ],
-                ),
-              ),
-              
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 15),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        PrivacyAmountText(
-                          amount: 'Pagado: ${humanizeNumbers.number(item.paidAmount, isPrivacyModeActive: isPrivacyActive)}€',
-                          isPrivacyActive: isPrivacyActive,
-                          style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
+                            if (item.dueDate != null)
+                              Padding(
+                                padding: EdgeInsets.only(bottom: 2.h),
+                                child: Text(
+                                  'Vence: ${DateFormat('dd/MM/yyyy').format(item.dueDate!)}',
+                                  style: TextStyle(
+                                    fontSize: 9.sp,
+                                    color: Colors.orange.withValues(alpha: 0.8),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            PrivacyAmountText(
+                              amount: 'Total: ${humanizeNumbers.number(item.totalAmount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
+                              isPrivacyActive: isPrivacyActive,
+                              style: TextStyle(fontSize: 10.sp, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
-                        if (item.dueDate != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 2),
-                            child: Text(
-                              'Vence: ${DateFormat('dd/MM/yyyy').format(item.dueDate!)}',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: Colors.orange.withValues(alpha: 0.8),
-                                fontWeight: FontWeight.w800,
-                              ),
+                        SizedBox(height: 6.h),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10.w),
+                          child: LinearProgressIndicator(
+                            value: isPrivacyActive ? 0.0 : progress,
+                            minHeight: 6.h,
+                            backgroundColor: Colors.orange.withValues(alpha: 0.05),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              progress >= 1.0 ? Colors.green.shade400 : Colors.orange.withValues(alpha: 0.4)
                             ),
                           ),
-                        PrivacyAmountText(
-                          amount: 'Total: ${humanizeNumbers.number(item.totalAmount, isPrivacyModeActive: isPrivacyActive)}€',
-                          isPrivacyActive: isPrivacyActive,
-                          style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: LinearProgressIndicator(
-                        value: isPrivacyActive ? 0.0 : progress,
-                        minHeight: 6,
-                        backgroundColor: Colors.orange.withValues(alpha: 0.05),
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          progress >= 1.0 ? Colors.green.shade400 : Colors.orange.withValues(alpha: 0.4)
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
@@ -26,12 +27,12 @@ class DebtsSummaryWidget extends StatelessWidget {
 
     return FadeInDown(
       duration: const Duration(milliseconds: 600),
-      from: 100, // Unificado a 100px
+      from: 50.h,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 5.h),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.all(18.w),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             gradient: isDark 
@@ -41,16 +42,16 @@ class DebtsSummaryWidget extends StatelessWidget {
                   end: Alignment.bottomRight,
                 )
               : null,
-            borderRadius: BorderRadius.circular(25),
+            borderRadius: BorderRadius.circular(25.w),
             border: Border.all(
               color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.3), 
-              width: 1.5
+              width: 1.5.w
             ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
+                blurRadius: 15.w,
+                offset: Offset(0, 8.h),
               )
             ],
           ),
@@ -65,43 +66,49 @@ class DebtsSummaryWidget extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            isDebtView ? 'TOTAL QUE DEBES' : 'TOTAL QUE TE DEBEN',
-                            style: TextStyle(
-                              color: Colors.orange.shade400,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                isDebtView ? 'TOTAL DEUDAS' : 'TOTAL PRÉSTAMOS',
+                                style: TextStyle(
+                                  color: Colors.orange.shade400,
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4.w),
                           GestureDetector(
                             onTap: () => context.read<ThemeCubit>().togglePrivacyMode(),
                             child: Icon(
                               isPrivacyActive ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              size: 14,
+                              size: 14.w,
                               color: Colors.orange.shade400.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2.h),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: PrivacyAmountText(
-                          amount: '${humanizeNumbers.number(totalAmount, isPrivacyModeActive: isPrivacyActive)}€',
+                          // REGLA DE ORO: Formato entero
+                          amount: '${humanizeNumbers.number(totalAmount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
                           isPrivacyActive: isPrivacyActive,
                           style: TextStyle(
                             color: isDark ? Colors.white : colorScheme.onSurface,
-                            fontSize: 30,
+                            fontSize: 30.sp,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -1,
                           ),
                         ),
                       ),
                       
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12.h),
                       
                       _StatusChip(
                         isDebtView: isDebtView,
@@ -111,7 +118,7 @@ class DebtsSummaryWidget extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(width: 15),
+                SizedBox(width: 15.w),
 
                 // COLUMNA 2: BURBUJA DE ACCIÓN
                 BurbujaResumenWidget(isDebtView: isDebtView),
@@ -141,11 +148,11 @@ class BurbujaResumenWidget extends StatelessWidget {
         );
       },
       child: Container(
-        width: 110,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        width: 110.w,
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: Colors.orange.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.w),
           border: Border.all(
             color: Colors.orange.withValues(alpha: 0.15),
           ),
@@ -153,20 +160,23 @@ class BurbujaResumenWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.add_box_rounded,
               color: Colors.orange,
-              size: 32,
+              size: 32.w,
             ),
-            const SizedBox(height: 4),
-            Text(
-              isDebtView ? 'NUEVA DEUDA' : 'NUEVO PRÉSTAMO',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.w900,
-                color: Colors.orange,
-                letterSpacing: 0.5,
+            SizedBox(height: 4.h),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                isDebtView ? 'NUEVA DEUDA' : 'NUEVO PRÉSTAMO',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 8.sp,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.orange,
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
           ],
@@ -191,11 +201,11 @@ class _StatusChip extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+        borderRadius: BorderRadius.circular(8.w),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.w),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -203,16 +213,21 @@ class _StatusChip extends StatelessWidget {
           Icon(
             isDebtView ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, 
             color: color.withValues(alpha: 0.8), 
-            size: 12
+            size: 12.w
           ),
-          const SizedBox(width: 6),
-          Text(
-            isDebtView ? 'PENDIENTE DE PAGO' : 'PENDIENTE DE COBRO',
-            style: TextStyle(
-              color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: 8,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.5,
+          SizedBox(width: 6.w),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                isDebtView ? 'PENDIENTE DE PAGO' : 'PENDIENTE DE COBRO',
+                style: TextStyle(
+                  color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
+                  fontSize: 8.sp,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+              ),
             ),
           ),
         ],
