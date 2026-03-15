@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/reset_password_cubit/reset_password_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/forms/authentication_inputs_widget/reset_password_input_widget.dart';
@@ -10,8 +11,8 @@ class ResetPasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Responsive.init(context);
     final String yearNow = Date().year();
-    final size = MediaQuery.of(context).size;
     final resetPasswordCubit = context.watch<ResetPasswordCubit>();
 
     return Theme(
@@ -39,44 +40,44 @@ class ResetPasswordScreen extends StatelessWidget {
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
+                padding: EdgeInsets.symmetric(horizontal: 30.w),
                 child: Column(
                   children: [
                     // Parte superior: Logo y Título
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10.h),
                     FadeInDown(
                       duration: const Duration(milliseconds: 800),
                       child: Image.asset(
                         'assets/imagen_login.png',
-                        height: size.height * 0.10,
+                        height: 10.hp,
                         fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20.h),
                     FadeInLeft(
                       delay: const Duration(milliseconds: 400),
                       child: RichText(
                         textAlign: TextAlign.center,
                         text: TextSpan(
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: 22.sp,
                             color: Colors.blueGrey.shade900,
                             height: 1.2,
                             letterSpacing: -0.5,
                           ),
-                          children: const [
-                            TextSpan(
+                          children: [
+                            const TextSpan(
                               text: 'Recupera tu ',
                               style: TextStyle(fontWeight: FontWeight.w300),
                             ),
-                            TextSpan(
+                            const TextSpan(
                               text: 'cuenta\n',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             TextSpan(
                               text: 'te ayudamos a volver a entrar',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 14.sp,
                                 color: Colors.blueGrey,
                                 fontWeight: FontWeight.w400,
                                 letterSpacing: 1.0,
@@ -86,16 +87,16 @@ class ResetPasswordScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    SizedBox(height: 30.h),
 
                     // Parte central: Tarjeta del Formulario
                     FadeInUp(
                       duration: const Duration(milliseconds: 800),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+                        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 25.h),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(30.w),
                           border: Border.all(
                             color: Colors.orange.shade300.withValues(alpha: 0.5),
                             width: 1.5,
@@ -113,16 +114,16 @@ class ResetPasswordScreen extends StatelessWidget {
                     ),
 
                     // Parte inferior: Copyright
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40.h),
                     FadeIn(
                       delay: const Duration(milliseconds: 1000),
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 15),
+                        padding: EdgeInsets.only(bottom: 15.h),
                         child: Text(
                           'JMCerezoDev - $yearNow ®',
                           style: TextStyle(
                             color: Colors.grey.shade400,
-                            fontSize: 10,
+                            fontSize: 10.sp,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1.5,
                           ),

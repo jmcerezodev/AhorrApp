@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
@@ -34,8 +35,8 @@ class InfoGlogalWidget extends StatelessWidget {
     return FadeInDown(
       duration: const Duration(milliseconds: 400),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-        padding: const EdgeInsets.all(18),
+        margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 5.h),
+        padding: EdgeInsets.all(18.w),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           gradient: isDark 
@@ -45,7 +46,7 @@ class InfoGlogalWidget extends StatelessWidget {
                 end: Alignment.bottomRight,
               )
             : null,
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(25.w),
           border: Border.all(color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.3), width: 1.5),
           boxShadow: [
             BoxShadow(
@@ -70,27 +71,27 @@ class InfoGlogalWidget extends StatelessWidget {
                           'BALANCE DE CUENTA',
                           style: TextStyle(
                             color: Colors.orange.shade400,
-                            fontSize: 10,
+                            fontSize: 10.sp,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.0,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4.w),
                         GestureDetector(
                           onTap: () => context.read<ThemeCubit>().togglePrivacyMode(),
                           child: Icon(
                             isPrivacyActive ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                            size: 14,
+                            size: 14.sp,
                             color: Colors.orange.shade400.withValues(alpha: 0.7),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2.h),
                     if (isLoading)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 5),
-                        child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 5.h),
+                        child: SizedBox(height: 20.w, width: 20.w, child: const CircularProgressIndicator(strokeWidth: 2)),
                       )
                     else
                       FittedBox(
@@ -101,14 +102,14 @@ class InfoGlogalWidget extends StatelessWidget {
                           isPrivacyActive: isPrivacyActive,
                           style: TextStyle(
                             color: isDark ? Colors.white : colorScheme.onSurface,
-                            fontSize: 30,
+                            fontSize: 30.sp,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -1,
                           ),
                         ),
                       ),
                     
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12.h),
                     
                     GestureDetector(
                       onTap: () => context.read<TotalMoneyCubit>().toggleSavingsInclusion(),
@@ -121,7 +122,7 @@ class InfoGlogalWidget extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(width: 15),
+              SizedBox(width: 15.w),
 
               // COLUMNA 2: BURBUJA DE AHORROS
               _SavingsBubble(
@@ -165,11 +166,11 @@ class _SavingsBubble extends StatelessWidget {
         }
       },
       child: Container(
-        width: 110,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        width: 110.w,
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: isGoalMet ? Colors.green.withValues(alpha: 0.05) : Colors.orange.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.w),
           border: Border.all(color: isGoalMet ? Colors.green.withValues(alpha: 0.2) : Colors.orange.withValues(alpha: 0.1)),
         ),
         child: Column(
@@ -180,40 +181,40 @@ class _SavingsBubble extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('AHORROS', style: const TextStyle(fontSize: 7, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                  Text('AHORROS', style: TextStyle(fontSize: 7.sp, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                   if (isGoalMet) ...[
-                    const SizedBox(width: 4),
-                    const Icon(Icons.check_circle, size: 9, color: Colors.green)
+                    SizedBox(width: 4.w),
+                    Icon(Icons.check_circle, size: 9.sp, color: Colors.green)
                   ]
                 ],
               ),
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 2.h),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: PrivacyAmountText(
                 amount: '${humanizeNumbers.number(savingsState.savingTotal, isPrivacyModeActive: isPrivacyActive)}€',
                 isPrivacyActive: isPrivacyActive,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isGoalMet ? Colors.green : Colors.orange),
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w900, color: isGoalMet ? Colors.green : Colors.orange),
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.h),
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(10.w),
               child: LinearProgressIndicator(
                 value: isPrivacyActive ? 0.0 : savingsState.progress, 
-                minHeight: 3, 
+                minHeight: 3.h, 
                 backgroundColor: (isGoalMet ? Colors.green : Colors.orange).withValues(alpha: 0.1), 
                 valueColor: AlwaysStoppedAnimation<Color>(isGoalMet ? Colors.green : Colors.orange)
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4.h),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: PrivacyAmountText(
                 amount: 'Meta: ${humanizeNumbers.number(savingsState.savingGoal, isPrivacyModeActive: isPrivacyActive)}€',
                 isPrivacyActive: isPrivacyActive,
-                style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: isGoalMet ? Colors.green.withValues(alpha: 0.7) : Colors.orange.withValues(alpha: 0.7)),
+                style: TextStyle(fontSize: 8.sp, fontWeight: FontWeight.w800, color: isGoalMet ? Colors.green.withValues(alpha: 0.7) : Colors.orange.withValues(alpha: 0.7)),
               ),
             ),
           ],
@@ -235,10 +236,10 @@ class _ModeChip extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.w),
         border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
       ),
       child: FittedBox(
@@ -246,13 +247,13 @@ class _ModeChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.sync_rounded, color: color.withValues(alpha: 0.8), size: 12),
-            const SizedBox(width: 6),
+            Icon(Icons.sync_rounded, color: color.withValues(alpha: 0.8), size: 12.sp),
+            SizedBox(width: 6.w),
             Text(
               isSavingsIncluded ? 'AHORROS SUMADOS' : 'SOLO CARTERA',
               style: TextStyle(
                 color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
-                fontSize: 8,
+                fontSize: 8.sp,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.5,
               ),

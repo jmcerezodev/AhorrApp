@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
@@ -27,17 +28,13 @@ class _UserInputWidgetState extends State<UserInputWidget> {
 
     return BlocListener<NewUserCubit, NewUserCubitState>(
       listener: (context, state) {
-        // 1. ÉXITO: Mostramos diálogo profesional en lugar de navegar directo
         if (state.status == NewUserStatus.success) {
           showDialog(
             context: context,
-            barrierDismissible: false, // Forzamos a pulsar el botón
+            barrierDismissible: false,
             builder: (context) => const _SuccessAccountDialog(),
           );
-        } 
-        
-        // 2. FALLO: Diálogo de error detallado
-        else if (state.status == NewUserStatus.failure) {
+        } else if (state.status == NewUserStatus.failure) {
           showDialog(
             context: context, 
             builder: (context) => AuthErrorDialog(
@@ -50,17 +47,17 @@ class _UserInputWidgetState extends State<UserInputWidget> {
       child: Form(
         child: Column(
           children: [
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
             Text(
               'REGISTRO',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w800,
                 color: Colors.grey.shade400,
                 letterSpacing: 3.0,
               ),
             ),
-            const SizedBox(height: 25),
+            SizedBox(height: 25.h),
 
             CustomInputTextWidget(
               prefixIcon: Icons.person_outline_rounded,
@@ -73,7 +70,7 @@ class _UserInputWidgetState extends State<UserInputWidget> {
               textCapitalization: TextCapitalization.sentences,
             ),
             
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
 
             CustomInputTextWidget(
               prefixIcon: Icons.email_outlined,
@@ -86,7 +83,7 @@ class _UserInputWidgetState extends State<UserInputWidget> {
               textCapitalization: TextCapitalization.none,
             ),
             
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
 
             CustomInputTextWidget(
               prefixIcon: Icons.key_outlined,
@@ -102,11 +99,11 @@ class _UserInputWidgetState extends State<UserInputWidget> {
               textCapitalization: TextCapitalization.none,
             ),
 
-            const SizedBox(height: 30),
+            SizedBox(height: 30.h),
 
             SizedBox(
               width: double.infinity,
-              height: 55,
+              height: 55.h,
               child: ElevatedButton.icon(
                 onPressed: newUserCubit.state.status == NewUserStatus.submitting
                   ? null
@@ -115,14 +112,14 @@ class _UserInputWidgetState extends State<UserInputWidget> {
                   backgroundColor: Colors.orange.shade600,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.w)),
                 ),
                 icon: newUserCubit.state.status == NewUserStatus.submitting
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.person_add_rounded),
-                label: const Text(
+                  ? SizedBox(width: 20.w, height: 20.w, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Icon(Icons.person_add_rounded, size: 20.sp),
+                label: Text(
                   'CREAR CUENTA', 
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.2)
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.sp, letterSpacing: 1.2)
                 ),
               ),
             ),
@@ -133,46 +130,45 @@ class _UserInputWidgetState extends State<UserInputWidget> {
   }
 }
 
-// --- DIÁLOGO DE ÉXITO PROFESIONAL (MODO CLARO FORZADO) ---
 class _SuccessAccountDialog extends StatelessWidget {
   const _SuccessAccountDialog();
 
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: ThemeData.light(), // Forzamos estilo claro
+      data: ThemeData.light(),
       child: Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
-          padding: const EdgeInsets.all(25),
+          padding: EdgeInsets.all(25.w),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(30.w),
             border: Border.all(color: Colors.green.shade100, width: 2),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(15),
+                padding: EdgeInsets.all(15.w),
                 decoration: BoxDecoration(
                   color: Colors.green.shade50,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.check_circle_outline_rounded, color: Colors.green.shade400, size: 50),
+                child: Icon(Icons.check_circle_outline_rounded, color: Colors.green.shade400, size: 50.sp),
               ),
-              const SizedBox(height: 20),
-              const Text(
+              SizedBox(height: 20.h),
+              Text(
                 '¡CUENTA CREADA!',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black87),
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black87),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10.h),
               Text(
                 'Tu cuenta ha sido configurada con éxito. ¡Ya puedes empezar a ahorrar!',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.5),
+                style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600, height: 1.5),
               ),
-              const SizedBox(height: 30),
+              SizedBox(height: 30.h),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -180,11 +176,11 @@ class _SuccessAccountDialog extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade400,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    padding: EdgeInsets.symmetric(vertical: 15.h),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.w)),
                   ),
-                  child: const Text('EMPEZAR AHORA', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  child: Text('EMPEZAR AHORA', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 14.sp)),
                 ),
               ),
             ],

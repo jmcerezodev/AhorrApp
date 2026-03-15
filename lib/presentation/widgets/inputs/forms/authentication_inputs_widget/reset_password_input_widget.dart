@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/bloc/authentication_cubits/reset_password_cubit/reset_password_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
@@ -44,17 +45,17 @@ class _ResetPasswordInputWidgetState extends State<ResetPasswordInputWidget> {
       child: Form(
         child: Column(
           children: [
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
             Text(
               'RECUPERACIÓN',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w800,
                 color: Colors.grey.shade400,
                 letterSpacing: 3.0,
               ),
             ),
-            const SizedBox(height: 25),
+            SizedBox(height: 25.h),
             CustomInputTextWidget(
               prefixIcon: Icons.email_outlined,
               label: 'Correo Electrónico',
@@ -65,10 +66,10 @@ class _ResetPasswordInputWidgetState extends State<ResetPasswordInputWidget> {
               textInputType: TextInputType.emailAddress,
               textCapitalization: TextCapitalization.none,
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: 30.h),
             SizedBox(
               width: double.infinity,
-              height: 55,
+              height: 55.h,
               child: ElevatedButton.icon(
                 onPressed: widget.cubit.state.status == ResetPasswordStatus.submitting
                     ? null
@@ -77,19 +78,19 @@ class _ResetPasswordInputWidgetState extends State<ResetPasswordInputWidget> {
                   backgroundColor: Colors.orange.shade600,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.w)),
                 ),
                 icon: widget.cubit.state.status == ResetPasswordStatus.submitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Icon(Icons.key_rounded),
-                label: const Text('RECUPERAR',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.2)),
+                    ? SizedBox(
+                        width: 20.w,
+                        height: 20.w,
+                        child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Icon(Icons.key_rounded, size: 20.sp),
+                label: Text('RECUPERAR',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.sp, letterSpacing: 1.2)),
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
           ],
         ),
       ),

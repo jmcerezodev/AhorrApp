@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
@@ -29,10 +30,11 @@ class MonthlyBalanceWidget extends StatelessWidget {
     final Color textColor = isPositive ? Colors.green.shade700 : Colors.red.shade700;
 
     return Container(
-      height: 55,
+      constraints: BoxConstraints(minHeight: 55.h), // Altura mínima escalada en lugar de fija
+      padding: EdgeInsets.symmetric(vertical: 8.h), // Padding vertical para evitar overflow
       decoration: BoxDecoration(
         color: baseColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.w),
         border: Border.all(color: baseColor.withValues(alpha: 0.2), width: 1.5),
       ),
       child: Column(
@@ -41,7 +43,7 @@ class MonthlyBalanceWidget extends StatelessWidget {
           Text(
             'BALANCE MES',
             style: TextStyle(
-              fontSize: 8,
+              fontSize: 8.sp,
               fontWeight: FontWeight.w900,
               color: textColor,
               letterSpacing: 0.5,
@@ -50,12 +52,12 @@ class MonthlyBalanceWidget extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: EdgeInsets.symmetric(horizontal: 8.w),
               child: PrivacyAmountText(
                 amount: '${isPositive ? "+" : ""}${humanizeNumbers.number(monthlyTotal, isPrivacyModeActive: isPrivacyActive)}€',
                 isPrivacyActive: isPrivacyActive,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 15.sp,
                   fontWeight: FontWeight.w900,
                   color: textColor,
                 ),

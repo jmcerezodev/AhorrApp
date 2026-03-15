@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
@@ -29,14 +30,12 @@ class _HomeScreenState extends State<HomeScreen> {
         final dateState = context.read<DateCubit>().state;
         final savingsCubit = context.read<SavingsCubit>();
         
-        // Pasamos el savingsCubit al historial para que sepa refrescarlo tras sincronizar
         context.read<HistoryCubit>().loadHistoryByDate(
           dateState.month, 
           dateState.year, 
           savingsCubit: savingsCubit
         );
         
-        // Carga inicial normal
         savingsCubit.loadSavings();
       }
     });
@@ -44,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Responsive.init(context);
     final String userName = context.watch<UpdateNameCubit>().state.name;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -97,7 +97,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ).then((_) => _isSyncDialogOpen = false);
               } else if (!state.isSyncing && _isSyncDialogOpen) {
-                // Si la sincronización termina, cerramos el diálogo y refrescamos ahorros
                 Navigator.of(context, rootNavigator: true).pop();
                 _isSyncDialogOpen = false;
                 context.read<SavingsCubit>().loadSavings();
@@ -110,8 +109,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 1. Header: Saludo y Menú (FIJO)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
+                  padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 5.h),
                   child: FadeInDown(
                     duration: const Duration(milliseconds: 500),
                     from: 100,
@@ -121,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Builder(
                           builder: (context) => IconButton(
                             onPressed: () => Scaffold.of(context).openDrawer(),
-                            icon: Icon(Icons.menu_rounded, color: colorScheme.onSurface, size: 30),
+                            icon: Icon(Icons.menu_rounded, color: colorScheme.onSurface, size: 30.sp),
                           ),
                         ),
                         Column(
@@ -129,11 +129,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Text(
                               'Hola, $userName',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: colorScheme.onSurface),
+                              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w900, color: colorScheme.onSurface),
                             ),
                             Text(
                               '$greeting de nuevo',
-                              style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w600),
+                              style: TextStyle(fontSize: 12.sp, color: Colors.orange, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -141,15 +141,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-      
+
+                // 2. Info Global: Balance (FIJO)
                 FadeInDown(
                   delay: const Duration(milliseconds: 100),
                   from: 100,
                   child: const InfoGlogalWidget()
                 ),
-      
+
+                // 3. Fecha y Balance Mensual (FIJO)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 2.h),
                   child: Row(
                     children: [
                       Expanded(
@@ -160,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: const DateCustomWidget()
                         )
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12.w),
                       Expanded(
                         flex: 2, 
                         child: FadeInRight(
@@ -172,30 +174,30 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-      
-                const SizedBox(height: 5),
+
+                SizedBox(height: 5.h),
+
+                // 4. Botones Ingresos/Gastos (FIJO)
                 FadeInUp(
                   delay: const Duration(milliseconds: 300),
                   from: 100,
                   child: const ExpensesIncomesCustomWidget()
                 ),
-                const SizedBox(height: 10),
+
+                SizedBox(height: 10.h),
                 
-                Expanded(
-                  child: FadeInUp(
-                    delay: const Duration(milliseconds: 400),
-                    from: 100,
-                    child: const HistoryCustomWidget()
-                  ),
+                // 5. Historial (SCROLLABLE)
+                const Expanded(
+                  child: HistoryCustomWidget(isSliver: false),
                 ),
                 
-                const SizedBox(height: 5),
+                SizedBox(height: 5.h),
               ],
             ),
       
             if (isCalendarOpen)
               Positioned(
-                top: 200,
+                top: 200.h,
                 left: 0,
                 right: 0,
                 child: const CalendarPanelWidget(),

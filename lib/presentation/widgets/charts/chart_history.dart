@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/filter_lists/filter_lists.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:flutter/material.dart';
@@ -13,14 +14,15 @@ class ChartHistory extends StatefulWidget {
 
 class _ChartHistoryState extends State<ChartHistory> {
   late ScrollController _scrollController;
-  int touchedGroupIndex = -1; // Mes seleccionado
-  int touchedRodIndex = -1;   // Barra específica seleccionada (0, 1 o 2)
+  int touchedGroupIndex = -1; 
+  int touchedRodIndex = -1;   
 
   @override
   void initState() {
     super.initState();
     final currentMonthIndex = DateTime.now().month - 1;
-    double initialOffset = (currentMonthIndex * 83.0) - 120.0;
+    // Ajuste dinámico del offset basado en el ancho escalado
+    double initialOffset = (currentMonthIndex * 83.w) - 120.w;
     if (initialOffset < 0) initialOffset = 0;
     _scrollController = ScrollController(initialScrollOffset: initialOffset);
   }
@@ -33,16 +35,15 @@ class _ChartHistoryState extends State<ChartHistory> {
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      width: size.width,
-      height: size.height * 0.35,
+      width: double.infinity,
+      height: 320.h, // Altura escalada
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(25.w),
         border: Border.all(
           color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3),
           width: 1.2,
@@ -56,14 +57,14 @@ class _ChartHistoryState extends State<ChartHistory> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(0, 20, 0, 10),
+        padding: EdgeInsets.fromLTRB(0, 20.h, 0, 10.h),
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 15),
-              child: _ChartLegend(),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 15.w),
+              child: const _ChartLegend(),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
             Expanded(
               child: Stack(
                 alignment: Alignment.center,
@@ -72,7 +73,7 @@ class _ChartHistoryState extends State<ChartHistory> {
                     opacity: isDark ? 0.05 : 0.1,
                     child: Image.asset(
                       'assets/Logo.png',
-                      width: size.width * 0.35,
+                      width: 35.wp,
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -81,8 +82,8 @@ class _ChartHistoryState extends State<ChartHistory> {
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
                     child: Container(
-                      width: 1000, 
-                      padding: const EdgeInsets.only(right: 30, left: 20),
+                      width: 1000.w, // Ancho total escalado del área de scroll
+                      padding: EdgeInsets.only(right: 30.w, left: 20.w),
                       child: BarChart(
                         BarChartData(
                           alignment: BarChartAlignment.spaceAround,
@@ -91,9 +92,9 @@ class _ChartHistoryState extends State<ChartHistory> {
                             touchTooltipData: BarTouchTooltipData(
                               getTooltipColor: (group) => colorScheme.surface,
                               tooltipBorder: BorderSide(color: colorScheme.primary.withValues(alpha: 0.2)),
-                              tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              tooltipBorderRadius: BorderRadius.circular(12),
-                              tooltipMargin: 20,
+                              tooltipPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                              tooltipBorderRadius: BorderRadius.circular(12.w),
+                              tooltipMargin: 20.h,
                               fitInsideVertically: true,
                               fitInsideHorizontally: true,
                               getTooltipItem: (group, groupIndex, rod, rodIndex) {
@@ -103,11 +104,11 @@ class _ChartHistoryState extends State<ChartHistory> {
                                 if (rodIndex == 2) type = "Ahorros";
                                 return BarTooltipItem(
                                   '$type\n',
-                                  TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 10, fontWeight: FontWeight.bold),
+                                  TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 10.sp, fontWeight: FontWeight.bold),
                                   children: [
                                     TextSpan(
-                                      text: '${rod.toY.toStringAsFixed(2)}€',
-                                      style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13),
+                                      text: '${rod.toY.toStringAsFixed(0)}€', // Formato entero
+                                      style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13.sp),
                                     ),
                                   ],
                                 );
@@ -132,18 +133,18 @@ class _ChartHistoryState extends State<ChartHistory> {
                             bottomTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
-                                reservedSize: 40,
+                                reservedSize: 40.h,
                                 getTitlesWidget: (value, meta) {
                                   const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
                                   return SideTitleWidget(
                                     meta: meta,
-                                    space: 15,
+                                    space: 15.h,
                                     child: Text(
                                       months[value.toInt()],
                                       style: TextStyle(
                                         color: colorScheme.onSurface.withValues(alpha: 0.4),
                                         fontWeight: FontWeight.w900, 
-                                        fontSize: 11
+                                        fontSize: 11.sp
                                       ),
                                     ),
                                   );
@@ -197,21 +198,20 @@ class _ChartHistoryState extends State<ChartHistory> {
           _buildRod(expenses[index], Colors.red.shade400, maxY, isGroupTouched && touchedRodIndex == 1),
           _buildRod(savings[index], colorScheme.primary, maxY, isGroupTouched && touchedRodIndex == 2),
         ],
-        barsSpace: 6,
+        barsSpace: 6.w,
       );
     });
   }
 
   BarChartRodData _buildRod(double value, Color color, double maxY, bool isThisRodTouched) {
-    // Si hay algo tocado pero NO es esta barra, la atenuamos más
     final bool anyRodTouchedInGroup = touchedRodIndex != -1;
     final double alpha = isThisRodTouched ? 1.0 : (anyRodTouchedInGroup ? 0.3 : 0.8);
 
     return BarChartRodData(
       toY: value,
       color: color.withValues(alpha: alpha),
-      width: 12, 
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+      width: 12.w, 
+      borderRadius: BorderRadius.vertical(top: Radius.circular(6.w)),
       backDrawRodData: BackgroundBarChartRodData(
         show: true,
         toY: maxY,
@@ -228,11 +228,11 @@ class _ChartHistoryState extends State<ChartHistory> {
     final expenses = sortLists.calculateTotalExpenses(historyCubit.state.historyList, year);
     final savings = sortLists.calculateTotalSavings(historyCubit.state.historyList, year);
     
-    double max = 100;
-    for (var val in incomes) { if (val > max) max = val; }
-    for (var val in expenses) { if (val > max) max = val; }
-    for (var val in savings) { if (val > max) max = val; }
-    return max * 1.5;
+    double maxVal = 100;
+    for (var val in incomes) { if (val > maxVal) maxVal = val; }
+    for (var val in expenses) { if (val > maxVal) maxVal = val; }
+    for (var val in savings) { if (val > maxVal) maxVal = val; }
+    return maxVal * 1.5;
   }
 }
 
@@ -246,9 +246,9 @@ class _ChartLegend extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _LegendItem(color: Colors.green.shade400, label: 'Ingresos'),
-        const SizedBox(width: 15),
+        SizedBox(width: 15.w),
         _LegendItem(color: Colors.red.shade400, label: 'Gastos'),
-        const SizedBox(width: 15),
+        SizedBox(width: 15.w),
         _LegendItem(color: colorScheme.primary, label: 'Ahorros'),
       ],
     );
@@ -266,15 +266,15 @@ class _LegendItem extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 6,
-          height: 6,
+          width: 6.w,
+          height: 6.w,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 6),
+        SizedBox(width: 6.w),
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            fontSize: 8, 
+            fontSize: 8.sp,
             color: colorScheme.onSurface.withValues(alpha: 0.5), 
             fontWeight: FontWeight.w800, 
             letterSpacing: 1

@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/view_ticket_image_dialog.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
@@ -8,7 +9,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 
 class HistoryCustomWidget extends StatefulWidget {
-  const HistoryCustomWidget({super.key});
+  final bool isSliver;
+  const HistoryCustomWidget({super.key, this.isSliver = false});
 
   @override
   State<HistoryCustomWidget> createState() => _HistoryCustomWidgetState();
@@ -43,13 +45,11 @@ class _HistoryCustomWidgetState extends State<HistoryCustomWidget> {
 
       final bool isCorrectDate = (itemYear == selectedYear) && (itemMonth == selectedMonth);
       
-      // Filtro por Tipo (Ingreso/Gasto/Ahorro)
       bool isTypeVisible = false;
       if (item['type'] == 'income' && historyCubit.state.showIncomes) isTypeVisible = true;
       if (item['type'] == 'expense' && historyCubit.state.showExpenses) isTypeVisible = true;
       if (item['type'] == 'saving' && historyCubit.state.showSavings) isTypeVisible = true;
 
-      // Filtro por Categoría
       bool isCategoryVisible = true;
       if (historyCubit.state.selectedCategories.isNotEmpty) {
         final String itemCategory = (item['category'] ?? 'otro').toString().toLowerCase();
@@ -59,128 +59,148 @@ class _HistoryCustomWidgetState extends State<HistoryCustomWidget> {
       return isCorrectDate && isTypeVisible && isCategoryVisible;
     }).toList();
 
-    // Ordenación
     final items = historyCubit.state.listOrder == 'descending' 
         ? filteredList 
         : filteredList.reversed.toList();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // 1. CABECERA Y FILTROS
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    // 1. CABECERA Y FILTROS (FIJOS cuando no es Sliver)
+    final headerAndFilters = Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 35.h, 
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(
-                  height: 35, 
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        historyCubit.state.isChart ? 'ANÁLISIS ANUAL' : 'MOVIMIENTOS',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onSurface.withValues(alpha: 0.4),
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (!historyCubit.state.isChart)
-                            _FilterMenuButton(),
-                          
-                          if (!historyCubit.state.isChart)
-                            IconButton(
-                              visualDensity: VisualDensity.compact,
-                              constraints: const BoxConstraints(),
-                              padding: const EdgeInsets.all(6), 
-                              onPressed: () {
-                                final newOrder = historyCubit.state.listOrder == 'descending' ? 'ascending' : 'descending';
-                                context.read<HistoryCubit>().listOrder(newOrder);
-                              },
-                              icon: Icon(Icons.sort_rounded, color: colorScheme.primary.withValues(alpha: 0.6), size: 18),
-                            ),
-                          IconButton(
-                            visualDensity: VisualDensity.compact,
-                            constraints: const BoxConstraints(),
-                            padding: const EdgeInsets.all(6), 
-                            icon: Icon(
-                              historyCubit.state.isChart ? Icons.list_alt_rounded : Icons.bar_chart_rounded,
-                              color: colorScheme.primary.withValues(alpha: 0.6),
-                              size: 20,
-                            ),
-                            onPressed: () => historyCubit.isChart(!historyCubit.state.isChart),
-                          ),
-                        ],
-                      ),
-                    ],
+                Text(
+                  historyCubit.state.isChart ? 'ANÁLISIS ANUAL' : 'MOVIMIENTOS',
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface.withValues(alpha: 0.4),
+                    letterSpacing: 1.5,
                   ),
                 ),
-                
-                // PANEL DE FILTROS ANIMADO
-                if (!historyCubit.state.isChart)
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    child: historyCubit.state.isFilterOpen
-                        ? _FilterPanel(historyCubit: historyCubit)
-                        : const SizedBox(width: double.infinity, height: 0),
-                  ),
-                
-                const SizedBox(height: 5),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!historyCubit.state.isChart)
+                      _FilterMenuButton(),
+                    
+                    if (!historyCubit.state.isChart)
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.all(6.w), 
+                        onPressed: () {
+                          final newOrder = historyCubit.state.listOrder == 'descending' ? 'ascending' : 'descending';
+                          context.read<HistoryCubit>().listOrder(newOrder);
+                        },
+                        icon: Icon(Icons.sort_rounded, color: colorScheme.primary.withValues(alpha: 0.6), size: 18.sp),
+                      ),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.all(6.w), 
+                      icon: Icon(
+                        historyCubit.state.isChart ? Icons.list_alt_rounded : Icons.bar_chart_rounded,
+                        color: colorScheme.primary.withValues(alpha: 0.6),
+                        size: 20.sp,
+                      ),
+                      onPressed: () => historyCubit.isChart(!historyCubit.state.isChart),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-
-          // 2. CONTENIDO (Gráfico o Lista)
-          if (historyCubit.state.isChart)
-            SliverToBoxAdapter(
-              child: FadeInRight(
-                duration: const Duration(milliseconds: 400),
-                child: const ChartHistory()
-              ),
-            )
-          else if (items.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: FadeInLeft(
-                duration: const Duration(milliseconds: 400),
-                from: 30,
-                child: _EmptyState(
-                  showIncomes: historyCubit.state.showIncomes,
-                  showExpenses: historyCubit.state.showExpenses,
-                  showSavings: historyCubit.state.showSavings,
-                  selectedDate: "${dateState.month} de ${dateState.year}"
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.only(top: 10, bottom: 20),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final item = _HistoryItem(item: items[index]);
-                    if (_hasAnimated) return item;
-
-                    return FadeInLeft(
-                      duration: const Duration(milliseconds: 400),
-                      delay: Duration(milliseconds: index * 20),
-                      from: 30,
-                      child: item,
-                    );
-                  },
-                  childCount: items.length,
-                ),
-              ),
+          
+          if (!historyCubit.state.isChart)
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: historyCubit.state.isFilterOpen
+                  ? _FilterPanel(historyCubit: historyCubit)
+                  : const SizedBox(width: double.infinity, height: 0),
             ),
+          
+          SizedBox(height: 5.h),
         ],
       ),
+    );
+
+    // Contenido del widget (Solo la lista o gráfico)
+    final List<Widget> slivers = [
+      if (historyCubit.state.isChart)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: FadeInRight(
+              duration: const Duration(milliseconds: 400),
+              child: const ChartHistory()
+            ),
+          ),
+        )
+      else if (items.isEmpty)
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: FadeInLeft(
+              duration: const Duration(milliseconds: 400),
+              from: 30,
+              child: _EmptyState(
+                showIncomes: historyCubit.state.showIncomes,
+                showExpenses: historyCubit.state.showExpenses,
+                showSavings: historyCubit.state.showSavings,
+                selectedDate: "${dateState.month} de ${dateState.year}"
+              ),
+            ),
+          ),
+        )
+      else
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 20.h),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final item = _HistoryItem(item: items[index]);
+                if (_hasAnimated) return item;
+
+                return FadeInLeft(
+                  duration: const Duration(milliseconds: 400),
+                  delay: Duration(milliseconds: index * 20),
+                  from: 30,
+                  child: item,
+                );
+              },
+              childCount: items.length,
+            ),
+          ),
+        ),
+    ];
+
+    if (widget.isSliver) {
+      return SliverMainAxisGroup(
+        slivers: [
+          SliverToBoxAdapter(child: headerAndFilters),
+          ...slivers,
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        headerAndFilters,
+        Expanded(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: slivers,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -194,12 +214,12 @@ class _FilterMenuButton extends StatelessWidget {
     return IconButton(
       visualDensity: VisualDensity.compact,
       constraints: const BoxConstraints(),
-      padding: const EdgeInsets.all(6), 
+      padding: EdgeInsets.all(6.w), 
       onPressed: () => historyCubit.toggleFilterPanel(),
       icon: Icon(
         historyCubit.state.isFilterOpen ? Icons.filter_list_off_rounded : Icons.filter_list_rounded, 
         color: colorScheme.primary.withValues(alpha: 0.6), 
-        size: 18
+        size: 18.sp
       ),
     );
   }
@@ -216,11 +236,11 @@ class _FilterPanel extends StatelessWidget {
     final state = historyCubit.state;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8, top: 2), 
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      margin: EdgeInsets.only(bottom: 8.h, top: 2.h), 
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.w),
         border: Border.all(color: colorScheme.primary.withValues(alpha: isDark ? 0.1 : 0.2)),
       ),
       child: Column(
@@ -250,10 +270,10 @@ class _FilterPanel extends StatelessWidget {
           ),
           
           if (state.showIncomes) ...[
-            const _FilterSectionTitle(title: 'CATEGORÍAS DE INGRESOS'),
+            _FilterSectionTitle(title: 'CATEGORÍAS DE INGRESOS'),
             Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 10.w,
+              runSpacing: 10.h,
               alignment: WrapAlignment.center,
               children: [
                 _CategoryFilterItem(id: 'nómina', icon: Icons.work_rounded, isSelected: state.selectedCategories.contains('nómina'), onTap: () => historyCubit.toggleCategoryFilter('nómina'), color: Colors.green),
@@ -265,10 +285,10 @@ class _FilterPanel extends StatelessWidget {
           ],
 
           if (state.showExpenses) ...[
-            const _FilterSectionTitle(title: 'CATEGORÍAS DE GASTOS'),
+            _FilterSectionTitle(title: 'CATEGORÍAS DE GASTOS'),
             Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 10.w,
+              runSpacing: 10.h,
               alignment: WrapAlignment.center,
               children: [
                 _CategoryFilterItem(id: 'hogar', icon: Icons.home_work_rounded, isSelected: state.selectedCategories.contains('hogar'), onTap: () => historyCubit.toggleCategoryFilter('hogar'), color: Colors.red.shade400),
@@ -282,7 +302,7 @@ class _FilterPanel extends StatelessWidget {
           ],
 
           if (state.showIncomes || state.showExpenses) ...[
-            const _FilterSectionTitle(title: 'OTROS'),
+            _FilterSectionTitle(title: 'OTROS'),
             _CategoryFilterItem(id: 'otro', icon: Icons.more_horiz_rounded, isSelected: state.selectedCategories.contains('otro'), onTap: () => historyCubit.toggleCategoryFilter('otro'), color: Colors.grey),
           ],
         ],
@@ -298,16 +318,16 @@ class _FilterSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: EdgeInsets.symmetric(vertical: 12.h),
       child: Row(
         children: [
           const Expanded(child: Divider(height: 1, thickness: 0.5)),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: EdgeInsets.symmetric(horizontal: 10.w),
             child: Text(
               title,
               style: TextStyle(
-                fontSize: 8,
+                fontSize: 8.sp,
                 fontWeight: FontWeight.w900,
                 color: Colors.blueGrey.shade300,
                 letterSpacing: 1.2,
@@ -336,13 +356,13 @@ class _CategoryFilterItem extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(8.w),
         decoration: BoxDecoration(
           color: isSelected ? color : color.withValues(alpha: 0.05),
           shape: BoxShape.circle,
           border: Border.all(color: isSelected ? color : color.withValues(alpha: 0.2), width: 1.5),
         ),
-        child: Icon(icon, size: 16, color: isSelected ? Colors.white : color.withValues(alpha: 0.6)),
+        child: Icon(icon, size: 16.sp, color: isSelected ? Colors.white : color.withValues(alpha: 0.6)),
       ),
     );
   }
@@ -368,13 +388,13 @@ class _FilterChip extends StatelessWidget {
       onTap: () => onChanged(!value),
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(4),
+              padding: EdgeInsets.all(4.w),
               decoration: BoxDecoration(
                 color: (value ? activeColor : colorScheme.onSurface).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
@@ -382,14 +402,14 @@ class _FilterChip extends StatelessWidget {
               child: Icon(
                 value ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
                 color: value ? activeColor : colorScheme.onSurface.withValues(alpha: 0.3),
-                size: 16,
+                size: 16.sp,
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8.w),
             Text(
               label,
               style: TextStyle(
-                fontSize: 10, 
+                fontSize: 10.sp, 
                 fontWeight: FontWeight.w900,
                 color: value ? activeColor : colorScheme.onSurface.withValues(alpha: 0.4),
               ),
@@ -444,6 +464,8 @@ class _HistoryItem extends StatelessWidget {
     final humanizeNumbers = HumanizeNumbers();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = screenWidth <= 375;
     
     final double amount = (item['money'] as num).toDouble();
     final type = item['type'];
@@ -477,11 +499,10 @@ class _HistoryItem extends StatelessWidget {
     }
 
     final moneyString = humanizeNumbers.number(amount.abs());
-    
     final bool showSpentLabel = isSpent && amount >= 0;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8), 
+      padding: EdgeInsets.only(bottom: 8.h), 
       child: Opacity(
         opacity: showSpentLabel ? 0.7 : 1.0, 
         child: Dismissible(
@@ -532,16 +553,16 @@ class _HistoryItem extends StatelessWidget {
               showDialog(
                 context: context,
                 builder: (_) => ViewTicketImageDialog(
-                  imagePath: imagePath,
+                  imagePath: imagePath!,
                   title: item['name'],
                 ),
               );
             } : null,
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20.w),
                 border: Border.all(
                   color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3),
                   width: 1.2,
@@ -557,118 +578,104 @@ class _HistoryItem extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: EdgeInsets.all(10.w),
                     decoration: BoxDecoration(
                       color: accentColor.withValues(alpha: isDark ? 0.1 : 0.05),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon, color: accentColor, size: 18),
+                    child: Icon(icon, color: accentColor, size: 18.sp),
                   ),
-                  const SizedBox(width: 15),
+                  SizedBox(width: 15.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // FILA 1: NOMBRE Y MONTO
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Flexible(
+                            Expanded(
                               child: Text(
                                 item['name'],
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.bold,
                                   color: colorScheme.onSurface,
                                   decoration: showSpentLabel ? TextDecoration.lineThrough : null,
                                 ),
                               ),
                             ),
-                            if (isRecurrent) ...[
-                              const SizedBox(width: 6),
-                              Icon(Icons.repeat_rounded, size: 14, color: Colors.orange.withValues(alpha: 0.8)),
-                            ],
-                            if (showSpentLabel) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                child: Text(
-                                  'GASTADO', 
-                                  style: TextStyle(
-                                    fontSize: 7, 
-                                    fontWeight: FontWeight.w900, 
-                                    color: colorScheme.primary.withValues(alpha: 0.6)
-                                  )
-                                ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              '$prefix$moneyString€',
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w900,
+                                color: accentColor,
                               ),
-                            ],
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 6.h),
+                        // FILA 2: FECHA Y CHIPS (Alineados para maximizar espacio)
                         Row(
                           children: [
                             Text(
                               '${item['currentDate']} • ${item['currentHour']}',
-                              style: TextStyle(fontSize: 10, color: colorScheme.onSurface.withValues(alpha: 0.4)),
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 8.5 : 10.sp, 
+                                color: colorScheme.onSurface.withValues(alpha: 0.4)
+                              ),
                             ),
-                            const SizedBox(width: 8),
-                            if (type != 'saving') ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: accentColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                child: Text(
-                                  category.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 7, 
-                                    fontWeight: FontWeight.w900, 
-                                    color: accentColor.withValues(alpha: 0.6)
-                                  )
-                                ),
-                              ),
-                            ],
-                            if (isTransferred) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 0.5),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.receipt_rounded, size: 8, color: Colors.orange),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      'TICKET',
-                                      style: TextStyle(
-                                        fontSize: 7, 
-                                        fontWeight: FontWeight.w900, 
-                                        color: Colors.orange.withValues(alpha: 0.8)
-                                      )
+                            const Spacer(),
+                            // Contenedor para chips con Row compacto
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isRecurrent) ...[
+                                  Icon(Icons.repeat_rounded, size: 14.sp, color: Colors.orange.withValues(alpha: 0.8)),
+                                  SizedBox(width: 4.w),
+                                ],
+                                if (showSpentLabel) ...[
+                                  _CompactChip(label: 'GASTADO', color: colorScheme.primary, isSmall: isSmallScreen),
+                                  SizedBox(width: 4.w),
+                                ],
+                                if (type != 'saving') ...[
+                                  _CompactChip(label: category.toUpperCase(), color: accentColor, isSmall: isSmallScreen),
+                                  SizedBox(width: 4.w),
+                                ],
+                                if (isTransferred) ...[
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(5.w),
+                                      border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 0.5),
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.receipt_rounded, size: 8.sp, color: Colors.orange),
+                                        SizedBox(width: 2.w),
+                                        Text(
+                                          'TICKET',
+                                          style: TextStyle(
+                                            fontSize: isSmallScreen ? 6.5 : 7.sp, 
+                                            fontWeight: FontWeight.w900, 
+                                            color: Colors.orange.withValues(alpha: 0.8)
+                                          )
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ],
                         ),
                       ],
-                    ),
-                  ),
-                  Text(
-                    '$prefix$moneyString€',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
-                      color: accentColor,
                     ),
                   ),
                 ],
@@ -676,6 +683,32 @@ class _HistoryItem extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CompactChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool isSmall;
+  const _CompactChip({required this.label, required this.color, required this.isSmall});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: isSmall ? 4.w : 6.w, vertical: 1.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(5.w),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: isSmall ? 6.5 : 7.sp, 
+          fontWeight: FontWeight.w900, 
+          color: color.withValues(alpha: 0.6)
+        )
       ),
     );
   }
@@ -699,24 +732,24 @@ class _SwipeBackground extends StatelessWidget {
     final isLeft = alignment == Alignment.centerLeft;
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.8), 
-        borderRadius: BorderRadius.circular(20)
+        borderRadius: BorderRadius.circular(20.w)
       ),
       alignment: alignment,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (isLeft) ...[
-            Icon(icon, color: Colors.white, size: 24),
-            const SizedBox(width: 10),
-            Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1)),
+            Icon(icon, color: Colors.white, size: 24.sp),
+            SizedBox(width: 10.w),
+            Text(label, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12.sp, letterSpacing: 1)),
           ],
           if (!isLeft) ...[
-            Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1)),
-            const SizedBox(width: 10),
-            Icon(icon, color: Colors.white, size: 24),
+            Text(label, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12.sp, letterSpacing: 1)),
+            SizedBox(width: 10.w),
+            Icon(icon, color: Colors.white, size: 24.sp),
           ],
         ],
       ),

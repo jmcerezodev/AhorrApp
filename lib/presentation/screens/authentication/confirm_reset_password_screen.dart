@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
@@ -82,7 +83,7 @@ class _ConfirmResetPasswordScreenState extends State<ConfirmResetPasswordScreen>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    Responsive.init(context);
 
     return Theme(
       data: ThemeData.light(useMaterial3: true).copyWith(
@@ -101,77 +102,100 @@ class _ConfirmResetPasswordScreenState extends State<ConfirmResetPasswordScreen>
           ),
           child: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Column(
-                children: [
-                  const SizedBox(height: 40),
-                  FadeInDown(
-                    child: Image.asset('assets/imagen_login.png', height: size.height * 0.12),
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 30.w),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: Responsive.screenHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
                   ),
-                  const SizedBox(height: 30),
-                  FadeInLeft(
-                    child: const Text(
-                      'Nueva Contraseña',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueGrey),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  FadeInLeft(
-                    delay: const Duration(milliseconds: 200),
-                    child: Text(
-                      'Introduce tu nueva clave de acceso para finalizar la recuperación.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.blueGrey.shade400),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  
-                  FadeInUp(
-                    child: Container(
-                      padding: const EdgeInsets.all(25),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10))],
-                      ),
-                      child: Column(
-                        children: [
-                          CustomInputTextWidget(
-                            controller: _passwordController,
-                            label: 'Contraseña nueva',
-                            obscureText: !_isPasswordVisible,
-                            prefixIcon: Icons.lock_outline_rounded,
-                            suffixIcon: _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                            onPressedSuffixIcon: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        SizedBox(height: 40.h),
+                        FadeInDown(
+                          child: Image.asset(
+                            'assets/imagen_login.png', 
+                            height: 12.hp,
+                            fit: BoxFit.contain,
                           ),
-                          const SizedBox(height: 20),
-                          CustomInputTextWidget(
-                            controller: _confirmPasswordController,
-                            label: 'Confirmar contraseña',
-                            obscureText: true,
-                            prefixIcon: Icons.lock_reset_rounded,
+                        ),
+                        SizedBox(height: 30.h),
+                        FadeInLeft(
+                          child: Text(
+                            'Nueva Contraseña',
+                            style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold, color: Colors.blueGrey),
                           ),
-                          const SizedBox(height: 30),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _onSubmit,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 15),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                              ),
-                              child: _isLoading 
-                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : const Text('GUARDAR CAMBIOS', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        ),
+                        SizedBox(height: 10.h),
+                        FadeInLeft(
+                          delay: const Duration(milliseconds: 200),
+                          child: Text(
+                            'Introduce tu nueva clave de acceso para finalizar la recuperación.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 14.sp, color: Colors.blueGrey.shade400),
+                          ),
+                        ),
+                        SizedBox(height: 40.h),
+                        
+                        FadeInUp(
+                          child: Container(
+                            padding: EdgeInsets.all(25.w),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30.w),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05), 
+                                  blurRadius: 20, 
+                                  offset: const Offset(0, 10)
+                                )
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                CustomInputTextWidget(
+                                  controller: _passwordController,
+                                  label: 'Contraseña nueva',
+                                  obscureText: !_isPasswordVisible,
+                                  prefixIcon: Icons.lock_outline_rounded,
+                                  suffixIcon: _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                                  onPressedSuffixIcon: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                                ),
+                                SizedBox(height: 20.h),
+                                CustomInputTextWidget(
+                                  controller: _confirmPasswordController,
+                                  label: 'Confirmar contraseña',
+                                  obscureText: true,
+                                  prefixIcon: Icons.lock_reset_rounded,
+                                ),
+                                SizedBox(height: 30.h),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 55.h,
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading ? null : _onSubmit,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.orange,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.w)),
+                                    ),
+                                    child: _isLoading 
+                                      ? SizedBox(width: 20.w, height: 20.w, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                      : Text('GUARDAR CAMBIOS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp, letterSpacing: 1)),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const Spacer(),
+                        SizedBox(height: 20.h),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),

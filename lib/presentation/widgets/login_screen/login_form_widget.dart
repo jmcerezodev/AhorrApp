@@ -1,4 +1,5 @@
 import 'package:ahorrapp/core/auth/biometric_service.dart';
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
@@ -51,13 +52,11 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
     final loginCubit = context.watch<LoginCubit>();
     
     return BlocListener<LoginCubit, LoginCubitState>(
-      // SOLO ESCUCHAMOS CAMBIOS EN EL STATUS PARA EVITAR DIÁLOGOS AL CAMBIAR VISIBILIDAD
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == LoginStatus.success) {
           context.go('/home-screen');
         } else if (state.status == LoginStatus.failure) {
-          // Si el error es por validación, no mostramos el diálogo, solo los errores en los campos
           if (state.errorMessage != 'Formulario no válido') {
             showDialog(
               context: context,
@@ -72,18 +71,19 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
       },
       child: Form(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
             Text(
               'ACCESO',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w800,
                 color: Colors.grey.shade400,
                 letterSpacing: 3.0,
               ),
             ),
-            const SizedBox(height: 25),
+            SizedBox(height: 25.h),
 
             CustomInputTextWidget(
               controller: emailController,
@@ -96,7 +96,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               textCapitalization: TextCapitalization.none,
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
 
             CustomInputTextWidget(
               controller: passwordController,
@@ -115,7 +115,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
 
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Recordarme', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              title: Text('Recordarme', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500)),
               value: loginCubit.state.isRemember,
               onChanged: (value) {
                 final newValue = value ?? false;
@@ -126,11 +126,11 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               activeColor: Colors.orange,
             ),
 
-            const SizedBox(height: 15),
+            SizedBox(height: 15.h),
 
             SizedBox(
               width: double.infinity,
-              height: 55,
+              height: 55.h,
               child: ElevatedButton.icon(
                 onPressed: (loginCubit.state.status == LoginStatus.submitting)
                   ? null 
@@ -150,37 +150,46 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                   backgroundColor: Colors.orange.shade600,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.w)),
                 ),
                 icon: loginCubit.state.status == LoginStatus.submitting
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.login_rounded),
+                  ? SizedBox(
+                      width: 20.w, 
+                      height: 20.w, 
+                      child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
+                    )
+                  : Icon(Icons.login_rounded, size: 20.sp),
                 label: Text(
                   loginCubit.state.status == LoginStatus.submitting ? 'CONECTANDO...' : 'ENTRAR',
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.2)
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.sp, letterSpacing: 1.2)
                 ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
 
             Wrap(
               alignment: WrapAlignment.center,
               crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 15,
+              spacing: 15.w,
+              runSpacing: 10.h,
               children: [
                 TextButton(
                   onPressed: () => context.push('/new-user'),
-                  child: const Text(
+                  child: Text(
                     'Crear Nueva Cuenta',
-                    style: TextStyle(color: Colors.orange, fontSize: 13, fontWeight: FontWeight.w800),
+                    style: TextStyle(color: Colors.orange, fontSize: 13.sp, fontWeight: FontWeight.w800),
                   ),
                 ),
                 TextButton(
                   onPressed: () => context.push('/reset-password'),
                   child: Text(
                     '¿Olvidaste la contraseña?',
-                    style: TextStyle(color: Colors.blueGrey.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Colors.blueGrey.withValues(alpha: 0.6), 
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600
+                    ),
                   ),
                 ),
               ],

@@ -1,3 +1,5 @@
+import 'dart:math';
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/network/connectivity_service.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
@@ -51,14 +53,18 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Responsive.init(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // iPhone 7 tiene 375 de ancho. S23 Ultra tiene ~412.
+    final bool isIphone7 = screenWidth <= 375;
 
     return Scaffold(
       drawer: const SideMenuWidget(),
-      resizeToAvoidBottomInset: false, // EVITA QUE EL KEYBOARD EMPUJE LA LISTA DE FONDO Y CAUSE OVERFLOW
+      resizeToAvoidBottomInset: false, 
       body: Column(
         children: [
-          // BANNER DE DESCONEXIÓN
           StreamBuilder<NetworkStatus>(
             stream: getIt<ConnectivityService>().status,
             initialData: getIt<ConnectivityService>().currentStatus,
@@ -68,17 +74,17 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
                   bottom: false,
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 15),
+                    padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 15.w),
                     color: Colors.orange.shade800.withValues(alpha: 0.9),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.cloud_off_rounded, color: Colors.white, size: 16),
-                        SizedBox(width: 10),
+                        Icon(Icons.cloud_off_rounded, color: Colors.white, size: 16.sp),
+                        SizedBox(width: 10.w),
                         Expanded(
                           child: Text(
                             'Modo Local: Los datos se sincronizarán al volver la conexión.',
-                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Colors.white, fontSize: 10.sp, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -91,7 +97,6 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
             },
           ),
           
-          // CONTENIDO CON TRANSICIÓN SUAVE
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
@@ -106,20 +111,28 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: ConvexAppBar(
-        style: TabStyle.fixedCircle,
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        color: Colors.grey.shade400,
-        activeColor: Colors.orange,
-        initialActiveIndex: _selectedIndex,
-        items: const [
-          TabItem(icon: Icons.repeat_rounded, title: 'Fijos'),
-          TabItem(icon: Icons.shopping_basket_rounded, title: 'Compra'),
-          TabItem(icon: Icons.home_rounded, title: 'Inicio'),
-          TabItem(icon: Icons.qr_code_scanner_rounded, title: 'Tickets'),
-          TabItem(icon: Icons.handshake_rounded, title: 'Deudas'),
-        ],
-        onTap: (int i) => setState(() => _selectedIndex = i),
+      bottomNavigationBar: DefaultTextStyle(
+        // Forzamos el estilo de texto aquí para intentar que la librería lo herede
+        style: TextStyle(fontSize: isIphone7 ? 8 : 10, fontWeight: FontWeight.bold),
+        child: ConvexAppBar(
+          style: TabStyle.fixedCircle,
+          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          color: Colors.grey.shade400,
+          activeColor: Colors.orange,
+          initialActiveIndex: _selectedIndex,
+          // Si es iPhone 7, le damos una altura generosa fija para evitar el overflow de la columna interna
+          height: isIphone7 ? 75 : 65.h, 
+          top: isIphone7 ? -15 : -22.h,   
+          curveSize: isIphone7 ? 70 : 85.w,
+          items: [
+            TabItem(icon: Icons.repeat_rounded, title: isIphone7 ? 'Fijo' : 'Fijos'),
+            TabItem(icon: Icons.shopping_basket_rounded, title: isIphone7 ? 'Compra' : 'Compra'),
+            TabItem(icon: Icons.home_rounded, title: 'Inicio'),
+            TabItem(icon: Icons.qr_code_scanner_rounded, title: 'Tickets'),
+            TabItem(icon: Icons.handshake_rounded, title: 'Deudas'),
+          ],
+          onTap: (int i) => setState(() => _selectedIndex = i),
+        ),
       ),
     );
   }

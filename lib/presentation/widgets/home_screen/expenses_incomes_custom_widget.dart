@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/core/filter_lists/filter_lists.dart';
@@ -24,7 +25,7 @@ class ExpensesIncomesCustomWidget extends StatelessWidget {
     final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: Row(
         children: [
           Expanded(
@@ -59,7 +60,7 @@ class ExpensesIncomesCustomWidget extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
           Expanded(
             child: FadeInRight(
               child: _CompactActionCard(
@@ -130,12 +131,12 @@ class _CompactActionCard extends StatelessWidget {
 
     return InkWell(
       onTap: onPressed,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(20.w),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.w),
           border: Border.all(
             color: colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.3),
             width: 1.2,
@@ -151,14 +152,14 @@ class _CompactActionCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8.w),
               decoration: BoxDecoration(
                 color: bgColor,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: iconColor, size: 18),
+              child: Icon(icon, color: iconColor, size: 18.sp),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,7 +168,7 @@ class _CompactActionCard extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 8,
+                      fontSize: 8.sp,
                       fontWeight: FontWeight.w800,
                       color: colorScheme.onSurface.withValues(alpha: 0.4),
                       letterSpacing: 1.0,
@@ -179,7 +180,7 @@ class _CompactActionCard extends StatelessWidget {
                       amount: '$money€',
                       isPrivacyActive: isPrivacyActive,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 15.sp,
                         fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
                       ),
