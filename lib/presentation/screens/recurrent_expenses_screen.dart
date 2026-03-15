@@ -1,4 +1,5 @@
 import 'package:animate_do/animate_do.dart';
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_app_bar.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_history_widget.dart';
@@ -28,7 +29,6 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with 
         });
       }
     });
-    // Cargamos tanto los gastos fijos como las deudas/préstamos para asegurar la sincronización de títulos y chips
     context.read<RecurrentExpensesCubit>().loadExpenses();
     context.read<DebtsLoansCubit>().loadDebtsLoans();
   }
@@ -42,16 +42,21 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    Responsive.init(context);
+    
+    final bool isSmallScreen = MediaQuery.of(context).size.width <= 375;
 
     return BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
       builder: (context, state) {
         return SafeArea(
+          bottom: false,
           child: Column(
             children: [
-              // 1. APPBAR - Desde arriba
+              // --- CABECERA ESTÁTICA ---
+              // 1. APPBAR
               FadeInDown(
                 duration: const Duration(milliseconds: 600),
-                from: 100,
+                from: 50.h,
                 child: const RecurrentAppBar(),
               ),
 
@@ -60,29 +65,32 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with 
                 isIncomeTab: _currentTabIndex == 1,
               ),
 
-              // 3. PESTAÑAS - Desde la IZQUIERDA
+              // 3. PESTAÑAS
               FadeInLeft(
                 duration: const Duration(milliseconds: 600),
-                from: 100,
+                from: 50.w,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w, 
+                    vertical: isSmallScreen ? 5.h : 10.h
+                  ),
                   child: Container(
-                    height: 45,
+                    height: 40.h,
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(25.w),
                     ),
                     child: TabBar(
                       controller: _tabController,
                       indicatorSize: TabBarIndicatorSize.tab,
                       dividerColor: Colors.transparent,
                       indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(25),
+                        borderRadius: BorderRadius.circular(25.w),
                         color: Colors.orange,
                       ),
                       labelColor: Colors.white,
                       unselectedLabelColor: colorScheme.onSurfaceVariant,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp),
                       tabs: const [
                         Tab(text: 'GASTOS'),
                         Tab(text: 'INGRESOS'),
@@ -92,16 +100,16 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with 
                 ),
               ),
 
-              // 4. LISTADOS - Desde abajo
+              // --- CUERPO SCROLLABLE ---
               Expanded(
                 child: state.status == RecurrentExpensesStatus.loading && state.expenses.isEmpty
                   ? const Center(child: CircularProgressIndicator(color: Colors.orange))
                   : FadeInUp(
                       duration: const Duration(milliseconds: 600),
-                      from: 100,
+                      from: 50.h,
                       child: TabBarView(
                         controller: _tabController,
-                        physics: const NeverScrollableScrollPhysics(),
+                        physics: const BouncingScrollPhysics(),
                         children: const [
                           RecurrentHistoryWidget(isIncomeTab: false),
                           RecurrentHistoryWidget(isIncomeTab: true),

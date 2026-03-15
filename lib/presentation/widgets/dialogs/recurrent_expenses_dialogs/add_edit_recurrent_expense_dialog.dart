@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
@@ -46,7 +47,11 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.expense?.name ?? '');
-    _amountController = TextEditingController(text: widget.expense?.amount.toString() ?? '');
+    // REGLA DE ORO: Si editamos, mostramos el valor sin decimales si es entero
+    final initialAmount = widget.expense?.amount;
+    _amountController = TextEditingController(
+      text: initialAmount != null ? initialAmount.toInt().toString() : ''
+    );
     _hasFixedDay = widget.expense?.day != null;
     _includeInSummary = widget.expense?.includeInSummary ?? true;
     _selectedCategory = widget.expense?.category ?? 'general';
@@ -108,7 +113,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
 
     return CustomDialogWrapper(
       borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
-      horizontalInsetPadding: 20,
+      horizontalInsetPadding: 20.w,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -122,7 +127,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
             color: Colors.orange,
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 25),
+          SizedBox(height: 25.h),
           
           Flexible(
             child: SingleChildScrollView(
@@ -138,16 +143,16 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                     enabled: !_isLoading,
                     autoFocus: false,
                   ),
-                  const SizedBox(height: 15),
+                  SizedBox(height: 15.h),
                   CustomInputTextWidget(
                     controller: _amountController,
                     label: 'IMPORTE',
-                    hintText: '0.00',
+                    hintText: '0',
                     enabled: !_isLoading,
                     autoFocus: false,
-                    textInputType: const TextInputType.numberWithOptions(decimal: true),
+                    textInputType: const TextInputType.numberWithOptions(decimal: false),
                   ),
-                  const SizedBox(height: 25),
+                  SizedBox(height: 25.h),
                   
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -157,27 +162,27 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('CATEGORÍA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
-                            const SizedBox(height: 10),
+                            Text('CATEGORÍA', style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
+                            SizedBox(height: 10.h),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              padding: EdgeInsets.symmetric(horizontal: 12.w),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(15),
+                                borderRadius: BorderRadius.circular(15.w),
                                 border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
                                   value: _selectedCategory,
                                   isExpanded: true,
-                                  borderRadius: BorderRadius.circular(15),
+                                  borderRadius: BorderRadius.circular(15.w),
                                   items: _categories.map((cat) {
                                     return DropdownMenuItem<String>(
                                       value: cat['id'],
                                       child: Row(
                                         children: [
-                                          Icon(cat['icon'], size: 16, color: Colors.orange),
-                                          const SizedBox(width: 8),
-                                          Flexible(child: Text(cat['name'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                                          Icon(cat['icon'], size: 16.w, color: Colors.orange),
+                                          SizedBox(width: 8.w),
+                                          Flexible(child: Text(cat['name'], style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
                                         ],
                                       ),
                                     );
@@ -189,14 +194,14 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                           ],
                         ),
                       ),
-                      const SizedBox(width: 15),
+                      SizedBox(width: 15.w),
                       Expanded(
                         flex: 2,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text('AUTOMÁTICO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
-                            const SizedBox(height: 8),
+                            Text('AUTOMÁTICO', style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
+                            SizedBox(height: 8.h),
                             Transform.scale(
                               scale: 0.7,
                               child: CupertinoSwitch(
@@ -221,12 +226,12 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                     child: !_hasFixedDay 
                       ? Column(
                           children: [
-                            const SizedBox(height: 20),
+                            SizedBox(height: 20.h),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 2.h),
                               decoration: BoxDecoration(
                                 color: Colors.orange.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(15),
+                                borderRadius: BorderRadius.circular(15.w),
                                 border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
                               ),
                               child: Row(
@@ -234,13 +239,13 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                                   Checkbox(
                                     value: _includeInSummary, 
                                     activeColor: Colors.orange,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.w)),
                                     onChanged: _isLoading ? null : (val) => setState(() => _includeInSummary = val ?? true),
                                   ),
-                                  const Expanded(
+                                  Expanded(
                                     child: Text(
                                       'Incluir en el resumen mensual',
-                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                                      style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600),
                                     ),
                                   ),
                                 ],
@@ -256,12 +261,12 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                     child: _hasFixedDay 
                       ? Column(
                           children: [
-                            const SizedBox(height: 25),
+                            SizedBox(height: 25.h),
                             const Divider(height: 1, thickness: 0.5),
-                            const SizedBox(height: 20),
+                            SizedBox(height: 20.h),
                             
-                            Text('CONFIGURACIÓN DEL CICLO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
-                            const SizedBox(height: 15),
+                            Text('CONFIGURACIÓN DEL CICLO', style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
+                            SizedBox(height: 15.h),
                             
                             Row(
                               children: [
@@ -269,24 +274,24 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text('FRECUENCIA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
-                                      const SizedBox(height: 8),
+                                      Text('FRECUENCIA', style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+                                      SizedBox(height: 8.h),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                        padding: EdgeInsets.symmetric(horizontal: 12.w),
                                         decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(15),
+                                          borderRadius: BorderRadius.circular(15.w),
                                           border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
                                         ),
                                         child: DropdownButtonHideUnderline(
                                           child: DropdownButton<RecurrentFrequency>(
                                             value: _selectedFrequency,
                                             isExpanded: true,
-                                            borderRadius: BorderRadius.circular(15),
-                                            items: const [
-                                              DropdownMenuItem(value: RecurrentFrequency.monthly, child: Text('Mensual', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
-                                              DropdownMenuItem(value: RecurrentFrequency.quarterly, child: Text('Trimestral', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
-                                              DropdownMenuItem(value: RecurrentFrequency.semiAnnually, child: Text('Semestral', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
-                                              DropdownMenuItem(value: RecurrentFrequency.annually, child: Text('Anual', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                                            borderRadius: BorderRadius.circular(15.w),
+                                            items: [
+                                              DropdownMenuItem(value: RecurrentFrequency.monthly, child: Text('Mensual', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600))),
+                                              DropdownMenuItem(value: RecurrentFrequency.quarterly, child: Text('Trimestral', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600))),
+                                              DropdownMenuItem(value: RecurrentFrequency.semiAnnually, child: Text('Semestral', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600))),
+                                              DropdownMenuItem(value: RecurrentFrequency.annually, child: Text('Anual', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600))),
                                             ],
                                             onChanged: _isLoading ? null : (val) => setState(() => _selectedFrequency = val!),
                                           ),
@@ -295,19 +300,19 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 15),
+                                SizedBox(width: 15.w),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text('FECHA COBRO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
-                                      const SizedBox(height: 8),
+                                      Text('FECHA COBRO', style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+                                      SizedBox(height: 8.h),
                                       GestureDetector(
                                         onTap: _isLoading ? null : () => _selectDate(context),
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(15),
+                                            borderRadius: BorderRadius.circular(15.w),
                                             border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
                                           ),
                                           child: Row(
@@ -316,11 +321,11 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                                               Flexible(
                                                 child: Text(
                                                   DateFormat('dd/MM/yy').format(_selectedStartDate),
-                                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                                  style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
-                                              const Icon(Icons.calendar_month_rounded, color: Colors.orange, size: 16),
+                                              Icon(Icons.calendar_month_rounded, color: Colors.orange, size: 16.w),
                                             ],
                                           ),
                                         ),
@@ -339,7 +344,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
             ),
           ),
 
-          const SizedBox(height: 35),
+          SizedBox(height: 35.h),
           Row(
             children: [
               Expanded(
@@ -349,7 +354,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                   colorScheme: colorScheme
                 ),
               ),
-              const SizedBox(width: 15),
+              SizedBox(width: 15.w),
               Expanded(
                 child: AppDialogs.dialogPrimaryButton(
                   text: 'GUARDAR',
@@ -379,7 +384,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
     await context.read<RecurrentExpensesCubit>().addOrUpdateExpense(
       id: widget.expense?.id,
       name: name,
-      amount: amount,
+      amount: amount.toInt().toDouble(), // Forzamos entero para consistencia
       day: _hasFixedDay ? _selectedStartDate.day : null,
       category: _selectedCategory,
       isActive: widget.expense?.isActive ?? true,

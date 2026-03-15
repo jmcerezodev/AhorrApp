@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:flutter/material.dart';
 
 class RecurrentAppBar extends StatelessWidget {
@@ -8,7 +9,7 @@ class RecurrentAppBar extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
+      padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 5.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -16,7 +17,7 @@ class RecurrentAppBar extends StatelessWidget {
           Builder(
             builder: (context) => IconButton(
               onPressed: () => Scaffold.of(context).openDrawer(),
-              icon: Icon(Icons.menu_rounded, color: colorScheme.onSurface, size: 30),
+              icon: Icon(Icons.menu_rounded, color: colorScheme.onSurface, size: 30.w),
             ),
           ),
 
@@ -27,15 +28,15 @@ class RecurrentAppBar extends StatelessWidget {
               Text(
                 'MIS FIJOS',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.w900,
                   color: colorScheme.onSurface,
                 ),
               ),
-              const Text(
+              Text(
                 'Controla hoy, ahorra siempre.',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 11.sp,
                   color: Colors.orange,
                   fontWeight: FontWeight.w600,
                 ),

@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_expense_item.dart';
@@ -38,124 +39,132 @@ class _RecurrentHistoryWidgetState extends State<RecurrentHistoryWidget> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final humanizeNumbers = HumanizeNumbers();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // CABECERA DE LISTADO CON FILTRO
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                widget.isIncomeTab ? 'LISTADO DE INGRESOS' : 'LISTADO DE GASTOS',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: colorScheme.onSurface.withValues(alpha: 0.4),
-                  letterSpacing: 2.0,
+    return BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
+      builder: (context, state) {
+        if (state.status == RecurrentExpensesStatus.loading && state.expenses.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state.status == RecurrentExpensesStatus.failure) {
+          return Center(child: Text(state.errorMessage ?? 'Error al cargar registros fijos'));
+        }
+
+        final List<dynamic> filteredExpenses = state.expenses
+            .where((e) => e.isIncome == widget.isIncomeTab)
+            .toList()
+          ..sort((a, b) => a.position.compareTo(b.position));
+
+        final displayedExpenses = filteredExpenses.where((e) {
+          final bool isAutomatic = e.day != null;
+          if (isAutomatic && !state.showAutomatic) return false;
+          if (!isAutomatic && !state.showManual) return false;
+          if (state.selectedCategories.isNotEmpty && !state.selectedCategories.contains(e.category.toLowerCase())) return false;
+          return true;
+        }).toList();
+
+        return CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // 1. CABECERA DE LISTADO CON FILTRO (Sliver)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 10.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        widget.isIncomeTab ? 'LISTADO DE INGRESOS' : 'LISTADO DE GASTOS',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.onSurface.withValues(alpha: 0.4),
+                          letterSpacing: 2.0,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => context.read<RecurrentExpensesCubit>().toggleFilterPanel(),
+                      icon: Icon(
+                        state.isFilterOpen ? Icons.filter_list_off_rounded : Icons.filter_list_rounded, 
+                        color: colorScheme.primary.withValues(alpha: 0.6), 
+                        size: 18.w
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
-                builder: (context, state) {
-                  return IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () => context.read<RecurrentExpensesCubit>().toggleFilterPanel(),
-                    icon: Icon(
-                      state.isFilterOpen ? Icons.filter_list_off_rounded : Icons.filter_list_rounded, 
-                      color: colorScheme.primary.withValues(alpha: 0.6), 
-                      size: 18
-                    ),
-                  );
-                },
+            ),
+
+            // 2. PANEL DE FILTROS ANIMADO (Sliver)
+            SliverToBoxAdapter(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: state.isFilterOpen
+                    ? RecurrentFilterPanel(cubit: context.read<RecurrentExpensesCubit>())
+                    : const SizedBox(width: double.infinity, height: 0),
               ),
-            ],
-          ),
-        ),
+            ),
 
-        // PANEL DE FILTROS ANIMADO
-        BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
-          builder: (context, state) {
-            return AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              child: state.isFilterOpen
-                  ? RecurrentFilterPanel(cubit: context.read<RecurrentExpensesCubit>())
-                  : const SizedBox(width: double.infinity, height: 0),
-            );
-          },
-        ),
-
-        Expanded(
-          child: BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
-            builder: (context, state) {
-              if (state.status == RecurrentExpensesStatus.loading && state.expenses.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (state.status == RecurrentExpensesStatus.failure) {
-                return Center(child: Text(state.errorMessage ?? 'Error al cargar registros fijos'));
-              }
-
-              final List<dynamic> filteredExpenses = state.expenses
-                  .where((e) => e.isIncome == widget.isIncomeTab)
-                  .toList()
-                ..sort((a, b) => a.position.compareTo(b.position));
-
-              final displayedExpenses = filteredExpenses.where((e) {
-                final bool isAutomatic = e.day != null;
-                if (isAutomatic && !state.showAutomatic) return false;
-                if (!isAutomatic && !state.showManual) return false;
-                if (state.selectedCategories.isNotEmpty && !state.selectedCategories.contains(e.category.toLowerCase())) return false;
-                return true;
-              }).toList();
-
-              if (displayedExpenses.isEmpty) {
-                return EmptyListWidget(
+            // 3. LISTADO (Sliver)
+            if (displayedExpenses.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: EmptyListWidget(
                   text: state.isFilterOpen 
                     ? 'No hay registros que coincidan con los filtros seleccionados.'
                     : (widget.isIncomeTab 
                         ? 'Añade tus ingresos recurrentes para que la app los anote automáticamente.'
                         : 'Añade tus facturas o suscripciones para que la app las anote automáticamente.'),
-                );
-              }
+                ),
+              )
+            else
+              SliverPadding(
+                padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 10.h, bottom: 100.h),
+                sliver: SliverReorderableList(
+                  itemCount: displayedExpenses.length,
+                  onReorder: (oldIndex, newIndex) {
+                    context.read<RecurrentExpensesCubit>().reorderExpenses(
+                      oldIndex, 
+                      newIndex, 
+                      isIncome: widget.isIncomeTab
+                    );
+                  },
+                  itemBuilder: (context, index) {
+                    final expense = displayedExpenses[index];
+                    final item = RecurrentExpenseItem(
+                      expense: expense,
+                      index: index,
+                      humanizeNumbers: humanizeNumbers,
+                      colorScheme: colorScheme,
+                      isDark: isDark,
+                    );
 
-              return ReorderableListView.builder(
-                padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20),
-                physics: const BouncingScrollPhysics(),
-                itemCount: displayedExpenses.length,
-                onReorder: (oldIndex, newIndex) {
-                  context.read<RecurrentExpensesCubit>().reorderExpenses(
-                    oldIndex, 
-                    newIndex, 
-                    isIncome: widget.isIncomeTab
-                  );
-                },
-                itemBuilder: (context, index) {
-                  final expense = displayedExpenses[index];
-                  final item = RecurrentExpenseItem(
-                    expense: expense,
-                    index: index,
-                    humanizeNumbers: humanizeNumbers,
-                    colorScheme: colorScheme,
-                    isDark: isDark,
-                  );
+                    Widget content = ReorderableDelayedDragStartListener(
+                      index: index,
+                      key: ValueKey(expense.id),
+                      child: item,
+                    );
 
-                  if (_hasAnimated) return Container(key: ValueKey(expense.id), child: item);
+                    if (_hasAnimated) return content;
 
-                  return FadeInUp(
-                    key: ValueKey(expense.id),
-                    duration: const Duration(milliseconds: 400),
-                    delay: Duration(milliseconds: index * 30),
-                    from: 30,
-                    child: item,
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
+                    return FadeInUp(
+                      key: ValueKey(expense.id),
+                      duration: const Duration(milliseconds: 400),
+                      delay: Duration(milliseconds: index * 30),
+                      from: 30.h,
+                      child: content,
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

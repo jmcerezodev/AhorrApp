@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
@@ -26,8 +27,9 @@ class RecurrentExpenseItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Sincronización de espaciado con HomeScreen: 8.h
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: 8.h),
       child: Dismissible(
         key: Key('dismiss_recurrent_${expense.id}'),
         background: const SwipeBackgroundWidget(
@@ -47,7 +49,6 @@ class RecurrentExpenseItem extends StatelessWidget {
             _onEdit(context);
             return false;
           } else {
-            // ELIMINACIÓN: Invocamos el diálogo y esperamos su resultado real (bool)
             final bool? result = await showDialog<bool>(
               context: context,
               barrierDismissible: false,

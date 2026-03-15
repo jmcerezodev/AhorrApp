@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:flutter/material.dart';
 
@@ -12,11 +13,11 @@ class RecurrentFilterPanel extends StatelessWidget {
     final state = cubit.state;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8, top: 2, left: 20, right: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      margin: EdgeInsets.only(bottom: 8.h, top: 2.h, left: 20.w, right: 20.w),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(18.w),
         border: Border.all(color: colorScheme.primary.withValues(alpha: isDark ? 0.1 : 0.2)),
       ),
       child: Column(
@@ -38,13 +39,13 @@ class RecurrentFilterPanel extends StatelessWidget {
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-            child: Divider(height: 1, thickness: 0.5),
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 10.w),
+            child: Divider(height: 1.h, thickness: 0.5),
           ),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 8.w,
+            runSpacing: 8.h,
             alignment: WrapAlignment.center,
             children: [
               _CategoryFilterItem(id: 'general', icon: Icons.receipt_long_rounded, isSelected: state.selectedCategories.contains('general'), onTap: () => cubit.toggleCategoryFilter('general')),
@@ -75,13 +76,13 @@ class _CategoryFilterItem extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(8.w),
         decoration: BoxDecoration(
           color: isSelected ? Colors.orange : Colors.orange.withValues(alpha: 0.05),
           shape: BoxShape.circle,
-          border: Border.all(color: isSelected ? Colors.orange : Colors.orange.withValues(alpha: 0.2), width: 1.5),
+          border: Border.all(color: isSelected ? Colors.orange : Colors.orange.withValues(alpha: 0.2), width: 1.5.w),
         ),
-        child: Icon(icon, size: 16, color: isSelected ? Colors.white : Colors.orange.withValues(alpha: 0.6)),
+        child: Icon(icon, size: 16.w, color: isSelected ? Colors.white : Colors.orange.withValues(alpha: 0.6)),
       ),
     );
   }
@@ -102,13 +103,13 @@ class _FilterChip extends StatelessWidget {
       onTap: () => onChanged(!value),
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(4),
+              padding: EdgeInsets.all(4.w),
               decoration: BoxDecoration(
                 color: (value ? activeColor : colorScheme.onSurface).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
@@ -116,14 +117,14 @@ class _FilterChip extends StatelessWidget {
               child: Icon(
                 value ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
                 color: value ? activeColor : colorScheme.onSurface.withValues(alpha: 0.3),
-                size: 16,
+                size: 16.w,
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8.w),
             Text(
               label,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 10.sp,
                 fontWeight: FontWeight.w900,
                 color: value ? activeColor : colorScheme.onSurface.withValues(alpha: 0.4),
               ),

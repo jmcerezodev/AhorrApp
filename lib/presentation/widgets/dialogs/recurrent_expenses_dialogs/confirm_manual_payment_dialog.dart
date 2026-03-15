@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
@@ -41,20 +42,20 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
       borderColor: _isSuccess 
           ? Colors.green.withValues(alpha: isDark ? 0.3 : 0.5) 
           : Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
-      horizontalInsetPadding: 30,
+      horizontalInsetPadding: 30.w,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ICONO ANIMADO (ZoomIn)
+          // ICONO ANIMADO
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 400),
             child: _isSuccess 
               ? ZoomIn(
                   child: Container(
                     key: const ValueKey('success_icon'),
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(12.w),
                     decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
-                    child: const Icon(Icons.check_rounded, color: Colors.white, size: 32),
+                    child: Icon(Icons.check_rounded, color: Colors.white, size: 32.w),
                   ),
                 )
               : AppDialogs.dialogHeader(
@@ -63,18 +64,18 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
                   color: Colors.orange, 
                   title: isIncome ? '¿ANOTAR INGRESO AHORA?' : '¿ANOTAR GASTO AHORA?',
                   circularBackground: true,
-                  iconSize: 32,
+                  iconSize: 32.w,
                   colorScheme: colorScheme,
                 ),
           ),
           
           if (_isSuccess) ...[
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
             Text(
               '¡ANOTADO CON ÉXITO!',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
+              style: TextStyle(
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w800,
                 color: Colors.green,
                 letterSpacing: 1.5,
@@ -82,7 +83,7 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
             ),
           ],
           
-          const SizedBox(height: 15),
+          SizedBox(height: 15.h),
           
           // MENSAJE
           _isSuccess 
@@ -92,7 +93,7 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
               )
             : Text.rich(
                 TextSpan(
-                  style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
+                  style: TextStyle(fontSize: 13.sp, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5),
                   children: [
                     TextSpan(text: 'Se va a registrar un ${isIncome ? "ingreso" : "gasto"} de '),
                     TextSpan(
@@ -110,20 +111,24 @@ class _ConfirmManualPaymentDialogState extends State<ConfirmManualPaymentDialog>
                 textAlign: TextAlign.center,
               ),
           
-          const SizedBox(height: 30),
+          SizedBox(height: 30.h),
 
           // BOTONES
           if (!_isSuccess)
-            Row(
+            OverflowBar(
+              spacing: 15.w,
+              overflowSpacing: 10.h,
+              alignment: MainAxisAlignment.center,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 120.w,
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
-                    child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 11.sp)),
                   ),
                 ),
-                const SizedBox(width: 15),
-                Expanded(
+                SizedBox(
+                  width: 120.w,
                   child: AppDialogs.dialogPrimaryButton(
                     text: 'ACEPTAR', 
                     onPressed: _handleAccept, 

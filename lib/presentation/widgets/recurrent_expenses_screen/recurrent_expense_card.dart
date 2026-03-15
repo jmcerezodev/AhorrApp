@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
@@ -29,8 +30,8 @@ class RecurrentExpenseCard extends StatelessWidget {
     final double progress = _calculateProgress(nextPaymentDate);
     final bool showProgress = isAutomatic && expense.isActive;
     final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
+    final bool isSmallScreen = MediaQuery.of(context).size.width <= 375;
 
-    // Buscamos si hay un registro vinculado (deuda o préstamo)
     final debtsState = context.watch<DebtsLoansCubit>().state;
     DebtLoan? linkedItem;
     try {
@@ -41,182 +42,189 @@ class RecurrentExpenseCard extends StatelessWidget {
     final bool isLoan = isLinked && linkedItem.type == DebtLoanType.loan;
     final bool isIncome = expense.isIncome;
     
-    // TÍTULO: Solo el concepto (si hay vínculo, el de la deuda/préstamo)
     final String displayTitle = isLinked ? linkedItem.name : expense.name;
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 92),
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(25.w),
         border: Border.all(
           color: Colors.orange.withValues(alpha: expense.isActive ? 0.15 : 0.05),
-          width: 1.5,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            blurRadius: 10.w,
+            offset: Offset(0, 5.h),
           )
         ],
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          ListTile(
-            contentPadding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
-            leading: Stack(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _getIconForCategory(expense.category),
-                    color: expense.isActive ? Colors.orange : Colors.grey,
-                    size: 24,
-                  ),
-                ),
-                if (isAutomatic)
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: expense.isActive ? Colors.green.shade400 : Colors.grey.shade400,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: isDark ? const Color(0xFF1E1E1E) : Colors.white, width: 2),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            title: Text(
-              displayTitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-                color: expense.isActive ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _getSubtitleText(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface.withValues(alpha: 0.4),
-                  ),
-                ),
-                if (showProgress) ...[
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      child: LinearProgressIndicator(
-                        value: isPrivacyActive ? 0.0 : progress,
-                        minHeight: 3,
-                        backgroundColor: Colors.orange.withValues(alpha: 0.05),
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.orange.withValues(alpha: 0.4)),
-                      ),
-                    ),
-                  ),
-                ]
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                PrivacyAmountText(
-                  amount: '${isIncome ? "+" : "-"}${humanizeNumbers.number(expense.amount, isPrivacyModeActive: isPrivacyActive)}€',
-                  isPrivacyActive: isPrivacyActive,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    color: expense.isActive 
-                      ? (isIncome ? Colors.green.shade400 : Colors.red.shade400)
-                      : Colors.grey,
-                  ),
-                ),
-                const SizedBox(width: 15),
-                GestureDetector(
-                  onTap: () async {
-                    if (isAutomatic) {
-                      context.read<RecurrentExpensesCubit>().toggleActive(expense);
-                    } else {
-                      await showDialog<bool>(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (context) => ConfirmManualPaymentDialog(
-                          expense: expense,
-                          amount: humanizeNumbers.number(expense.amount, isPrivacyModeActive: isPrivacyActive),
-                        ),
-                      );
-                    }
-                  },
-                  child: Icon(
-                    isAutomatic 
-                      ? (expense.isActive ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded)
-                      : (isIncome ? Icons.add_circle_rounded : Icons.add_circle_outline_rounded),
-                    color: Colors.orange.withValues(alpha: 0.6),
-                    size: 32,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // BLOQUE INFERIOR DE TIEMPO Y CHIP VINCULADO
-          if (showProgress || isLinked)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: Row(
+          Row(
+            children: [
+              // LEADING: Icono
+              Stack(
                 children: [
-                  if (showProgress)
-                    Text(
-                      daysRemaining == 0 
-                        ? (isIncome ? '¡Te ingresan hoy!' : '¡Se cobra hoy!')
-                        : (isIncome ? 'Próximo ingreso en $daysRemaining días' : 'Próximo cobro en $daysRemaining días'),
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
-                        letterSpacing: 0.5,
+                  Container(
+                    padding: EdgeInsets.all(10.w),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _getIconForCategory(expense.category),
+                      color: expense.isActive ? Colors.orange : Colors.grey,
+                      size: 22.sp,
+                    ),
+                  ),
+                  if (isAutomatic)
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 10.w,
+                        height: 10.w,
+                        decoration: BoxDecoration(
+                          color: expense.isActive ? Colors.green.shade400 : Colors.grey.shade400,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: isDark ? const Color(0xFF1E1E1E) : Colors.white, width: 2.w),
+                        ),
                       ),
                     ),
-                  if (isLinked) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                ],
+              ),
+              
+              SizedBox(width: 12.w),
+
+              // CENTRAL: Título y Subtítulo
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      displayTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14.sp,
+                        color: expense.isActive ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.4),
                       ),
-                      child: Text(
-                        isLoan ? 'PRÉSTAMO' : 'DEUDA',
-                        style: const TextStyle(
-                          color: Colors.orange,
-                          fontSize: 7.5,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
+                    ),
+                    Text(
+                      _getSubtitleText(),
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 9.sp : 10.sp,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface.withValues(alpha: 0.4),
                       ),
                     ),
                   ],
+                ),
+              ),
+
+              SizedBox(width: 8.w),
+
+              // TRAILING: Monto y Acción
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  PrivacyAmountText(
+                    amount: '${isIncome ? "+" : "-"}${humanizeNumbers.number(expense.amount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
+                    isPrivacyActive: isPrivacyActive,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15.sp,
+                      color: expense.isActive 
+                        ? (isIncome ? Colors.green.shade400 : Colors.red.shade400)
+                        : Colors.grey,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  GestureDetector(
+                    onTap: () async {
+                      if (isAutomatic) {
+                        context.read<RecurrentExpensesCubit>().toggleActive(expense);
+                      } else {
+                        await showDialog<bool>(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => ConfirmManualPaymentDialog(
+                            expense: expense,
+                            amount: humanizeNumbers.number(expense.amount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive),
+                          ),
+                        );
+                      }
+                    },
+                    child: Icon(
+                      isAutomatic 
+                        ? (expense.isActive ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded)
+                        : (isIncome ? Icons.add_circle_rounded : Icons.add_circle_outline_rounded),
+                      color: Colors.orange.withValues(alpha: 0.6),
+                      size: 28.sp,
+                    ),
+                  ),
                 ],
               ),
+            ],
+          ),
+
+          // BARRA DE PROGRESO E INFO INFERIOR
+          if (showProgress || isLinked) ...[
+            SizedBox(height: 8.h),
+            if (showProgress)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10.w),
+                child: LinearProgressIndicator(
+                  value: isPrivacyActive ? 0.0 : progress,
+                  minHeight: 3.h,
+                  backgroundColor: Colors.orange.withValues(alpha: 0.05),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.orange.withValues(alpha: 0.4)),
+                ),
+              ),
+            SizedBox(height: 6.h),
+            Row(
+              children: [
+                if (showProgress)
+                  Expanded(
+                    child: Text(
+                      daysRemaining == 0 
+                        ? (isIncome ? '¡Hoy ingresa!' : '¡Hoy se cobra!')
+                        : (isIncome ? 'Próximo ingreso en $daysRemaining días' : 'Próximo cobro en $daysRemaining días'),
+                      style: TextStyle(
+                        fontSize: 8.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                if (isLinked) ...[
+                  if (showProgress) SizedBox(width: 8.w),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6.w),
+                      border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                    ),
+                    child: Text(
+                      isLoan ? 'PRÉSTAMO' : 'DEUDA',
+                      style: TextStyle(
+                        color: Colors.orange,
+                        fontSize: 7.sp,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
+          ],
         ],
       ),
     );

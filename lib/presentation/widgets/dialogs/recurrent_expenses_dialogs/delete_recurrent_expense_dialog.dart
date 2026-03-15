@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
@@ -20,7 +21,6 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Buscamos si hay un registro vinculado (deuda o préstamo)
     final debtsState = context.read<DebtsLoansCubit>().state;
     DebtLoan? linkedItem;
     try {
@@ -30,7 +30,6 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
     final bool isLinked = linkedItem != null;
     final bool isLoan = isLinked && linkedItem.type == DebtLoanType.loan;
     
-    // Determinamos si el registro actual es un ingreso o un gasto fijo
     final expenseState = context.read<RecurrentExpensesCubit>().state;
     bool isIncome = false;
     try {
@@ -39,7 +38,7 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
 
     return CustomDialogWrapper(
       borderColor: Colors.red.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
-      horizontalInsetPadding: 30,
+      horizontalInsetPadding: 30.w,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -49,25 +48,25 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
             title: isIncome ? '¿Eliminar Ingreso Fijo?' : '¿Eliminar Gasto Fijo?',
             colorScheme: colorScheme,
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20.h),
           
           AppDialogs.dialogMessage(
             '¿Estás seguro de que quieres eliminar este registro automático?',
             colorScheme,
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10.h),
           Text(
             '"$expenseName"',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 15.sp,
               fontWeight: FontWeight.w900,
               color: colorScheme.onSurface,
             ),
           ),
           
           if (isLinked) ...[
-            const SizedBox(height: 15),
+            SizedBox(height: 15.h),
             AppDialogs.dialogMessage(
               'Este registro está vinculado ${isLoan ? "al préstamo" : "a la deuda"} "${linkedItem.name}". Si lo eliminas, también se borrará de tu lista de cuentas pendientes.',
               colorScheme,
@@ -75,25 +74,30 @@ class DeleteRecurrentExpenseDialog extends StatelessWidget {
             ),
           ],
           
-          const SizedBox(height: 15),
+          SizedBox(height: 15.h),
           AppDialogs.dialogMessage(
             'Esta acción no se puede deshacer.',
             colorScheme,
             customColor: Colors.red.shade400.withValues(alpha: 0.8),
           ),
-          const SizedBox(height: 30),
+          SizedBox(height: 30.h),
 
-          Row(
+          // Usamos OverflowBar para que los botones se apilen si no caben
+          OverflowBar(
+            spacing: 15.w,
+            overflowSpacing: 10.h,
+            alignment: MainAxisAlignment.center,
             children: [
-              Expanded(
+              SizedBox(
+                width: 130.w, // Ancho controlado para que quepan dos en iPhone 7
                 child: AppDialogs.dialogSecondaryButton(
                   text: 'CANCELAR', 
                   onPressed: () => Navigator.of(context).pop(false),
                   colorScheme: colorScheme,
                 ),
               ),
-              const SizedBox(width: 15),
-              Expanded(
+              SizedBox(
+                width: 130.w,
                 child: AppDialogs.dialogPrimaryButton(
                   text: 'ELIMINAR', 
                   onPressed: () {

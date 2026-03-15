@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs/add_edit_recurrent_expense_dialog.dart';
@@ -23,19 +24,18 @@ class RecurrentSummaryWidget extends StatelessWidget {
 
     return BlocBuilder<RecurrentExpensesCubit, RecurrentExpensesState>(
       builder: (context, state) {
-        // Obtenemos el total según la pestaña activa (Ingreso o Gasto)
         final double totalToShow = state.showProrated 
             ? (isIncomeTab ? state.totalIncomeProrated : state.totalExpenseProrated)
             : (isIncomeTab ? state.totalIncomeStrict : state.totalExpenseStrict);
 
         return FadeInDown(
-          duration: const Duration(milliseconds: 1000), // Más lento
-          from: 50, // Más recorrido
+          duration: const Duration(milliseconds: 1000),
+          from: 50.h,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 5.h),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(18),
+              padding: EdgeInsets.all(18.w),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                 gradient: isDark 
@@ -45,16 +45,16 @@ class RecurrentSummaryWidget extends StatelessWidget {
                       end: Alignment.bottomRight,
                     )
                   : null,
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(25.w),
                 border: Border.all(
                   color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.3), 
-                  width: 1.5
+                  width: 1.5.w
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
+                    blurRadius: 15.w,
+                    offset: Offset(0, 8.h),
                   )
                 ],
               ),
@@ -68,43 +68,49 @@ class RecurrentSummaryWidget extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                isIncomeTab ? 'TOTAL INGRESOS FIJOS' : 'TOTAL GASTOS FIJOS',
-                                style: TextStyle(
-                                  color: Colors.orange.shade400,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.2,
+                              Flexible(
+                                child: Text(
+                                  isIncomeTab ? 'TOTAL INGRESOS' : 'TOTAL GASTOS',
+                                  softWrap: false,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.orange.shade400,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.2,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              SizedBox(width: 4.w),
                               GestureDetector(
                                 onTap: () => context.read<ThemeCubit>().togglePrivacyMode(),
                                 child: Icon(
                                   isPrivacyActive ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                  size: 14,
+                                  size: 14.w,
                                   color: Colors.orange.shade400.withValues(alpha: 0.7),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2.h),
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: PrivacyAmountText(
-                              amount: '${humanizeNumbers.number(totalToShow, isPrivacyModeActive: isPrivacyActive)}€',
+                              // REGLA DE ORO: Formato entero
+                              amount: '${humanizeNumbers.number(totalToShow.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
                               isPrivacyActive: isPrivacyActive,
                               style: TextStyle(
                                 color: isDark ? Colors.white : colorScheme.onSurface,
-                                fontSize: 30,
+                                fontSize: 30.sp,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -1,
                               ),
                             ),
                           ),
                           
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12.h),
                           
                           GestureDetector(
                             onTap: () => context.read<RecurrentExpensesCubit>().toggleProratedView(),
@@ -118,7 +124,7 @@ class RecurrentSummaryWidget extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(width: 15),
+                    SizedBox(width: 15.w),
 
                     _AddRecurrentBubble(isIncome: isIncomeTab),
                   ],
@@ -147,11 +153,11 @@ class _AddRecurrentBubble extends StatelessWidget {
         );
       },
       child: Container(
-        width: 110,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        width: 110.w,
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: Colors.orange.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.w),
           border: Border.all(
             color: Colors.orange.withValues(alpha: 0.15),
           ),
@@ -159,20 +165,23 @@ class _AddRecurrentBubble extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.add_box_rounded,
               color: Colors.orange,
-              size: 32,
+              size: 32.w,
             ),
-            const SizedBox(height: 4),
-            Text(
-              isIncome ? 'NUEVO INGRESO' : 'NUEVO GASTO',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.w900,
-                color: Colors.orange,
-                letterSpacing: 0.5,
+            SizedBox(height: 4.h),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                isIncome ? 'NUEVO INGRESO' : 'NUEVO GASTO',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 8.sp,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.orange,
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
           ],
@@ -197,24 +206,29 @@ class _ModeChip extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+        borderRadius: BorderRadius.circular(8.w),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.w),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.sync_rounded, color: color.withValues(alpha: 0.8), size: 12),
-          const SizedBox(width: 6),
-          Text(
-            showProrated ? 'TOTAL PRORRATEADO' : 'TOTAL MENSUAL',
-            style: TextStyle(
-              color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: 8,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.5,
+          Icon(Icons.sync_rounded, color: color.withValues(alpha: 0.8), size: 12.w),
+          SizedBox(width: 6.w),
+          Flexible(
+            child: Text(
+              showProrated ? 'TOTAL PRORRATEADO' : 'TOTAL MENSUAL',
+              softWrap: false,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
+                fontSize: 8.sp,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
         ],

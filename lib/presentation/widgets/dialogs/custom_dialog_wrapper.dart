@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 
@@ -30,14 +31,16 @@ class CustomDialogWrapper extends StatelessWidget {
         colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4);
 
     Widget card = Container(
-      constraints: constraints,
-      padding: padding ?? const EdgeInsets.all(25),
+      constraints: constraints ?? BoxConstraints(
+        maxHeight: 700.h, // Altura máxima responsiva para evitar overflows
+      ),
+      padding: padding ?? EdgeInsets.all(25.w),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(30.w),
         border: Border.all(
           color: effectiveBorderColor,
-          width: 1.5,
+          width: 1.5.w,
         ),
       ),
       child: child,
@@ -60,7 +63,11 @@ class CustomDialogWrapper extends StatelessWidget {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.symmetric(horizontal: horizontalInsetPadding),
+      // Inset padding responsivo para que respire en iPhone 7
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: horizontalInsetPadding.w,
+        vertical: 24.h,
+      ),
       child: content,
     );
   }
