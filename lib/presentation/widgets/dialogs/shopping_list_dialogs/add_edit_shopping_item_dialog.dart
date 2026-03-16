@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
@@ -36,7 +37,8 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.item?.name ?? '');
-    _amountController = TextEditingController(text: widget.item == null || widget.item?.amount == 0 ? '' : widget.item?.amount.toString());
+    // REGLA DE ORO: Formato entero
+    _amountController = TextEditingController(text: widget.item == null || widget.item?.amount == 0 ? '' : widget.item?.amount.toInt().toString());
     _selectedCategory = widget.item?.category ?? 'general';
     _quantity = widget.item?.quantity ?? 1;
   }
@@ -55,21 +57,24 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
 
     return CustomDialogWrapper(
       borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
-      horizontalInsetPadding: 20,
+      horizontalInsetPadding: 20.w,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Header con FittedBox para evitar overflows en títulos largos
           AppDialogs.dialogRowHeader(
             icon: widget.item == null ? Icons.add_shopping_cart_rounded : Icons.edit_note_rounded, 
             title: widget.item == null ? 'Añadir Producto' : 'Editar Producto', 
             color: Colors.orange, 
             colorScheme: colorScheme
           ),
-          const SizedBox(height: 25),
+          SizedBox(height: 20.h), // Reducido de 25 a 20 para ganar espacio
           
           Flexible(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
+              // Padding inferior dinámico para que el teclado no tape el último input
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 20.h : 0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,56 +91,53 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
                       }
                     },
                   ),
-                  const SizedBox(height: 15),
+                  SizedBox(height: 12.h), // Reducido de 15 a 12
                   
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end, // Cambiado a end para alinear con el label
                     children: [
+                      // PRECIO: Con Expanded para proteger el ancho
                       Expanded(
-                        flex: 2,
+                        flex: 3,
                         child: CustomInputTextWidget(
                           controller: _amountController,
-                          label: 'Precio ud. (opcional)',
-                          hintText: '0.00',
-                          textInputType: const TextInputType.numberWithOptions(decimal: true),
+                          label: 'Precio ud.',
+                          hintText: '0',
+                          textInputType: const TextInputType.numberWithOptions(decimal: false),
                           enabled: !_isLoading,
                           autoFocus: false,
                         ),
                       ),
-                      const SizedBox(width: 15),
+                      SizedBox(width: 12.w),
+                      // CANTIDAD: Selector compacto
                       Expanded(
-                        flex: 1,
+                        flex: 2,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('UDS.', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
-                            const SizedBox(height: 8),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text('UDS.', style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1))
+                            ),
+                            SizedBox(height: 8.h),
                             Container(
-                              height: 55,
-                              padding: const EdgeInsets.symmetric(horizontal: 5),
+                              height: 50.h, // Reducido de 55 a 50
+                              padding: EdgeInsets.symmetric(horizontal: 4.w),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(15),
+                                borderRadius: BorderRadius.circular(15.w),
                                 border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  InkWell(
+                                  GestureDetector(
                                     onTap: _quantity > 1 ? () => setState(() => _quantity--) : null,
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4.0),
-                                      child: Icon(Icons.remove, size: 16, color: _quantity > 1 ? Colors.orange : Colors.grey.shade300),
-                                    ),
+                                    child: Icon(Icons.remove, size: 16.w, color: _quantity > 1 ? Colors.orange : Colors.grey.shade300),
                                   ),
-                                  Text('$_quantity', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-                                  InkWell(
+                                  Text('$_quantity', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.sp)),
+                                  GestureDetector(
                                     onTap: () => setState(() => _quantity++),
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(4.0),
-                                      child: Icon(Icons.add, size: 16, color: Colors.orange),
-                                    ),
+                                    child: Icon(Icons.add, size: 16.w, color: Colors.orange),
                                   ),
                                 ],
                               ),
@@ -146,29 +148,38 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
                     ],
                   ),
                   
-                  const SizedBox(height: 20),
+                  SizedBox(height: 15.h), // Reducido de 20 a 15
                   
-                  Text('CATEGORÍA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
-                  const SizedBox(height: 10),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('CATEGORÍA', style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1))
+                  ),
+                  SizedBox(height: 8.h),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(15.w),
                       border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedCategory,
                         isExpanded: true,
-                        borderRadius: BorderRadius.circular(15),
+                        borderRadius: BorderRadius.circular(15.w),
                         items: _categories.map((cat) {
                           return DropdownMenuItem<String>(
                             value: cat['id'],
                             child: Row(
                               children: [
-                                Icon(cat['icon'], size: 16, color: Colors.orange),
-                                const SizedBox(width: 10),
-                                Text(cat['name'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                Icon(cat['icon'], size: 16.w, color: Colors.orange),
+                                SizedBox(width: 10.w),
+                                Flexible(
+                                  child: Text(
+                                    cat['name'], 
+                                    style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+                                    overflow: TextOverflow.ellipsis,
+                                  )
+                                ),
                               ],
                             ),
                           );
@@ -182,19 +193,23 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
             ),
           ),
 
-          const SizedBox(height: 30),
+          SizedBox(height: 25.h), // Reducido de 30 a 25
           
-          Row(
+          OverflowBar(
+            spacing: 12.w,
+            overflowSpacing: 10.h,
+            alignment: MainAxisAlignment.center,
             children: [
-              Expanded(
+              SizedBox(
+                width: 110.w, // Un poco más estrecho para asegurar que quepan
                 child: AppDialogs.dialogSecondaryButton(
                   text: 'CANCELAR', 
                   onPressed: () => context.pop(), 
                   colorScheme: colorScheme
                 ),
               ),
-              const SizedBox(width: 15),
-              Expanded(
+              SizedBox(
+                width: 110.w,
                 child: AppDialogs.dialogPrimaryButton(
                   text: 'GUARDAR', 
                   onPressed: _isLoading ? null : _save, 
@@ -225,11 +240,11 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
     });
     
     if (widget.item == null) {
-      await context.read<ShoppingListCubit>().addItem(name, amount: amount, category: _selectedCategory, quantity: _quantity);
+      await context.read<ShoppingListCubit>().addItem(name, amount: amount.toInt().toDouble(), category: _selectedCategory, quantity: _quantity);
     } else {
       final updatedItem = widget.item!.copyWith(
         name: name,
-        amount: amount,
+        amount: amount.toInt().toDouble(),
         category: _selectedCategory,
         quantity: _quantity,
       );

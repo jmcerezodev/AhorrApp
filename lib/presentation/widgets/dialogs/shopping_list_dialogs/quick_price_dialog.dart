@@ -1,5 +1,8 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,79 +37,72 @@ class _QuickPriceDialogState extends State<QuickPriceDialog> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Container(
-        padding: const EdgeInsets.all(25),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4), width: 1.5)
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), shape: BoxShape.circle),
-                  child: const Icon(Icons.euro_rounded, color: Colors.orange, size: 24),
-                ),
-                const SizedBox(width: 15),
-                const Text(
-                  'AÑADIR PRECIO',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1.5),
-                ),
-              ],
+    return CustomDialogWrapper(
+      borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
+      horizontalInsetPadding: 30.w,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppDialogs.dialogRowHeader(
+            icon: Icons.euro_rounded, 
+            title: 'Añadir Precio', 
+            color: Colors.orange, 
+            colorScheme: colorScheme
+          ),
+          SizedBox(height: 10.h),
+          Text(
+            widget.item.name,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: colorScheme.onSurface.withValues(alpha: 0.5),
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 10),
-            Text(
-              widget.item.name,
-              style: TextStyle(
-                fontSize: 12,
-                color: colorScheme.onSurface.withValues(alpha: 0.5),
-                fontWeight: FontWeight.w600,
+          ),
+          SizedBox(height: 25.h),
+          
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 10.h : 0),
+              child: CustomInputTextWidget(
+                controller: _amountController,
+                label: 'Importe del producto',
+                hintText: '0',
+                autoFocus: true,
+                textInputType: const TextInputType.numberWithOptions(decimal: false),
+                enabled: !_isLoading,
               ),
             ),
-            const SizedBox(height: 25),
-            CustomInputTextWidget(
-              controller: _amountController,
-              label: 'Importe del producto',
-              hintText: '0.00',
-              autoFocus: true,
-              textInputType: const TextInputType.numberWithOptions(decimal: true),
-              enabled: !_isLoading,
-            ),
-            const SizedBox(height: 30),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: _isLoading ? null : () => context.pop(),
-                    child: Text('CANCELAR', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold, letterSpacing: 1)),
-                  ),
+          ),
+          
+          SizedBox(height: 30.h),
+
+          OverflowBar(
+            spacing: 15.w,
+            overflowSpacing: 10.h,
+            alignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 120.w,
+                child: AppDialogs.dialogSecondaryButton(
+                  text: 'CANCELAR', 
+                  onPressed: () => context.pop(), 
+                  colorScheme: colorScheme
                 ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _save,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    ),
-                    child: _isLoading 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('GUARDAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-                  ),
+              ),
+              SizedBox(
+                width: 120.w,
+                child: AppDialogs.dialogPrimaryButton(
+                  text: 'GUARDAR', 
+                  onPressed: _isLoading ? null : _save, 
+                  color: Colors.orange,
+                  isLoading: _isLoading,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -119,7 +115,8 @@ class _QuickPriceDialogState extends State<QuickPriceDialog> {
 
     setState(() => _isLoading = true);
     
-    final updatedItem = widget.item.copyWith(amount: amount);
+    // REGLA DE ORO: Guardamos como entero
+    final updatedItem = widget.item.copyWith(amount: amount.toInt().toDouble());
     await context.read<ShoppingListCubit>().updateItem(updatedItem);
     
     if (mounted) context.pop();

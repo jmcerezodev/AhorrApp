@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/shopping_list_dialogs/add_edit_shopping_item_dialog.dart';
@@ -18,11 +19,12 @@ class ShoppingSummaryWidget extends StatelessWidget {
       builder: (context, state) {
         return FadeInDown(
           duration: const Duration(milliseconds: 400),
+          from: 50.h,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 5.h),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(18),
+              padding: EdgeInsets.all(18.w),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                 gradient: isDark 
@@ -32,16 +34,16 @@ class ShoppingSummaryWidget extends StatelessWidget {
                       end: Alignment.bottomRight,
                     )
                   : null,
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(25.w),
                 border: Border.all(
                   color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.3), 
-                  width: 1.5
+                  width: 1.5.w
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
+                    blurRadius: 15.w,
+                    offset: Offset(0, 8.h),
                   )
                 ],
               ),
@@ -49,36 +51,39 @@ class ShoppingSummaryWidget extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // COLUMNA 1: INFO (Idéntica a Home y Gastos Fijos)
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'TOTAL EN LA CESTA',
-                            style: TextStyle(
-                              color: Colors.orange.shade400,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'TOTAL EN LA CESTA',
+                              style: TextStyle(
+                                color: Colors.orange.shade400,
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.2,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2.h),
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              '${humanizeNumbers.number(state.totalBoughtPrice)}€',
+                              // REGLA DE ORO: Formato entero
+                              '${humanizeNumbers.number(state.totalBoughtPrice.toInt().toDouble())}€',
                               style: TextStyle(
                                 color: isDark ? Colors.white : colorScheme.onSurface,
-                                fontSize: 30,
+                                fontSize: 30.sp,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -1,
                               ),
                             ),
                           ),
                           
-                          const SizedBox(height: 12), // ESPACIO UNIFICADO
+                          SizedBox(height: 12.h), 
                           
                           _BasketChip(
                             totalBought: state.totalBought,
@@ -89,9 +94,8 @@ class ShoppingSummaryWidget extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(width: 15),
+                    SizedBox(width: 15.w),
 
-                    // COLUMNA 2: BURBUJA DE ACCIÓN (Ajustada para misma altura)
                     const _AddProductBubble(),
                   ],
                 ),
@@ -118,32 +122,35 @@ class _AddProductBubble extends StatelessWidget {
         );
       },
       child: Container(
-        width: 110,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        width: 110.w,
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: Colors.orange.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.w),
           border: Border.all(
             color: Colors.orange.withValues(alpha: 0.15),
           ),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.add_shopping_cart_rounded,
               color: Colors.orange,
-              size: 32,
+              size: 32.w,
             ),
-            SizedBox(height: 4),
-            Text(
-              'AÑADIR',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.w900,
-                color: Colors.orange,
-                letterSpacing: 0.5,
+            SizedBox(height: 4.h),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'AÑADIR',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 8.sp,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.orange,
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
           ],
@@ -170,32 +177,35 @@ class _BasketChip extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+        borderRadius: BorderRadius.circular(8.w),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.w),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.shopping_basket_rounded, color: color.withValues(alpha: 0.8), size: 12),
-          const SizedBox(width: 6),
-          Text(
-            'EN LA CESTA',
-            style: TextStyle(
-              color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: 8,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.5,
+          Icon(Icons.shopping_basket_rounded, color: color.withValues(alpha: 0.8), size: 12.w),
+          SizedBox(width: 6.w),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'EN LA CESTA',
+              style: TextStyle(
+                color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
+                fontSize: 8.sp,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8.w),
           Text(
             '$totalBought/$totalItems',
             style: TextStyle(
               color: isDark ? Colors.white : colorScheme.onSurface,
-              fontSize: 10,
+              fontSize: 10.sp,
               fontWeight: FontWeight.w900,
             ),
           ),

@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
@@ -24,7 +25,7 @@ class _ShoppingListHistoryWidgetState extends State<ShoppingListHistoryWidget> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 1500), () {
+      Future.delayed(const Duration(milliseconds: 1000), () {
         if (mounted) setState(() => _hasAnimated = true);
       });
     });
@@ -40,11 +41,11 @@ class _ShoppingListHistoryWidgetState extends State<ShoppingListHistoryWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+          padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 10.h),
           child: Text(
             'LISTA ACTUAL',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 11.sp,
               fontWeight: FontWeight.w800,
               color: colorScheme.onSurface.withValues(alpha: 0.4),
               letterSpacing: 2.0,
@@ -65,7 +66,7 @@ class _ShoppingListHistoryWidgetState extends State<ShoppingListHistoryWidget> {
               }
 
               return ReorderableListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 10.h, bottom: 100.h),
                 physics: const BouncingScrollPhysics(),
                 itemCount: state.items.length,
                 onReorder: (oldIndex, newIndex) {
@@ -88,7 +89,7 @@ class _ShoppingListHistoryWidgetState extends State<ShoppingListHistoryWidget> {
                     key: ValueKey('anim_${item.id}'),
                     duration: const Duration(milliseconds: 400),
                     delay: Duration(milliseconds: index * 20),
-                    from: 30,
+                    from: 30.w,
                     child: listItem,
                   );
                 },
@@ -120,7 +121,7 @@ class _ShoppingItemDismissible extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: 8.h),
       child: Dismissible(
         key: Key('dismiss_${item.id}'),
         background: const SwipeBackgroundWidget(

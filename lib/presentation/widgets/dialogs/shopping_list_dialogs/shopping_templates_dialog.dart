@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/shopping_template.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
@@ -31,7 +32,7 @@ class _ShoppingTemplatesDialogState extends State<ShoppingTemplatesDialog> {
 
     return CustomDialogWrapper(
       borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
-      horizontalInsetPadding: 20,
+      horizontalInsetPadding: 20.w,
       child: BlocBuilder<ShoppingTemplatesCubit, ShoppingTemplatesState>(
         builder: (context, state) {
           final bool isEmpty = state.templates.isEmpty;
@@ -59,24 +60,24 @@ class _ShoppingTemplatesDialogState extends State<ShoppingTemplatesDialog> {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.orange, size: 28),
+                    icon: Icon(Icons.add_circle_outline_rounded, color: Colors.orange, size: 28.w),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               
               if (state.status == ShoppingTemplatesStatus.loading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 30),
-                  child: Center(child: CircularProgressIndicator(color: Colors.orange)),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 30.h),
+                  child: const Center(child: CircularProgressIndicator(color: Colors.orange)),
                 )
               else if (isEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 30),
+                  padding: EdgeInsets.symmetric(vertical: 30.h),
                   child: Column(
                     children: [
-                      Icon(Icons.stars_rounded, size: 40, color: colorScheme.onSurface.withValues(alpha: 0.1)),
-                      const SizedBox(height: 15),
+                      Icon(Icons.stars_rounded, size: 40.w, color: colorScheme.onSurface.withValues(alpha: 0.1)),
+                      SizedBox(height: 15.h),
                       AppDialogs.dialogMessage(
                         'Guarda productos frecuentes pulsando la estrella para añadirlos rápido.',
                         colorScheme,
@@ -90,14 +91,14 @@ class _ShoppingTemplatesDialogState extends State<ShoppingTemplatesDialog> {
                     shrinkWrap: true,
                     physics: const BouncingScrollPhysics(),
                     itemCount: state.templates.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, __) => SizedBox(height: 8.h),
                     itemBuilder: (context, index) {
                       return _TemplateItem(template: state.templates[index]);
                     },
                   ),
                 ),
 
-              const SizedBox(height: 25),
+              SizedBox(height: 25.h),
               
               SizedBox(
                 width: double.infinity,
@@ -166,17 +167,17 @@ class _TemplateItem extends StatelessWidget {
         }
       },
       child: Container(
-        constraints: const BoxConstraints(minHeight: 70),
+        constraints: BoxConstraints(minHeight: 70.h),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.w),
           border: Border.all(
             color: Colors.orange.withValues(alpha: 0.15),
-            width: 1.2,
+            width: 1.2.w,
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+          padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 8.h),
           child: Row(
             children: [
               Expanded(
@@ -186,17 +187,19 @@ class _TemplateItem extends StatelessWidget {
                   children: [
                     Text(
                       product.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontSize: 14.sp,
                         color: colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2.h),
                     Text(
                       product.category.toUpperCase(),
                       style: TextStyle(
-                        fontSize: 8,
+                        fontSize: 8.sp,
                         fontWeight: FontWeight.w900,
                         color: Colors.orange.withValues(alpha: 0.5),
                         letterSpacing: 0.5,
@@ -208,10 +211,11 @@ class _TemplateItem extends StatelessWidget {
 
               if (hasPrice)
                 Text(
-                  '${humanizeNumbers.number(product.amount)}€',
+                  // REGLA DE ORO: Formato entero
+                  '${humanizeNumbers.number(product.amount.toInt().toDouble())}€',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
-                    fontSize: 14,
+                    fontSize: 14.sp,
                     color: colorScheme.onSurface,
                   ),
                 )
@@ -230,17 +234,17 @@ class _TemplateItem extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8.w),
                       border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
                     ),
-                    child: const Text(
+                    child: Text(
                       'SIN PRECIO',
                       style: TextStyle(
                         color: Colors.red,
-                        fontSize: 7,
+                        fontSize: 7.sp,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.5,
                       ),
@@ -248,7 +252,7 @@ class _TemplateItem extends StatelessWidget {
                   ),
                 ),
               
-              const SizedBox(width: 12),
+              SizedBox(width: 12.w),
 
               GestureDetector(
                 onTap: () {
@@ -262,15 +266,15 @@ class _TemplateItem extends StatelessWidget {
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(8.w),
                   decoration: BoxDecoration(
                     color: Colors.orange.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12.w),
                     border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add_shopping_cart_rounded, 
-                    size: 18, 
+                    size: 18.w,
                     color: Colors.orange
                   ),
                 ),

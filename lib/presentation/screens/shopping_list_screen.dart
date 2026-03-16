@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_templates_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
@@ -24,29 +25,35 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Responsive.init(context);
+    
     return SafeArea(
+      bottom: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. APPBAR
+          // 1. APPBAR (FIJO)
           FadeInDown(
             duration: const Duration(milliseconds: 500),
+            from: 50.h,
             child: const ShoppingListAppBar()
           ),
 
-          // 2. RESUMEN
+          // 2. RESUMEN (FIJO)
           FadeInDown(
             delay: const Duration(milliseconds: 100),
+            from: 50.h,
             child: const ShoppingSummaryWidget()
           ),
 
-          // 3. BOTONES DE ACCIÓN (2 COLUMNAS)
+          // 3. BOTONES DE ACCIÓN (FIJO)
           BlocBuilder<ShoppingListCubit, ShoppingState>(
             builder: (context, state) {
               return FadeInUp(
                 delay: const Duration(milliseconds: 200),
+                from: 50.h,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
                   child: Row(
                     children: [
                       // COLUMNA 1: MIS FAVORITOS
@@ -70,9 +77,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                         ),
                       ),
                       
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10.w),
 
-                      // COLUMNA 2: AÑADIR A GASTOS (Se desactiva si totalBought == 0)
+                      // COLUMNA 2: AÑADIR A GASTOS
                       Expanded(
                         child: _ActionButton(
                           onPressed: state.totalBought > 0 
@@ -85,9 +92,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                                   ),
                                 );
                               }
-                            : null, // Desactivado
+                            : null,
                           icon: Icons.receipt_long_rounded,
-                          label: 'AÑADIR A GASTOS', // TEXTO AÚN MÁS RESUMIDO
+                          label: 'AÑADIR A GASTOS',
                           color: Colors.orange,
                         ),
                       ),
@@ -98,10 +105,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             },
           ),
 
-          // 4. LISTADO
+          // 4. LISTADO (SCROLLABLE INDEPENDIENTE)
           Expanded(
             child: FadeInUp(
               delay: const Duration(milliseconds: 300),
+              from: 50.h,
               child: const ShoppingListHistoryWidget()
             ),
           ),
@@ -129,14 +137,15 @@ class _ActionButton extends StatelessWidget {
     final bool isEnabled = onPressed != null;
 
     return SizedBox(
-      height: 50,
+      height: 50.h,
       child: ElevatedButton.icon(
         onPressed: onPressed,
-        icon: Icon(icon, size: 18),
+        icon: Icon(icon, size: 18.w),
         label: FittedBox(
+          fit: BoxFit.scaleDown,
           child: Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5),
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11.sp, letterSpacing: 0.5),
           ),
         ),
         style: ElevatedButton.styleFrom(
@@ -145,10 +154,10 @@ class _ActionButton extends StatelessWidget {
           elevation: 0,
           side: BorderSide(
             color: isEnabled ? color : Colors.grey.withValues(alpha: 0.1), 
-            width: 1.5
+            width: 1.5.w
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(20.w),
           ),
         ),
       ),
