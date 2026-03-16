@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/add_edit_ticket_item_dialog.dart';
@@ -23,7 +24,7 @@ class _TicketsHistoryWidgetState extends State<TicketsHistoryWidget> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 1500), () {
+      Future.delayed(const Duration(milliseconds: 1000), () {
         if (mounted) setState(() => _hasAnimated = true);
       });
     });
@@ -48,14 +49,15 @@ class _TicketsHistoryWidgetState extends State<TicketsHistoryWidget> {
         }
 
         return ReorderableListView.builder(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+          physics: const BouncingScrollPhysics(),
           itemCount: items.length,
           onReorder: (oldIndex, newIndex) => context.read<TicketsCubit>().reorderItems(oldIndex, newIndex),
           itemBuilder: (context, index) {
             final item = items[index];
             final card = Padding(
               key: ValueKey(item.id),
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: EdgeInsets.only(bottom: 8.h),
               child: Dismissible(
                 key: Key('dismiss_${item.id}'),
                 direction: DismissDirection.horizontal,
@@ -109,7 +111,7 @@ class _TicketsHistoryWidgetState extends State<TicketsHistoryWidget> {
               key: ValueKey('anim_${item.id}'),
               duration: const Duration(milliseconds: 400),
               delay: Duration(milliseconds: index * 20),
-              from: 30,
+              from: 30.h,
               child: card,
             );
           },

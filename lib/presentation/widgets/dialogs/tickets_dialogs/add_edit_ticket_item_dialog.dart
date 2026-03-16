@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/domain/entities/ticket_item.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
@@ -36,7 +37,8 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.item?.name ?? '');
-    _amountController = TextEditingController(text: widget.item == null || widget.item?.amount == 0 ? '' : widget.item?.amount.toString());
+    // REGLA DE ORO: Formato entero
+    _amountController = TextEditingController(text: widget.item == null || widget.item?.amount == 0 ? '' : widget.item?.amount.toInt().toString());
     _selectedCategory = widget.item?.category ?? 'general';
   }
 
@@ -54,7 +56,7 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
 
     return CustomDialogWrapper(
       borderColor: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.4),
-      horizontalInsetPadding: 20,
+      horizontalInsetPadding: 20.w,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -64,7 +66,7 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
             color: Colors.orange, 
             colorScheme: colorScheme
           ),
-          const SizedBox(height: 25),
+          SizedBox(height: 25.h),
           
           Flexible(
             child: SingleChildScrollView(
@@ -85,40 +87,43 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
                       }
                     },
                   ),
-                  const SizedBox(height: 15),
+                  SizedBox(height: 15.h),
                   
                   CustomInputTextWidget(
                     controller: _amountController,
                     label: 'Total ticket',
-                    hintText: '0.00',
-                    textInputType: const TextInputType.numberWithOptions(decimal: true),
+                    hintText: '0',
+                    textInputType: const TextInputType.numberWithOptions(decimal: false),
                     enabled: !_isLoading,
                     autoFocus: false,
                   ),
                   
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20.h),
                   
-                  Text('CATEGORÍA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
-                  const SizedBox(height: 10),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('CATEGORÍA', style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1))
+                  ),
+                  SizedBox(height: 10.h),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(15.w),
                       border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedCategory,
                         isExpanded: true,
-                        borderRadius: BorderRadius.circular(15),
+                        borderRadius: BorderRadius.circular(15.w),
                         items: _categories.map((cat) {
                           return DropdownMenuItem<String>(
                             value: cat['id'],
                             child: Row(
                               children: [
-                                Icon(cat['icon'], size: 16, color: Colors.orange),
-                                const SizedBox(width: 10),
-                                Text(cat['name'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                Icon(cat['icon'], size: 16.w, color: Colors.orange),
+                                SizedBox(width: 10.w),
+                                Text(cat['name'], style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
                               ],
                             ),
                           );
@@ -132,19 +137,23 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
             ),
           ),
 
-          const SizedBox(height: 30),
+          SizedBox(height: 30.h),
           
-          Row(
+          OverflowBar(
+            spacing: 15.w,
+            overflowSpacing: 10.h,
+            alignment: MainAxisAlignment.center,
             children: [
-              Expanded(
+              SizedBox(
+                width: 120.w,
                 child: AppDialogs.dialogSecondaryButton(
                   text: 'CANCELAR', 
                   onPressed: () => Navigator.of(context).pop(), 
                   colorScheme: colorScheme
                 ),
               ),
-              const SizedBox(width: 15),
-              Expanded(
+              SizedBox(
+                width: 120.w,
                 child: AppDialogs.dialogPrimaryButton(
                   text: 'GUARDAR', 
                   onPressed: _isLoading ? null : _save, 
@@ -178,7 +187,8 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
       id: widget.item?.id ?? const Uuid().v4(),
       userId: Preferences.uId,
       name: name,
-      amount: amount,
+      // REGLA DE ORO: Guardar como entero
+      amount: amount.toInt().toDouble(),
       date: widget.item?.date ?? DateTime.now(),
       imagePath: widget.item?.imagePath,
       category: _selectedCategory,
