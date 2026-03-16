@@ -1,6 +1,7 @@
 import 'package:ahorrapp/core/date/date.dart';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/inputs/inputs.dart';
+import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/movement.dart';
 import 'package:ahorrapp/domain/usecases/save_movement_usecase.dart';
 import 'package:ahorrapp/presentation/bloc/history_cubit/history_cubit.dart';
@@ -13,6 +14,7 @@ part 'incomes_cubit_state.dart';
 
 class IncomesCubit extends Cubit<IncomesCubitState> {
   final SaveMovementUseCase _saveMovementUseCase = getIt<SaveMovementUseCase>();
+  final _humanizer = HumanizeNumbers();
 
   IncomesCubit() : super(const IncomesCubitState());
 
@@ -22,7 +24,7 @@ class IncomesCubit extends Cubit<IncomesCubitState> {
     emit(state.copyWith(status: IncomesStatus.posting));
 
     final date = Date();
-    final double amount = double.parse(state.incomeMoney.value.replaceAll(',', '.'));
+    final double amount = _humanizer.parse(state.incomeMoney.value);
     final String month = date.monthNames();
     final int year = int.parse(date.year());
     
@@ -39,7 +41,7 @@ class IncomesCubit extends Cubit<IncomesCubitState> {
       month: month,
       year: year,
       createdAt: DateTime.now(),
-      category: state.category, // AÑADIDO
+      category: state.category,
     );
 
     try {
@@ -58,7 +60,7 @@ class IncomesCubit extends Cubit<IncomesCubitState> {
     emit(const IncomesCubitState());
   }
 
-  void categoryChanged(String value) { // NUEVO
+  void categoryChanged(String value) {
     emit(state.copyWith(category: value));
   }
 

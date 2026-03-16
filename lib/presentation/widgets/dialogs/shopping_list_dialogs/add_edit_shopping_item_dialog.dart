@@ -1,4 +1,5 @@
 import 'package:ahorrapp/core/config/responsive_utils.dart';
+import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/shopping_list_item.dart';
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
@@ -23,6 +24,7 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
   String _selectedCategory = 'general';
   bool _isLoading = false;
   String? _errorText;
+  final _humanizer = HumanizeNumbers();
 
   final List<Map<String, dynamic>> _categories = [
     {'id': 'general', 'icon': Icons.shopping_basket_rounded, 'name': 'General'},
@@ -37,8 +39,12 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.item?.name ?? '');
-    // REGLA DE ORO: Formato entero
-    _amountController = TextEditingController(text: widget.item == null || widget.item?.amount == 0 ? '' : widget.item?.amount.toInt().toString());
+    
+    _amountController = TextEditingController(
+      text: widget.item == null || widget.item?.amount == 0 
+        ? '' 
+        : _humanizer.number(widget.item!.amount)
+    );
     _selectedCategory = widget.item?.category ?? 'general';
     _quantity = widget.item?.quantity ?? 1;
   }
@@ -103,7 +109,7 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
                           controller: _amountController,
                           label: 'Precio ud.',
                           hintText: '0',
-                          textInputType: const TextInputType.numberWithOptions(decimal: false),
+                          textInputType: const TextInputType.numberWithOptions(decimal: true),
                           enabled: !_isLoading,
                           autoFocus: false,
                         ),
@@ -231,8 +237,7 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
       return;
     }
 
-    final amountText = _amountController.text.replaceAll(',', '.').trim();
-    final amount = double.tryParse(amountText) ?? 0.0;
+    final amount = _humanizer.parse(_amountController.text);
 
     setState(() {
       _isLoading = true;
@@ -240,11 +245,11 @@ class _AddEditShoppingItemDialogState extends State<AddEditShoppingItemDialog> {
     });
     
     if (widget.item == null) {
-      await context.read<ShoppingListCubit>().addItem(name, amount: amount.toInt().toDouble(), category: _selectedCategory, quantity: _quantity);
+      await context.read<ShoppingListCubit>().addItem(name, amount: amount, category: _selectedCategory, quantity: _quantity);
     } else {
       final updatedItem = widget.item!.copyWith(
         name: name,
-        amount: amount.toInt().toDouble(),
+        amount: amount,
         category: _selectedCategory,
         quantity: _quantity,
       );

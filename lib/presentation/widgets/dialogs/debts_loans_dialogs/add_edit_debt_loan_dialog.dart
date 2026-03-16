@@ -1,4 +1,5 @@
 import 'package:ahorrapp/core/config/responsive_utils.dart';
+import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/debts_loans_cubit/debts_loans_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
@@ -46,15 +47,21 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
   String? _amountError;
   String? _dateError;
 
+  final _humanizer = HumanizeNumbers();
+
   @override
   void initState() {
     super.initState();
     _type = widget.item?.type ?? widget.initialType;
     _nameController = TextEditingController(text: widget.item?.name ?? '');
     _personController = TextEditingController(text: widget.item?.person ?? '');
-    // REGLA DE ORO: Formato entero
-    _amountController = TextEditingController(text: widget.item?.totalAmount.toInt().toString() ?? '');
-    _installmentAmountController = TextEditingController(text: widget.item?.installmentAmount?.toInt().toString() ?? '');
+    
+    _amountController = TextEditingController(
+      text: widget.item != null ? _humanizer.number(widget.item!.totalAmount) : ''
+    );
+    _installmentAmountController = TextEditingController(
+      text: widget.item?.installmentAmount != null ? _humanizer.number(widget.item!.installmentAmount!) : ''
+    );
     _monthsController = TextEditingController(text: widget.item?.totalInstallments?.toString() ?? '');
     _monthsFocusNode = FocusNode();
     
@@ -78,21 +85,13 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
     super.dispose();
   }
 
-  double _parseInput(String input) {
-    String sanitized = input.trim().replaceAll(' ', '').replaceAll('\u00A0', '');
-    if (sanitized.isEmpty) return 0;
-    sanitized = sanitized.replaceAll(',', '.');
-    return double.tryParse(sanitized) ?? 0;
-  }
-
   void _onAmountOrMonthsChanged() {
     if (_isAutoCalculate && _isInstallment) {
-      final total = _parseInput(_amountController.text);
+      final total = _humanizer.parse(_amountController.text);
       final months = int.tryParse(_monthsController.text.trim()) ?? 0;
       if (total > 0 && months > 0) {
         final result = total / months;
-        // Mostramos entero en el input si es posible, o redondeamos
-        _installmentAmountController.text = result.toInt().toString();
+        _installmentAmountController.text = _humanizer.number(result);
       } else {
         _installmentAmountController.clear();
       }
@@ -150,8 +149,8 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
     if (_selectedDate!.isAfter(today)) return 0.0;
     int monthsPassed = (today.year - _selectedDate!.year) * 12 + (today.month - _selectedDate!.month);
     if (today.day >= _selectedDate!.day) monthsPassed += 1;
-    final installment = _parseInput(_installmentAmountController.text);
-    final total = _parseInput(_amountController.text);
+    final installment = _humanizer.parse(_installmentAmountController.text);
+    final total = _humanizer.parse(_amountController.text);
     double calculatedPaid = monthsPassed * installment;
     return calculatedPaid > total ? total : calculatedPaid;
   }
@@ -210,7 +209,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                     hintText: '0',
                     errorText: _amountError,
                     enabled: !_isLoading,
-                    textInputType: const TextInputType.numberWithOptions(decimal: false),
+                    textInputType: const TextInputType.numberWithOptions(decimal: true),
                     onChanged: (val) { 
                       if (_amountError != null) setState(() => _amountError = null);
                       _onAmountOrMonthsChanged();
@@ -273,7 +272,7 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
                                     controller: _installmentAmountController,
                                     label: 'CUOTA MENSUAL',
                                     hintText: '0',
-                                    textInputType: const TextInputType.numberWithOptions(decimal: false),
+                                    textInputType: const TextInputType.numberWithOptions(decimal: true),
                                     enabled: !_isLoading && !_isAutoCalculate,
                                   ),
                                 ),
@@ -478,14 +477,15 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
     setState(() {
       _nameError = _nameController.text.trim().isEmpty ? 'Campo obligatorio' : null;
       _personError = _personController.text.trim().isEmpty ? 'Campo obligatorio' : null;
-      final amount = _parseInput(_amountController.text);
+      final amount = _humanizer.parse(_amountController.text);
       if (amount <= 0) _amountError = 'Importe no válido'; else _amountError = null;
       if (_isInstallment && _dueDate == null) _dateError = 'Campo obligatorio'; else _dateError = null;
       if (_nameError != null || _personError != null || _amountError != null || _dateError != null) hasError = true;
     });
     if (hasError) return;
     setState(() => _isLoading = true);
-    final installmentAmount = _parseInput(_installmentAmountController.text);
+    final totalAmount = _humanizer.parse(_amountController.text);
+    final installmentAmount = _humanizer.parse(_installmentAmountController.text);
     final totalInstallments = int.tryParse(_monthsController.text.trim());
     final finalStartDate = _selectedDate ?? DateTime.now();
     final double initialPaid = _calculateInitialPaidAmount();
@@ -494,14 +494,14 @@ class _AddEditDebtLoanDialogState extends State<AddEditDebtLoanDialog> {
       id: widget.item?.id,
       name: _nameController.text.trim(),
       person: _personController.text.trim(),
-      totalAmount: _parseInput(_amountController.text).toInt().toDouble(),
-      paidAmount: initialPaid.toInt().toDouble(),
+      totalAmount: totalAmount,
+      paidAmount: initialPaid,
       type: _type,
       date: finalStartDate,
       dueDate: _dueDate,
       isInstallment: _isInstallment,
       totalInstallments: totalInstallments,
-      installmentAmount: installmentAmount.toInt().toDouble(),
+      installmentAmount: installmentAmount,
       addToRecurrent: _isInstallment,
       existingRecurrentId: widget.item?.recurrentExpenseId,
       addToHistory: _addToHistory,

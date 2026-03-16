@@ -1,4 +1,5 @@
 import 'package:ahorrapp/core/config/responsive_utils.dart';
+import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
@@ -33,6 +34,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
   late DateTime _selectedStartDate;
   String _selectedCategory = 'general';
   bool _isLoading = false;
+  final _humanizer = HumanizeNumbers();
 
   final List<Map<String, dynamic>> _categories = [
     {'id': 'general', 'icon': Icons.receipt_long_rounded, 'name': 'General'},
@@ -47,10 +49,10 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.expense?.name ?? '');
-    // REGLA DE ORO: Si editamos, mostramos el valor sin decimales si es entero
+    
     final initialAmount = widget.expense?.amount;
     _amountController = TextEditingController(
-      text: initialAmount != null ? initialAmount.toInt().toString() : ''
+      text: initialAmount != null ? _humanizer.number(initialAmount) : ''
     );
     _hasFixedDay = widget.expense?.day != null;
     _includeInSummary = widget.expense?.includeInSummary ?? true;
@@ -150,7 +152,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
                     hintText: '0',
                     enabled: !_isLoading,
                     autoFocus: false,
-                    textInputType: const TextInputType.numberWithOptions(decimal: false),
+                    textInputType: const TextInputType.numberWithOptions(decimal: true),
                   ),
                   SizedBox(height: 25.h),
                   
@@ -372,10 +374,9 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
 
   void _save() async {
     final name = _nameController.text.trim();
-    final amountText = _amountController.text.replaceAll(',', '.').trim();
-    final amount = double.tryParse(amountText);
+    final amount = _humanizer.parse(_amountController.text);
 
-    if (name.isEmpty || amount == null || amount <= 0) {
+    if (name.isEmpty || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, introduce un nombre y un importe válido')));
       return;
     }
@@ -384,7 +385,7 @@ class _AddEditRecurrentExpenseDialogState extends State<AddEditRecurrentExpenseD
     await context.read<RecurrentExpensesCubit>().addOrUpdateExpense(
       id: widget.expense?.id,
       name: name,
-      amount: amount.toInt().toDouble(), // Forzamos entero para consistencia
+      amount: amount,
       day: _hasFixedDay ? _selectedStartDate.day : null,
       category: _selectedCategory,
       isActive: widget.expense?.isActive ?? true,

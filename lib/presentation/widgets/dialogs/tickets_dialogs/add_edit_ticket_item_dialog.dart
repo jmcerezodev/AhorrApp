@@ -1,4 +1,5 @@
 import 'package:ahorrapp/core/config/responsive_utils.dart';
+import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/domain/entities/ticket_item.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
@@ -23,6 +24,7 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
   String _selectedCategory = 'general';
   bool _isLoading = false;
   String? _errorText;
+  final _humanizer = HumanizeNumbers();
 
   final List<Map<String, dynamic>> _categories = [
     {'id': 'general', 'icon': Icons.shopping_basket_rounded, 'name': 'General'},
@@ -37,8 +39,12 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.item?.name ?? '');
-    // REGLA DE ORO: Formato entero
-    _amountController = TextEditingController(text: widget.item == null || widget.item?.amount == 0 ? '' : widget.item?.amount.toInt().toString());
+    
+    _amountController = TextEditingController(
+      text: widget.item == null || widget.item?.amount == 0 
+        ? '' 
+        : _humanizer.number(widget.item!.amount)
+    );
     _selectedCategory = widget.item?.category ?? 'general';
   }
 
@@ -93,7 +99,7 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
                     controller: _amountController,
                     label: 'Total ticket',
                     hintText: '0',
-                    textInputType: const TextInputType.numberWithOptions(decimal: false),
+                    textInputType: const TextInputType.numberWithOptions(decimal: true),
                     enabled: !_isLoading,
                     autoFocus: false,
                   ),
@@ -175,8 +181,7 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
       return;
     }
 
-    final amountText = _amountController.text.replaceAll(',', '.').trim();
-    final amount = double.tryParse(amountText) ?? 0.0;
+    final amount = _humanizer.parse(_amountController.text);
 
     setState(() {
       _isLoading = true;
@@ -187,8 +192,7 @@ class _AddEditTicketItemDialogState extends State<AddEditTicketItemDialog> {
       id: widget.item?.id ?? const Uuid().v4(),
       userId: Preferences.uId,
       name: name,
-      // REGLA DE ORO: Guardar como entero
-      amount: amount.toInt().toDouble(),
+      amount: amount,
       date: widget.item?.date ?? DateTime.now(),
       imagePath: widget.item?.imagePath,
       category: _selectedCategory,
