@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 
 class AppTheme {
   ThemeData getTheme({bool isDarkMode = false}) {
@@ -27,10 +28,13 @@ class AppTheme {
           secondary: primaryOrange,
           onSecondary: Colors.white,
           surface: Colors.white,
-          onSurface: Color(0xFF263238), // blueGrey.shade900
-          outline: Color(0xFFFFE0B2), // Borde sutil #FFE0B2
-          error: Color(0xFFC62828), // red.shade800
+          onSurface: const Color(0xFF263238), // blueGrey.shade900
+          outline: const Color(0xFFFFE0B2), // Borde sutil #FFE0B2
+          error: const Color(0xFFC62828), // red.shade800
         );
+
+    // Ajuste dinámico de fuente: 10 (hardcoded para test) en pantallas pequeñas, 14.sp para el resto
+    final double dynamicFontSize = Responsive.isSmallScreen ? 10 : 14.sp;
 
     return ThemeData(
       useMaterial3: true,
@@ -99,24 +103,38 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: isDarkMode ? Colors.white.withOpacity(0.05) : Colors.white,
+        hintStyle: TextStyle(
+          color: Colors.grey.shade400,
+          fontSize: dynamicFontSize,
+          fontWeight: FontWeight.normal,
+        ),
+        labelStyle: TextStyle(
+          color: Colors.grey.shade600,
+          fontSize: dynamicFontSize,
+        ),
+        floatingLabelStyle: TextStyle(
+          color: primaryOrange,
+          fontSize: dynamicFontSize,
+          fontWeight: FontWeight.bold,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFFFE0B2)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFFFE0B2)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: primaryOrange, width: 2),
         ),
-        labelStyle: const TextStyle(color: Colors.grey),
         prefixIconColor: primaryOrange,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       ),
 
       listTileTheme: const ListTileThemeData(iconColor: primaryOrange),
-      
+
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: primaryOrange,
         foregroundColor: Colors.white,

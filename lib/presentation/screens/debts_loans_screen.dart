@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/app_input_styles.dart';
 import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
@@ -19,6 +20,7 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
   late TabController _tabController;
   int _currentTabIndex = 0;
   bool _hasAnimated = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -43,6 +45,7 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -71,7 +74,38 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
                 isDebtView: _currentTabIndex == 0,
               ),
 
-              // 3. PESTAÑAS (FIJO)
+              // 3. BARRA DE BÚSQUEDA
+              FadeInDown(
+                delay: const Duration(milliseconds: 100),
+                from: 30.h,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w, 
+                    vertical: isSmallScreen ? 5.h : 8.h
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) => context.read<DebtsLoansCubit>().updateSearchQuery(value),
+                    style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                    decoration: AppInputStyles.decoration(
+                      labelText: 'Buscador',
+                      hintText: _currentTabIndex == 0 ? 'Buscar deuda...' : 'Buscar préstamo...',
+                      prefixIcon: Icons.search_rounded,
+                      suffixIcon: _searchController.text.isNotEmpty 
+                        ? IconButton(
+                            icon: Icon(Icons.close_rounded, size: 18.w),
+                            onPressed: () {
+                              _searchController.clear();
+                              context.read<DebtsLoansCubit>().updateSearchQuery('');
+                            },
+                          )
+                        : null,
+                    ),
+                  ),
+                ),
+              ),
+
+              // 4. PESTAÑAS (FIJO)
               FadeInRight(
                 duration: const Duration(milliseconds: 600),
                 from: 50.w,
@@ -96,7 +130,7 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
                       ),
                       labelColor: Colors.white,
                       unselectedLabelColor: colorScheme.onSurfaceVariant,
-                      labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp),
+                      labelStyle: const TextStyle(fontWeight: FontWeight.bold),
                       tabs: const [
                         Tab(text: 'DEUDAS'),
                         Tab(text: 'PRÉSTAMOS'),
@@ -106,7 +140,7 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
                 ),
               ),
 
-              // 4. LISTADO (SCROLLABLE INDEPENDIENTE)
+              // 5. LISTADO (SCROLLABLE INDEPENDIENTE)
               Expanded(
                 child: state.isLoading 
                   ? const Center(child: CircularProgressIndicator(color: Colors.orange))
@@ -117,8 +151,8 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
                         controller: _tabController,
                         physics: const BouncingScrollPhysics(),
                         children: [
-                          _buildList(state.debtsLoans.where((e) => e.type == DebtLoanType.debt).toList(), true),
-                          _buildList(state.debtsLoans.where((e) => e.type == DebtLoanType.loan).toList(), false),
+                          _buildList(state.debtsLoans.where((e) => e.type == DebtLoanType.debt).toList(), true, state.searchQuery),
+                          _buildList(state.debtsLoans.where((e) => e.type == DebtLoanType.loan).toList(), false, state.searchQuery),
                         ],
                       ),
                     ),
@@ -168,12 +202,22 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildList(List<DebtLoan> items, bool isDebt) {
-    if (items.isEmpty) {
+  Widget _buildList(List<DebtLoan> items, bool isDebt, String searchQuery) {
+    // Filtrado por búsqueda
+    final filteredItems = items.where((item) {
+      if (searchQuery.isEmpty) return true;
+      final query = searchQuery.toLowerCase();
+      return item.name.toLowerCase().contains(query) || 
+             item.person.toLowerCase().contains(query);
+    }).toList();
+
+    if (filteredItems.isEmpty) {
       return EmptyListWidget(
-        text: isDebt 
-          ? 'No tienes deudas pendientes.\n¡Estás al día con tus pagos!' 
-          : 'No has realizado préstamos.\nNo te debe dinero nadie.',
+        text: searchQuery.isNotEmpty
+          ? 'No se han encontrado resultados para "$searchQuery"'
+          : (isDebt 
+              ? 'No tienes deudas pendientes.\n¡Estás al día con tus pagos!' 
+              : 'No has realizado préstamos.\nNo te debe dinero nadie.'),
       );
     }
 
@@ -183,9 +227,9 @@ class _DebtsLoansScreenState extends State<DebtsLoansScreen> with SingleTickerPr
     return ListView.builder(
       padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 10.h, bottom: 100.h),
       physics: const BouncingScrollPhysics(),
-      itemCount: items.length,
+      itemCount: filteredItems.length,
       itemBuilder: (context, index) {
-        final item = items[index];
+        final item = filteredItems[index];
         final card = DebtLoanCard(
           item: item, 
           isDark: isDark, 

@@ -40,6 +40,10 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     }
   }
 
+  void updateSearchQuery(String query) {
+    emit(state.copyWith(searchQuery: query));
+  }
+
   void toggleProratedView() {
     final newValue = !state.showProrated;
     Preferences.isProratedView = newValue;

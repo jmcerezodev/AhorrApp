@@ -4,11 +4,13 @@ class DebtsLoansState extends Equatable {
   final List<DebtLoan> debtsLoans;
   final bool isLoading;
   final String? errorMessage;
+  final String searchQuery;
 
   const DebtsLoansState({
     this.debtsLoans = const [],
     this.isLoading = false,
     this.errorMessage,
+    this.searchQuery = '',
   });
 
   double get totalDebts => debtsLoans
@@ -23,14 +25,16 @@ class DebtsLoansState extends Equatable {
     List<DebtLoan>? debtsLoans,
     bool? isLoading,
     String? errorMessage,
+    String? searchQuery,
   }) {
     return DebtsLoansState(
       debtsLoans: debtsLoans ?? this.debtsLoans,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 
   @override
-  List<Object?> get props => [debtsLoans, isLoading, errorMessage];
+  List<Object?> get props => [debtsLoans, isLoading, errorMessage, searchQuery];
 }

@@ -1,9 +1,9 @@
 import 'package:ahorrapp/core/auth/biometric_service.dart';
+import 'package:ahorrapp/core/config/app_input_styles.dart';
 import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
-import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -85,32 +85,43 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
             ),
             SizedBox(height: 25.h),
 
-            CustomInputTextWidget(
+            TextFormField(
               controller: emailController,
-              prefixIcon: Icons.email_outlined,
-              label: 'Correo Electrónico',
               onChanged: loginCubit.emailChanged,
-              errorText: _formSubmitted ? loginCubit.state.email.errorMessage : null,
-              autoFocus: false,
-              textInputType: TextInputType.emailAddress,
+              keyboardType: TextInputType.emailAddress,
               textCapitalization: TextCapitalization.none,
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+              decoration: AppInputStyles.decoration(
+                labelText: 'Correo Electrónico',
+                hintText: 'Tu correo...',
+                prefixIcon: Icons.email_outlined,
+                errorText: _formSubmitted ? loginCubit.state.email.errorMessage : null,
+              ),
             ),
 
             SizedBox(height: 20.h),
 
-            CustomInputTextWidget(
+            TextFormField(
               controller: passwordController,
-              prefixIcon: Icons.lock_outline,
-              suffixIcon: (loginCubit.state.passwordEncripted == false) 
-                ? Icons.visibility_outlined 
-                : Icons.visibility_off_outlined,
-              onPressedSuffixIcon: () => isPasswordVisible(context),
-              label: 'Contraseña',
-              obscureText: loginCubit.state.passwordEncripted,
-              autoFocus: false,
               onChanged: loginCubit.passwordChanged,
-              errorText: _formSubmitted ? loginCubit.state.password.errorMessage : null,
+              obscureText: loginCubit.state.passwordEncripted,
               textCapitalization: TextCapitalization.none,
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+              decoration: AppInputStyles.decoration(
+                labelText: 'Contraseña',
+                hintText: 'Tu contraseña...',
+                prefixIcon: Icons.lock_outline,
+                suffixIcon: IconButton(
+                  onPressed: () => isPasswordVisible(context),
+                  icon: Icon(
+                    loginCubit.state.passwordEncripted 
+                      ? Icons.visibility_off_outlined 
+                      : Icons.visibility_outlined,
+                    color: Colors.blueGrey.shade400,
+                  ),
+                ),
+                errorText: _formSubmitted ? loginCubit.state.password.errorMessage : null,
+              ),
             ),
 
             CheckboxListTile(

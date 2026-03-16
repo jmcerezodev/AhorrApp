@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/app_input_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/service_locator.dart';
@@ -123,10 +124,11 @@ class _ExportPdfDialogState extends State<ExportPdfDialog> {
             controller: _passwordController,
             obscureText: true,
             enabled: _hasMovements,
-            decoration: InputDecoration(
+            decoration: AppInputStyles.decoration(
               labelText: 'Contraseña',
+              hintText: 'Introduce tu contraseña',
               errorText: _errorMessage,
-              prefixIcon: const Icon(Icons.lock_outline_rounded),
+              prefixIcon: Icons.lock_outline_rounded,
             ),
           ),
         ],

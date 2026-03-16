@@ -41,6 +41,10 @@ class DebtsLoansCubit extends Cubit<DebtsLoansState> {
     }
   }
 
+  void updateSearchQuery(String query) {
+    emit(state.copyWith(searchQuery: query));
+  }
+
   Future<void> addOrUpdateDebtLoan({
     String? id,
     required String name,

@@ -1,4 +1,5 @@
 import 'package:animate_do/animate_do.dart';
+import 'package:ahorrapp/core/config/app_input_styles.dart';
 import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/recurrent_expenses_screen/recurrent_app_bar.dart';
@@ -17,6 +18,7 @@ class RecurrentExpensesScreen extends StatefulWidget {
 class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentTabIndex = 0;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -36,6 +38,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with 
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -65,7 +68,38 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with 
                 isIncomeTab: _currentTabIndex == 1,
               ),
 
-              // 3. PESTAÑAS
+              // 3. BARRA DE BÚSQUEDA
+              FadeInDown(
+                delay: const Duration(milliseconds: 100),
+                from: 30.h,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w, 
+                    vertical: isSmallScreen ? 5.h : 8.h
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) => context.read<RecurrentExpensesCubit>().updateSearchQuery(value),
+                    style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                    decoration: AppInputStyles.decoration(
+                      labelText: 'Buscador',
+                      hintText: _currentTabIndex == 0 ? 'Buscar gasto...' : 'Buscar ingreso...',
+                      prefixIcon: Icons.search_rounded,
+                      suffixIcon: _searchController.text.isNotEmpty 
+                        ? IconButton(
+                            icon: Icon(Icons.close_rounded, size: 18.w),
+                            onPressed: () {
+                              _searchController.clear();
+                              context.read<RecurrentExpensesCubit>().updateSearchQuery('');
+                            },
+                          )
+                        : null,
+                    ),
+                  ),
+                ),
+              ),
+
+              // 4. PESTAÑAS
               FadeInLeft(
                 duration: const Duration(milliseconds: 600),
                 from: 50.w,
@@ -90,7 +124,7 @@ class _RecurrentExpensesScreenState extends State<RecurrentExpensesScreen> with 
                       ),
                       labelColor: Colors.white,
                       unselectedLabelColor: colorScheme.onSurfaceVariant,
-                      labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.sp),
+                      labelStyle: const TextStyle(fontWeight: FontWeight.bold),
                       tabs: const [
                         Tab(text: 'GASTOS'),
                         Tab(text: 'INGRESOS'),

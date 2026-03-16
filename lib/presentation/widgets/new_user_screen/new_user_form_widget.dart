@@ -1,7 +1,7 @@
+import 'package:ahorrapp/core/config/app_input_styles.dart';
 import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
-import 'package:ahorrapp/presentation/widgets/inputs/inputs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -59,44 +59,56 @@ class _UserInputWidgetState extends State<UserInputWidget> {
             ),
             SizedBox(height: 25.h),
 
-            CustomInputTextWidget(
-              prefixIcon: Icons.person_outline_rounded,
-              label: 'Tu Nombre',
-              hintText: 'Nombre',
+            TextFormField(
               onChanged: newUserCubit.nameChanged,
-              errorText: nameCubit.errorMessage,
-              autoFocus: false,
-              textInputType: TextInputType.name,
+              keyboardType: TextInputType.name,
               textCapitalization: TextCapitalization.sentences,
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+              decoration: AppInputStyles.decoration(
+                labelText: 'Tu Nombre',
+                hintText: 'Nombre',
+                prefixIcon: Icons.person_outline_rounded,
+                errorText: nameCubit.errorMessage,
+              ),
             ),
             
             SizedBox(height: 20.h),
 
-            CustomInputTextWidget(
-              prefixIcon: Icons.email_outlined,
-              label: 'Correo Electronico',
-              hintText: 'tucorreo@correo.com',
-              onChanged:  newUserCubit.emailChanged,
-              errorText: emailCubit.errorMessage,
-              autoFocus: false,
-              textInputType: TextInputType.emailAddress,
+            TextFormField(
+              onChanged: newUserCubit.emailChanged,
+              keyboardType: TextInputType.emailAddress,
               textCapitalization: TextCapitalization.none,
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+              decoration: AppInputStyles.decoration(
+                labelText: 'Correo Electronico',
+                hintText: 'tucorreo@correo.com',
+                prefixIcon: Icons.email_outlined,
+                errorText: emailCubit.errorMessage,
+              ),
             ),
             
             SizedBox(height: 20.h),
 
-            CustomInputTextWidget(
-              prefixIcon: Icons.key_outlined,
-              suffixIcon: (newUserCubit.state.passwordEncripted == false) 
-              ? Icons.visibility_outlined 
-              : Icons.visibility_off_outlined,
-              onPressedSuffixIcon: () => isPasswordVisible(context),
-              label: 'Contraseña',
+            TextFormField(
               obscureText: newUserCubit.state.passwordEncripted,
-              autoFocus: false,
               onChanged: newUserCubit.passwordChanged,
-              errorText: passwordCubit.errorMessage,
               textCapitalization: TextCapitalization.none,
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+              decoration: AppInputStyles.decoration(
+                labelText: 'Contraseña',
+                hintText: 'Contraseña',
+                prefixIcon: Icons.key_outlined,
+                suffixIcon: IconButton(
+                  onPressed: () => isPasswordVisible(context),
+                  icon: Icon(
+                    newUserCubit.state.passwordEncripted == false 
+                      ? Icons.visibility_outlined 
+                      : Icons.visibility_off_outlined,
+                    color: Colors.blueGrey.shade400,
+                  ),
+                ),
+                errorText: passwordCubit.errorMessage,
+              ),
             ),
 
             SizedBox(height: 30.h),

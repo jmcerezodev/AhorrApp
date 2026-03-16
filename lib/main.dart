@@ -1,5 +1,6 @@
 import 'package:ahorrapp/config/routes/app_router.dart';
 import 'package:ahorrapp/config/theme/app_theme.dart';
+import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
 import 'package:ahorrapp/core/sync/sync_service.dart';
@@ -155,6 +156,9 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
+    // Inicializamos Responsive aquí para que el tema pueda usar .sp, .w, etc.
+    Responsive.init(context);
+
     final themeState = context.watch<ThemeCubit>().state;
     final securityStatus = context.watch<SecurityCubit>().state.status;
 

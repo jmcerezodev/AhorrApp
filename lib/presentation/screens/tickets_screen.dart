@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/config/app_input_styles.dart';
 import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
 import 'package:ahorrapp/presentation/widgets/tickets_screen/tickets_app_bar.dart';
@@ -31,7 +32,6 @@ class _TicketsScreenState extends State<TicketsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     Responsive.init(context);
     final bool isSmallScreen = MediaQuery.of(context).size.width <= 375;
 
@@ -100,14 +100,10 @@ class _TicketsScreenState extends State<TicketsScreen> {
                 controller: _searchController,
                 onChanged: (value) => context.read<TicketsCubit>().updateSearchQuery(value),
                 style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-                decoration: InputDecoration(
+                decoration: AppInputStyles.decoration(
+                  labelText: 'Buscador',
                   hintText: 'Buscar por comercio o categoría...',
-                  hintStyle: TextStyle(
-                    fontSize: 13.sp, 
-                    color: isDark ? Colors.white24 : Colors.black26,
-                    fontWeight: FontWeight.w600
-                  ),
-                  prefixIcon: Icon(Icons.search_rounded, color: Colors.orange, size: 20.w),
+                  prefixIcon: Icons.search_rounded,
                   suffixIcon: _searchController.text.isNotEmpty 
                     ? IconButton(
                         icon: Icon(Icons.close_rounded, size: 18.w),
@@ -117,17 +113,6 @@ class _TicketsScreenState extends State<TicketsScreen> {
                         },
                       )
                     : null,
-                  filled: true,
-                  fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.grey.withValues(alpha: 0.05),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.w),
-                    borderSide: BorderSide(color: Colors.orange.withValues(alpha: 0.1), width: 1.w),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20.w),
-                    borderSide: BorderSide(color: Colors.orange, width: 1.5.w),
-                  ),
                 ),
               ),
             ),

@@ -55,6 +55,15 @@ class _RecurrentHistoryWidgetState extends State<RecurrentHistoryWidget> {
           ..sort((a, b) => a.position.compareTo(b.position));
 
         final displayedExpenses = filteredExpenses.where((e) {
+          // Filtro por búsqueda
+          if (state.searchQuery.isNotEmpty) {
+            final query = state.searchQuery.toLowerCase();
+            if (!e.name.toLowerCase().contains(query) && 
+                !e.category.toLowerCase().contains(query)) {
+              return false;
+            }
+          }
+
           final bool isAutomatic = e.day != null;
           if (isAutomatic && !state.showAutomatic) return false;
           if (!isAutomatic && !state.showManual) return false;
@@ -109,11 +118,13 @@ class _RecurrentHistoryWidgetState extends State<RecurrentHistoryWidget> {
             Expanded(
               child: displayedExpenses.isEmpty
                   ? EmptyListWidget(
-                      text: state.isFilterOpen 
-                        ? 'No hay registros que coincidan con los filtros seleccionados.'
-                        : (widget.isIncomeTab 
-                            ? 'Añade tus ingresos recurrentes para que la app los anote automáticamente.'
-                            : 'Añade tus facturas o suscripciones para que la app las anote automáticamente.'),
+                      text: state.searchQuery.isNotEmpty
+                        ? 'No se han encontrado resultados para "${state.searchQuery}"'
+                        : (state.isFilterOpen 
+                          ? 'No hay registros que coincidan con los filtros seleccionados.'
+                          : (widget.isIncomeTab 
+                              ? 'Añade tus ingresos recurrentes para que la app los anote automáticamente.'
+                              : 'Añade tus facturas o suscripciones para que la app las anote automáticamente.')),
                     )
                   : ReorderableListView.builder(
                       padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 10.h, bottom: 100.h),

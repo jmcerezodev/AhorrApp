@@ -16,6 +16,10 @@ class Responsive {
     // Usamos el mínimo para asegurar que quepa en ambas dimensiones
     _scale = min(screenWidth / _refWidth, screenHeight / _refHeight);
   }
+
+  /// Indica si la pantalla es pequeña (tipo iPhone 7/8/SE o menor)
+  /// Aumentamos el umbral a 380 para asegurar que el iPhone 7 (375) siempre sea detectado.
+  static bool get isSmallScreen => screenWidth <= 380;
 }
 
 extension ResponsiveSize on num {
@@ -26,8 +30,6 @@ extension ResponsiveSize on num {
   double get h => this * (Responsive.screenHeight / Responsive._refHeight);
 
   /// Escalado de fuentes refinado.
-  /// Para pantallas pequeñas (como iPhone 7), permitimos bajar hasta un 85% del tamaño original
-  /// para mejorar la legibilidad y evitar amontonamientos.
   double get sp => max(this * Responsive._scale, this * 0.85);
   
   /// Porcentaje del ancho de pantalla

@@ -11,6 +11,7 @@ class RecurrentExpensesState extends Equatable {
   final bool showAutomatic;
   final bool showManual;
   final List<String> selectedCategories;
+  final String searchQuery;
 
   const RecurrentExpensesState({
     this.expenses = const [],
@@ -21,6 +22,7 @@ class RecurrentExpensesState extends Equatable {
     this.showAutomatic = true,
     this.showManual = true,
     this.selectedCategories = const [],
+    this.searchQuery = '',
   });
 
   bool _shouldInclude(RecurrentExpense e) {
@@ -76,6 +78,7 @@ class RecurrentExpensesState extends Equatable {
     bool? showAutomatic,
     bool? showManual,
     List<String>? selectedCategories,
+    String? searchQuery,
   }) {
     return RecurrentExpensesState(
       expenses: expenses ?? this.expenses,
@@ -86,6 +89,7 @@ class RecurrentExpensesState extends Equatable {
       showAutomatic: showAutomatic ?? this.showAutomatic,
       showManual: showManual ?? this.showManual,
       selectedCategories: selectedCategories ?? this.selectedCategories,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 
@@ -99,5 +103,6 @@ class RecurrentExpensesState extends Equatable {
     showAutomatic, 
     showManual,
     selectedCategories,
+    searchQuery,
   ];
 }
