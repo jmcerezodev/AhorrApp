@@ -62,106 +62,92 @@ class _RecurrentHistoryWidgetState extends State<RecurrentHistoryWidget> {
           return true;
         }).toList();
 
-        return CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // 1. CABECERA DE LISTADO CON FILTRO (Sliver)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 10.h),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        widget.isIncomeTab ? 'LISTADO DE INGRESOS' : 'LISTADO DE GASTOS',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onSurface.withValues(alpha: 0.4),
-                          letterSpacing: 2.0,
-                        ),
+        return Column(
+          children: [
+            // 1. CABECERA DE LISTADO CON FILTRO (ESTÁTICA)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 10.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      widget.isIncomeTab ? 'LISTADO DE INGRESOS' : 'LISTADO DE GASTOS',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w800,
+                        color: colorScheme.onSurface.withValues(alpha: 0.4),
+                        letterSpacing: 2.0,
                       ),
                     ),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => context.read<RecurrentExpensesCubit>().toggleFilterPanel(),
-                      icon: Icon(
-                        state.isFilterOpen ? Icons.filter_list_off_rounded : Icons.filter_list_rounded, 
-                        color: colorScheme.primary.withValues(alpha: 0.6), 
-                        size: 18.w
-                      ),
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => context.read<RecurrentExpensesCubit>().toggleFilterPanel(),
+                    icon: Icon(
+                      state.isFilterOpen ? Icons.filter_list_off_rounded : Icons.filter_list_rounded, 
+                      color: colorScheme.primary.withValues(alpha: 0.6), 
+                      size: 18.w
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
-            // 2. PANEL DE FILTROS ANIMADO (Sliver)
-            SliverToBoxAdapter(
-              child: AnimatedSize(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                child: state.isFilterOpen
-                    ? RecurrentFilterPanel(cubit: context.read<RecurrentExpensesCubit>())
-                    : const SizedBox(width: double.infinity, height: 0),
-              ),
+            // 2. PANEL DE FILTROS ANIMADO (ESTÁTICO)
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: state.isFilterOpen
+                  ? RecurrentFilterPanel(cubit: context.read<RecurrentExpensesCubit>())
+                  : const SizedBox(width: double.infinity, height: 0),
             ),
 
-            // 3. LISTADO (Sliver)
-            if (displayedExpenses.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: EmptyListWidget(
-                  text: state.isFilterOpen 
-                    ? 'No hay registros que coincidan con los filtros seleccionados.'
-                    : (widget.isIncomeTab 
-                        ? 'Añade tus ingresos recurrentes para que la app los anote automáticamente.'
-                        : 'Añade tus facturas o suscripciones para que la app las anote automáticamente.'),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 10.h, bottom: 100.h),
-                sliver: SliverReorderableList(
-                  itemCount: displayedExpenses.length,
-                  onReorder: (oldIndex, newIndex) {
-                    context.read<RecurrentExpensesCubit>().reorderExpenses(
-                      oldIndex, 
-                      newIndex, 
-                      isIncome: widget.isIncomeTab
-                    );
-                  },
-                  itemBuilder: (context, index) {
-                    final expense = displayedExpenses[index];
-                    final item = RecurrentExpenseItem(
-                      expense: expense,
-                      index: index,
-                      humanizeNumbers: humanizeNumbers,
-                      colorScheme: colorScheme,
-                      isDark: isDark,
-                    );
+            // 3. LISTADO (SCROLLABLE)
+            Expanded(
+              child: displayedExpenses.isEmpty
+                  ? EmptyListWidget(
+                      text: state.isFilterOpen 
+                        ? 'No hay registros que coincidan con los filtros seleccionados.'
+                        : (widget.isIncomeTab 
+                            ? 'Añade tus ingresos recurrentes para que la app los anote automáticamente.'
+                            : 'Añade tus facturas o suscripciones para que la app las anote automáticamente.'),
+                    )
+                  : ReorderableListView.builder(
+                      padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 10.h, bottom: 100.h),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: displayedExpenses.length,
+                      onReorder: (oldIndex, newIndex) {
+                        context.read<RecurrentExpensesCubit>().reorderExpenses(
+                          oldIndex, 
+                          newIndex, 
+                          isIncome: widget.isIncomeTab
+                        );
+                      },
+                      itemBuilder: (context, index) {
+                        final expense = displayedExpenses[index];
+                        final item = RecurrentExpenseItem(
+                          expense: expense,
+                          index: index,
+                          humanizeNumbers: humanizeNumbers,
+                          colorScheme: colorScheme,
+                          isDark: isDark,
+                        );
 
-                    Widget content = ReorderableDelayedDragStartListener(
-                      index: index,
-                      key: ValueKey(expense.id),
-                      child: item,
-                    );
+                        if (_hasAnimated) return Container(key: ValueKey(expense.id), child: item);
 
-                    if (_hasAnimated) return content;
-
-                    return FadeInUp(
-                      key: ValueKey(expense.id),
-                      duration: const Duration(milliseconds: 400),
-                      delay: Duration(milliseconds: index * 30),
-                      from: 30.h,
-                      child: content,
-                    );
-                  },
-                ),
-              ),
+                        return FadeInUp(
+                          key: ValueKey(expense.id),
+                          duration: const Duration(milliseconds: 400),
+                          delay: Duration(milliseconds: index * 30),
+                          from: 30.h,
+                          child: item,
+                        );
+                      },
+                    ),
+            ),
           ],
         );
       },
