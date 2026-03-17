@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/sync/sync_service.dart';
 import '../../domain/entities/ticket_item.dart';
 import '../../domain/repositories/tickets_repository.dart';
+import '../appwrite/appwrite_repository.dart';
 import '../datasources/local/tickets_local_datasource.dart';
 import '../local/local_db_service.dart';
 import '../local/models/local_ticket_item.dart';
@@ -159,6 +162,37 @@ class TicketsRepositoryImpl implements TicketsRepository {
         appwriteId: ticketId,
       );
       _syncService.processQueue();
+    }
+  }
+
+  @override
+  Future<void> downloadMissingImages(String userId) async {
+    final models = await localDataSource.getTicketItems(userId);
+    if (models.isEmpty) return;
+
+    final appDir = await getApplicationDocumentsDirectory();
+    final appwriteRepo = getIt<AppwriteRepository>();
+
+    for (final model in models) {
+      if (model.remoteImageId == null || model.remoteImageId!.isEmpty) continue;
+
+      // Comprobar si ya tiene imagen local válida
+      if (model.imagePath != null && model.imagePath!.isNotEmpty) {
+        final fileName = model.imagePath!.split('/').last;
+        if (File('${appDir.path}/$fileName').existsSync()) continue;
+      }
+
+      // Descargar desde Appwrite Storage y guardar en Documents
+      try {
+        final bytes = await appwriteRepo.downloadTicketImage(model.remoteImageId!);
+        final fileName = 'ticket_${model.ticketItemId}.jpg';
+        await File('${appDir.path}/$fileName').writeAsBytes(bytes);
+        model.imagePath = fileName;
+        await localDataSource.saveTicketItem(model);
+        debugPrint('[TicketRepo] Imagen recuperada: ${model.ticketItemId}');
+      } catch (e) {
+        debugPrint('[TicketRepo] Error descargando imagen ${model.remoteImageId}: $e');
+      }
     }
   }
 

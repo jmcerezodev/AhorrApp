@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -17,6 +18,8 @@ class OpenAIService implements AIService {
   @override
   Future<List<TicketItem>> parseTicketText(String rawText, String userId) async {
     if (rawText.isEmpty) return [];
+
+    debugPrint('[OpenAI] Enviando texto (${rawText.length} chars) a la API...');
 
     try {
       final response = await _client.post(
@@ -53,18 +56,25 @@ Responde ÚNICAMENTE con este JSON minificado, sin texto adicional:
           'temperature': 0,
           'max_tokens': 80,
         }),
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw TimeoutException(
+          '[OpenAI] La petición superó los 15 segundos sin respuesta.',
+        ),
       );
+
+      debugPrint('[OpenAI] Respuesta recibida. HTTP ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
         if (data.containsKey('usage')) {
           final usage = data['usage'];
-          debugPrint('📊 [OpenAI Usage] Total Tokens: ${usage['total_tokens'] ?? 0}');
+          debugPrint('[OpenAI] Tokens usados: ${usage['total_tokens'] ?? 0}');
         }
 
         final String content = _cleanJsonResponse(data['choices'][0]['message']['content']);
-        debugPrint('Contenido recibido de la IA: $content');
+        debugPrint('[OpenAI] JSON recibido: $content');
 
         final Map<String, dynamic> jsonMap = jsonDecode(content);
 
@@ -85,8 +95,11 @@ Responde ÚNICAMENTE con este JSON minificado, sin texto adicional:
         debugPrint('Error API OpenAI: ${response.statusCode} - ${response.body}');
         return [];
       }
+    } on TimeoutException catch (e) {
+      debugPrint('[OpenAI] Timeout: $e');
+      rethrow; // el cubit lo captura y emite estado de error
     } catch (e) {
-      debugPrint('Error parseando IA: $e');
+      debugPrint('[OpenAI] Error: $e');
       return [];
     }
   }

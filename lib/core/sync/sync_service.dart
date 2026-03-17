@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:path_provider/path_provider.dart';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/network/connectivity_service.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
@@ -393,7 +394,14 @@ class SyncService {
 
       if ((remoteImageId == null || remoteImageId.isEmpty) && localPath != null) {
         try {
-          final file = File(localPath);
+          // localPath puede ser solo el nombre de archivo (sin ruta absoluta)
+          // porque guardamos únicamente el filename para evitar que el UUID
+          // del contenedor iOS invalide la ruta entre sesiones.
+          final appDir = await getApplicationDocumentsDirectory();
+          final resolvedPath = localPath.contains('/')
+              ? localPath
+              : '${appDir.path}/$localPath';
+          final file = File(resolvedPath);
           if (await file.exists()) {
             remoteImageId = await _appwriteRepo.uploadTicketImage(file);
             final isar = _localDb.isar;

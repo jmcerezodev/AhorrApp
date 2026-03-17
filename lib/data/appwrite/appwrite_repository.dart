@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:ahorrapp/core/config/env.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as models;
@@ -45,6 +46,15 @@ class AppwriteRepository {
     try {
       await _storage.deleteFile(bucketId: _ticketsBucketId, fileId: fileId);
     } catch (_) {}
+  }
+
+  /// Descarga el contenido binario de una imagen de ticket desde Appwrite Storage.
+  /// Se usa para recuperar imágenes locales tras una reinstalación.
+  Future<Uint8List> downloadTicketImage(String fileId) async {
+    return await _storage.getFileDownload(
+      bucketId: _ticketsBucketId,
+      fileId: fileId,
+    );
   }
 
   // --- PREFERENCIAS DE USUARIO ---

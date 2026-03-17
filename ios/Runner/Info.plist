@@ -29,6 +29,10 @@
 
     <key>NSFaceIDUsageDescription</key>
     <string>Necesitamos usar Face ID para desbloquear tu acceso a AhorrApp.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Necesitamos acceso a la cámara para escanear tus documentos y facturas.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Necesitamos acceso a tu galería para procesar y guardar las imágenes escaneadas.</string>
 
     <key>UIApplicationSceneManifest</key>
     <dict>

@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:ahorrapp/core/di/service_locator.dart';
+import 'package:ahorrapp/domain/repositories/tickets_repository.dart';
 import 'package:ahorrapp/domain/services/document_scanner_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -36,9 +39,25 @@ TicketsCubit({
     try {
       final items = await getTicketItemsUseCase(Preferences.uId);
       emit(state.copyWith(status: TicketsStatus.success, items: items));
+      // Recuperar en background las imágenes que falten (post-reinstalación).
+      // No bloquea la UI ni genera un nuevo estado loading.
+      _downloadMissingImagesInBackground();
     } catch (e) {
       emit(state.copyWith(status: TicketsStatus.failure, errorMessage: e.toString()));
     }
+  }
+
+  void _downloadMissingImagesInBackground() {
+    getIt<TicketsRepository>()
+        .downloadMissingImages(Preferences.uId)
+        .then((_) async {
+          // Re-carga silenciosa para reflejar las imágenes recién descargadas
+          final updated = await getTicketItemsUseCase(Preferences.uId);
+          if (!isClosed) emit(state.copyWith(items: updated));
+        })
+        .catchError((e) {
+          debugPrint('[TicketsCubit] Error en descarga de imágenes: $e');
+        });
   }
 
   void updateSearchQuery(String query) {
@@ -51,45 +70,59 @@ TicketsCubit({
       if (scannedFiles != null && scannedFiles.isNotEmpty) {
         await processTicketImage(scannedFiles.first);
       }
+      // Si el usuario cancela (null o lista vacía) no hay loading pendiente,
+      // el estado queda como estaba (success/initial). No se emite nada.
     } catch (e) {
-      emit(state.copyWith(status: TicketsStatus.failure, errorMessage: "Error al escanear: $e"));
+      // Asegura que si se emitió loading antes del escaneo, queda resuelto.
+      emit(state.copyWith(
+        status: TicketsStatus.failure,
+        errorMessage: 'Error al escanear: $e',
+      ));
     }
   }
 
   Future<void> processTicketImage(File imageFile) async {
     emit(state.copyWith(status: TicketsStatus.loading));
     try {
-      // 1. Procesar con OCR/AI usando la imagen original para máxima efectividad
-      // (El servicio de OCR optimizará una copia temporal internamente)
+      // 1. OCR + AI — puede lanzar TimeoutException o Exception de texto vacío
       final detectedItems = await processTicketImageUseCase(imageFile, Preferences.uId);
 
-      // 2. Comprimir para guardar (esto es lo que se sube a Appwrite)
-      // Parámetros optimizados para ~100KB y nítidez en impresión a tamaño real
+      // 2. Comprimir para guardar
       final compressedFile = await _compressImage(imageFile.path);
 
-      // 3. Guardar localmente de forma permanente
+      // 3. Guardar localmente de forma permanente (solo el nombre de archivo,
+      //    nunca la ruta absoluta — el UUID del contenedor iOS puede cambiar)
       final appDir = await getApplicationDocumentsDirectory();
       final fileName = 'ticket_${DateTime.now().millisecondsSinceEpoch}.jpg';
       await compressedFile.copy('${appDir.path}/$fileName');
-      
+
       if (detectedItems.isNotEmpty) {
-        // Guardamos solo el nombre del archivo, no la ruta absoluta completa.
-        // En iOS el UUID del contenedor cambia entre lanzamientos, lo que haría
-        // que la ruta absoluta quede obsoleta. El nombre se resuelve a ruta
-        // absoluta en runtime usando getApplicationDocumentsDirectory().
         final ticket = detectedItems.first.copyWith(
           imagePath: fileName,
           remoteImageId: null,
         );
         await saveTicketItemUseCase(ticket);
       }
-      
+
       // Limpieza de temporales de compresión
-      if (compressedFile.existsSync()) await compressedFile.delete().catchError((_) => compressedFile);
-      
+      if (compressedFile.existsSync()) {
+        await compressedFile.delete().catchError((_) => compressedFile);
+      }
+
+      // Siempre llega aquí → libera el estado loading con success o failure
       await loadItems();
+    } on TimeoutException {
+      // El timeout de OpenAI lanzó TimeoutException — libera el loading
+      emit(state.copyWith(
+        status: TicketsStatus.failure,
+        errorMessage: 'La conexión tardó demasiado. Comprueba tu internet e inténtalo de nuevo.',
+      ));
     } catch (e) {
-      emit(state.copyWith(status: TicketsStatus.failure, errorMessage: "Error al procesar ticket: $e"));
+      // Cualquier otro error (OCR vacío, JSON malformado, etc.) — libera el loading
+      emit(state.copyWith(
+        status: TicketsStatus.failure,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      ));
     }
   }
 
