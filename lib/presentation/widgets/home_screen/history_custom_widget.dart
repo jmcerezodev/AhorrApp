@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/tickets_dialogs/view_ticket_image_dialog.dart';
 import 'package:animate_do/animate_do.dart';
@@ -7,6 +8,7 @@ import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 class HistoryCustomWidget extends StatefulWidget {
   final bool isSliver;
@@ -549,15 +551,7 @@ class _HistoryItem extends StatelessWidget {
             }
           },
           child: GestureDetector(
-            onTap: (imagePath != null && imagePath.isNotEmpty) ? () {
-              showDialog(
-                context: context,
-                builder: (_) => ViewTicketImageDialog(
-                  imagePath: imagePath!,
-                  title: item['name'],
-                ),
-              );
-            } : null,
+            onTap: (imagePath != null && imagePath.isNotEmpty) ? () => _handleTap(context, imagePath, item['name']) : null,
             child: Container(
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
@@ -685,6 +679,30 @@ class _HistoryItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleTap(BuildContext context, String storedPath, String title) async {
+    // Resolvemos la ruta absoluta en runtime a partir del nombre de archivo.
+    final appDir = await getApplicationDocumentsDirectory();
+    final fileName = storedPath.split('/').last;
+    final resolvedPath = '${appDir.path}/$fileName';
+
+    String? validPath;
+    if (File(resolvedPath).existsSync()) {
+      validPath = resolvedPath;
+    } else if (File(storedPath).existsSync()) {
+      validPath = storedPath;
+    }
+
+    if (validPath != null && context.mounted) {
+      showDialog(
+        context: context,
+        builder: (_) => ViewTicketImageDialog(
+          imagePath: validPath!,
+          title: title,
+        ),
+      );
+    }
   }
 }
 

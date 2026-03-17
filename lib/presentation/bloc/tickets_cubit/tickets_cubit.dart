@@ -70,11 +70,15 @@ TicketsCubit({
       // 3. Guardar localmente de forma permanente
       final appDir = await getApplicationDocumentsDirectory();
       final fileName = 'ticket_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final savedImage = await compressedFile.copy('${appDir.path}/$fileName');
+      await compressedFile.copy('${appDir.path}/$fileName');
       
       if (detectedItems.isNotEmpty) {
+        // Guardamos solo el nombre del archivo, no la ruta absoluta completa.
+        // En iOS el UUID del contenedor cambia entre lanzamientos, lo que haría
+        // que la ruta absoluta quede obsoleta. El nombre se resuelve a ruta
+        // absoluta en runtime usando getApplicationDocumentsDirectory().
         final ticket = detectedItems.first.copyWith(
-          imagePath: savedImage.path,
+          imagePath: fileName,
           remoteImageId: null,
         );
         await saveTicketItemUseCase(ticket);

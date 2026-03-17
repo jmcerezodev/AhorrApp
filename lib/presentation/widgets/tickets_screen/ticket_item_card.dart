@@ -13,6 +13,7 @@ import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 
 class TicketItemCard extends StatelessWidget {
   final TicketItem item;
@@ -165,12 +166,42 @@ class TicketItemCard extends StatelessWidget {
     );
   }
 
-  void _handleTap(BuildContext context) {
-    if (item.imagePath != null && File(item.imagePath!).existsSync()) {
+  Future<void> _handleTap(BuildContext context) async {
+    if (item.imagePath == null) {
+      print('[TicketItemCard] imagePath es null para: ${item.name}');
+      return;
+    }
+
+    // En iOS el UUID del contenedor cambia entre lanzamientos de la app,
+    // así que resolvemos la ruta absoluta en runtime a partir del nombre
+    // de archivo, con fallback para entradas antiguas que guardan la ruta completa.
+    final appDir = await getApplicationDocumentsDirectory();
+    final storedPath = item.imagePath!;
+    final fileName = storedPath.split('/').last;
+    final resolvedPath = '${appDir.path}/$fileName';
+
+    print('[TicketItemCard] Ruta guardada en BD:  $storedPath');
+    print('[TicketItemCard] Ruta resuelta runtime: $resolvedPath');
+    print('[TicketItemCard] ¿Existe ruta guardada?  ${File(storedPath).existsSync()}');
+    print('[TicketItemCard] ¿Existe ruta resuelta?  ${File(resolvedPath).existsSync()}');
+
+    String? validPath;
+    if (File(resolvedPath).existsSync()) {
+      // Caso normal: archivo en Documents con el nombre extraído
+      validPath = resolvedPath;
+    } else if (File(storedPath).existsSync()) {
+      // Fallback: la ruta absoluta completa todavía es válida
+      validPath = storedPath;
+    } else {
+      print('[TicketItemCard] Archivo no encontrado. Ticket: ${item.name} | fileName: $fileName');
+      return;
+    }
+
+    if (context.mounted) {
       showDialog(
         context: context,
         builder: (_) => ViewTicketImageDialog(
-          imagePath: item.imagePath!,
+          imagePath: validPath!,
           title: item.name,
         ),
       );
