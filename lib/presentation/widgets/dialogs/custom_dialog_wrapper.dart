@@ -26,14 +26,20 @@ class CustomDialogWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mediaQuery = MediaQuery.of(context);
+    final screenSize = mediaQuery.size;
+    final keyboardHeight = mediaQuery.viewInsets.bottom;
+    // Altura útil: entre la barra de estado (top) y el teclado (bottom)
+    final usableHeight = screenSize.height - mediaQuery.padding.top - keyboardHeight;
 
-    final effectiveBorderColor = borderColor ?? 
+    final effectiveBorderColor = borderColor ??
         colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.4);
 
     Widget card = Container(
-      constraints: constraints ?? BoxConstraints(
-        maxHeight: 700.h, // Altura máxima responsiva para evitar overflows
-      ),
+      constraints: constraints ??
+          BoxConstraints(
+            maxWidth: screenSize.width - (horizontalInsetPadding * 2).w,
+          ),
       padding: padding ?? EdgeInsets.all(25.w),
       decoration: BoxDecoration(
         color: colorScheme.surface,
@@ -53,22 +59,41 @@ class CustomDialogWrapper extends StatelessWidget {
       );
     }
 
-    Widget content = card;
-    if (wrapInScrollView) {
-      content = SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: card,
-      );
-    }
-
+    // Estructura con clamp:
+    // SafeArea protege el notch/barra de estado en el techo.
+    // SizedBox limita el área de scroll a exactamente
+    //   screenHeight - padding.top - keyboardHeight
+    // así el diálogo no puede subir más allá del techo ni
+    // bajar por debajo del teclado. BouncingPhysics da el
+    // rebote elástico de iOS en ambos extremos.
     return Dialog(
       backgroundColor: Colors.transparent,
-      // Inset padding responsivo para que respire en iPhone 7
-      insetPadding: EdgeInsets.symmetric(
-        horizontal: horizontalInsetPadding.w,
-        vertical: 24.h,
+      insetPadding: EdgeInsets.zero,
+      child: SafeArea(
+        bottom: false, // el teclado ya actúa como límite inferior
+        child: SizedBox(
+          width: screenSize.width,
+          height: usableHeight,
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              // minHeight igual a la zona útil: la tarjeta queda
+              // centrada cuando no hay scroll y los extremos del
+              // BouncingScrollPhysics coinciden con los límites reales.
+              constraints: BoxConstraints(minHeight: usableHeight),
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalInsetPadding.w,
+                    vertical: 16.h,
+                  ),
+                  child: card,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
-      child: content,
     );
   }
 }
