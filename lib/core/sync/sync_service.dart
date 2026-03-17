@@ -11,7 +11,6 @@ import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/data/local/local_db_service.dart';
 import 'package:ahorrapp/data/local/models/pending_sync.dart';
 import 'package:ahorrapp/data/local/models/local_ticket_item.dart';
-import 'package:ahorrapp/data/local/models/local_history.dart';
 import 'package:ahorrapp/domain/repositories/debt_loan_repository.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
 import 'package:appwrite/appwrite.dart';
@@ -19,6 +18,7 @@ import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 
 enum SyncStatus { idle, syncing, success, error }
+enum _SyncResult { success, retry, fatal }
 
 class SyncService {
   final LocalDbService _localDb = getIt<LocalDbService>();
@@ -32,6 +32,8 @@ class SyncService {
   int _errorCount = 0;
   DateTime? _nextRetryTime;
   final ValueNotifier<SyncStatus> syncStatusNotifier = ValueNotifier(SyncStatus.idle);
+  
+  static const int _maxItemRetries = 5;
   
   // Guard para evitar que sincronizaciones automáticas pisen el estado visual de una manual
   bool _isManualInResultState = false;
@@ -57,15 +59,13 @@ class SyncService {
   Future<void> forceSync() async {
     _errorCount = 0;
     _nextRetryTime = null;
-    _isManualInResultState = false; // Reset si se pulsa de nuevo
+    _isManualInResultState = false; 
     await processQueue(isManual: true);
   }
 
   Future<void> processQueue({bool isManual = false}) async {
-    // Si estamos mostrando un resultado manual (Éxito/Error), ignoramos peticiones automáticas
     if (!isManual && _isManualInResultState) return;
 
-    // Cooldown de 30 segundos tras una manual para evitar peticiones automáticas redundantes
     if (!isManual && _lastManualSyncTime != null && 
         DateTime.now().difference(_lastManualSyncTime!).inSeconds < 30) {
       debugPrint('⏳ Sincronización automática bloqueada por cooldown manual.');
@@ -74,7 +74,6 @@ class SyncService {
     
     if (_isSyncing || !Preferences.isLoggedIn) return;
     
-    // Si no es manual, verificamos si estamos en periodo de "enfriamiento" (Backoff)
     if (!isManual && _nextRetryTime != null && DateTime.now().isBefore(_nextRetryTime!)) {
       debugPrint('⏳ Sincronización en cooldown hasta: $_nextRetryTime');
       return;
@@ -91,7 +90,6 @@ class SyncService {
     
     _isSyncing = true;
     
-    // Solo actualizamos el notifier si es manual o si no estamos en guardia de resultado manual
     if (isManual || !_isManualInResultState) {
       syncStatusNotifier.value = SyncStatus.syncing;
     }
@@ -112,58 +110,64 @@ class SyncService {
       }
 
       bool hasNetworkError = false;
+      bool hasItemError = false;
 
       for (var pending in pendingList) {
-        bool success = false;
+        _SyncResult result = _SyncResult.retry;
         final Map<String, dynamic> data = jsonDecode(pending.dataJson);
 
         try {
-          if (pending.collection == 'history') {
-            success = await _syncHistory(pending, data);
-          } else if (pending.collection == 'savings') {
-            success = await _syncSavings(pending, data);
-          } else if (pending.collection == 'settings') {
-            success = await _syncSettings(pending, data);
-          } else if (pending.collection == 'recurrent_expenses') {
-            success = await _syncRecurrentExpenses(pending, data);
-          } else if (pending.collection == 'shopping_list') {
-            success = await _syncShoppingList(pending, data);
-          } else if (pending.collection == 'tickets') {
-            success = await _syncTickets(pending, data);
-          } else if (pending.collection == 'debts_loans') {
-            success = await _syncDebtsLoans(pending, data);
-          } else if (pending.collection == 'user') {
-            success = await _syncUser(pending, data);
-          }
+          result = await _executeSyncItem(pending, data);
 
-          if (success) {
+          if (result == _SyncResult.success) {
             await _localDb.deletePendingSync(pending.id);
-            _errorCount = 0;
-            _nextRetryTime = null;
-          }
-        } catch (e) {
-          // Errores de autenticación
-          if (e is AppwriteException && (e.code == 401 || e.code == 403)) {
-            final reauthSuccess = await _attemptSilentLogin();
-            if (reauthSuccess) {
-              _isSyncing = false;
-              await processQueue(isManual: isManual);
-              return;
+            // No reseteamos el backoff global aquí para permitir que otros items fallen
+            // pero si todo va bien, al final se resetea.
+          } else if (result == _SyncResult.fatal) {
+            debugPrint('❌ Fallo fatal en ítem ${pending.collection} (ID: ${pending.id}). Eliminando de la cola.');
+            await _localDb.deletePendingSync(pending.id);
+          } else {
+            // Reintento por error puntual del ítem o fallo lógico
+            pending.retryCount++;
+            if (pending.retryCount >= _maxItemRetries) {
+              debugPrint('⚠️ Máximo de reintentos alcanzado para ${pending.collection} (ID: ${pending.id}). Descartando.');
+              await _localDb.deletePendingSync(pending.id);
+            } else {
+              await _localDb.isar.writeTxn(() async {
+                await _localDb.isar.pendingSyncs.put(pending);
+              });
+              hasItemError = true;
+              // Continuamos con el siguiente ítem para evitar bloqueo global
+              continue; 
             }
           }
-
-          // Conflicto: Si ya existe en el servidor, lo damos por bueno y borramos de la cola local
-          if (e is AppwriteException && e.code == 409) {
-             await _localDb.deletePendingSync(pending.id);
-             continue;
+        } catch (e) {
+          if (e is AppwriteException) {
+            final int code = e.code ?? 0;
+            // Errores de autenticación: Intentar login silencioso y reanudar
+            if (code == 401 || code == 403) {
+              final reauthSuccess = await _attemptSilentLogin();
+              if (reauthSuccess) {
+                _isSyncing = false;
+                await processQueue(isManual: isManual);
+                return;
+              }
+            }
+            
+            // Si es un error de red o de servidor (5xx), paramos la cola
+            if (code == 0 || code >= 500) {
+              hasNetworkError = true;
+              break; 
+            }
           }
-
+          
+          // Otros errores desconocidos: asumimos error de red/temporal y aplicamos backoff
           hasNetworkError = true;
           break; 
         }
       }
 
-      if (hasNetworkError) {
+      if (hasNetworkError || hasItemError) {
         _applyBackoff();
         if (isManual || !_isManualInResultState) {
           if (isManual) _isManualInResultState = true;
@@ -171,6 +175,10 @@ class SyncService {
           if (isManual) _resetManualGuardAfterDelay();
         }
       } else {
+        // Todo éxito: reset backoff
+        _errorCount = 0;
+        _nextRetryTime = null;
+        
         if (isManual || !_isManualInResultState) {
           if (isManual) {
             _isManualInResultState = true;
@@ -191,6 +199,32 @@ class SyncService {
     } finally {
       _isSyncing = false;
     }
+  }
+
+  Future<_SyncResult> _executeSyncItem(PendingSync pending, Map<String, dynamic> data) async {
+    bool success = false;
+    
+    // Dispatcher
+    if (pending.collection == 'history') {
+      success = await _syncHistory(pending, data);
+    } else if (pending.collection == 'savings') {
+      success = await _syncSavings(pending, data);
+    } else if (pending.collection == 'settings') {
+      success = await _syncSettings(pending, data);
+    } else if (pending.collection == 'recurrent_expenses') {
+      success = await _syncRecurrentExpenses(pending, data);
+    } else if (pending.collection == 'shopping_list') {
+      success = await _syncShoppingList(pending, data);
+    } else if (pending.collection == 'tickets') {
+      // El método de tickets puede devolver un resultado específico para archivos inexistentes
+      return await _syncTickets(pending, data);
+    } else if (pending.collection == 'debts_loans') {
+      success = await _syncDebtsLoans(pending, data);
+    } else if (pending.collection == 'user') {
+      success = await _syncUser(pending, data);
+    }
+
+    return success ? _SyncResult.success : _SyncResult.retry;
   }
 
   void resetSyncStatus() {
@@ -230,7 +264,15 @@ class SyncService {
     }
   }
 
-  // --- MÉTODOS DE SINCRONIZACIÓN (SIN CAMBIOS EN LA LÓGICA DE NEGOCIO) ---
+  String _formatAmount(dynamic money) {
+    if (money == null) return '0';
+    final num val = money is num ? money : num.tryParse(money.toString()) ?? 0;
+    // Si es entero, mostrar sin decimales. Si tiene decimales, mostrar 2 máximo.
+    if (val == val.toInt()) return val.toInt().toString();
+    return val.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+  }
+
+  // --- MÉTODOS DE SINCRONIZACIÓN ---
 
   Future<bool> _syncUser(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'update_name') {
@@ -252,11 +294,14 @@ class SyncService {
         }
       }
 
+      final double money = (data['money'] as num?)?.toDouble() ?? 0.0;
+      debugPrint('⬆️ Sincronizando historial: ${data['name']} por ${_formatAmount(money)}');
+
       await _appwriteRepo.addHistory(
         documentId: pending.appwriteId!,
         userId: data['userId'] ?? '',
         name: data['name'] ?? '',
-        money: (data['money'] as num?)?.toDouble() ?? 0.0,
+        money: money,
         isIncome: data['isIncome'] ?? false,
         currentDate: data['currentDate'] ?? data['date'] ?? '',
         currentHour: data['currentHour'] ?? data['hour'] ?? '',
@@ -282,10 +327,13 @@ class SyncService {
 
   Future<bool> _syncSavings(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'create') {
+      final double money = (data['money'] as num?)?.toDouble() ?? 0.0;
+      debugPrint('⬆️ Sincronizando ahorro: ${_formatAmount(money)}');
+
       await _appwriteRepo.addSaving(
         documentId: pending.appwriteId!,
         userId: data['userId'] ?? '',
-        money: (data['money'] as num?)?.toDouble() ?? 0.0,
+        money: money,
         month: data['month'] ?? '',
         year: data['year'] ?? 0,
         description: data['description'] ?? '',
@@ -380,7 +428,7 @@ class SyncService {
     return false;
   }
 
-  Future<bool> _syncTickets(PendingSync pending, Map<String, dynamic> data) async {
+  Future<_SyncResult> _syncTickets(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'save') {
       String? remoteImageId = data['remoteImageId'];
       final String? localPath = data['imagePath'];
@@ -394,14 +442,12 @@ class SyncService {
 
       if ((remoteImageId == null || remoteImageId.isEmpty) && localPath != null) {
         try {
-          // localPath puede ser solo el nombre de archivo (sin ruta absoluta)
-          // porque guardamos únicamente el filename para evitar que el UUID
-          // del contenedor iOS invalide la ruta entre sesiones.
           final appDir = await getApplicationDocumentsDirectory();
           final resolvedPath = localPath.contains('/')
               ? localPath
               : '${appDir.path}/$localPath';
           final file = File(resolvedPath);
+          
           if (await file.exists()) {
             remoteImageId = await _appwriteRepo.uploadTicketImage(file);
             final isar = _localDb.isar;
@@ -412,9 +458,13 @@ class SyncService {
                 await isar.localTicketItems.put(localTicket);
               });
             }
+          } else {
+            debugPrint('❌ Archivo de ticket no encontrado en: $resolvedPath. Eliminando de la cola de sincronización.');
+            // Según instrucciones: eliminar el ítem si el archivo no existe
+            return _SyncResult.fatal;
           }
         } catch (e) {
-          return false;
+          return _SyncResult.retry;
         }
       }
 
@@ -428,31 +478,37 @@ class SyncService {
           data: cleanData,
         );
       } catch (e) {
-        await _appwriteRepo.addTicket(
-          documentId: pending.appwriteId!,
-          ticketItemId: cleanData['ticketItemId'] ?? pending.appwriteId!,
-          userId: cleanData['userId'] ?? '',
-          name: cleanData['name'] ?? '',
-          amount: (cleanData['amount'] as num?)?.toDouble() ?? 0.0,
-          date: cleanData['date'] ?? '',
-          category: cleanData['category'] ?? 'general',
-          position: cleanData['position'] ?? 0,
-          isTransferred: cleanData['isTransferred'] ?? false,
-          remoteImageId: remoteImageId,
-        );
+        if (e is AppwriteException && e.code == 404) {
+          await _appwriteRepo.addTicket(
+            documentId: pending.appwriteId!,
+            ticketItemId: cleanData['ticketItemId'] ?? pending.appwriteId!,
+            userId: cleanData['userId'] ?? '',
+            name: cleanData['name'] ?? '',
+            amount: (cleanData['amount'] as num?)?.toDouble() ?? 0.0,
+            date: cleanData['date'] ?? '',
+            category: cleanData['category'] ?? 'general',
+            position: cleanData['position'] ?? 0,
+            isTransferred: cleanData['isTransferred'] ?? false,
+            remoteImageId: remoteImageId,
+          );
+        } else {
+          rethrow;
+        }
       }
-      return true;
+      return _SyncResult.success;
     } else if (pending.action == 'delete') {
       final String? remoteImageId = data['remoteImageId'];
       if (remoteImageId != null && remoteImageId.isNotEmpty) {
-        await _appwriteRepo.deleteTicketImage(remoteImageId);
+        try {
+          await _appwriteRepo.deleteTicketImage(remoteImageId);
+        } catch (_) {}
       }
       try {
         await _appwriteRepo.deleteTicket(pending.appwriteId!);
       } catch (_) {}
-      return true;
+      return _SyncResult.success;
     }
-    return false;
+    return _SyncResult.fatal;
   }
 
   Future<bool> _syncDebtsLoans(PendingSync pending, Map<String, dynamic> data) async {

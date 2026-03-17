@@ -16,4 +16,7 @@ class PendingSync {
   String? appwriteId;
 
   late DateTime createdAt;
+
+  // Contador de reintentos para evitar bucles infinitos
+  int retryCount = 0;
 }
