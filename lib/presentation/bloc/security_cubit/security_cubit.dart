@@ -7,7 +7,10 @@ import 'package:ahorrapp/core/di/service_locator.dart';
 class SecurityCubit extends Cubit<SecurityState> {
   final BiometricService _biometricService = getIt<BiometricService>();
 
-  SecurityCubit() : super(SecurityState(status: Preferences.isBiometricActive ? SecurityStatus.locked : SecurityStatus.unlocked));
+  SecurityCubit() : super(SecurityState(
+    status: Preferences.isBiometricActive ? SecurityStatus.locked : SecurityStatus.unlocked,
+    isBiometricEnabled: Preferences.isBiometricActive,
+  ));
 
   Future<void> authenticate() async {
     if (!Preferences.isBiometricActive) {
@@ -27,5 +30,10 @@ class SecurityCubit extends Cubit<SecurityState> {
     if (Preferences.isBiometricActive) {
       emit(state.copyWith(status: SecurityStatus.locked));
     }
+  }
+
+  void toggleBiometric(bool value) {
+    Preferences.isBiometricActive = value;
+    emit(state.copyWith(isBiometricEnabled: value));
   }
 }

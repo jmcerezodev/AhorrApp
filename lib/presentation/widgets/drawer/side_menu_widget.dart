@@ -1,11 +1,14 @@
 import 'package:ahorrapp/core/auth/biometric_service.dart';
 import 'package:ahorrapp/core/config/responsive_utils.dart';
-import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
+import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/sync/sync_service.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_state.dart';
+import 'package:ahorrapp/presentation/bloc/security_cubit/security_cubit.dart';
+import 'package:ahorrapp/presentation/bloc/security_cubit/security_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -17,12 +20,11 @@ class SideMenuWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeCubit = context.watch<ThemeCubit>();
-    final isDark = themeCubit.state == ThemeMode.dark;
+    final themeCubit = context.read<ThemeCubit>();
+    final securityCubit = context.read<SecurityCubit>();
     final biometricService = BiometricService();
     final primaryOrange = Theme.of(context).primaryColor;
     
-    // Detectamos si es pantalla pequeña (iPhone 7 altura aprox 667)
     final bool isSmallScreen = MediaQuery.of(context).size.height <= 700;
 
     return Drawer(
@@ -46,40 +48,47 @@ class SideMenuWidget extends StatelessWidget {
                 SizedBox(height: 10.h),
                 const _SectionTitle(title: 'AJUSTES DE LA APP'),
                 
-                _CustomSwitchItem(
-                  leadingIcon: Icons.dark_mode_outlined,
-                  label: 'Modo Oscuro',
-                  value: isDark,
-                  onChanged: (val) => themeCubit.toggleTheme(),
-                  activeIcon: Icons.dark_mode_rounded,
-                  inactiveIcon: Icons.light_mode_rounded,
+                BlocBuilder<ThemeCubit, ThemeState>(
+                  builder: (context, state) {
+                    final isDark = state.themeMode == ThemeMode.dark;
+                    return _CustomSwitchItem(
+                      leadingIcon: Icons.dark_mode_outlined,
+                      label: 'Modo Oscuro',
+                      value: isDark,
+                      onChanged: (val) => themeCubit.toggleTheme(),
+                      activeIcon: Icons.dark_mode_rounded,
+                      inactiveIcon: Icons.light_mode_rounded,
+                    );
+                  },
                 ),
 
-                _CustomSwitchItem(
-                  leadingIcon: Icons.fingerprint_rounded,
-                  label: 'Biometría',
-                  value: Preferences.isBiometricActive,
-                  onChanged: (val) async {
-                    if (val) {
-                      final bool? confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => const BiometricInfoDialog(),
-                      );
-                      
-                      if (confirmed == true) {
-                        Preferences.isBiometricActive = true;
-                        (context as Element).markNeedsBuild();
-                      }
-                    } else {
-                      final bool authenticated = await biometricService.authenticate();
-                      if (authenticated) {
-                        Preferences.isBiometricActive = false;
-                        (context as Element).markNeedsBuild();
-                      }
-                    }
+                BlocBuilder<SecurityCubit, SecurityState>(
+                  builder: (context, state) {
+                    return _CustomSwitchItem(
+                      leadingIcon: Icons.fingerprint_rounded,
+                      label: 'Biometría',
+                      value: state.isBiometricEnabled,
+                      onChanged: (val) async {
+                        if (val) {
+                          final bool? confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => const BiometricInfoDialog(),
+                          );
+                          
+                          if (confirmed == true) {
+                            securityCubit.toggleBiometric(true);
+                          }
+                        } else {
+                          final bool authenticated = await biometricService.authenticate();
+                          if (authenticated) {
+                            securityCubit.toggleBiometric(false);
+                          }
+                        }
+                      },
+                      activeIcon: Icons.fingerprint_rounded,
+                      inactiveIcon: Icons.lock_outline_rounded,
+                    );
                   },
-                  activeIcon: Icons.fingerprint_rounded,
-                  inactiveIcon: Icons.lock_outline_rounded,
                 ),
 
                 Padding(
@@ -566,7 +575,6 @@ class _DrawerItem extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         dense: true,
-        // Ajustamos la densidad visual si la pantalla es pequeña (iPhone 7)
         visualDensity: isSmallScreen ? VisualDensity.compact : VisualDensity.standard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.w)),
         leading: Icon(icon, color: iconColor ?? primaryOrange, size: 20.w),
