@@ -133,7 +133,7 @@ class RecurrentExpenseCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   PrivacyAmountText(
-                    amount: '${isIncome ? "+" : "-"}${humanizeNumbers.number(expense.amount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
+                    amount: '${isIncome ? "+" : "-"}${humanizeNumbers.number(expense.amount, isPrivacyModeActive: isPrivacyActive)}€',
                     isPrivacyActive: isPrivacyActive,
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
@@ -154,7 +154,7 @@ class RecurrentExpenseCard extends StatelessWidget {
                           barrierDismissible: false,
                           builder: (context) => ConfirmManualPaymentDialog(
                             expense: expense,
-                            amount: humanizeNumbers.number(expense.amount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive),
+                            amount: humanizeNumbers.number(expense.amount, isPrivacyModeActive: isPrivacyActive),
                           ),
                         );
                       }

@@ -211,8 +211,7 @@ class _TemplateItem extends StatelessWidget {
 
               if (hasPrice)
                 Text(
-                  // REGLA DE ORO: Formato entero
-                  '${humanizeNumbers.number(product.amount.toInt().toDouble())}€',
+                  '${humanizeNumbers.number(product.amount)}€',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 14.sp,

@@ -227,7 +227,7 @@ class ShoppingItemCard extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
-              '${humanizeNumbers.number((item.amount * item.quantity).toInt().toDouble())}€',
+              '${humanizeNumbers.number(item.amount * item.quantity)}€',
               style: TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 14.sp,
@@ -239,7 +239,7 @@ class ShoppingItemCard extends StatelessWidget {
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                '${humanizeNumbers.number(item.amount.toInt().toDouble())}€/ud',
+                '${humanizeNumbers.number(item.amount)}€/ud',
                 style: TextStyle(
                   fontSize: 8.sp,
                   fontWeight: FontWeight.w900,

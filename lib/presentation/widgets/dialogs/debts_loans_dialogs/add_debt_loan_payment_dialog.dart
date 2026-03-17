@@ -31,7 +31,7 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
         ? (widget.item.installmentAmount ?? widget.item.remainingAmount)
         : widget.item.remainingAmount;
     
-    _amountController = TextEditingController(text: suggested.toStringAsFixed(2));
+    _amountController = TextEditingController(text: HumanizeNumbers().format(suggested));
   }
 
   @override
@@ -108,10 +108,9 @@ class _AddDebtLoanPaymentDialogState extends State<AddDebtLoanPaymentDialog> {
   }
 
   void _onConfirm() async {
-    final amountText = _amountController.text.replaceAll(',', '.').trim();
-    final amount = double.tryParse(amountText);
+    final amount = HumanizeNumbers().parse(_amountController.text.trim());
 
-    if (amount == null || amount <= 0) {
+    if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor, introduce un importe válido'))
       );

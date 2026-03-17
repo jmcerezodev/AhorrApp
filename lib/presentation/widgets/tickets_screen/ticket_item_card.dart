@@ -133,8 +133,7 @@ class TicketItemCard extends StatelessWidget {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: PrivacyAmountText(
-                          // REGLA DE ORO: Formato entero
-                          amount: '${humanizeNumbers.number(item.amount.toInt().toDouble())}€',
+                          amount: '${humanizeNumbers.number(item.amount)}€',
                           isPrivacyActive: context.watch<ThemeCubit>().state.isPrivacyModeActive,
                           style: TextStyle(
                             fontWeight: FontWeight.w900,

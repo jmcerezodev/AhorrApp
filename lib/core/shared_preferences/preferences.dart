@@ -7,6 +7,9 @@ class Preferences {
     _prefs = await SharedPreferences.getInstance();
   }
 
+  // Permite inyectar un mock para tests
+  static set setPrefs(SharedPreferences prefs) => _prefs = prefs;
+
   // --- SESIÓN Y AUTH ---
   static String get uId => _prefs.getString('uId') ?? '';
   static set uId(String value) => _prefs.setString('uId', value);

@@ -3,12 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import '../../core/config/env.dart';
+import '../../core/numbers_format/humanize_numbers.dart';
 import '../../domain/entities/ticket_item.dart';
 import '../../domain/services/ai_service.dart';
 
 class OpenAIService implements AIService {
   static const String _model = 'gpt-4o-mini';
   final http.Client _client;
+  final HumanizeNumbers _humanizer = HumanizeNumbers();
 
   OpenAIService({http.Client? client}) : _client = client ?? http.Client();
 
@@ -51,20 +53,14 @@ INSTRUCCIONES CRÍTICAS:
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // --- REGISTRO DE TOKENS REALES ---
         if (data.containsKey('usage')) {
           final usage = data['usage'];
-          final int promptTokens = usage['prompt_tokens'] ?? 0;
-          final int completionTokens = usage['completion_tokens'] ?? 0;
-          final int totalTokens = usage['total_tokens'] ?? 0;
-
-          debugPrint('📊 [OpenAI Usage] Model: $_model');
-          debugPrint('   🔹 Prompt Tokens: $promptTokens');
-          debugPrint('   🔹 Completion Tokens: $completionTokens');
-          debugPrint('   🔹 Total Tokens: $totalTokens');
+          debugPrint('📊 [OpenAI Usage] Total Tokens: ${usage['total_tokens'] ?? 0}');
         }
 
         final String content = _cleanJsonResponse(data['choices'][0]['message']['content']);
+        debugPrint('Contenido recibido de la IA: $content');
+
         final Map<String, dynamic> jsonMap = jsonDecode(content);
 
         final String name = jsonMap['n']?.toString() ?? 'Ticket';
@@ -91,12 +87,12 @@ INSTRUCCIONES CRÍTICAS:
   }
 
   double _parseToDouble(dynamic value) {
+    if (value == null) return 0.0;
     if (value is num) return value.toDouble();
-    if (value is String) {
-      String clean = value.replaceAll(RegExp(r'[^0-9\.\,]'), '').replaceAll(',', '.');
-      return double.tryParse(clean) ?? 0.0;
-    }
-    return 0.0;
+    
+    // Lógica robusta: limpieza y conversión de coma a punto
+    final String rawPrice = value.toString().replaceAll(',', '.').replaceAll(RegExp(r'[^0-9.]'), '');
+    return double.tryParse(rawPrice) ?? 0.0;
   }
 
   String _cleanJsonResponse(String content) => content.replaceAll('```json', '').replaceAll('```', '').trim();

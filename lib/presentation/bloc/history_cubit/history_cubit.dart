@@ -22,12 +22,20 @@ import 'package:isar/isar.dart';
 part 'history_cubit_state.dart';
 
 class HistoryCubit extends Cubit<HistoryCubitState> {
-  final GetMovementsUseCase _getMovementsUseCase = getIt<GetMovementsUseCase>();
-  final AppwriteRepository _repository = getIt<AppwriteRepository>();
-  final LocalDbService _localDb = getIt<LocalDbService>();
+  final GetMovementsUseCase _getMovementsUseCase;
+  final AppwriteRepository _repository;
+  final LocalDbService _localDb;
   final TotalMoneyCubit totalMoneyCubit;
 
-  HistoryCubit({required this.totalMoneyCubit}) : super(const HistoryCubitState());
+  HistoryCubit({
+    required this.totalMoneyCubit,
+    GetMovementsUseCase? getMovementsUseCase,
+    AppwriteRepository? repository,
+    LocalDbService? localDb,
+  })  : _getMovementsUseCase = getMovementsUseCase ?? getIt<GetMovementsUseCase>(),
+        _repository = repository ?? getIt<AppwriteRepository>(),
+        _localDb = localDb ?? getIt<LocalDbService>(),
+        super(const HistoryCubitState());
 
   Future<void> loadHistory() async {
     if (Preferences.uId.isEmpty) return;

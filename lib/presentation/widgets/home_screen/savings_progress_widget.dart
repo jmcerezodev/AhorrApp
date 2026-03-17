@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,7 +29,7 @@ class SavingsProgressWidget extends StatelessWidget {
                 ),
               ),
               Text(
-                '${(savingsState.progress * 100).toStringAsFixed(0)}%',
+                '${HumanizeNumbers().format(savingsState.progress * 100)}%',
                 style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
@@ -49,7 +50,7 @@ class SavingsProgressWidget extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${savingsState.savingTotal.toStringAsFixed(2)}€ de ${savingsState.savingGoal.toStringAsFixed(0)}€',
+            '${HumanizeNumbers().format(savingsState.savingTotal)}€ de ${HumanizeNumbers().format(savingsState.savingGoal)}€',
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w600,

@@ -167,8 +167,7 @@ class DebtLoanCard extends StatelessWidget {
                               )
                             else
                               PrivacyAmountText(
-                                // REGLA DE ORO: Formato entero
-                                amount: '${humanizeNumbers.number(item.remainingAmount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
+                                  amount: '${humanizeNumbers.number(item.remainingAmount, isPrivacyModeActive: isPrivacyActive)}€',
                                 isPrivacyActive: isPrivacyActive,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w900,
@@ -185,7 +184,7 @@ class DebtLoanCard extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(5.w),
                                 ),
                                 child: PrivacyAmountText(
-                                  amount: '${humanizeNumbers.number(item.installmentAmount?.toInt().toDouble() ?? 0, isPrivacyModeActive: isPrivacyActive)}€/mes',
+                                  amount: '${humanizeNumbers.number(item.installmentAmount ?? 0, isPrivacyModeActive: isPrivacyActive)}€/mes',
                                   isPrivacyActive: isPrivacyActive,
                                   style: TextStyle(
                                     fontSize: 9.sp,
@@ -222,7 +221,7 @@ class DebtLoanCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             PrivacyAmountText(
-                              amount: 'Pagado: ${humanizeNumbers.number(item.paidAmount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
+                              amount: 'Pagado: ${humanizeNumbers.number(item.paidAmount, isPrivacyModeActive: isPrivacyActive)}€',
                               isPrivacyActive: isPrivacyActive,
                               style: TextStyle(fontSize: 10.sp, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
                             ),
@@ -239,7 +238,7 @@ class DebtLoanCard extends StatelessWidget {
                                 ),
                               ),
                             PrivacyAmountText(
-                              amount: 'Total: ${humanizeNumbers.number(item.totalAmount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
+                              amount: 'Total: ${humanizeNumbers.number(item.totalAmount, isPrivacyModeActive: isPrivacyActive)}€',
                               isPrivacyActive: isPrivacyActive,
                               style: TextStyle(fontSize: 10.sp, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
                             ),

@@ -98,8 +98,7 @@ class RecurrentSummaryWidget extends StatelessWidget {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: PrivacyAmountText(
-                              // REGLA DE ORO: Formato entero
-                              amount: '${humanizeNumbers.number(totalToShow.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
+                              amount: '${humanizeNumbers.number(totalToShow, isPrivacyModeActive: isPrivacyActive)}€',
                               isPrivacyActive: isPrivacyActive,
                               style: TextStyle(
                                 color: isDark ? Colors.white : colorScheme.onSurface,

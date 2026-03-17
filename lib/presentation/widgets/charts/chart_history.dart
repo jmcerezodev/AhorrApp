@@ -1,5 +1,6 @@
 import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/filter_lists/filter_lists.dart';
+import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -107,7 +108,7 @@ class _ChartHistoryState extends State<ChartHistory> {
                                   TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 10.sp, fontWeight: FontWeight.bold),
                                   children: [
                                     TextSpan(
-                                      text: '${rod.toY.toStringAsFixed(0)}€', // Formato entero
+                                      text: '${HumanizeNumbers().format(rod.toY)}€',
                                       style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13.sp),
                                     ),
                                   ],

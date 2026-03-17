@@ -96,8 +96,7 @@ class DebtsSummaryWidget extends StatelessWidget {
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: PrivacyAmountText(
-                          // REGLA DE ORO: Formato entero
-                          amount: '${humanizeNumbers.number(totalAmount.toInt().toDouble(), isPrivacyModeActive: isPrivacyActive)}€',
+                          amount: '${humanizeNumbers.number(totalAmount, isPrivacyModeActive: isPrivacyActive)}€',
                           isPrivacyActive: isPrivacyActive,
                           style: TextStyle(
                             color: isDark ? Colors.white : colorScheme.onSurface,

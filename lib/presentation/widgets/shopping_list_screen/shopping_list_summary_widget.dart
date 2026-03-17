@@ -72,8 +72,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              // REGLA DE ORO: Formato entero
-                              '${humanizeNumbers.number(state.totalBoughtPrice.toInt().toDouble())}€',
+                              '${humanizeNumbers.number(state.totalBoughtPrice)}€',
                               style: TextStyle(
                                 color: isDark ? Colors.white : colorScheme.onSurface,
                                 fontSize: 30.sp,

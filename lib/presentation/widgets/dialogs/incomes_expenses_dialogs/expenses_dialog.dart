@@ -1,3 +1,4 @@
+import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
@@ -68,7 +69,7 @@ class _ExpensesDialogState extends State<ExpensesDialog> {
               children: [
                 Text('SALDO DISPONIBLE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: colorScheme.onSurface.withValues(alpha: 0.4), letterSpacing: 1)),
                 const SizedBox(height: 5),
-                Text('${totalBalance.toStringAsFixed(2)}€', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+                Text('${HumanizeNumbers().format(totalBalance)}€', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
               ],
             ),
           ),
