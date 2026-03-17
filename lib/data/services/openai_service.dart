@@ -30,15 +30,20 @@ class OpenAIService implements AIService {
           'messages': [
             {
               'role': 'system',
-              'content': '''Eres un extractor experto de tickets de compra.
-Tu objetivo es identificar el NOMBRE DEL ESTABLECIMIENTO y el IMPORTE TOTAL.
+              'content': '''Extrae dos datos de este ticket de compra.
 
-INSTRUCCIONES CRÍTICAS:
-1. El NOMBRE DEL ESTABLECIMIENTO suele estar al principio. Puede ocupar una o VARIAS LÍNEAS consecutivas. Debes CONCATENARLAS en una sola frase coherente.
-2. EXTRAE ÚNICAMENTE LA MARCA COMERCIAL PRINCIPAL. Elimina ciudades, barrios, centros comerciales, sucursales o direcciones.
-3. El IMPORTE TOTAL es el valor final asociado a "TOTAL", "TOTAL EUR", "A PAGAR" o similar.
-4. Formato de salida: SOLO un JSON minificado {"n":"nombre_comercio_completo","p":importe_total}.
-5. Si no hay un nombre claro al inicio, usa "Ticket".'''
+NOMBRE DEL COMERCIO:
+- Está casi siempre en las primeras líneas.
+- Extrae solo la marca principal. Descarta ciudad, dirección, CIF y sucursal.
+- Si no hay nombre claro, devuelve "Desconocido".
+
+TOTAL:
+- Busca la línea con "TOTAL", "TOTAL EUR", "A PAGAR", "IMPORTE" o similar.
+- Es el número más grande del ticket que NO sea un número de tarjeta (>12 dígitos) ni una fecha.
+- Si hay varios totales, usa el mayor.
+
+Responde ÚNICAMENTE con este JSON minificado, sin texto adicional:
+{"comercio":"nombre","total":0.00}'''
             },
             {
               'role': 'user',
@@ -46,7 +51,7 @@ INSTRUCCIONES CRÍTICAS:
             }
           ],
           'temperature': 0,
-          'max_tokens': 150,
+          'max_tokens': 80,
         }),
       );
 
@@ -63,8 +68,8 @@ INSTRUCCIONES CRÍTICAS:
 
         final Map<String, dynamic> jsonMap = jsonDecode(content);
 
-        final String name = jsonMap['n']?.toString() ?? 'Ticket';
-        final double p = _parseToDouble(jsonMap['p']);
+        final String name = jsonMap['comercio']?.toString() ?? 'Desconocido';
+        final double p = _parseToDouble(jsonMap['total']);
 
         return [
           TicketItem(
@@ -100,7 +105,7 @@ INSTRUCCIONES CRÍTICAS:
   String _capitalize(String text) {
     if (text.isEmpty) return text;
     final String clean = text.trim();
-    if (clean.toLowerCase() == 'ticket') return 'Ticket';
+    if (clean.toLowerCase() == 'desconocido') return 'Desconocido';
     
     return clean.split(' ').map((word) {
       if (word.isEmpty) return '';

@@ -113,6 +113,9 @@ class GoogleMlKitOCRService implements OCRService {
       rowText = rowText.replaceAll(RegExp(r'\s+'), ' ').trim();
       
       if (rowText.length < 2) continue;
+      // Líneas largas (>30 chars) casi siempre son textos legales, publicidad
+      // o direcciones que no aportan ni nombre de comercio ni total.
+      if (rowText.length > 30) continue;
       if (noiseRegex.hasMatch(rowText)) continue;
       if (RegExp(r'^[ \.\-\*_:=|]+$').hasMatch(rowText)) continue;
       
