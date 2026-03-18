@@ -2,9 +2,20 @@ import 'dart:io';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/domain/entities/ticket_item.dart';
 import 'package:ahorrapp/domain/services/ticket_export_service.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/general_dialogs/successful_dialog_no_go.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/app_dialogs.dart';
+import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
+
+/// Resuelve la ruta real en el sandbox de la app.
+/// Isar persiste solo el nombre de archivo; la ruta base cambia entre sesiones en iOS.
+Future<String?> _resolveImagePath(String? storedPath) async {
+  if (storedPath == null) return null;
+  if (storedPath.contains('/')) return storedPath; // ya es ruta absoluta
+  final appDir = await getApplicationDocumentsDirectory();
+  return '${appDir.path}/$storedPath';
+}
 
 class TicketExportDialog extends StatelessWidget {
   final TicketItem item;
@@ -76,18 +87,18 @@ class TicketExportDialog extends StatelessWidget {
               onTap: () async {
                 final navigator = Navigator.of(context);
                 context.pop();
-                if (item.imagePath != null) {
-                  final result = await exportService.saveImageToGallery(File(item.imagePath!));
-                  if (result != null && navigator.mounted) {
+                final path = await _resolveImagePath(item.imagePath);
+                if (path == null || !File(path).existsSync()) return;
+                try {
+                  await exportService.saveImageToGallery(File(path));
+                  if (navigator.mounted) {
                     showDialog(
                       context: navigator.context,
-                      builder: (_) => SuccessfulDialogNoGo(
-                        title: '¡GUARDADO!',
-                        sucessfulName: 'Ticket guardado con éxito en: $result',
-                      ),
+                      barrierDismissible: false,
+                      builder: (_) => const _GallerySavedDialog(),
                     );
                   }
-                }
+                } catch (_) {}
               },
             ),
             const SizedBox(height: 12),
@@ -97,11 +108,11 @@ class TicketExportDialog extends StatelessWidget {
               color: brandColor,
               onTap: () async {
                 context.pop();
-                if (item.imagePath != null) {
-                  // Usamos la interfaz de impresión del sistema que permite "Guardar como PDF" directamente
-                  // saltándose las restricciones de privacidad de carpetas.
-                  await exportService.savePdfWithSystem(File(item.imagePath!), 'ticket_${item.name}');
-                }
+                final path = await _resolveImagePath(item.imagePath);
+                if (path == null || !File(path).existsSync()) return;
+                try {
+                  await exportService.savePdfWithSystem(File(path), 'ticket_${item.name}');
+                } catch (_) {}
               },
             ),
             const SizedBox(height: 12),
@@ -111,9 +122,11 @@ class TicketExportDialog extends StatelessWidget {
               color: brandColor,
               onTap: () async {
                 context.pop();
-                if (item.imagePath != null) {
-                  await exportService.shareTicketImage(File(item.imagePath!), 'Ticket de ${item.name}');
-                }
+                final path = await _resolveImagePath(item.imagePath);
+                if (path == null || !File(path).existsSync()) return;
+                try {
+                  await exportService.shareTicketImage(File(path), 'Ticket de ${item.name}');
+                } catch (_) {}
               },
             ),
             
@@ -132,6 +145,44 @@ class TicketExportDialog extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _GallerySavedDialog extends StatelessWidget {
+  const _GallerySavedDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return CustomDialogWrapper(
+      borderColor: Colors.green.shade400.withValues(alpha: isDark ? 0.2 : 0.4),
+      horizontalInsetPadding: 30,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppDialogs.dialogHeader(
+            icon: Icons.check_circle_outline_rounded,
+            color: Colors.green.shade400,
+            title: '¡Guardado!',
+            titleColor: Colors.green.shade600,
+            colorScheme: colorScheme,
+          ),
+          const SizedBox(height: 20),
+          AppDialogs.dialogMessage('La imagen del ticket se ha guardado correctamente en tu galería de fotos.', colorScheme),
+          const SizedBox(height: 30),
+          SizedBox(
+            width: double.infinity,
+            child: AppDialogs.dialogPrimaryButton(
+              text: 'ENTENDIDO',
+              onPressed: () => context.pop(),
+              color: Colors.green.shade600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -169,9 +220,11 @@ class _ExportOption extends StatelessWidget {
               const SizedBox(width: 15),
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: color,
-                  fontSize: 11,
+                  fontSize: 9.5,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
                 ),

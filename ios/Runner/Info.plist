@@ -38,6 +38,8 @@
     <string>AhorrApp utiliza la cámara para escanear tickets y facturas mediante la tecnología de detección de documentos de Apple.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Necesitamos acceso a tu galería para procesar y guardar las imágenes escaneadas.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>AhorrApp necesita permiso para guardar los tickets escaneados en tu galería de fotos.</string>
 
     <key>UIApplicationSceneManifest</key>
     <dict>
