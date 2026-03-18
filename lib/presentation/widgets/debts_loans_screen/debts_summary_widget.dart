@@ -26,7 +26,7 @@ class DebtsSummaryWidget extends StatelessWidget {
     final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
 
     return FadeInDown(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 1000),
       from: 50.h,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 5.h),
@@ -67,16 +67,16 @@ class DebtsSummaryWidget extends StatelessWidget {
                       Row(
                         children: [
                           Flexible(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                isDebtView ? 'TOTAL DEUDAS' : 'TOTAL PRÉSTAMOS',
-                                style: TextStyle(
-                                  color: Colors.orange.shade400,
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.2,
-                                ),
+                            child: Text(
+                              isDebtView ? 'TOTAL DEUDAS' : 'TOTAL PRÉSTAMOS',
+                              softWrap: false,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.orange.shade400,
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.2,
                               ),
                             ),
                           ),
@@ -100,7 +100,7 @@ class DebtsSummaryWidget extends StatelessWidget {
                           isPrivacyActive: isPrivacyActive,
                           style: TextStyle(
                             color: isDark ? Colors.white : colorScheme.onSurface,
-                            fontSize: 30.sp,
+                            fontSize: Responsive.isSmallScreen ? 24.sp : 30.sp,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -1,
                           ),
@@ -216,16 +216,16 @@ class _StatusChip extends StatelessWidget {
           ),
           SizedBox(width: 6.w),
           Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                isDebtView ? 'PENDIENTE DE PAGO' : 'PENDIENTE DE COBRO',
-                style: TextStyle(
-                  color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
-                  fontSize: 8.sp,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
-                ),
+            child: Text(
+              isDebtView ? 'PENDIENTE DE PAGO' : 'PENDIENTE DE COBRO',
+              softWrap: false,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
+                fontSize: 8.sp,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
               ),
             ),
           ),

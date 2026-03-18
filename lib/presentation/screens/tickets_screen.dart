@@ -45,11 +45,9 @@ class _TicketsScreenState extends State<TicketsScreen> with WidgetsBindingObserv
     Responsive.init(context);
     final bool isSmallScreen = MediaQuery.of(context).size.width <= 375;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
+    return SafeArea(
+      bottom: false,
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. APPBAR
@@ -131,7 +129,6 @@ class _TicketsScreenState extends State<TicketsScreen> with WidgetsBindingObserv
             ),
           ],
         ),
-      ),
     );
   }
 }

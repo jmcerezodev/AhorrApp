@@ -18,7 +18,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
     return BlocBuilder<ShoppingListCubit, ShoppingState>(
       builder: (context, state) {
         return FadeInDown(
-          duration: const Duration(milliseconds: 400),
+          duration: const Duration(milliseconds: 1000),
           from: 50.h,
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 5.h),
@@ -27,7 +27,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
               padding: EdgeInsets.all(18.w),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                gradient: isDark 
+                gradient: isDark
                   ? const LinearGradient(
                       colors: [Color(0xFF2C2C2C), Color(0xFF1E1E1E)],
                       begin: Alignment.topLeft,
@@ -36,7 +36,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
                   : null,
                 borderRadius: BorderRadius.circular(25.w),
                 border: Border.all(
-                  color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.3), 
+                  color: Colors.orange.withValues(alpha: isDark ? 0.1 : 0.3),
                   width: 1.5.w
                 ),
                 boxShadow: [
@@ -55,16 +55,16 @@ class ShoppingSummaryWidget extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'TOTAL EN LA CESTA',
-                              style: TextStyle(
-                                color: Colors.orange.shade400,
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.2,
-                              ),
+                          Text(
+                            'TOTAL EN LA CESTA',
+                            softWrap: false,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.orange.shade400,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
                             ),
                           ),
                           SizedBox(height: 2.h),
@@ -75,7 +75,7 @@ class ShoppingSummaryWidget extends StatelessWidget {
                               '${humanizeNumbers.number(state.totalBoughtPrice)}€',
                               style: TextStyle(
                                 color: isDark ? Colors.white : colorScheme.onSurface,
-                                fontSize: 30.sp,
+                                fontSize: Responsive.isSmallScreen ? 24.sp : 30.sp,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -1,
                               ),
@@ -187,10 +187,12 @@ class _BasketChip extends StatelessWidget {
         children: [
           Icon(Icons.shopping_basket_rounded, color: color.withValues(alpha: 0.8), size: 12.w),
           SizedBox(width: 6.w),
-          FittedBox(
-            fit: BoxFit.scaleDown,
+          Flexible(
             child: Text(
               'EN LA CESTA',
+              softWrap: false,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: isDark ? Colors.white70 : colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 8.sp,

@@ -102,7 +102,7 @@ class RecurrentSummaryWidget extends StatelessWidget {
                               isPrivacyActive: isPrivacyActive,
                               style: TextStyle(
                                 color: isDark ? Colors.white : colorScheme.onSurface,
-                                fontSize: 30.sp,
+                                fontSize: Responsive.isSmallScreen ? 24.sp : 30.sp,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -1,
                               ),
