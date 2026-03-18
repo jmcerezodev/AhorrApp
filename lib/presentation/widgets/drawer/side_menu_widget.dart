@@ -1,14 +1,8 @@
 import 'package:ahorrapp/core/auth/biometric_service.dart';
 import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
-import 'package:ahorrapp/core/di/service_locator.dart';
-import 'package:ahorrapp/core/sync/sync_service.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/custom_dialog_wrapper.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
-import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_cubit.dart';
-import 'package:ahorrapp/presentation/bloc/theme_cubit/theme_state.dart';
-import 'package:ahorrapp/presentation/bloc/security_cubit/security_cubit.dart';
-import 'package:ahorrapp/presentation/bloc/security_cubit/security_state.dart';
+import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -223,7 +217,15 @@ class _SyncButton extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.w),
       child: OutlinedButton.icon(
-        onPressed: () => _showSyncDialog(context),
+        onPressed: () {
+          Navigator.pop(context); // Cerrar Drawer
+          context.read<HistoryCubit>().forceBalanceResync(
+            context.read<TotalMoneyCubit>(),
+            savingsCubit: context.read<SavingsCubit>(),
+            ticketsCubit: context.read<TicketsCubit>(),
+            debtsCubit: context.read<DebtsLoansCubit>(),
+          );
+        },
         icon: Icon(Icons.sync_rounded, size: 18.w),
         label: Text('SINCRONIZAR AHORA', style: TextStyle(fontSize: 11.sp, letterSpacing: 1)),
         style: OutlinedButton.styleFrom(
@@ -234,119 +236,6 @@ class _SyncButton extends StatelessWidget {
           backgroundColor: isDark ? primaryOrange.withOpacity(0.05) : Colors.white,
         ),
       ),
-    );
-  }
-
-  void _showSyncDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const _SyncStatusDialog(),
-    ).then((_) {
-      getIt<SyncService>().resetSyncStatus();
-    });
-    getIt<SyncService>().forceSync();
-  }
-}
-
-class _SyncStatusDialog extends StatefulWidget {
-  const _SyncStatusDialog();
-
-  @override
-  State<_SyncStatusDialog> createState() => _SyncStatusDialogState();
-}
-
-class _SyncStatusDialogState extends State<_SyncStatusDialog> with SingleTickerProviderStateMixin {
-  late AnimationController _rotationController;
-  final SyncService _syncService = getIt<SyncService>();
-
-  @override
-  void initState() {
-    super.initState();
-    _rotationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat();
-
-    _syncService.syncStatusNotifier.addListener(_onStatusChange);
-  }
-
-  @override
-  void dispose() {
-    _syncService.syncStatusNotifier.removeListener(_onStatusChange);
-    _rotationController.dispose();
-    super.dispose();
-  }
-
-  void _onStatusChange() {
-    if (!mounted) return;
-    final status = _syncService.syncStatusNotifier.value;
-    if (status == SyncStatus.success || status == SyncStatus.error) {
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted && Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final primaryOrange = Theme.of(context).primaryColor;
-
-    return ValueListenableBuilder<SyncStatus>(
-      valueListenable: _syncService.syncStatusNotifier,
-      builder: (context, status, child) {
-        IconData icon = Icons.sync_rounded;
-        String title = 'Sincronizando...';
-        String message = 'Estamos subiendo tus datos financieros a la nube segura.';
-        Color iconColor = primaryOrange;
-
-        if (status == SyncStatus.success) {
-          icon = Icons.check_circle_outline_rounded;
-          title = '¡Éxito!';
-          message = 'Tus datos están sincronizados correctamente.';
-          iconColor = Colors.green;
-          _rotationController.stop();
-        } else if (status == SyncStatus.error) {
-          icon = Icons.error_outline_rounded;
-          title = 'Error de conexión';
-          message = 'No se ha podido sincronizar. Reintentando en unos momentos...';
-          iconColor = Colors.orange;
-          _rotationController.stop();
-        }
-
-        return CustomDialogWrapper(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RotationTransition(
-                turns: status == SyncStatus.syncing ? _rotationController : const AlwaysStoppedAnimation(0),
-                child: Icon(icon, color: iconColor, size: 50.w),
-              ),
-              SizedBox(height: 20.h),
-              Text(
-                title,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.sp),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 10.h),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13.sp, color: Colors.grey),
-              ),
-              if (status == SyncStatus.success || status == SyncStatus.error) ...[
-                SizedBox(height: 20.h),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('CERRAR'),
-                ),
-              ]
-            ],
-          ),
-        );
-      },
     );
   }
 }

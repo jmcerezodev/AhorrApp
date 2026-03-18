@@ -7,6 +7,7 @@ export 'tickets_cubit/tickets_cubit.dart';
 export 'total_money_cubit/total_money_cubit.dart';
 export 'date_cubit/date_cubit.dart';
 export 'theme_cubit/theme_cubit.dart';
+export 'theme_cubit/theme_state.dart';
 export 'recurrent_expenses_cubit/recurrent_expenses_cubit.dart';
 export 'debts_loans_cubit/debts_loans_cubit.dart';
 export 'security_cubit/security_cubit.dart';

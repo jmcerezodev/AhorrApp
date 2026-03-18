@@ -2,7 +2,6 @@ import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:ahorrapp/data/appwrite/auth_appwrite.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
-import 'package:ahorrapp/presentation/widgets/dialogs/dialogs.dart';
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,7 +15,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final authAppwrite = AuthAppwrite();
-  bool _isSyncDialogOpen = false; 
 
   @override
   void initState() {
@@ -79,28 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 state.year, 
                 savingsCubit: context.read<SavingsCubit>()
               );
-            },
-          ),
-          BlocListener<HistoryCubit, HistoryCubitState>(
-            listenWhen: (prev, curr) => prev.isSyncing != curr.isSyncing,
-            listener: (context, state) {
-              if (state.isSyncing && !_isSyncDialogOpen) {
-                _isSyncDialogOpen = true;
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (_) => BlocProvider.value(
-                    value: context.read<HistoryCubit>(),
-                    child: BlocBuilder<HistoryCubit, HistoryCubitState>(
-                      builder: (context, state) => SyncProgressDialog(progress: state.syncProgress),
-                    ),
-                  ),
-                ).then((_) => _isSyncDialogOpen = false);
-              } else if (!state.isSyncing && _isSyncDialogOpen) {
-                Navigator.of(context, rootNavigator: true).pop();
-                _isSyncDialogOpen = false;
-                context.read<SavingsCubit>().loadSavings();
-              }
             },
           ),
         ],
