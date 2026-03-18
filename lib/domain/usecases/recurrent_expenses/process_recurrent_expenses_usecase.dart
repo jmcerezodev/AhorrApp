@@ -87,6 +87,12 @@ class ProcessRecurrentExpensesUseCase {
 
   bool _shouldApply(RecurrentExpense expense, DateTime now, int effectiveDay) {
     if (now.day < effectiveDay) return false;
+
+    // No aplicar si el gasto aún no ha comenzado (startDate en el futuro)
+    final nowMonth = DateTime(now.year, now.month);
+    final startMonth = DateTime(expense.startDate.year, expense.startDate.month);
+    if (nowMonth.isBefore(startMonth)) return false;
+
     if (expense.lastApplied == null) return true;
 
     try {

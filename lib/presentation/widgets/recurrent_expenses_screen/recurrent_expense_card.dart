@@ -7,6 +7,7 @@ import 'package:ahorrapp/presentation/widgets/dialogs/recurrent_expenses_dialogs
 import 'package:ahorrapp/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 class RecurrentExpenseCard extends StatelessWidget {
   final RecurrentExpense expense;
@@ -25,10 +26,11 @@ class RecurrentExpenseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isAutomatic = expense.day != null;
-    final DateTime nextPaymentDate = _calculateNextPaymentDate();
+    final DateTime? nextPaymentDate = expense.nextPaymentDate;
     final now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    final int daysRemaining = nextPaymentDate.difference(now).inDays;
-    final double progress = _calculateProgress(nextPaymentDate);
+    final int daysRemaining = nextPaymentDate?.difference(now).inDays ?? 0;
+    final double progress = expense.cycleProgress;
+    final bool isPaused = isAutomatic && !expense.isActive;
     final bool showProgress = isAutomatic && expense.isActive;
     final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
     final bool isSmallScreen = MediaQuery.of(context).size.width <= 375;
@@ -174,7 +176,7 @@ class RecurrentExpenseCard extends StatelessWidget {
           ),
 
           // BARRA DE PROGRESO E INFO INFERIOR
-          if (showProgress || isLinked || !isAutomatic) ...[
+          if (showProgress || isPaused || isLinked || !isAutomatic) ...[
             SizedBox(height: 8.h),
             if (showProgress)
               ClipRRect(
@@ -196,13 +198,17 @@ class RecurrentExpenseCard extends StatelessWidget {
                       if (isAutomatic)
                         Flexible(
                           child: Text(
-                            daysRemaining == 0 
-                              ? (isIncome ? '¡Hoy ingresa!' : '¡Hoy se cobra!')
-                              : (isIncome ? 'Próximo ingreso en $daysRemaining días' : 'Próximo cobro en $daysRemaining días'),
+                            isPaused
+                              ? 'PAUSADO'
+                              : (daysRemaining <= 0
+                                  ? (isIncome ? '¡Hoy ingresa!' : '¡Hoy se cobra!')
+                                  : (isIncome ? 'Próximo ingreso en $daysRemaining días' : 'Próximo cobro en $daysRemaining días')),
                             style: TextStyle(
                               fontSize: 8.5.sp,
                               fontWeight: FontWeight.w800,
-                              color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
+                              color: isPaused
+                                ? Colors.grey.shade500
+                                : (daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6)),
                               letterSpacing: 0.3,
                             ),
                           ),
@@ -250,86 +256,32 @@ class RecurrentExpenseCard extends StatelessWidget {
     );
   }
 
-  DateTime _calculateNextPaymentDate() {
-    final now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    
-    // Comprobar si ya se aplicó este mes
-    if (expense.lastApplied != null) {
-      final parts = expense.lastApplied!.split('-');
-      final lastMonth = int.parse(parts[0]);
-      final lastYear = int.parse(parts[1]);
-      
-      if (lastMonth == now.month && lastYear == now.year) {
-        // Ya se aplicó, calcular la fecha del PRÓXIMO periodo
-        int monthsToAdd = 0;
-        switch (expense.frequency) {
-          case RecurrentFrequency.monthly: monthsToAdd = 1; break;
-          case RecurrentFrequency.quarterly: monthsToAdd = 3; break;
-          case RecurrentFrequency.semiAnnually: monthsToAdd = 6; break;
-          case RecurrentFrequency.annually: monthsToAdd = 12; break;
-        }
-        
-        final baseDate = DateTime(now.year, now.month, expense.day ?? now.day);
-        return DateTime(baseDate.year, baseDate.month + monthsToAdd, baseDate.day);
-      }
-    }
-
-    // Si no se ha aplicado, seguir la lógica normal
-    DateTime nextDate = DateTime(expense.startDate.year, expense.startDate.month, expense.day ?? expense.startDate.day);
-    
-    int monthsToAdd = 0;
-    switch (expense.frequency) {
-      case RecurrentFrequency.monthly: monthsToAdd = 1; break;
-      case RecurrentFrequency.quarterly: monthsToAdd = 3; break;
-      case RecurrentFrequency.semiAnnually: monthsToAdd = 6; break;
-      case RecurrentFrequency.annually: monthsToAdd = 12; break;
-    }
-
-    if (nextDate.isAfter(now) || nextDate.isAtSameMomentAs(now)) {
-      return nextDate;
-    }
-
-    while (nextDate.isBefore(now)) {
-      nextDate = DateTime(nextDate.year, nextDate.month + monthsToAdd, nextDate.day);
-    }
-    
-    return nextDate;
-  }
-
-  double _calculateProgress(DateTime nextDate) {
-    final now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    
-    int monthsInCycle = 1;
-    switch (expense.frequency) {
-      case RecurrentFrequency.monthly: monthsInCycle = 1; break;
-      case RecurrentFrequency.quarterly: monthsInCycle = 3; break;
-      case RecurrentFrequency.semiAnnually: monthsInCycle = 6; break;
-      case RecurrentFrequency.annually: monthsInCycle = 12; break;
-    }
-
-    final prevDate = DateTime(nextDate.year, nextDate.month - monthsInCycle, nextDate.day);
-    
-    final totalDays = nextDate.difference(prevDate).inDays;
-    final elapsedDays = now.difference(prevDate).inDays;
-
-    if (totalDays <= 0) return 0.0;
-    return (elapsedDays / totalDays).clamp(0.0, 1.0);
-  }
-
   String _getSubtitleText() {
-    final bool isIncome = expense.isIncome;
-    if (expense.day == null) return isIncome ? 'Ingreso manual' : 'Cobro manual';
-
-    switch (expense.frequency) {
-      case RecurrentFrequency.monthly:
-        return 'Día ${expense.day} de cada mes';
-      case RecurrentFrequency.quarterly:
-        return 'Día ${expense.day} cada trimestre';
-      case RecurrentFrequency.semiAnnually:
-        return 'Día ${expense.day} cada 6 meses';
-      case RecurrentFrequency.annually:
-        return 'Día ${expense.day} cada año';
+    if (expense.day == null) {
+      return expense.isIncome ? 'Ingreso manual' : 'Cobro manual';
     }
+
+    if (expense.frequency == RecurrentFrequency.monthly) {
+      return 'Día ${expense.day} de cada mes';
+    }
+
+    // Para frecuencias largas: mostrar la fecha real del próximo cobro
+    final next = expense.nextPaymentDate;
+    if (next == null) return 'Día ${expense.day}';
+
+    final String monthName = DateFormat('MMMM', 'es_ES').format(next);
+    final String capitalizedMonth =
+        monthName[0].toUpperCase() + monthName.substring(1);
+
+    final String freqLabel;
+    switch (expense.frequency) {
+      case RecurrentFrequency.quarterly:   freqLabel = 'trimestre'; break;
+      case RecurrentFrequency.semiAnnually: freqLabel = '6 meses';  break;
+      case RecurrentFrequency.annually:    freqLabel = 'año';       break;
+      default: freqLabel = 'periodo';
+    }
+
+    return '${next.day} de $capitalizedMonth (cada $freqLabel)';
   }
 
   IconData _getIconForCategory(String category) {
