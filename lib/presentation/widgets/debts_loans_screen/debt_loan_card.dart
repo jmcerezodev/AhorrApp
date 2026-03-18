@@ -1,6 +1,7 @@
 import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/numbers_format/humanize_numbers.dart';
 import 'package:ahorrapp/domain/entities/debt_loan.dart';
+import 'package:ahorrapp/domain/entities/recurrent_expense.dart';
 import 'package:ahorrapp/presentation/bloc/cubits.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/add_debt_loan_payment_dialog.dart';
 import 'package:ahorrapp/presentation/widgets/dialogs/debts_loans_dialogs/add_edit_debt_loan_dialog.dart';
@@ -33,6 +34,18 @@ class DebtLoanCard extends StatelessWidget {
     final double progress = item.totalAmount > 0 ? item.paidAmount / item.totalAmount : 0;
     final bool isFullyPaid = item.remainingAmount <= 0;
     
+    // Vincular con Gasto Recurrente si existe
+    final recurrentState = context.watch<RecurrentExpensesCubit>().state;
+    RecurrentExpense? linkedExpense;
+    if (item.recurrentExpenseId != null) {
+      try {
+        linkedExpense = recurrentState.expenses.firstWhere((e) => e.id == item.recurrentExpenseId);
+      } catch (_) {}
+    }
+
+    final bool isAutomated = linkedExpense != null;
+    final bool isPaused = isAutomated && !linkedExpense.isActive;
+
     // Lógica para calcular cuotas
     int installmentsPaid = 0;
     if (item.isInstallment && item.installmentAmount != null && item.installmentAmount! > 0) {
@@ -69,7 +82,9 @@ class DebtLoanCard extends StatelessWidget {
             color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             borderRadius: BorderRadius.circular(25.w),
             border: Border.all(
-              color: Colors.orange.withValues(alpha: 0.15),
+              color: isPaused 
+                ? Colors.grey.withValues(alpha: 0.2)
+                : Colors.orange.withValues(alpha: isAutomated ? 0.3 : 0.15),
               width: 1.2.w,
             ),
             boxShadow: [
@@ -96,12 +111,12 @@ class DebtLoanCard extends StatelessWidget {
                     leading: Container(
                       padding: EdgeInsets.all(12.w),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.1),
+                        color: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         isDebt ? Icons.money_off_rounded : Icons.handshake_rounded,
-                        color: Colors.orange,
+                        color: isPaused ? Colors.grey : Colors.orange,
                         size: 24.w,
                       ),
                     ),
@@ -111,7 +126,8 @@ class DebtLoanCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
+                        color: isPaused ? colorScheme.onSurface.withValues(alpha: 0.5) : colorScheme.onSurface,
                       ),
                     ),
                     subtitle: Column(
@@ -122,28 +138,44 @@ class DebtLoanCard extends StatelessWidget {
                             children: [
                               TextSpan(
                                 text: isDebt ? "A: " : "De: ",
-                                style: const TextStyle(
-                                  color: Colors.orange,
+                                style: TextStyle(
+                                  color: isPaused ? Colors.grey : Colors.orange,
                                   fontWeight: FontWeight.normal,
                                 ),
                               ),
                               TextSpan(
                                 text: item.person,
                                 style: TextStyle(
-                                  fontSize: 12.sp,
+                                  fontSize: 11.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                  color: colorScheme.onSurface.withValues(alpha: isPaused ? 0.3 : 0.6),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        if (item.isInstallment && item.totalInstallments != null)
+                        if (isAutomated)
+                          Padding(
+                            padding: EdgeInsets.only(top: 2.h),
+                            child: Text(
+                              isPaused 
+                                ? 'Pausado'
+                                : (linkedExpense?.nextPaymentDate != null 
+                                    ? 'Próximo: ${DateFormat("d MMM", "es_ES").format(linkedExpense!.nextPaymentDate!)}'
+                                    : 'Sin fecha'),
+                              style: TextStyle(
+                                fontSize: 8.5.sp,
+                                fontWeight: FontWeight.w800,
+                                color: isPaused ? Colors.grey : Colors.orange.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          )
+                        else if (item.isInstallment && item.totalInstallments != null)
                           Text(
                             'Cuota $installmentsPaid de ${item.totalInstallments}',
                             style: TextStyle(
-                              fontSize: 10.sp,
-                              color: Colors.orange.withValues(alpha: 0.8),
+                              fontSize: 9.sp,
+                              color: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.8),
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -152,57 +184,92 @@ class DebtLoanCard extends StatelessWidget {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            if (isFullyPaid)
-                              Text(
-                                'Finalizado',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 14.sp,
-                                  color: Colors.green,
-                                ),
-                              )
-                            else
-                              PrivacyAmountText(
+                        Flexible(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              if (isFullyPaid)
+                                Text(
+                                  'Finalizado',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 13.sp,
+                                    color: Colors.green,
+                                  ),
+                                )
+                              else
+                                PrivacyAmountText(
                                   amount: '${humanizeNumbers.number(item.remainingAmount, isPrivacyModeActive: isPrivacyActive)}€',
-                                isPrivacyActive: isPrivacyActive,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16.sp,
-                                  color: isDebt ? Colors.red.shade400 : Colors.blue.shade400,
-                                ),
-                              ),
-                            if (item.isInstallment && !isFullyPaid)
-                              Container(
-                                margin: EdgeInsets.only(top: 4.h),
-                                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(5.w),
-                                ),
-                                child: PrivacyAmountText(
-                                  amount: '${humanizeNumbers.number(item.installmentAmount ?? 0, isPrivacyModeActive: isPrivacyActive)}€/mes',
                                   isPrivacyActive: isPrivacyActive,
                                   style: TextStyle(
-                                    fontSize: 9.sp,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.orange,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 15.sp,
+                                    color: isPaused 
+                                      ? Colors.grey 
+                                      : (isDebt ? Colors.red.shade400 : Colors.blue.shade400),
                                   ),
                                 ),
-                              ),
-                          ],
+                              if (item.isInstallment && !isFullyPaid)
+                                Container(
+                                  margin: EdgeInsets.only(top: 3.h),
+                                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
+                                  decoration: BoxDecoration(
+                                    color: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(4.w),
+                                  ),
+                                  child: PrivacyAmountText(
+                                    amount: '${humanizeNumbers.number(item.installmentAmount ?? 0, isPrivacyModeActive: isPrivacyActive)}€/mes',
+                                    isPrivacyActive: isPrivacyActive,
+                                    style: TextStyle(
+                                      fontSize: 8.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: isPaused ? Colors.grey : Colors.orange,
+                                    ),
+                                  ),
+                                ),
+                              if (isAutomated) ...[
+                                SizedBox(height: 3.h),
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
+                                  decoration: BoxDecoration(
+                                    color: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(5.w),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        isPaused ? Icons.pause_circle_filled_rounded : Icons.bolt_rounded,
+                                        size: 9.sp,
+                                        color: isPaused ? Colors.grey : Colors.orange,
+                                      ),
+                                      SizedBox(width: 2.w),
+                                      Text(
+                                        isPaused ? 'PAUSA' : 'AUTO',
+                                        style: TextStyle(
+                                          fontSize: 7.5.sp,
+                                          fontWeight: FontWeight.w900,
+                                          color: isPaused ? Colors.grey : Colors.orange,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
-                        SizedBox(width: 10.w),
-                        if (!item.isCompleted && !item.isInstallment)
+                        if (!item.isCompleted && !item.isInstallment && !isAutomated) ...[
+                          SizedBox(width: 8.w),
                           IconButton(
                             onPressed: () => _showPaymentDialog(context),
-                            icon: Icon(Icons.add_circle_outline_rounded, color: Colors.orange, size: 28.w),
+                            icon: Icon(Icons.add_circle_outline_rounded, color: Colors.orange, size: 26.w),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                           ),
+                        ],
                       ],
                     ),
                   ),
@@ -225,7 +292,7 @@ class DebtLoanCard extends StatelessWidget {
                               isPrivacyActive: isPrivacyActive,
                               style: TextStyle(fontSize: 10.sp, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
                             ),
-                            if (item.dueDate != null)
+                            if (item.dueDate != null && !isAutomated)
                               Padding(
                                 padding: EdgeInsets.only(bottom: 2.h),
                                 child: Text(
@@ -250,9 +317,11 @@ class DebtLoanCard extends StatelessWidget {
                           child: LinearProgressIndicator(
                             value: isPrivacyActive ? 0.0 : progress,
                             minHeight: 6.h,
-                            backgroundColor: Colors.orange.withValues(alpha: 0.05),
+                            backgroundColor: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.05),
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              progress >= 1.0 ? Colors.green.shade400 : Colors.orange.withValues(alpha: 0.4)
+                              isPaused 
+                                ? Colors.grey.withValues(alpha: 0.3)
+                                : (progress >= 1.0 ? Colors.green.shade400 : Colors.orange.withValues(alpha: 0.4))
                             ),
                           ),
                         ),

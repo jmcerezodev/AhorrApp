@@ -197,7 +197,8 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
 
   Future<void> applyExpenseManually(RecurrentExpense expense, {DebtsLoansCubit? debtsCubit}) async {
     final dateService = Date();
-    
+    final now = DateTime.now();
+
     final movement = Movement(
       id: const Uuid().v4(),
       name: expense.name,
@@ -208,21 +209,29 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
       hour: dateService.currentHour(),
       month: dateService.monthNames(),
       year: int.parse(dateService.year()),
-      createdAt: DateTime.now(),
+      createdAt: now,
       isRecurrent: true,
     );
 
     try {
       await _saveMovementUseCase(movement);
 
+      // Actualizar deuda vinculada si existe
       if (debtsCubit != null) {
-        final linkedItem = debtsCubit.state.debtsLoans.where((d) => d.recurrentExpenseId == expense.id).firstOrNull;
+        final linkedItem = debtsCubit.state.debtsLoans
+            .where((d) => d.recurrentExpenseId == expense.id)
+            .firstOrNull;
         if (linkedItem != null) {
           await debtsCubit.addPayment(linkedItem.id, expense.amount, addToHistory: false);
         }
       }
-      
-      await loadExpenses(); // Refrescar lista tras aplicar
+
+      // Marcar el período como aplicado para que nextPaymentDate salte al siguiente
+      // ciclo y ProcessRecurrentExpensesUseCase no lo duplique automáticamente.
+      final updatedExpense = expense.copyWith(lastApplied: '${now.month}-${now.year}');
+      await _saveRecurrentExpenseUseCase(updatedExpense);
+
+      await loadExpenses();
     } catch (e) {
       emit(state.copyWith(
         status: RecurrentExpensesStatus.failure,

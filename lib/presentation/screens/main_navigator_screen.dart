@@ -46,10 +46,15 @@ class _MainNavigatorScreenState extends State<MainNavigatorScreen> {
     if (userId.isEmpty) return;
 
     await getIt<ProcessRecurrentExpensesUseCase>().call(userId);
-    
+
     if (mounted) {
       final dateState = context.read<DateCubit>().state;
+      // Refrescar historial con los nuevos movimientos generados
       context.read<HistoryCubit>().loadHistoryByDate(dateState.month, dateState.year);
+      // Refrescar gastos fijos y deudas: el procesador puede haber actualizado
+      // lastApplied y paidAmount directamente en Isar sin pasar por los cubits.
+      context.read<RecurrentExpensesCubit>().loadExpenses();
+      context.read<DebtsLoansCubit>().loadDebtsLoans();
     }
   }
 
