@@ -10,6 +10,7 @@ class RecurrentExpensesState extends Equatable {
   final bool isFilterOpen;
   final bool showAutomatic;
   final bool showManual;
+  final bool showDebts; // NUEVO: Filtro para deudas y préstamos
   final List<String> selectedCategories;
   final String searchQuery;
 
@@ -21,6 +22,7 @@ class RecurrentExpensesState extends Equatable {
     this.isFilterOpen = false,
     this.showAutomatic = true,
     this.showManual = true,
+    this.showDebts = true, // Por defecto visible
     this.selectedCategories = const [],
     this.searchQuery = '',
   });
@@ -77,6 +79,7 @@ class RecurrentExpensesState extends Equatable {
     bool? isFilterOpen,
     bool? showAutomatic,
     bool? showManual,
+    bool? showDebts,
     List<String>? selectedCategories,
     String? searchQuery,
   }) {
@@ -88,6 +91,7 @@ class RecurrentExpensesState extends Equatable {
       isFilterOpen: isFilterOpen ?? this.isFilterOpen,
       showAutomatic: showAutomatic ?? this.showAutomatic,
       showManual: showManual ?? this.showManual,
+      showDebts: showDebts ?? this.showDebts,
       selectedCategories: selectedCategories ?? this.selectedCategories,
       searchQuery: searchQuery ?? this.searchQuery,
     );
@@ -102,6 +106,7 @@ class RecurrentExpensesState extends Equatable {
     isFilterOpen, 
     showAutomatic, 
     showManual,
+    showDebts,
     selectedCategories,
     searchQuery,
   ];

@@ -39,7 +39,7 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
       ..startDate = expense.startDate
       ..position = expense.position
       ..includeInSummary = expense.includeInSummary
-      ..isIncome = expense.isIncome // NUEVO
+      ..isIncome = expense.isIncome 
       ..createdAt = existingItem?.createdAt ?? DateTime.now();
 
     await _localDb.saveRecurrentExpenses([localItem]);
@@ -53,11 +53,13 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
   @override
   Future<void> updateLastApplied(String id, String monthYear) async {
     final isar = _localDb.isar;
-    final item = await isar.localRecurrentExpenses.filter().appwriteIdEqualTo(id).findFirst();
-    if (item != null) {
-      item.lastApplied = monthYear;
-      await _localDb.saveRecurrentExpenses([item]);
-    }
+    await isar.writeTxn(() async {
+      final item = await isar.localRecurrentExpenses.filter().appwriteIdEqualTo(id).findFirst();
+      if (item != null) {
+        item.lastApplied = monthYear;
+        await isar.localRecurrentExpenses.put(item);
+      }
+    });
   }
 
   RecurrentExpense _mapToEntity(LocalRecurrentExpense local) {
@@ -74,7 +76,7 @@ class IsarRecurrentExpenseRepository implements IRecurrentExpenseRepository {
       startDate: local.startDate,
       position: local.position,
       includeInSummary: local.includeInSummary,
-      isIncome: local.isIncome, // NUEVO
+      isIncome: local.isIncome,
     );
   }
 

@@ -40,6 +40,16 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
     }
   }
 
+  void resetFilters() {
+    emit(state.copyWith(
+      showAutomatic: true,
+      showManual: true,
+      showDebts: true,
+      selectedCategories: [],
+      searchQuery: '',
+    ));
+  }
+
   void updateSearchQuery(String query) {
     emit(state.copyWith(searchQuery: query));
   }
@@ -60,6 +70,10 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
 
   void toggleManualFilter(bool value) {
     emit(state.copyWith(showManual: value));
+  }
+
+  void toggleDebtsFilter(bool value) {
+    emit(state.copyWith(showDebts: value));
   }
 
   void toggleCategoryFilter(String category) {
@@ -207,6 +221,8 @@ class RecurrentExpensesCubit extends Cubit<RecurrentExpensesState> {
           await debtsCubit.addPayment(linkedItem.id, expense.amount, addToHistory: false);
         }
       }
+      
+      await loadExpenses(); // Refrescar lista tras aplicar
     } catch (e) {
       emit(state.copyWith(
         status: RecurrentExpensesStatus.failure,

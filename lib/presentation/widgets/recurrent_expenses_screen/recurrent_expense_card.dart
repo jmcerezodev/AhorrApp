@@ -26,7 +26,8 @@ class RecurrentExpenseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isAutomatic = expense.day != null;
     final DateTime nextPaymentDate = _calculateNextPaymentDate();
-    final int daysRemaining = nextPaymentDate.difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)).inDays;
+    final now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final int daysRemaining = nextPaymentDate.difference(now).inDays;
     final double progress = _calculateProgress(nextPaymentDate);
     final bool showProgress = isAutomatic && expense.isActive;
     final isPrivacyActive = context.watch<ThemeCubit>().state.isPrivacyModeActive;
@@ -173,7 +174,7 @@ class RecurrentExpenseCard extends StatelessWidget {
           ),
 
           // BARRA DE PROGRESO E INFO INFERIOR
-          if (showProgress || isLinked) ...[
+          if (showProgress || isLinked || !isAutomatic) ...[
             SizedBox(height: 8.h),
             if (showProgress)
               ClipRRect(
@@ -188,22 +189,41 @@ class RecurrentExpenseCard extends StatelessWidget {
             SizedBox(height: 6.h),
             Row(
               children: [
-                if (showProgress)
-                  Expanded(
-                    child: Text(
-                      daysRemaining == 0 
-                        ? (isIncome ? '¡Hoy ingresa!' : '¡Hoy se cobra!')
-                        : (isIncome ? 'Próximo ingreso en $daysRemaining días' : 'Próximo cobro en $daysRemaining días'),
-                      style: TextStyle(
-                        fontSize: 8.5.sp,
-                        fontWeight: FontWeight.w800,
-                        color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
-                        letterSpacing: 0.3,
-                      ),
-                    ),
+                Expanded(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isAutomatic)
+                        Flexible(
+                          child: Text(
+                            daysRemaining == 0 
+                              ? (isIncome ? '¡Hoy ingresa!' : '¡Hoy se cobra!')
+                              : (isIncome ? 'Próximo ingreso en $daysRemaining días' : 'Próximo cobro en $daysRemaining días'),
+                            style: TextStyle(
+                              fontSize: 8.5.sp,
+                              fontWeight: FontWeight.w800,
+                              color: daysRemaining <= 3 ? Colors.red.shade300 : Colors.orange.withValues(alpha: 0.6),
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      if (!isAutomatic)
+                        Text(
+                          isIncome ? 'INGRESO MANUAL' : 'COBRO MANUAL',
+                          style: TextStyle(
+                            fontSize: 8.5.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.blueGrey.shade300,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      SizedBox(width: 8.w),
+                      _CategoryChip(category: expense.category),
+                    ],
                   ),
+                ),
                 if (isLinked) ...[
-                  if (showProgress) SizedBox(width: 8.w),
+                  SizedBox(width: 8.w),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
                     decoration: BoxDecoration(
@@ -232,6 +252,29 @@ class RecurrentExpenseCard extends StatelessWidget {
 
   DateTime _calculateNextPaymentDate() {
     final now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    
+    // Comprobar si ya se aplicó este mes
+    if (expense.lastApplied != null) {
+      final parts = expense.lastApplied!.split('-');
+      final lastMonth = int.parse(parts[0]);
+      final lastYear = int.parse(parts[1]);
+      
+      if (lastMonth == now.month && lastYear == now.year) {
+        // Ya se aplicó, calcular la fecha del PRÓXIMO periodo
+        int monthsToAdd = 0;
+        switch (expense.frequency) {
+          case RecurrentFrequency.monthly: monthsToAdd = 1; break;
+          case RecurrentFrequency.quarterly: monthsToAdd = 3; break;
+          case RecurrentFrequency.semiAnnually: monthsToAdd = 6; break;
+          case RecurrentFrequency.annually: monthsToAdd = 12; break;
+        }
+        
+        final baseDate = DateTime(now.year, now.month, expense.day ?? now.day);
+        return DateTime(baseDate.year, baseDate.month + monthsToAdd, baseDate.day);
+      }
+    }
+
+    // Si no se ha aplicado, seguir la lógica normal
     DateTime nextDate = DateTime(expense.startDate.year, expense.startDate.month, expense.day ?? expense.startDate.day);
     
     int monthsToAdd = 0;
@@ -298,5 +341,35 @@ class RecurrentExpenseCard extends StatelessWidget {
       case 'ocio': return Icons.sports_esports_rounded;
       default: return Icons.receipt_long_rounded;
     }
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  final String category;
+
+  const _CategoryChip({required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6.w),
+        border: Border.all(
+          color: Colors.orange.withValues(alpha: 0.3),
+          width: 0.8,
+        ),
+      ),
+      child: Text(
+        category.toUpperCase(),
+        style: TextStyle(
+          color: Colors.orange,
+          fontSize: 7.sp,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
   }
 }

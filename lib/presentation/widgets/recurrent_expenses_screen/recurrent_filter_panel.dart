@@ -4,7 +4,13 @@ import 'package:flutter/material.dart';
 
 class RecurrentFilterPanel extends StatelessWidget {
   final RecurrentExpensesCubit cubit;
-  const RecurrentFilterPanel({super.key, required this.cubit});
+  final bool isIncomeTab;
+
+  const RecurrentFilterPanel({
+    super.key, 
+    required this.cubit, 
+    required this.isIncomeTab
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,22 +28,31 @@ class RecurrentFilterPanel extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _FilterChip(
-                label: 'Automáticos',
-                value: state.showAutomatic,
-                activeColor: Colors.orange,
-                onChanged: (val) => cubit.toggleAutomaticFilter(val),
-              ),
-              _FilterChip(
-                label: 'Manuales',
-                value: state.showManual,
-                activeColor: Colors.orange,
-                onChanged: (val) => cubit.toggleManualFilter(val),
-              ),
-            ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _FilterChip(
+                  label: 'Automáticos',
+                  value: state.showAutomatic,
+                  activeColor: Colors.orange,
+                  onChanged: (val) => cubit.toggleAutomaticFilter(val),
+                ),
+                _FilterChip(
+                  label: 'Manuales',
+                  value: state.showManual,
+                  activeColor: Colors.orange,
+                  onChanged: (val) => cubit.toggleManualFilter(val),
+                ),
+                _FilterChip(
+                  label: isIncomeTab ? 'Préstamos' : 'Deudas',
+                  value: state.showDebts,
+                  activeColor: Colors.orange,
+                  onChanged: (val) => cubit.toggleDebtsFilter(val),
+                ),
+              ],
+            ),
           ),
           Padding(
             padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 10.w),
