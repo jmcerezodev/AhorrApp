@@ -82,7 +82,7 @@ class DebtLoanCard extends StatelessWidget {
             color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             borderRadius: BorderRadius.circular(25.w),
             border: Border.all(
-              color: isPaused 
+              color: isPaused
                 ? Colors.grey.withValues(alpha: 0.2)
                 : Colors.orange.withValues(alpha: isAutomated ? 0.3 : 0.15),
               width: 1.2.w,
@@ -95,20 +95,20 @@ class DebtLoanCard extends StatelessWidget {
               )
             ],
           ),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width - 40.w,
-              child: Column(
-                children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.fromLTRB(
-                      (isSmallScreen ? 12 : 20).w, 
-                      10.h, 
-                      10.w, 
-                      10.h
-                    ),
-                    leading: Container(
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  (isSmallScreen ? 12 : 20).w,
+                  10.h,
+                  10.w,
+                  10.h,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Leading
+                    Container(
                       padding: EdgeInsets.all(12.w),
                       decoration: BoxDecoration(
                         color: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.1),
@@ -120,149 +120,157 @@ class DebtLoanCard extends StatelessWidget {
                         size: 24.w,
                       ),
                     ),
-                    title: Text(
-                      item.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14.sp,
-                        color: isPaused ? colorScheme.onSurface.withValues(alpha: 0.5) : colorScheme.onSurface,
-                      ),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: isDebt ? "A: " : "De: ",
-                                style: TextStyle(
-                                  color: isPaused ? Colors.grey : Colors.orange,
-                                  fontWeight: FontWeight.normal,
-                                ),
-                              ),
-                              TextSpan(
-                                text: item.person,
-                                style: TextStyle(
-                                  fontSize: 11.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurface.withValues(alpha: isPaused ? 0.3 : 0.6),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (isAutomated)
-                          Padding(
-                            padding: EdgeInsets.only(top: 2.h),
-                            child: Text(
-                              isPaused 
-                                ? 'Pausado'
-                                : (linkedExpense?.nextPaymentDate != null 
-                                    ? 'Próximo: ${DateFormat("d MMM", "es_ES").format(linkedExpense!.nextPaymentDate!)}'
-                                    : 'Sin fecha'),
-                              style: TextStyle(
-                                fontSize: 8.5.sp,
-                                fontWeight: FontWeight.w800,
-                                color: isPaused ? Colors.grey : Colors.orange.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          )
-                        else if (item.isInstallment && item.totalInstallments != null)
+                    SizedBox(width: 12.w),
+                    // Title + Subtitle
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
-                            'Cuota $installmentsPaid de ${item.totalInstallments}',
+                            item.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 9.sp,
-                              color: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.8),
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14.sp,
+                              color: isPaused ? colorScheme.onSurface.withValues(alpha: 0.5) : colorScheme.onSurface,
                             ),
                           ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              if (isFullyPaid)
-                                Text(
-                                  'Finalizado',
+                          SizedBox(height: 2.h),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: isDebt ? "A: " : "De: ",
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 13.sp,
-                                    color: Colors.green,
-                                  ),
-                                )
-                              else
-                                PrivacyAmountText(
-                                  amount: '${humanizeNumbers.number(item.remainingAmount, isPrivacyModeActive: isPrivacyActive)}€',
-                                  isPrivacyActive: isPrivacyActive,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 15.sp,
-                                    color: isPaused 
-                                      ? Colors.grey 
-                                      : (isDebt ? Colors.red.shade400 : Colors.blue.shade400),
+                                    color: isPaused ? Colors.grey : Colors.orange,
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 11.sp,
                                   ),
                                 ),
-                              if (item.isInstallment && !isFullyPaid)
-                                Container(
-                                  margin: EdgeInsets.only(top: 3.h),
-                                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
-                                  decoration: BoxDecoration(
-                                    color: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(4.w),
-                                  ),
-                                  child: PrivacyAmountText(
-                                    amount: '${humanizeNumbers.number(item.installmentAmount ?? 0, isPrivacyModeActive: isPrivacyActive)}€/mes',
-                                    isPrivacyActive: isPrivacyActive,
-                                    style: TextStyle(
-                                      fontSize: 8.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: isPaused ? Colors.grey : Colors.orange,
-                                    ),
-                                  ),
-                                ),
-                              if (isAutomated) ...[
-                                SizedBox(height: 3.h),
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
-                                  decoration: BoxDecoration(
-                                    color: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(5.w),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        isPaused ? Icons.pause_circle_filled_rounded : Icons.bolt_rounded,
-                                        size: 9.sp,
-                                        color: isPaused ? Colors.grey : Colors.orange,
-                                      ),
-                                      SizedBox(width: 2.w),
-                                      Text(
-                                        isPaused ? 'PAUSA' : 'AUTO',
-                                        style: TextStyle(
-                                          fontSize: 7.5.sp,
-                                          fontWeight: FontWeight.w900,
-                                          color: isPaused ? Colors.grey : Colors.orange,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
-                                    ],
+                                TextSpan(
+                                  text: item.person,
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurface.withValues(alpha: isPaused ? 0.3 : 0.6),
                                   ),
                                 ),
                               ],
-                            ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
+                          if (isAutomated)
+                            Padding(
+                              padding: EdgeInsets.only(top: 2.h),
+                              child: Text(
+                                isPaused
+                                  ? 'Pausado'
+                                  : (linkedExpense.nextPaymentDate != null
+                                      ? 'Próximo: ${DateFormat("d MMM", "es_ES").format(linkedExpense.nextPaymentDate!)}'
+                                      : 'Sin fecha'),
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: isPaused ? Colors.grey : Colors.orange.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            )
+                          else if (item.isInstallment && item.totalInstallments != null)
+                            Padding(
+                              padding: EdgeInsets.only(top: 2.h),
+                              child: Text(
+                                'Cuota $installmentsPaid de ${item.totalInstallments}',
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  color: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.8),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    // Trailing Column
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (isFullyPaid)
+                          Text(
+                            'Finalizado',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13.sp,
+                              color: Colors.green,
+                            ),
+                          )
+                        else
+                          PrivacyAmountText(
+                            amount: '${humanizeNumbers.number(item.remainingAmount, isPrivacyModeActive: isPrivacyActive)}€',
+                            isPrivacyActive: isPrivacyActive,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15.sp,
+                              color: isPaused
+                                ? Colors.grey
+                                : (isDebt ? Colors.red.shade400 : Colors.blue.shade400),
+                            ),
+                          ),
+                        if (item.isInstallment && !isFullyPaid) ...[
+                          SizedBox(height: 4.h),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
+                            decoration: BoxDecoration(
+                              color: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4.w),
+                            ),
+                            child: PrivacyAmountText(
+                              amount: '${humanizeNumbers.number(item.installmentAmount ?? 0, isPrivacyModeActive: isPrivacyActive)}€/mes',
+                              isPrivacyActive: isPrivacyActive,
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w800,
+                                color: isPaused ? Colors.grey : Colors.orange,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (isAutomated) ...[
+                          SizedBox(height: 4.h),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
+                            decoration: BoxDecoration(
+                              color: (isPaused ? Colors.grey : Colors.orange).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(5.w),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isPaused ? Icons.pause_circle_filled_rounded : Icons.bolt_rounded,
+                                  size: 10.sp,
+                                  color: isPaused ? Colors.grey : Colors.orange,
+                                ),
+                                SizedBox(width: 2.w),
+                                Text(
+                                  isPaused ? 'PAUSA' : 'AUTO',
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w900,
+                                    color: isPaused ? Colors.grey : Colors.orange,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         if (!item.isCompleted && !item.isInstallment && !isAutomated) ...[
-                          SizedBox(width: 8.w),
+                          SizedBox(height: 4.h),
                           IconButton(
                             onPressed: () => _showPaymentDialog(context),
                             icon: Icon(Icons.add_circle_outline_rounded, color: Colors.orange, size: 26.w),
@@ -272,7 +280,9 @@ class DebtLoanCard extends StatelessWidget {
                         ],
                       ],
                     ),
-                  ),
+                  ],
+                ),
+              ),
                   
                   Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -328,9 +338,7 @@ class DebtLoanCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
+            ],
           ),
         ),
       ),
