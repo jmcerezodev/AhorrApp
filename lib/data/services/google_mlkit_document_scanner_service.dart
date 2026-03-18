@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:image_picker/image_picker.dart';
@@ -43,11 +42,9 @@ class GoogleMlKitDocumentScannerService implements DocumentScannerService {
     try {
       final result = await _scanner.scanDocument();
       return result.images?.map((path) => File(path)).toList();
-    } on PlatformException catch (e) {
-      debugPrint('DEBUG_ANDROID_SCANNER: ${e.message} | code: ${e.code}');
+    } on PlatformException {
       return null;
-    } catch (e) {
-      debugPrint('DEBUG_ANDROID_SCANNER: $e');
+    } catch (_) {
       return null;
     }
   }
@@ -57,27 +54,14 @@ class GoogleMlKitDocumentScannerService implements DocumentScannerService {
   /// Devuelve null si el usuario cancela deslizando hacia abajo.
   Future<List<File>?> _scanWithVisionKitIOS() async {
     try {
-      // ignore: avoid_print
-      print('DEBUG: Invocando VisionKit nativo (AppDelegate.swift)...');
       final List<dynamic>? paths =
           await _visionKitChannel.invokeMethod<List<dynamic>>('scanDocument');
-      // ignore: avoid_print
-      print('DEBUG: Imágenes recibidas del escáner: ${paths?.length ?? 0}');
       // Lista vacía = usuario canceló
       if (paths == null || paths.isEmpty) return null;
       return paths.cast<String>().map((path) => File(path)).toList();
-    } on PlatformException catch (e) {
-      if (e.code == 'UNAVAILABLE') {
-        // ignore: avoid_print
-        print('DEBUG_IOS_SCANNER: VisionKit no disponible → fallback cámara estándar');
-      } else {
-        // ignore: avoid_print
-        print('DEBUG_IOS_SCANNER: Error nativo (${e.code}: ${e.message}) → fallback cámara estándar');
-      }
+    } on PlatformException {
       return _scanWithImagePickerFallback();
-    } catch (e) {
-      // ignore: avoid_print
-      print('DEBUG_IOS_SCANNER: Error ($e) → fallback cámara estándar');
+    } catch (_) {
       return _scanWithImagePickerFallback();
     }
   }
@@ -85,8 +69,6 @@ class GoogleMlKitDocumentScannerService implements DocumentScannerService {
   /// Cámara estándar como fallback si VisionKit falla (p.ej. MissingPluginException).
   Future<List<File>?> _scanWithImagePickerFallback() async {
     try {
-      // ignore: avoid_print
-      print('DEBUG: Abriendo cámara estándar (fallback)...');
       final picker = ImagePicker();
       final XFile? picked = await picker.pickImage(
         source: ImageSource.camera,
@@ -95,11 +77,9 @@ class GoogleMlKitDocumentScannerService implements DocumentScannerService {
       );
       if (picked == null) return null;
       return [File(picked.path)];
-    } on PlatformException catch (e) {
-      debugPrint('DEBUG_IOS_FALLBACK: ${e.message} | code: ${e.code}');
+    } on PlatformException {
       return null;
-    } catch (e) {
-      debugPrint('DEBUG_IOS_FALLBACK: $e');
+    } catch (_) {
       return null;
     }
   }

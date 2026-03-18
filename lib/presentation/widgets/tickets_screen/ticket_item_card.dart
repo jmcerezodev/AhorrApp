@@ -213,10 +213,7 @@ class TicketItemCard extends StatelessWidget {
   }
 
   Future<void> _handleTap(BuildContext context) async {
-    if (item.imagePath == null) {
-      print('[TicketItemCard] imagePath es null para: ${item.name}');
-      return;
-    }
+    if (item.imagePath == null) return;
 
     final appDir = await getApplicationDocumentsDirectory();
     final storedPath = item.imagePath!;
@@ -229,7 +226,6 @@ class TicketItemCard extends StatelessWidget {
     } else if (File(storedPath).existsSync()) {
       validPath = storedPath;
     } else {
-      print('[TicketItemCard] Archivo no encontrado. Ticket: ${item.name} | fileName: $fileName');
       return;
     }
 

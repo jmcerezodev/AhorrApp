@@ -15,8 +15,6 @@ class GoogleMlKitOCRService implements OCRService {
 
   @override
   Future<String> extractText(File imageFile) async {
-    debugPrint('[OCR] Extrayendo texto de: ${imageFile.path}');
-
     // 1. Optimización en Isolate
     File optimizedImage = await _optimizeImageInBackground(imageFile.path);
 
@@ -27,7 +25,6 @@ class GoogleMlKitOCRService implements OCRService {
 
     // Reintento con imagen original si la optimizada no dio texto
     if (optimizedText.isEmpty && optimizedImage.path != imageFile.path) {
-      debugPrint('[OCR] Sin texto en imagen optimizada, reintentando con original...');
       inputImage = InputImage.fromFile(imageFile);
       recognizedText = await _textRecognizer.processImage(inputImage);
       optimizedText = extractOptimizedText(recognizedText);
@@ -37,8 +34,6 @@ class GoogleMlKitOCRService implements OCRService {
     if (optimizedImage.path != imageFile.path) {
       await optimizedImage.delete().catchError((_) => optimizedImage);
     }
-
-    debugPrint('[OCR] ML Kit terminado. Texto extraído: ${optimizedText.length} chars');
 
     if (optimizedText.isEmpty) {
       throw Exception(
@@ -52,17 +47,8 @@ class GoogleMlKitOCRService implements OCRService {
 
   @override
   Future<List<TicketItem>> processTicket(File imageFile, String userId) async {
-    debugPrint('[OCR] Procesamiento completo (OCR + IA): ${imageFile.path}');
-    try {
-      final text = await extractText(imageFile);
-      debugPrint('[OpenAI] Enviando texto a procesar...');
-      final result = await aiService.parseTicketText(text, userId);
-      debugPrint('[OCR] Proceso completo. Elementos detectados: ${result.length}');
-      return result;
-    } catch (e) {
-      debugPrint('[OCR] Error en procesamiento: $e');
-      rethrow;
-    }
+    final text = await extractText(imageFile);
+    return aiService.parseTicketText(text, userId);
   }
 
   Future<File> _optimizeImageInBackground(String imagePath) async {
@@ -78,8 +64,7 @@ class GoogleMlKitOCRService implements OCRService {
       await optimizedFile.writeAsBytes(optimizedBytes);
       
       return optimizedFile;
-    } catch (e) {
-      debugPrint('⚠️ Error en optimización en background: $e');
+    } catch (_) {
       return File(imagePath);
     }
   }

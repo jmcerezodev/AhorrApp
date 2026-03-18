@@ -56,9 +56,7 @@ class TicketsCubit extends Cubit<TicketsState> {
     try {
       final items = await getTicketItemsUseCase(Preferences.uId);
       emit(state.copyWith(status: TicketsStatus.success, items: items));
-    } catch (e) {
-      debugPrint('[TicketsCubit] Error en refresco silencioso: $e');
-    }
+    } catch (_) {}
   }
 
   void _downloadMissingImagesInBackground() {
@@ -68,9 +66,7 @@ class TicketsCubit extends Cubit<TicketsState> {
           final updated = await getTicketItemsUseCase(Preferences.uId);
           if (!isClosed) emit(state.copyWith(items: updated));
         })
-        .catchError((e) {
-          debugPrint('[TicketsCubit] Error en descarga de imágenes: $e');
-        });
+        .catchError((_) {});
   }
 
   void updateSearchQuery(String query) {
@@ -78,16 +74,12 @@ class TicketsCubit extends Cubit<TicketsState> {
   }
 
   Future<void> scanAndProcessTicket() async {
-    // ignore: avoid_print
-    print('DEBUG_CUBIT: scanAndProcessTicket llamado');
     try {
       final scannedFiles = await documentScannerService.scanDocument();
       if (scannedFiles != null && scannedFiles.isNotEmpty) {
         await processTicketImage(scannedFiles.first);
       }
     } catch (e) {
-      // ignore: avoid_print
-      print('DEBUG_CUBIT: Error → $e');
       emit(state.copyWith(
         status: TicketsStatus.failure,
         isProcessingOcr: false,
@@ -102,15 +94,12 @@ class TicketsCubit extends Cubit<TicketsState> {
     
     try {
       // 1. OCR local
-      debugPrint('DEBUG 2: Iniciando OCR con Google ML Kit...');
       final rawText = await ocrService.extractText(imageFile);
-      debugPrint('DEBUG 3: OCR finalizado. Texto extraído: ${rawText.length} caracteres');
 
       // Finalizamos flag de OCR antes de seguir con el resto
       emit(state.copyWith(isProcessingOcr: false));
 
       // 2. Comprimir y guardar imagen de forma permanente
-      debugPrint('DEBUG 1: Iniciando compresión de imagen...');
       final compressedFile = await _compressImage(imageFile.path);
       final appDir = await getApplicationDocumentsDirectory();
       final fileName = 'ticket_${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -120,7 +109,6 @@ class TicketsCubit extends Cubit<TicketsState> {
       }
 
       // 3. Verificar conectividad antes de enviar a la IA
-      debugPrint('DEBUG 4: Verificando conectividad...');
       bool hasConnection = false;
       try {
         final result = await Connectivity().checkConnectivity();
@@ -142,9 +130,7 @@ class TicketsCubit extends Cubit<TicketsState> {
           rawText: rawText,
           ocrStatus: OcrStatus.pendingOcr,
         ));
-        
-        debugPrint('DEBUG: Guardado ticket offline con éxito');
-        
+
         final items = await getTicketItemsUseCase(Preferences.uId);
         emit(state.copyWith(status: TicketsStatus.success, items: items));
         return;

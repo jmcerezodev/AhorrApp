@@ -21,8 +21,6 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:workmanager/workmanager.dart';
 
 void main() async {
-  // ignore: avoid_print
-  print('APP_START: main() ejecutado');
   try {
     WidgetsFlutterBinding.ensureInitialized();
     usePathUrlStrategy();
@@ -71,7 +69,6 @@ void main() async {
       )
     );
   } catch (e) {
-    debugPrint("❌ Error fatal durante la inicialización: $e");
     runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
@@ -178,8 +175,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> with WidgetsBindingObse
   Future<void> _updateAppSecurity() async {
     try {
       await platform.invokeMethod('setSecure', {'secure': Preferences.isBiometricActive});
-    } on PlatformException catch (e) {
-      debugPrint("Error al configurar FLAG_SECURE: ${e.message}");
+    } on PlatformException catch (_) {
     }
   }
 

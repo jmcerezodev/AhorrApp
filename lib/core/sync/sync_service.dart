@@ -66,16 +66,14 @@ class SyncService {
   Future<void> processQueue({bool isManual = false}) async {
     if (!isManual && _isManualInResultState) return;
 
-    if (!isManual && _lastManualSyncTime != null && 
+    if (!isManual && _lastManualSyncTime != null &&
         DateTime.now().difference(_lastManualSyncTime!).inSeconds < 30) {
-      debugPrint('⏳ Sincronización automática bloqueada por cooldown manual.');
       return;
     }
     
     if (_isSyncing || !Preferences.isLoggedIn) return;
     
     if (!isManual && _nextRetryTime != null && DateTime.now().isBefore(_nextRetryTime!)) {
-      debugPrint('⏳ Sincronización en cooldown hasta: $_nextRetryTime');
       return;
     }
 
@@ -112,6 +110,9 @@ class SyncService {
       bool hasNetworkError = false;
       bool hasItemError = false;
 
+      final List<int> idsToDelete = [];
+      final List<PendingSync> pendingsToRetry = [];
+
       for (var pending in pendingList) {
         _SyncResult result = _SyncResult.retry;
         final Map<String, dynamic> data = jsonDecode(pending.dataJson);
@@ -120,22 +121,16 @@ class SyncService {
           result = await _executeSyncItem(pending, data);
 
           if (result == _SyncResult.success) {
-            await _localDb.deletePendingSync(pending.id);
-            // No reseteamos el backoff global aquí para permitir que otros items fallen
-            // pero si todo va bien, al final se resetea.
+            idsToDelete.add(pending.id);
           } else if (result == _SyncResult.fatal) {
-            debugPrint('❌ Fallo fatal en ítem ${pending.collection} (ID: ${pending.id}). Eliminando de la cola.');
-            await _localDb.deletePendingSync(pending.id);
+            idsToDelete.add(pending.id);
           } else {
             // Reintento por error puntual del ítem o fallo lógico
             pending.retryCount++;
             if (pending.retryCount >= _maxItemRetries) {
-              debugPrint('⚠️ Máximo de reintentos alcanzado para ${pending.collection} (ID: ${pending.id}). Descartando.');
-              await _localDb.deletePendingSync(pending.id);
+              idsToDelete.add(pending.id);
             } else {
-              await _localDb.isar.writeTxn(() async {
-                await _localDb.isar.pendingSyncs.put(pending);
-              });
+              pendingsToRetry.add(pending);
               hasItemError = true;
               // Continuamos con el siguiente ítem para evitar bloqueo global
               continue;
@@ -157,14 +152,22 @@ class SyncService {
             // Si es un error de red o de servidor (5xx), paramos la cola
             if (code == 0 || code >= 500) {
               hasNetworkError = true;
-              break; 
+              break;
             }
           }
 
           // Otros errores desconocidos: asumimos error de red/temporal y aplicamos backoff
           hasNetworkError = true;
-          break; 
+          break;
         }
+      }
+
+      // Commit en una sola transacción Isar
+      if (idsToDelete.isNotEmpty || pendingsToRetry.isNotEmpty) {
+        await _localDb.isar.writeTxn(() async {
+          if (idsToDelete.isNotEmpty) await _localDb.isar.pendingSyncs.deleteAll(idsToDelete);
+          if (pendingsToRetry.isNotEmpty) await _localDb.isar.pendingSyncs.putAll(pendingsToRetry);
+        });
       }
 
       if (hasNetworkError || hasItemError) {
@@ -244,7 +247,6 @@ class SyncService {
     _errorCount++;
     final secondsToWait = min(5 * pow(3, _errorCount - 1).toInt(), 600);
     _nextRetryTime = DateTime.now().add(Duration(seconds: secondsToWait));
-    debugPrint('⚠️ Error de sincronización ($_errorCount). Reintento en $secondsToWait segundos.');
   }
 
   Future<bool> _attemptSilentLogin() async {
@@ -295,7 +297,6 @@ class SyncService {
       }
 
       final double money = (data['money'] as num?)?.toDouble() ?? 0.0;
-      debugPrint('⬆️ Sincronizando historial: ${data['name']} por ${_formatAmount(money)}');
 
       await _appwriteRepo.addHistory(
         documentId: pending.appwriteId!,
@@ -328,7 +329,6 @@ class SyncService {
   Future<bool> _syncSavings(PendingSync pending, Map<String, dynamic> data) async {
     if (pending.action == 'create') {
       final double money = (data['money'] as num?)?.toDouble() ?? 0.0;
-      debugPrint('⬆️ Sincronizando ahorro: ${_formatAmount(money)}');
 
       await _appwriteRepo.addSaving(
         documentId: pending.appwriteId!,
@@ -459,8 +459,6 @@ class SyncService {
               });
             }
           } else {
-            debugPrint('❌ Archivo de ticket no encontrado en: $resolvedPath. Eliminando de la cola de sincronización.');
-            // Según instrucciones: eliminar el ítem si el archivo no existe
             return _SyncResult.fatal;
           }
         } catch (e) {

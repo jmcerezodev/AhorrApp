@@ -24,12 +24,7 @@ const String kPendingOcrTaskName = 'processPendingOcrTicketsV2';
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
-    print('DEBUG WORKER: Tarea iniciada correctamente. taskName=$taskName');
-
-    if (taskName != kPendingOcrTaskName) {
-      print('DEBUG WORKER: Tarea desconocida ($taskName), ignorando.');
-      return true;
-    }
+    if (taskName != kPendingOcrTaskName) return true;
 
     try {
       // Flutter binding requerido por path_provider y shared_preferences
@@ -39,20 +34,15 @@ void callbackDispatcher() {
       await Preferences.init();
       final String userId = Preferences.uId;
 
-      if (userId.isEmpty) {
-        print('DEBUG WORKER: Sin userId activo — tarea abortada.');
-        return true;
-      }
+      if (userId.isEmpty) return true;
 
       // 2. Isar — apertura totalmente independiente de la UI.
       //    En el isolate del worker, Isar.instanceNames siempre está vacío
       //    (memoria separada), por lo que LocalDbService abre la BD desde cero.
       //    Isar 3.x gestiona el acceso concurrente vía su capa nativa (WAL).
-      print('WORKER CHECK: Intentando abrir Isar...');
       final dbService = LocalDbService();
       await dbService.init();
       final isar = dbService.isar;
-      print('WORKER CHECK: Isar abierto, buscando tickets...');
 
       // 3. Consulta con una sola condición Isar (patrón garantizado en 3.x).
       //    El filtro de userId se aplica en Dart: pendingOcr siempre es un
@@ -65,12 +55,7 @@ void callbackDispatcher() {
       final pendingTickets =
           allPending.where((t) => t.userId == userId).toList();
 
-      if (pendingTickets.isEmpty) {
-        print('DEBUG WORKER: No hay tickets pendientes.');
-        return true;
-      }
-
-      print('DEBUG WORKER: ${pendingTickets.length} ticket(s) a procesar.');
+      if (pendingTickets.isEmpty) return true;
 
       // 4. Procesar cada ticket con OpenAI
       final aiService = OpenAIService();
@@ -84,12 +69,10 @@ void callbackDispatcher() {
             ticket.name = 'Sin texto detectado';
             await isar.localTicketItems.put(ticket);
           });
-          print('DEBUG WORKER: Ticket ${ticket.ticketItemId} sin rawText → error.');
           continue;
         }
 
         try {
-          print('DEBUG WORKER: Llamando a OpenAI para ${ticket.ticketItemId}...');
           final results = await aiService.processRawText(rawText, userId);
 
           if (results.isNotEmpty) {
@@ -122,33 +105,24 @@ void callbackDispatcher() {
               },
               appwriteId: ticket.ticketItemId,
             );
-
-            print(
-              'DEBUG WORKER: Ticket procesado → "${ticket.name}" ${ticket.amount}',
-            );
           } else {
             await isar.writeTxn(() async {
               ticket.ocrStatus = OcrStatus.error;
               ticket.name = 'No procesado';
               await isar.localTicketItems.put(ticket);
             });
-            print('DEBUG WORKER: OpenAI devolvió respuesta vacía para ${ticket.ticketItemId}.');
           }
         } on TimeoutException {
           // Mantener pendingOcr para que se reintente en la siguiente ejecución
-          print('DEBUG WORKER: Timeout en ${ticket.ticketItemId} — se reintentará.');
         } on SocketException {
-          print('DEBUG WORKER: Sin red procesando ${ticket.ticketItemId} — se reintentará.');
-        } catch (e) {
-          print('DEBUG WORKER: Error inesperado en ${ticket.ticketItemId}: $e');
+          // Sin red: se reintentará en la siguiente ejecución
+        } catch (_) {
+          // Error inesperado: se reintentará
         }
       }
 
-      print('DEBUG WORKER: Tarea completada correctamente.');
       return true;
-    } catch (e, st) {
-      print('DEBUG WORKER ERROR: $e');
-      print('DEBUG WORKER STACKTRACE: $st');
+    } catch (_) {
       return false; // WorkManager reintentará la tarea
     }
   });

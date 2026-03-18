@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/sync/sync_service.dart';
@@ -192,10 +191,7 @@ class TicketsRepositoryImpl implements TicketsRepository {
         await File('${appDir.path}/$fileName').writeAsBytes(bytes);
         model.imagePath = fileName;
         await localDataSource.saveTicketItem(model);
-        debugPrint('[TicketRepo] Imagen recuperada: ${model.ticketItemId}');
-      } catch (e) {
-        debugPrint('[TicketRepo] Error descargando imagen ${model.remoteImageId}: $e');
-      }
+      } catch (_) {}
     }
   }
 
