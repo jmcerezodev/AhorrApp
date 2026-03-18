@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import '../../../domain/entities/ticket_item.dart';
 
 part 'local_ticket_item.g.dart';
 
@@ -18,4 +19,8 @@ class LocalTicketItem {
   late String category;
   late int position;
   late bool isTransferred;
+  /// Texto OCR crudo. Solo presente cuando ocrStatus == pendingOcr.
+  String? rawText;
+  @enumerated
+  OcrStatus ocrStatus = OcrStatus.completed;
 }

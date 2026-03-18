@@ -1,5 +1,6 @@
 import 'package:ahorrapp/config/routes/app_router.dart';
 import 'package:ahorrapp/config/theme/app_theme.dart';
+import 'package:ahorrapp/core/background/pending_ocr_worker.dart';
 import 'package:ahorrapp/core/config/responsive_utils.dart';
 import 'package:ahorrapp/core/di/service_locator.dart';
 import 'package:ahorrapp/core/shared_preferences/preferences.dart';
@@ -10,12 +11,14 @@ import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_list_cubit.da
 import 'package:ahorrapp/presentation/bloc/shopping_cubit/shopping_templates_cubit.dart';
 import 'package:ahorrapp/presentation/bloc/tickets_cubit/tickets_cubit.dart';
 import 'package:ahorrapp/presentation/screens/security_lock_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart'; 
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:workmanager/workmanager.dart';
 
 void main() async {
   try {
@@ -24,8 +27,11 @@ void main() async {
 
     await Preferences.init();
     await setupServiceLocator();
-    
+
     getIt<SyncService>().init();
+
+    // Motor de procesamiento diferido: ejecuta en background cuando hay red
+    await _initWorkmanager();
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       systemNavigationBarColor: Colors.transparent,
@@ -92,6 +98,27 @@ void main() async {
       ),
     ));
   }
+}
+
+/// Inicializa WorkManager y registra la tarea periódica de OCR diferido.
+///
+/// - [ExistingPeriodicWorkPolicy.keep]: si la tarea ya está encolada no se duplica.
+/// - [NetworkType.connected]: la tarea solo corre cuando hay conexión activa.
+/// - iOS extra: añade en `ios/Runner/Info.plist`:
+///   <key>BGTaskSchedulerPermittedIdentifiers</key>
+///   <array><string>processPendingOcrTicketsV2</string></array>
+Future<void> _initWorkmanager() async {
+  await Workmanager().initialize(
+    callbackDispatcher,
+    isInDebugMode: kDebugMode,
+  );
+  await Workmanager().registerPeriodicTask(
+    kPendingOcrTaskId,
+    kPendingOcrTaskName,
+    frequency: const Duration(minutes: 15),
+    constraints: Constraints(networkType: NetworkType.connected),
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+  );
 }
 
 class MainAppWrapper extends StatefulWidget {

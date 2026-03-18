@@ -14,51 +14,54 @@ class GoogleMlKitOCRService implements OCRService {
   GoogleMlKitOCRService(this.aiService);
 
   @override
+  Future<String> extractText(File imageFile) async {
+    debugPrint('[OCR] Extrayendo texto de: ${imageFile.path}');
+
+    // 1. Optimización en Isolate
+    File optimizedImage = await _optimizeImageInBackground(imageFile.path);
+
+    // 2. OCR — ML Kit corre en su propio hilo nativo
+    InputImage inputImage = InputImage.fromFile(optimizedImage);
+    RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
+    String optimizedText = extractOptimizedText(recognizedText);
+
+    // Reintento con imagen original si la optimizada no dio texto
+    if (optimizedText.isEmpty && optimizedImage.path != imageFile.path) {
+      debugPrint('[OCR] Sin texto en imagen optimizada, reintentando con original...');
+      inputImage = InputImage.fromFile(imageFile);
+      recognizedText = await _textRecognizer.processImage(inputImage);
+      optimizedText = extractOptimizedText(recognizedText);
+    }
+
+    // Limpieza de temporales
+    if (optimizedImage.path != imageFile.path) {
+      await optimizedImage.delete().catchError((_) => optimizedImage);
+    }
+
+    debugPrint('[OCR] ML Kit terminado. Texto extraído: ${optimizedText.length} chars');
+
+    if (optimizedText.isEmpty) {
+      throw Exception(
+        'No se detectó texto en la imagen. '
+        'Asegúrate de que el ticket esté bien iluminado y enfocado.',
+      );
+    }
+
+    return optimizedText;
+  }
+
+  @override
   Future<List<TicketItem>> processTicket(File imageFile, String userId) async {
-    debugPrint('[OCR] Foto recibida: ${imageFile.path}');
-
+    debugPrint('[OCR] Procesamiento completo (OCR + IA): ${imageFile.path}');
     try {
-      // 1. Optimización de imagen en Isolate (segundo plano)
-      File optimizedImage = await _optimizeImageInBackground(imageFile.path);
-
-      // 2. OCR — Google ML Kit corre en su propio hilo nativo
-      InputImage inputImage = InputImage.fromFile(optimizedImage);
-      RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
-
-      String optimizedText = extractOptimizedText(recognizedText);
-
-      // Reintento con imagen original si la optimizada no dio texto
-      if (optimizedText.isEmpty && optimizedImage.path != imageFile.path) {
-        debugPrint('[OCR] Sin texto en imagen optimizada, reintentando con original...');
-        inputImage = InputImage.fromFile(imageFile);
-        recognizedText = await _textRecognizer.processImage(inputImage);
-        optimizedText = extractOptimizedText(recognizedText);
-      }
-
-      // Limpieza de temporales
-      if (optimizedImage.path != imageFile.path) {
-        await optimizedImage.delete().catchError((_) => optimizedImage);
-      }
-
-      debugPrint('[OCR] ML Kit terminado. Texto extraído: ${optimizedText.length} chars');
-
-      // Abortar si no hay texto — evita llamar a OpenAI con vacío
-      if (optimizedText.isEmpty) {
-        throw Exception(
-          'No se detectó texto en la imagen. '
-          'Asegúrate de que el ticket esté bien iluminado y enfocado.',
-        );
-      }
-
-      // 3. IA — llamada HTTP asíncrona
+      final text = await extractText(imageFile);
       debugPrint('[OpenAI] Enviando texto a procesar...');
-      final result = await aiService.parseTicketText(optimizedText, userId);
+      final result = await aiService.parseTicketText(text, userId);
       debugPrint('[OCR] Proceso completo. Elementos detectados: ${result.length}');
       return result;
-
     } catch (e) {
       debugPrint('[OCR] Error en procesamiento: $e');
-      rethrow; // propagar para que el cubit emita estado de error
+      rethrow;
     }
   }
 

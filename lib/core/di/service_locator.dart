@@ -40,7 +40,6 @@ import 'package:ahorrapp/domain/usecases/shopping_list/save_shopping_list_item_u
 import 'package:ahorrapp/domain/usecases/shopping_list/save_shopping_template_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/delete_ticket_item_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/get_ticket_items_usecase.dart';
-import 'package:ahorrapp/domain/usecases/tickets/process_ticket_image_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/reorder_ticket_items_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/save_ticket_item_usecase.dart';
 import 'package:ahorrapp/domain/usecases/tickets/transfer_tickets_to_expenses_usecase.dart';
@@ -238,7 +237,7 @@ Future<void> setupServiceLocator() async {
     saveMovementUseCase: getIt<SaveMovementUseCase>(),
     ticketsRepository: getIt<TicketsRepository>(),
   ));
-  getIt.registerLazySingleton<ProcessTicketImageUseCase>(() => ProcessTicketImageUseCase(getIt<OCRService>()));
+  // ProcessTicketImageUseCase eliminado — el Cubit usa OCRService y AIService directamente
 
   // CASOS DE USO DEUDAS Y PRÉSTAMOS
   getIt.registerLazySingleton<GetDebtsLoansUseCase>(() => GetDebtsLoansUseCase(
@@ -285,7 +284,8 @@ Future<void> setupServiceLocator() async {
     saveTicketItemUseCase: getIt<SaveTicketItemUseCase>(),
     deleteTicketItemUseCase: getIt<DeleteTicketItemUseCase>(),
     reorderTicketItemsUseCase: getIt<ReorderTicketItemsUseCase>(),
-    processTicketImageUseCase: getIt<ProcessTicketImageUseCase>(),
+    ocrService: getIt<OCRService>(),
+    aiService: getIt<AIService>(),
     documentScannerService: getIt<DocumentScannerService>(),
   ));
 

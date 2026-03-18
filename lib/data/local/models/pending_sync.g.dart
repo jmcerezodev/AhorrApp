@@ -41,6 +41,11 @@ const PendingSyncSchema = CollectionSchema(
       id: 4,
       name: r'dataJson',
       type: IsarType.string,
+    ),
+    r'retryCount': PropertySchema(
+      id: 5,
+      name: r'retryCount',
+      type: IsarType.long,
     )
   },
   estimateSize: _pendingSyncEstimateSize,
@@ -86,6 +91,7 @@ void _pendingSyncSerialize(
   writer.writeString(offsets[2], object.collection);
   writer.writeDateTime(offsets[3], object.createdAt);
   writer.writeString(offsets[4], object.dataJson);
+  writer.writeLong(offsets[5], object.retryCount);
 }
 
 PendingSync _pendingSyncDeserialize(
@@ -101,6 +107,7 @@ PendingSync _pendingSyncDeserialize(
   object.createdAt = reader.readDateTime(offsets[3]);
   object.dataJson = reader.readString(offsets[4]);
   object.id = id;
+  object.retryCount = reader.readLong(offsets[5]);
   return object;
 }
 
@@ -121,6 +128,8 @@ P _pendingSyncDeserializeProp<P>(
       return (reader.readDateTime(offset)) as P;
     case 4:
       return (reader.readString(offset)) as P;
+    case 5:
+      return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -886,6 +895,62 @@ extension PendingSyncQueryFilter
       ));
     });
   }
+
+  QueryBuilder<PendingSync, PendingSync, QAfterFilterCondition>
+      retryCountEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'retryCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<PendingSync, PendingSync, QAfterFilterCondition>
+      retryCountGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'retryCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<PendingSync, PendingSync, QAfterFilterCondition>
+      retryCountLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'retryCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<PendingSync, PendingSync, QAfterFilterCondition>
+      retryCountBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'retryCount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension PendingSyncQueryObject
@@ -953,6 +1018,18 @@ extension PendingSyncQuerySortBy
   QueryBuilder<PendingSync, PendingSync, QAfterSortBy> sortByDataJsonDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'dataJson', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PendingSync, PendingSync, QAfterSortBy> sortByRetryCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'retryCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PendingSync, PendingSync, QAfterSortBy> sortByRetryCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'retryCount', Sort.desc);
     });
   }
 }
@@ -1030,6 +1107,18 @@ extension PendingSyncQuerySortThenBy
       return query.addSortBy(r'id', Sort.desc);
     });
   }
+
+  QueryBuilder<PendingSync, PendingSync, QAfterSortBy> thenByRetryCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'retryCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PendingSync, PendingSync, QAfterSortBy> thenByRetryCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'retryCount', Sort.desc);
+    });
+  }
 }
 
 extension PendingSyncQueryWhereDistinct
@@ -1065,6 +1154,12 @@ extension PendingSyncQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'dataJson', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PendingSync, PendingSync, QDistinct> distinctByRetryCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'retryCount');
     });
   }
 }
@@ -1104,6 +1199,12 @@ extension PendingSyncQueryProperty
   QueryBuilder<PendingSync, String, QQueryOperations> dataJsonProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'dataJson');
+    });
+  }
+
+  QueryBuilder<PendingSync, int, QQueryOperations> retryCountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'retryCount');
     });
   }
 }

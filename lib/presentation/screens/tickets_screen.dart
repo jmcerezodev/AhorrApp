@@ -15,19 +15,29 @@ class TicketsScreen extends StatefulWidget {
   State<TicketsScreen> createState() => _TicketsScreenState();
 }
 
-class _TicketsScreenState extends State<TicketsScreen> {
+class _TicketsScreenState extends State<TicketsScreen> with WidgetsBindingObserver {
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     context.read<TicketsCubit>().loadItems();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Si la app vuelve del segundo plano (donde pudo correr el worker), refrescamos
+    if (state == AppLifecycleState.resumed) {
+      context.read<TicketsCubit>().refreshListSilently();
+    }
   }
 
   @override
@@ -35,98 +45,92 @@ class _TicketsScreenState extends State<TicketsScreen> {
     Responsive.init(context);
     final bool isSmallScreen = MediaQuery.of(context).size.width <= 375;
 
-    return SafeArea(
-      bottom: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. APPBAR (FIJO)
-          FadeInDown(
-            duration: const Duration(milliseconds: 500),
-            from: 50.h,
-            child: const TicketsAppBar()
-          ),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. APPBAR
+            FadeInDown(
+              duration: const Duration(milliseconds: 500),
+              from: 50.h,
+              child: const TicketsAppBar()
+            ),
 
-          // 2. RESUMEN (FIJO)
-          FadeInDown(
-            delay: const Duration(milliseconds: 100),
-            from: 50.h,
-            child: const TicketsSummaryWidget()
-          ),
+            // 2. RESUMEN
+            FadeInDown(
+              delay: const Duration(milliseconds: 100),
+              from: 50.h,
+              child: const TicketsSummaryWidget()
+            ),
 
-          // 3. BARRA DE PROGRESO (Solo en carga - FIJO)
-          BlocBuilder<TicketsCubit, TicketsState>(
-            builder: (context, state) {
-              if (state.status != TicketsStatus.loading) return const SizedBox.shrink();
-              
-              return FadeIn(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+            // 3. BARRA DE PROGRESO
+            BlocBuilder<TicketsCubit, TicketsState>(
+              builder: (context, state) {
+                // Se muestra si el estado es loading O si se está procesando OCR (ML Kit)
+                final isLoading = state.status == TicketsStatus.loading || state.isProcessingOcr;
+                
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
                   child: Column(
                     children: [
-                      LinearProgressIndicator(
-                        backgroundColor: Colors.orange.withValues(alpha: 0.1),
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
-                        minHeight: 6.h,
-                        borderRadius: BorderRadius.all(Radius.circular(10.w)),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        'Procesando ticket...',
-                        style: TextStyle(
-                          color: Colors.orange.shade700,
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                      if (isLoading)
+                        const LinearProgressIndicator(
+                          minHeight: 2,
+                          backgroundColor: Colors.transparent,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                        )
+                      else
+                        const SizedBox(height: 2),
                     ],
                   ),
-                ),
-              );
-            },
-          ),
-
-          // 4. BARRA DE BÚSQUEDA (FIJO)
-          FadeInDown(
-            delay: const Duration(milliseconds: 200),
-            from: 50.h,
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 20.w, 
-                vertical: isSmallScreen ? 5.h : 10.h
-              ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (value) => context.read<TicketsCubit>().updateSearchQuery(value),
-                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-                decoration: AppInputStyles.decoration(
-                  labelText: 'Buscador',
-                  hintText: 'Buscar por comercio o categoría...',
-                  prefixIcon: Icons.search_rounded,
-                  suffixIcon: _searchController.text.isNotEmpty 
-                    ? IconButton(
-                        icon: Icon(Icons.close_rounded, size: 18.w),
-                        onPressed: () {
-                          _searchController.clear();
-                          context.read<TicketsCubit>().updateSearchQuery('');
-                        },
-                      )
-                    : null,
-                ),
-              ),
+                );
+              },
             ),
-          ),
 
-          // 5. LISTADO (SCROLLABLE INDEPENDIENTE)
-          Expanded(
-            child: FadeInUp(
-              delay: const Duration(milliseconds: 300),
+            // 4. BARRA DE BÚSQUEDA
+            FadeInDown(
+              delay: const Duration(milliseconds: 200),
               from: 50.h,
-              child: const TicketsHistoryWidget()
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 20.w, 
+                  vertical: isSmallScreen ? 5.h : 10.h
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) => context.read<TicketsCubit>().updateSearchQuery(value),
+                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                  decoration: AppInputStyles.decoration(
+                    labelText: 'Buscador',
+                    hintText: 'Buscar por comercio o categoría...',
+                    prefixIcon: Icons.search_rounded,
+                    suffixIcon: _searchController.text.isNotEmpty 
+                      ? IconButton(
+                          icon: Icon(Icons.close_rounded, size: 18.w),
+                          onPressed: () {
+                            _searchController.clear();
+                            context.read<TicketsCubit>().updateSearchQuery('');
+                          },
+                        )
+                      : null,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+
+            // 5. LISTADO
+            Expanded(
+              child: FadeInUp(
+                delay: const Duration(milliseconds: 300),
+                from: 50.h,
+                child: const TicketsHistoryWidget()
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

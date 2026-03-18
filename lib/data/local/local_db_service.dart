@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'models/local_history.dart';
@@ -37,6 +38,7 @@ class LocalDbService {
           LocalDebtLoanSchema,
         ],
         directory: dir.path,
+        inspector: kDebugMode,
       );
     } else {
       _isar = Isar.getInstance()!;

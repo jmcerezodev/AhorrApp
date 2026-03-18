@@ -138,7 +138,7 @@ class SyncService {
               });
               hasItemError = true;
               // Continuamos con el siguiente ítem para evitar bloqueo global
-              continue; 
+              continue;
             }
           }
         } catch (e) {
@@ -153,14 +153,14 @@ class SyncService {
                 return;
               }
             }
-            
+
             // Si es un error de red o de servidor (5xx), paramos la cola
             if (code == 0 || code >= 500) {
               hasNetworkError = true;
               break; 
             }
           }
-          
+
           // Otros errores desconocidos: asumimos error de red/temporal y aplicamos backoff
           hasNetworkError = true;
           break; 

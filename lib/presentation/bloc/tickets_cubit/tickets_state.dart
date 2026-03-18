@@ -7,12 +7,14 @@ class TicketsState extends Equatable {
   final List<TicketItem> items;
   final String searchQuery;
   final String? errorMessage;
+  final bool isProcessingOcr;
 
   const TicketsState({
     this.status = TicketsStatus.initial,
     this.items = const [],
     this.searchQuery = '',
     this.errorMessage,
+    this.isProcessingOcr = false,
   });
 
   double get totalAmount => items.fold(0, (sum, item) => sum + item.amount);
@@ -38,15 +40,17 @@ class TicketsState extends Equatable {
     List<TicketItem>? items,
     String? searchQuery,
     String? errorMessage,
+    bool? isProcessingOcr,
   }) {
     return TicketsState(
       status: status ?? this.status,
       items: items ?? this.items,
       searchQuery: searchQuery ?? this.searchQuery,
       errorMessage: errorMessage ?? this.errorMessage,
+      isProcessingOcr: isProcessingOcr ?? this.isProcessingOcr,
     );
   }
 
   @override
-  List<Object?> get props => [status, items, searchQuery, errorMessage];
+  List<Object?> get props => [status, items, searchQuery, errorMessage, isProcessingOcr];
 }

@@ -33,15 +33,18 @@ class TicketsRepositoryImpl implements TicketsRepository {
   Future<void> saveTicketItem(TicketItem item) async {
     // 1. Guardar localmente
     await localDataSource.saveTicketItem(_fromEntity(item));
-    
+
+    // Los tickets pendingOcr son locales hasta que se procesen — no se sincronizan
+    if (item.ocrStatus == OcrStatus.pendingOcr) return;
+
     // 2. Recuperar la versión más reciente de Isar (por si SyncService actualizó el remoteImageId)
     final latestModel = await localDataSource.getTicketItemById(item.id);
     final String? remoteImageId = latestModel?.remoteImageId ?? item.remoteImageId;
 
     // 3. Añadir a la cola de sincronización con el ID remoto más actual
     await _localDb.addPendingSync(
-      'save', 
-      'tickets', 
+      'save',
+      'tickets',
       {
         'ticketItemId': item.id,
         'userId': item.userId,
@@ -51,8 +54,8 @@ class TicketsRepositoryImpl implements TicketsRepository {
         'category': item.category,
         'position': item.position,
         'isTransferred': item.isTransferred,
-        'remoteImageId': remoteImageId, // USAR EL VALOR MÁS RECIENTE
-        'imagePath': item.imagePath, 
+        'remoteImageId': remoteImageId,
+        'imagePath': item.imagePath,
       },
       appwriteId: item.id,
     );
@@ -208,6 +211,8 @@ class TicketsRepositoryImpl implements TicketsRepository {
       category: model.category,
       position: model.position,
       isTransferred: model.isTransferred,
+      rawText: model.rawText,
+      ocrStatus: model.ocrStatus,
     );
   }
 
@@ -222,6 +227,8 @@ class TicketsRepositoryImpl implements TicketsRepository {
       ..remoteImageId = entity.remoteImageId
       ..category = entity.category
       ..position = entity.position
-      ..isTransferred = entity.isTransferred;
+      ..isTransferred = entity.isTransferred
+      ..rawText = entity.rawText
+      ..ocrStatus = entity.ocrStatus;
   }
 }

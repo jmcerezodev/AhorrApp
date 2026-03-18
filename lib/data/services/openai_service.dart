@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
@@ -97,12 +98,19 @@ Responde ÚNICAMENTE con este JSON minificado, sin texto adicional:
       }
     } on TimeoutException catch (e) {
       debugPrint('[OpenAI] Timeout: $e');
-      rethrow; // el cubit lo captura y emite estado de error
+      rethrow;
+    } on SocketException catch (e) {
+      debugPrint('[OpenAI] Sin conexión de red: $e');
+      rethrow;
     } catch (e) {
       debugPrint('[OpenAI] Error: $e');
       return [];
     }
   }
+
+  @override
+  Future<List<TicketItem>> processRawText(String rawText, String userId) =>
+      parseTicketText(rawText, userId);
 
   double _parseToDouble(dynamic value) {
     if (value == null) return 0.0;

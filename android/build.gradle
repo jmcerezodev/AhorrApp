@@ -1,3 +1,15 @@
+buildscript {
+    ext.kotlin_version = '2.1.0'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -19,7 +31,7 @@ subprojects {
                     namespace = project.group
                 }
 
-                // Forzamos la versión del SDK para todos los plugins que lo requieran
+                // Forzamos compileSdk 36 para cumplir con los requisitos de las librerías androidx
                 compileSdk = 36
 
                 // Forzamos Java 17 en todos los plugins y subproyectos de forma segura
@@ -27,13 +39,14 @@ subprojects {
                     sourceCompatibility = JavaVersion.VERSION_17
                     targetCompatibility = JavaVersion.VERSION_17
                 }
+            }
+        }
 
-                // Ajustamos Kotlin si está presente dentro del bloque android
-                if (project.plugins.hasPlugin('kotlin-android')) {
-                    kotlinOptions {
-                        jvmTarget = "17"
-                    }
-                }
+        // Esta es la parte crítica: forzar el jvmTarget fuera del bloque 'android'
+        // para que afecte a todas las tareas de compilación de Kotlin en todos los módulos
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            kotlinOptions {
+                jvmTarget = "17"
             }
         }
     }
