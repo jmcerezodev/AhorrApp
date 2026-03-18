@@ -16,6 +16,8 @@ class TicketsSummaryWidget extends StatelessWidget {
       builder: (context, state) {
         final bool isLoading = state.status == TicketsStatus.loading;
         final int totalItems = state.items.length;
+        // ignore: avoid_print
+        print('DEBUG_UI: Botón dibujado — status=${state.status} ocr=${state.isProcessingOcr}');
 
         return FadeInDown(
           duration: const Duration(milliseconds: 400),
@@ -116,7 +118,14 @@ class _AddProductBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isLoading ? null : () => context.read<TicketsCubit>().scanAndProcessTicket(),
+      // HitTestBehavior.opaque: registra el toque en TODA el área del widget,
+      // incluyendo zonas con color casi transparente (alpha 0.05 falla sin esto).
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        // ignore: avoid_print
+        print('¡CLICK REALIZADO! isLoading=$isLoading');
+        context.read<TicketsCubit>().scanAndProcessTicket();
+      },
       child: Container(
         width: 110.w,
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),

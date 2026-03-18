@@ -21,6 +21,8 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:workmanager/workmanager.dart';
 
 void main() async {
+  // ignore: avoid_print
+  print('APP_START: main() ejecutado');
   try {
     WidgetsFlutterBinding.ensureInitialized();
     usePathUrlStrategy();

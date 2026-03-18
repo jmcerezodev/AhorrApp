@@ -78,14 +78,19 @@ class TicketsCubit extends Cubit<TicketsState> {
   }
 
   Future<void> scanAndProcessTicket() async {
+    // ignore: avoid_print
+    print('DEBUG_CUBIT: scanAndProcessTicket llamado');
     try {
       final scannedFiles = await documentScannerService.scanDocument();
       if (scannedFiles != null && scannedFiles.isNotEmpty) {
         await processTicketImage(scannedFiles.first);
       }
     } catch (e) {
+      // ignore: avoid_print
+      print('DEBUG_CUBIT: Error → $e');
       emit(state.copyWith(
         status: TicketsStatus.failure,
+        isProcessingOcr: false,
         errorMessage: 'Error al escanear: $e',
       ));
     }
